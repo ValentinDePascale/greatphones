@@ -1,0 +1,6 @@
+[
+  {"id":"GP-2025-0001","ico":"📱","name":"iPhone 15 Pro","sub":"256GB Titanio","price":1150000,"client":"Martina Garcia","dni":"35456789","imei":"358123456789012","date":"2025-03-15","status":"Entregado","warranty":"90 dias"},
+  {"id":"GP-2025-0002","ico":"💻","name":"MacBook Air M2","sub":"256GB Midnight","price":2100000,"client":"Carlos Ruiz","dni":"28765432","imei":"","date":"2025-03-18","status":"En camino","warranty":"12 meses"},
+  {"id":"GP-2025-0003","ico":"🌌","name":"Galaxy S24 Ultra","sub":"512GB Phantom","price":1420000,"client":"Ana Gomez","dni":"40123456","imei":"358345678901234","date":"2025-03-20","status":"Entregado","warranty":"90 dias"},
+  {"id":"GP-2025-0004","ico":"📱","name":"iPhone 14","sub":"128GB Azul","price":680000,"client":"Luis Perez","dni":"32654321","imei":"358234567890123","date":"2025-03-22","status":"Procesando","warranty":"24 meses"}
+]

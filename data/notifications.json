@@ -1,0 +1,6 @@
+[
+  {"id":0,"type":"offer","title":"iPhone 16 Pro - NUEVO","text":"Acaba de llegar el iPhone 16 Pro Desert Titanium. Stock limitado.","time":"Hace 1h","read":false},
+  {"id":1,"type":"loyalty","title":"Descuento por ser cliente GP","text":"Por tu historial, tenes 5% de descuento en tu proxima compra.","time":"Hace 3h","read":false},
+  {"id":2,"type":"order","title":"Tu pedido esta en camino","text":"MacBook Air M2 - GP-2025-0002 - Entrega estimada manana.","time":"Hace 5h","read":true},
+  {"id":3,"type":"offer","title":"JBL Flip 7 - Precio especial","text":"Solo este finde: JBL Flip 7 a $149.000.","time":"Ayer","read":true}
+]

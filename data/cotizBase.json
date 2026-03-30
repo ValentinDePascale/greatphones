@@ -1,0 +1,26 @@
+{
+  "base": {
+    "iPhone 6":5000,"iPhone 7":12000,"iPhone 8":20000,"iPhone X":38000,"iPhone XR":48000,
+    "iPhone XS":52000,"iPhone 11":78000,"iPhone 11 Pro":115000,"iPhone 12":142000,
+    "iPhone 12 Pro":188000,"iPhone 13":245000,"iPhone 13 Pro":335000,"iPhone 14":380000,
+    "iPhone 14 Pro":515000,"iPhone 15":615000,"iPhone 15 Pro":775000,"iPhone 15 Pro Max":840000,
+    "iPhone 16":895000,"iPhone 16 Pro":1145000,"iPhone 16 Pro Max":1250000,
+    "iPad 6ta gen":50000,"iPad 7ma gen":65000,"iPad mini 5":85000,"iPad mini 6":120000,
+    "iPad Air M2":280000,"iPad Pro 11 M1":380000,"iPad Pro 11 M4":520000,
+    "MacBook Air M1":440000,"MacBook Air M2":615000,"MacBook Air M3":775000,
+    "MacBook Pro 13 M1":550000,"MacBook Pro 14 M3 Pro":1100000,
+    "Galaxy S21":68000,"Galaxy S22 Ultra":185000,"Galaxy S23":220000,"Galaxy S23+":280000,
+    "Galaxy S23 Ultra":350000,"Galaxy S24":380000,"Galaxy S24+":440000,"Galaxy S24 Ultra":590000,
+    "Moto G54":35000,"Edge 40 Pro":95000,"Edge 50 Pro":145000,
+    "Redmi Note 12":45000,"Redmi Note 13":58000,"Xiaomi 13T":115000,"Poco F5":135000
+  },
+  "condition": {
+    "Impecable":1.0,"Muy bueno":0.82,"Bueno":0.65,"Con danos":0.42
+  },
+  "extras": {
+    "pant":0.08,"bat":0.06,"icloud":0.30,"caja":0.04,"acc":0.03
+  },
+  "storage": {
+    "16 GB":0.72,"32 GB":0.80,"64 GB":0.88,"128 GB":1,"256 GB":1.18,"512 GB":1.38,"1 TB":1.6
+  }
+}

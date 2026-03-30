@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+  <meta name="theme-color" content="#0E0B07">
+  <title>Great Phones — Tecnologia premium. Precio justo.</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles/globals.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/pages.css">
+  <link rel="stylesheet" href="styles/admin.css">
+  <link rel="stylesheet" href="styles/responsive.css">
+</head>
+<body>
+
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <div class="tb-loc" onclick="promptLocation()">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    <span>Envios a</span><span class="tb-loc-v" id="locVal">Bahia Blanca</span>
+  </div>
+  <div class="tb-sep"></div>
+  <div class="tb-links">
+    <button class="tb-lnk" onclick="nav('sell')">Vende tu equipo</button>
+    <button class="tb-lnk" onclick="nav('servicio')">Servicio tecnico</button>
+    <button class="tb-lnk" onclick="nav('mayorista')">Mayoristas</button>
+    <button class="tb-lnk" onclick="nav('ofertas')">Ofertas</button>
+  </div>
+  <div class="tb-right"><button class="tb-admin" onclick="nav('admin')">Admin</button></div>
+</div>
+
+<!-- ===== MAIN NAV ===== -->
+<div class="mainnav">
+  <div class="nav-logo" onclick="nav('home')">
+    <svg width="36" height="36" viewBox="0 0 48 48" fill="none">
+      <ellipse cx="24" cy="30" rx="16" ry="11" fill="#F5F0E8"/>
+      <ellipse cx="24" cy="29" rx="13" ry="9" fill="#1A1008"/>
+      <circle cx="20" cy="27" r="2" fill="#F5F0E8"/><circle cx="28" cy="27" r="2" fill="#F5F0E8"/>
+      <circle cx="20.5" cy="27" r="0.8" fill="#1A1008"/><circle cx="28.5" cy="27" r="0.8" fill="#1A1008"/>
+      <ellipse cx="24" cy="31" rx="1.5" ry="0.8" fill="#FF6B2C"/>
+      <line x1="17" y1="30" x2="10" y2="28" stroke="#F5F0E8" stroke-width="0.8"/>
+      <line x1="17" y1="31.5" x2="10" y2="31.5" stroke="#F5F0E8" stroke-width="0.8"/>
+      <line x1="31" y1="30" x2="38" y2="28" stroke="#F5F0E8" stroke-width="0.8"/>
+      <line x1="31" y1="31.5" x2="38" y2="31.5" stroke="#F5F0E8" stroke-width="0.8"/>
+      <path d="M16 24 Q14 16 18 14 Q20 20 24 20 Q28 20 30 14 Q34 16 32 24" fill="#1A1008"/>
+      <polygon points="15,20 12,12 18,17" fill="#1A1008"/>
+      <polygon points="33,20 36,12 30,17" fill="#1A1008"/>
+    </svg>
+    <div><div class="nav-logo-text">Great Phones</div><div class="nav-logo-sub">Bahia Blanca</div></div>
+  </div>
+  <div class="nav-search">
+    <input class="nsi" id="searchInput" placeholder="Buscar iPhone, MacBook, Samsung, reparaciones..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="nsb" onclick="doSearch()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </button>
+    <div class="srdd" id="searchDD"></div>
+  </div>
+  <div class="nav-acts">
+    <div class="notif-wrap">
+      <button class="nbtn" onclick="toggleNotif(event)" title="Notificaciones">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span class="nbadge hidden" id="notifBadge">0</span>
+      </button>
+      <div class="notif-panel" id="notifPanel">
+        <div class="notif-hdr"><span class="notif-title">Notificaciones</span><button class="notif-clr" onclick="clearNotifs()">Marcar leidas</button></div>
+        <div id="notifList"></div>
+      </div>
+    </div>
+    <button class="nbtn" onclick="nav('favoritos')" title="Favoritos">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      <span class="nbadge hidden" id="favBadge">0</span>
+    </button>
+    <button class="nbtn" onclick="openCart()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span>Carrito</span><span class="nbadge hidden" id="cartBadge">0</span>
+    </button>
+    <button class="nbtn" onclick="nav('mensajes')" title="Mensajes">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span class="nbadge hidden" id="msgBadge">0</span>
+    </button>
+    <button class="nbtn" onclick="nav('cuenta')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <span>Cuenta</span>
+    </button>
+    <button class="nbtn nbtn-o" onclick="nav('sell')"><span>Vender</span></button>
+  </div>
+</div>
+
+<!-- ===== CATEGORY NAV ===== -->
+<div class="catnav">
+  <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
+  <button class="cni" id="cn-shop" onclick="nav('shop');setCN('shop')">Comprar</button>
+  <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
+  <button class="cni" id="cn-servicio" onclick="nav('servicio');setCN('servicio')">Servicio tecnico</button>
+  <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
+  <button class="cni" id="cn-mayorista" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
+  <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantias</button>
+  <button class="cni" id="cn-ofertas" onclick="nav('ofertas');setCN('ofertas')">Ofertas</button>
+</div>
+
+<!-- ============================= PAGE: HOME ============================= -->
+<div class="page act" id="p-home">
+  <div class="ubar">
+    <div class="ubar-t"><span class="pdot"></span><span id="ubarTxt">Oferta del dia — iPhone 16 Pro desde $1.650.000 · Garantia 90 dias incluida</span></div>
+    <div class="ubar-tm" id="timerEl">06:00:00</div>
+  </div>
+  <div class="hero">
+    <div class="hero-body">
+      <div class="hero-tag"><span class="pdot"></span>Bahia Blanca · Todo el pais</div>
+      <h1 class="hero-h">Tecnologia <em>premium</em>.<br>Precio justo.</h1>
+      <p class="hero-sub">Compra con garantia, vende tu equipo o reparalo. Verificado, seguro, en todo el pais.</p>
+      <div class="hero-ctas">
+        <button class="btn-o" onclick="nav('shop')">Ver catalogo</button>
+        <button class="btn-gl" onclick="nav('sell')">Cotizar mi equipo</button>
+      </div>
+    </div>
+    <div class="hero-bg-logo">
+      <svg width="220" height="220" viewBox="0 0 48 48" fill="none" opacity=".7">
+        <ellipse cx="24" cy="30" rx="16" ry="11" fill="#F5F0E8"/>
+        <ellipse cx="24" cy="29" rx="13" ry="9" fill="#1A1008"/>
+        <circle cx="20" cy="27" r="2" fill="#F5F0E8"/><circle cx="28" cy="27" r="2" fill="#F5F0E8"/>
+        <path d="M16 24 Q14 16 18 14 Q20 20 24 20 Q28 20 30 14 Q34 16 32 24" fill="#1A1008"/>
+        <polygon points="15,20 12,12 18,17" fill="#1A1008"/>
+        <polygon points="33,20 36,12 30,17" fill="#1A1008"/>
+      </svg>
+    </div>
+    <div class="hero-pills">
+      <span class="hp">Garantia 90 dias</span><span class="hp">IMEI verificado</span>
+      <span class="hp">Hasta 24 cuotas</span><span class="hp">Entrega 24hs</span>
+      <span class="hp">Mercado Pago</span><span class="hp">Servicio tecnico</span>
+      <span class="hp">Todo el pais</span><span class="hp">Envio internacional</span>
+    </div>
+  </div>
+  <div class="promo-banner" style="background:linear-gradient(135deg,#0E0B07,#1A1008)" onclick="openDetail(8)">
+    <div class="pb-strip">NUEVO</div>
+    <div class="pb-inner"><span class="pb-ico">&#128241;</span>
+      <div class="pb-body"><div class="pb-tag">Disponible ahora</div><div class="pb-t" style="font-family:'Playfair Display',Georgia,serif">iPhone 16 Pro</div><div class="pb-s">Desert Titanium · Camara 48MP · Chip A18 Pro</div><div class="pb-price" style="font-family:'Playfair Display',Georgia,serif">desde $1.650.000</div></div>
+      <button class="pb-btn">Ver</button>
+    </div>
+  </div>
+  <div class="sec sec-cream">
+    <div class="sec-hdr"><div><div class="sec-tag" style="color:var(--red)">Precios especiales</div><h2 class="sec-title" style="font-family:'Playfair Display',Georgia,serif">Ofertas de hoy</h2></div><button class="sec-more" onclick="nav('ofertas')">Ver todas</button></div>
+    <div class="offer-strip" id="offerStrip"></div>
+  </div>
+  <div class="sec sec-cream" style="padding-top:0">
+    <div class="sec-hdr"><h2 class="sec-title" style="font-family:'Playfair Display',Georgia,serif">Lo mas vendido</h2><button class="sec-more" onclick="nav('shop')">Ver catalogo</button></div>
+    <div class="prod-rail" id="homeRail"></div>
+  </div>
+  <div class="promo-banner" style="background:linear-gradient(135deg,#0d1a2d,#0a0f1a)" onclick="openDetail(1)">
+    <div class="pb-inner"><span class="pb-ico">&#128187;</span>
+      <div class="pb-body"><div class="pb-tag">Producto estrella</div><div class="pb-t" style="font-family:'Playfair Display',Georgia,serif">MacBook Air M2</div><div class="pb-s">256GB · Midnight · 18hs de bateria</div><div class="pb-price" style="font-family:'Playfair Display',Georgia,serif">$2.100.000</div></div>
+      <button class="pb-btn" style="background:var(--blue)">Ver</button>
+    </div>
+  </div>
+  <div class="sec sec-warm">
+    <div class="sec-hdr"><h2 class="sec-title sec-title-lt" style="font-family:'Playfair Display',Georgia,serif">Nuestros servicios</h2></div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div onclick="nav('sell')" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:1.1rem;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+        <span style="font-size:32px">&#128176;</span>
+        <div style="flex:1"><div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--cream);margin-bottom:.2rem">Vende tu equipo</div><div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Cotizacion online, revision tecnica y pago en 24hs.</div></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="nav('servicio')" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:1.1rem;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+        <span style="font-size:32px">&#128295;</span>
+        <div style="flex:1"><div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--cream);margin-bottom:.2rem">Servicio tecnico</div><div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Pantalla, bateria, camara, placa. Presupuesto sin cargo.</div></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div onclick="nav('mensajes')" style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:13px;padding:1.1rem;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+        <span style="font-size:32px">&#128172;</span>
+        <div style="flex:1"><div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--cream);margin-bottom:.2rem">Mensajeria privada</div><div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Chat directo con el equipo GP, con soporte de fotos.</div></div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="sec sec-dark">
+    <div class="sec-hdr"><div><div class="sec-tag" style="color:var(--orange)">Proteccion total</div><h2 class="sec-title sec-title-lt" style="font-family:'Playfair Display',Georgia,serif">Garantias y seguros</h2></div><button class="sec-more" onclick="nav('garantias')">Ver todo</button></div>
+    <div class="guar-grid">
+      <div class="guar-card" onclick="nav('garantias')"><span class="gc-ico">&#128737;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">90 dias</div><div class="gc-d">Incluida en todos los equipos.</div><div class="gc-price">Gratis</div></div>
+      <div class="guar-card" onclick="nav('garantias')"><span class="gc-ico">&#128197;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">12 meses</div><div class="gc-d">Garantia extendida certificada.</div><div class="gc-price">15% del valor</div></div>
+      <div class="guar-card featured" onclick="nav('garantias')"><div class="guar-feat-tag">Mas elegido</div><span class="gc-ico">&#128198;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">24 meses</div><div class="gc-d">2 anos de tranquilidad total.</div><div class="gc-price">25% del valor</div></div>
+      <div class="guar-card" style="border-color:rgba(255,107,44,.3)" onclick="nav('garantias')"><span class="gc-ico">&#128272;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">Todo riesgo 24m</div><div class="gc-d">Caidas, agua, robo. Sin franquicia.</div><div class="gc-price">18% del valor</div></div>
+    </div>
+    <button class="btn-o" style="width:100%;margin-top:.875rem" onclick="nav('shop')">Comprar con garantia</button>
+  </div>
+  <div class="promo-banner" style="margin-top:1rem;background:linear-gradient(135deg,#1a0a00,#2d1400)" onclick="nav('accesorios')">
+    <div class="pb-inner"><span class="pb-ico">&#128266;</span>
+      <div class="pb-body"><div class="pb-tag">Audio premium</div><div class="pb-t" style="font-family:'Playfair Display',Georgia,serif">JBL y MAX — Accesorios</div><div class="pb-s">Parlantes, auriculares, cargadores y fundas originales.</div></div>
+      <button class="pb-btn">Ver</button>
+    </div>
+  </div>
+  <div class="sec sec-cream" style="padding-top:1.5rem">
+    <div class="sec-hdr"><h2 class="sec-title" style="font-family:'Playfair Display',Georgia,serif">Preguntas frecuentes</h2></div>
+    <div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Puedo enviar mi equipo para reparacion desde otra ciudad?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Si. Recibimos equipos desde cualquier parte del pais y del mundo via DHL, FedEx o Andreani.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Como funciona la mensajeria interna?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Cada compra tiene su propia conversacion privada con nuestro equipo.</div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Cuantas cuotas aceptan?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Tarjetas de credito hasta 24 cuotas. Sin interes hasta 12 cuotas.</div></div>
+    </div>
+  </div>
+  <footer>
+    <div class="fl-row"><svg width="18" height="18" viewBox="0 0 48 48" fill="none"><ellipse cx="24" cy="30" rx="16" ry="11" fill="#F5F0E8"/><ellipse cx="24" cy="29" rx="13" ry="9" fill="#1A1008"/><circle cx="20" cy="27" r="2" fill="#F5F0E8"/><circle cx="28" cy="27" r="2" fill="#F5F0E8"/><path d="M16 24 Q14 16 18 14 Q20 20 24 20 Q28 20 30 14 Q34 16 32 24" fill="#1A1008"/><polygon points="15,20 12,12 18,17" fill="#1A1008"/><polygon points="33,20 36,12 30,17" fill="#1A1008"/></svg><span class="fl-t">Great Phones</span></div>
+    <p class="fl-sub">Zelarrayan 179, Bahia Blanca · 9hs a 21:30hs lunes a lunes<br>@greatphones.bb · +54 9 2914 72-7351</p>
+    <div class="fl-links">
+      <button class="fl-link" onclick="nav('shop')">Comprar</button><button class="fl-link" onclick="nav('sell')">Vender</button>
+      <button class="fl-link" onclick="nav('servicio')">Servicio tecnico</button><button class="fl-link" onclick="nav('garantias')">Garantias</button>
+      <button class="fl-link" onclick="nav('accesorios')">Accesorios</button><button class="fl-link" onclick="nav('mayorista')">Mayorista</button>
+      <button class="fl-link" onclick="nav('ofertas')">Ofertas</button><button class="fl-link" onclick="nav('mensajes')">Mensajes</button>
+    </div>
+    <div class="fl-btm">2025 Great Phones Bahia Blanca — Todos los derechos reservados</div>
+  </footer>
+</div>
+
+<!-- ============================= PAGE: SHOP ============================= -->
+<div class="page" id="p-shop">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Catalogo</h1><p class="shop-s" id="shopSubtitle">Todos los equipos verificados con garantia incluida</p></div>
+  <div class="filter-panel">
+    <div class="filter-row" id="filterBar">
+      <button class="fchip act" onclick="filterShop('todos',this)">Todos</button>
+      <button class="fchip" onclick="filterShop('iPhone',this)">iPhone</button>
+      <button class="fchip" onclick="filterShop('iPad',this)">iPad</button>
+      <button class="fchip" onclick="filterShop('MacBook',this)">MacBook</button>
+      <button class="fchip" onclick="filterShop('iMac',this)">iMac</button>
+      <button class="fchip" onclick="filterShop('Samsung',this)">Samsung</button>
+      <button class="fchip" onclick="filterShop('Motorola',this)">Motorola</button>
+      <button class="fchip" onclick="filterShop('Xiaomi',this)">Xiaomi</button>
+      <button class="fchip" onclick="filterShop('fav',this)">Favoritos</button>
+    </div>
+    <button class="filter-expand-btn" onclick="toggleAdvFilters()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filtros avanzados
+      <svg id="afArrow" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="adv-filters" id="advFilters">
+      <div class="af-row">
+        <div class="af-grp"><span class="af-lbl">Almacenamiento</span>
+          <select class="af-sel" id="af-st" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>
+        <div class="af-grp"><span class="af-lbl">Estado</span>
+          <select class="af-sel" id="af-cd" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>
+        <div class="af-grp"><span class="af-lbl">Tipo</span>
+          <select class="af-sel" id="af-ty" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="celular">Celulares</option><option value="tablet">Tablets / iPad</option><option value="laptop">Laptops / MacBook</option><option value="desktop">iMac / Desktop</option></select></div>
+      </div>
+      <div class="af-row">
+        <div class="af-grp"><span class="af-lbl">Precio</span>
+          <div class="pr-row"><input class="af-inp" type="number" id="af-p1" placeholder="Min $" oninput="renderShopGrid()"><span style="color:rgba(255,255,255,.3);font-size:11px">-</span><input class="af-inp" type="number" id="af-p2" placeholder="Max $" oninput="renderShopGrid()"></div></div>
+        <div class="af-grp"><span class="af-lbl">Entrega</span>
+          <select class="af-sel" id="af-dl" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="hoy">Llega hoy (BB)</option><option value="manana">Manana</option><option value="48hs">48hs</option><option value="72hs">72hs</option><option value="envio">Envio nacional</option><option value="int">Internacional</option></select></div>
+      </div>
+      <button class="adm-btn-o" style="font-size:10px;padding:6px 14px" onclick="clearAdvF()">Limpiar filtros</button>
+    </div>
+  </div>
+  <div class="sort-bar">
+    <select class="sort-sel" id="sortSel" onchange="renderShopGrid()"><option value="rel">Relevancia</option><option value="asc">Menor precio</option><option value="desc">Mayor precio</option><option value="new">Mas nuevos</option><option value="bat">Mayor bateria</option></select>
+    <span class="sort-count" id="shopCount"></span>
+  </div>
+  <div class="shop-grid" id="shopGrid"></div>
+</div>
+
+<!-- ============================= PAGE: OFERTAS ============================= -->
+<div class="page" id="p-ofertas">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Ofertas</h1><p class="shop-s">Precios especiales por tiempo limitado</p></div>
+  <div class="shop-grid" id="ofertasGrid" style="padding-top:1.1rem"></div>
+</div>
+
+<!-- ============================= PAGE: FAVORITOS ============================= -->
+<div class="page" id="p-favoritos">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Mis favoritos</h1><p class="shop-s" id="favCount">0 guardados</p></div>
+  <div id="favGrid" class="shop-grid"></div>
+  <div id="favEmpty" style="text-align:center;padding:3rem 1rem">
+    <div style="font-size:44px;margin-bottom:.875rem">&#9825;</div>
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;margin-bottom:.4rem">Nada guardado aun</div>
+    <p style="font-size:11px;color:var(--gray);line-height:1.6">Toca el corazon en cualquier producto para guardarlo aca.</p>
+    <button class="btn-o" style="margin-top:1.1rem" onclick="nav('shop')">Ver catalogo</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: DETAIL ============================= -->
+<div class="page" id="p-detail">
+  <div class="det-back-wrap"><button class="det-back" onclick="nav('shop')">&#8592; Volver al catalogo</button></div>
+  <div class="det-body">
+    <div class="det-img"><span id="detIco" style="font-size:90px">&#128241;</span>
+      <div class="det-fav-btn" id="detFavBtn" onclick="toggleDetFav()">&#9825;</div>
+      <div class="det-score"><div class="ds-n" style="font-family:'Playfair Display',Georgia,serif" id="detScore">94</div><div class="ds-l">Score</div></div>
+    </div>
+    <h1 class="det-name" style="font-family:'Playfair Display',Georgia,serif" id="detName">iPhone 15 Pro</h1>
+    <div class="det-meta" id="detMeta">256 GB — Bateria 94%</div>
+    <div class="det-price-row">
+      <span class="det-price" id="detPrice">$1.150.000</span>
+      <span class="det-old hidden" id="detOld"></span>
+    </div>
+    <div class="cuota-band">
+      <div class="cb-t">Cuotas disponibles</div>
+      <div class="cb-opts">
+        <span class="cb-chip act" onclick="selCuota(this,1)">1 cuota</span>
+        <span class="cb-chip" onclick="selCuota(this,3)">3 cuotas</span>
+        <span class="cb-chip" onclick="selCuota(this,6)">6 cuotas</span>
+        <span class="cb-chip" onclick="selCuota(this,12)">12 cuotas</span>
+      </div>
+    </div>
+    <div class="trust-row">
+      <span class="trust-pill">Garantia 90 dias</span><span class="trust-pill">IMEI verificado</span>
+      <span class="trust-pill">Cable + funda gratis</span><span class="trust-pill">Dev. 7 dias</span>
+    </div>
+    <div class="opt-st">Garantia extendida</div>
+    <div class="opt-list" id="optWarranty">
+      <div class="opt-row act" onclick="selOpt(this,'w',0)"><span class="opt-l">90 dias — incluida</span><span class="opt-r">Gratis</span></div>
+      <div class="opt-row" onclick="selOpt(this,'w',0.15)"><span class="opt-l">+12 meses extendida</span><span class="opt-r" id="dw12">+$0</span></div>
+      <div class="opt-row" onclick="selOpt(this,'w',0.25)"><span class="opt-l">+24 meses extendida</span><span class="opt-r" id="dw24">+$0</span></div>
+    </div>
+    <div class="opt-st">Entrega</div>
+    <div class="opt-list" id="optDelivery">
+      <div class="opt-row act" onclick="selOpt(this,'d',0)"><span class="opt-l">Retiro en tienda</span><span class="opt-r">Gratis</span></div>
+      <div class="opt-row" onclick="selOpt(this,'d',5000)"><span class="opt-l">Entrega inmediata</span><span class="opt-r">+$5.000</span></div>
+      <div class="opt-row" onclick="selOpt(this,'d',8000)"><span class="opt-l">Envio 24-48hs</span><span class="opt-r">+$8.000</span></div>
+    </div>
+    <div class="total-band"><span class="total-l">Total a pagar</span><span class="total-v" id="detTotal">$0</span></div>
+    <button class="btn-fo" onclick="addToCart()">+ Agregar al carrito</button>
+    <button class="btn-fg" onclick="addToCart();openCart()">Comprar ahora</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: GARANTIAS ============================= -->
+<div class="page" id="p-garantias">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Garantias y seguros</h1><p class="shop-s">Proteccion real para tu inversion</p></div>
+  <div class="sec sec-dark">
+    <div class="guar-grid" style="margin-bottom:1.25rem">
+      <div class="guar-card"><span class="gc-ico">&#128737;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">Garantia 90 dias</div><div class="gc-d">Incluida en todos los equipos.</div><div class="gc-price">Incluida gratis</div></div>
+      <div class="guar-card"><span class="gc-ico">&#128197;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">Garantia 12 meses</div><div class="gc-d">Extension 1 ano adicional.</div><div class="gc-price">15% del valor</div></div>
+      <div class="guar-card featured"><div class="guar-feat-tag">Mas vendido</div><span class="gc-ico">&#128198;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">Garantia 24 meses</div><div class="gc-d">2 anos. Prestamo de equipo.</div><div class="gc-price">25% del valor</div></div>
+      <div class="guar-card" style="border-color:rgba(255,107,44,.3)"><span class="gc-ico">&#128272;</span><div class="gc-t" style="font-family:'Playfair Display',Georgia,serif">Todo riesgo 24m</div><div class="gc-d">Caidas, pantalla, agua, robo.</div><div class="gc-price">18% del valor</div></div>
+    </div>
+    <button class="btn-o" style="margin-top:.875rem;width:100%" onclick="nav('shop')">Comprar con garantia</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: SELL ============================= -->
+<div class="page" id="p-sell">
+  <div class="sell-hero">
+    <div class="sh-tag">Sin complicaciones</div>
+    <h1 class="sh-h">Vende tu equipo.<br>Cobras rapido.</h1>
+    <p class="sh-sub">Cotizacion online · Revision tecnica · Firma digital · Pago en 24hs. +5% bonus en saldo.</p>
+    <div class="steps-row">
+      <div class="step-chip"><span class="sc-ico">&#128187;</span><div class="sc-n">Paso 1</div><div class="sc-t">Cotizas online</div></div>
+      <div class="step-chip"><span class="sc-ico">&#128230;</span><div class="sc-n">Paso 2</div><div class="sc-t">Envias el equipo</div></div>
+      <div class="step-chip"><span class="sc-ico">&#128269;</span><div class="sc-n">Paso 3</div><div class="sc-t">Lo revisamos</div></div>
+      <div class="step-chip"><span class="sc-ico">&#128184;</span><div class="sc-n">Paso 4</div><div class="sc-t">Cobras o acumulas</div></div>
+    </div>
+  </div>
+  <div class="cotiz-card">
+    <div class="cotiz-top"><div class="cotiz-t">Tasacion online</div><div class="cotiz-s">Precio en tiempo real · Sin compromiso</div></div>
+    <div class="cotiz-body">
+      <div class="sb-wrap" id="svBar"><div class="sb dn"></div><div class="sb cur"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div><div class="sb"></div></div>
+      <div id="svS0">
+        <span class="field-lbl">Paso 1 de 6 — Que queres vender?</span>
+        <div class="cat-sel">
+          <button class="csbtn act" onclick="svCat('iPhone',this)"><span class="csbtn-ico">&#128241;</span><span class="csbtn-t">iPhone</span></button>
+          <button class="csbtn" onclick="svCat('iPad',this)"><span class="csbtn-ico">&#11035;</span><span class="csbtn-t">iPad</span></button>
+          <button class="csbtn" onclick="svCat('MacBook',this)"><span class="csbtn-ico">&#128187;</span><span class="csbtn-t">MacBook</span></button>
+          <button class="csbtn" onclick="svCat('Samsung',this)"><span class="csbtn-ico">&#127756;</span><span class="csbtn-t">Samsung</span></button>
+          <button class="csbtn" onclick="svCat('Motorola',this)"><span class="csbtn-ico">&#12349;</span><span class="csbtn-t">Motorola</span></button>
+          <button class="csbtn" onclick="svCat('Xiaomi',this)"><span class="csbtn-ico">&#128308;</span><span class="csbtn-t">Xiaomi</span></button>
+        </div>
+        <div class="nav-row"><button class="btn-next" onclick="svStep(1)">Continuar</button></div>
+      </div>
+      <div id="svS1" class="hidden">
+        <span class="field-lbl">Paso 2 de 6 — Modelo y almacenamiento</span>
+        <select class="sel-f" id="svMod" onchange="sv.model=this.value;svChk1()"><option value="">Selecciona el modelo</option></select>
+        <select class="sel-f" id="svStor" onchange="sv.storage=this.value;svChk1()"><option value="">Almacenamiento</option><option>64 GB</option><option>128 GB</option><option>256 GB</option><option>512 GB</option><option>1 TB</option></select>
+        <div class="nav-row"><button class="btn-back" onclick="svStep(0)">&#8592;</button><button class="btn-next" id="svN1" disabled onclick="svStep(2)">Continuar</button></div>
+      </div>
+      <div id="svS2" class="hidden">
+        <span class="field-lbl">Paso 3 de 6 — Estado del dispositivo</span>
+        <div class="cond-card act" onclick="svCond('Impecable',1.0,this)"><div class="cc-hdr"><div class="cc-name">&#10024; Impecable</div><div class="cc-pi-pos">Precio maximo</div></div><div class="cc-det">Como nuevo. Sin rayones, pantalla perfecta, bateria sobre 90%.</div></div>
+        <div class="cond-card" onclick="svCond('Muy bueno',0.82,this)"><div class="cc-hdr"><div class="cc-name">&#128077; Muy bueno</div><div class="cc-pi-pos">-5% a -18%</div></div><div class="cc-det">Marcas minimas solo visibles con luz directa.</div></div>
+        <div class="cond-card" onclick="svCond('Bueno',0.65,this)"><div class="cc-hdr"><div class="cc-name">&#128076; Bueno</div><div class="cc-pi-neg">-18% a -35%</div></div><div class="cc-det">Rayones visibles pero funciona al 100%.</div></div>
+        <div class="nav-row"><button class="btn-back" onclick="svStep(1)">&#8592;</button><button class="btn-next" id="svN2" disabled onclick="svStep(3)">Ver oferta</button></div>
+      </div>
+      <div id="svS3" class="hidden">
+        <div class="price-reveal"><div class="pr-lbl">Saldo estimado</div><div class="pr-price" id="svPriceBig">$0</div></div>
+        <span class="field-lbl">Como envias el equipo?</span>
+        <div class="envio-opts">
+          <div class="eopt" onclick="svEnvio('presencial',this)"><span class="eopt-ico">&#127978;</span><div><div class="eopt-t">Presencial en tienda</div><div class="eopt-s">Zelarrayan 179, Bahia Blanca</div></div></div>
+          <div class="eopt" onclick="svEnvio('andreani',this)"><span class="eopt-ico">&#128230;</span><div><div class="eopt-t">Andreani — etiqueta prepaga</div></div></div>
+        </div>
+        <span class="field-lbl">Como recibes el dinero?</span>
+        <div class="voucher-opts">
+          <div class="vopt" onclick="svCobro('saldo',this)"><span class="vopt-ico">&#127967;</span><div><div class="vopt-t">Saldo en cuenta Great Phones</div><div class="vopt-bonus">+5% bonus</div></div></div>
+          <div class="vopt" onclick="svCobro('transfer',this)"><span class="vopt-ico">&#127968;</span><div><div class="vopt-t">Transferencia bancaria</div></div></div>
+        </div>
+        <div class="nav-row"><button class="btn-back" onclick="svStep(2)">&#8592;</button><button class="btn-next" id="svN3" disabled onclick="svStep(4)">Continuar</button></div>
+      </div>
+      <div id="svS4" class="hidden">
+        <span class="field-lbl">Paso 5 de 6 — Tus datos</span>
+        <input class="inp-f" id="svNombre" placeholder="Nombre completo" oninput="svChk4()">
+        <input class="inp-f" id="svDni" placeholder="DNI" oninput="svChk4()">
+        <input class="inp-f" id="svTel" placeholder="WhatsApp" oninput="svChk4()">
+        <div class="nav-row"><button class="btn-back" onclick="svStep(3)">&#8592;</button><button class="btn-next" id="svN4" disabled onclick="svStep(5)">Confirmar</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: SERVICIO ============================= -->
+<div class="page" id="p-servicio">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Servicio tecnico</h1><p class="shop-s">Certificado · Presupuesto sin cargo</p></div>
+  <div style="background:rgba(0,200,150,.07);border:1px solid rgba(0,200,150,.18);border-radius:9px;margin:.875rem 1rem;padding:.75rem;font-size:11px;color:var(--gl)">
+    &#9992; <strong>Servicio a distancia:</strong> Envia tu equipo desde cualquier parte del pais.
+  </div>
+  <div class="repair-grid" id="repairGrid"></div>
+  <div style="padding:0 1rem 2rem;background:var(--cream)">
+    <div style="background:#fff;border:1px solid var(--border);border-radius:13px;padding:1.1rem">
+      <div style="font-size:13px;font-weight:500;margin-bottom:.65rem">Describe el problema</div>
+      <select class="sel-f"><option value="">Cual es tu equipo?</option><option>iPhone 16 Pro</option><option>iPhone 15 Pro</option><option>MacBook Air</option></select>
+      <textarea class="inp-f" style="height:70px;resize:none" placeholder="Describe brevemente que falla..."></textarea>
+      <button class="btn-fo" onclick="alert('Presupuesto enviado por mensajeria')">Pedir presupuesto gratuito</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: ACCESORIOS ============================= -->
+<div class="page" id="p-accesorios">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Accesorios</h1><p class="shop-s">Apple · JBL · Originales con garantia</p></div>
+  <div class="filter-panel"><div class="filter-row">
+    <button class="fchip act" onclick="filtAcc('todos',this)">Todos</button>
+    <button class="fchip" onclick="filtAcc('cargadores',this)">Cargadores</button>
+    <button class="fchip" onclick="filtAcc('auriculares',this)">Auriculares</button>
+    <button class="fchip" onclick="filtAcc('parlantes',this)">Parlantes</button>
+    <button class="fchip" onclick="filtAcc('fundas',this)">Fundas</button>
+  </div></div>
+  <div class="acc-grid" id="accGrid"></div>
+</div>
+
+<!-- ============================= PAGE: MAYORISTA ============================= -->
+<div class="page" id="p-mayorista">
+  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Mayoristas</h1><p class="shop-s">Para revendedores — Descuento + asesor dedicado</p></div>
+  <div style="padding:1rem">
+    <div class="plan-grid">
+      <div class="plan-card" onclick="selPlan(this)"><div class="plan-n" style="font-family:'Playfair Display',Georgia,serif">Starter</div><div class="plan-price" style="font-family:'Playfair Display',Georgia,serif">Gratis <span>/mes</span></div><div class="plan-req">Min. 3 equipos/compra</div><div class="plan-feat"><span class="pfi">&#10003;</span>-8% descuento</div><button class="plan-btn" onclick="event.stopPropagation()">Solicitar</button></div>
+      <div class="plan-card feat" onclick="selPlan(this)"><div class="plan-badge">Mas elegido</div><div class="plan-n" style="font-family:'Playfair Display',Georgia,serif">Pro</div><div class="plan-price" style="font-family:'Playfair Display',Georgia,serif">$15.000 <span>/mes</span></div><div class="plan-req">Min. 10 equipos/mes</div><div class="plan-feat"><span class="pfi pfi-o">&#10003;</span>-20% descuento</div><button class="plan-btn" onclick="event.stopPropagation()">Solicitar</button></div>
+    </div>
+    <div style="background:var(--cream2);border-radius:11px;padding:.875rem;border:1px solid var(--border)">
+      <div style="font-size:12px;font-weight:500;margin-bottom:.65rem">Formulario de solicitud</div>
+      <input class="inp-f" placeholder="Nombre / Razon social"><input class="inp-f" placeholder="CUIT o DNI"><input class="inp-f" placeholder="WhatsApp"><input class="inp-f" placeholder="Email">
+      <button class="btn-fo" onclick="alert('Solicitud enviada')">Enviar solicitud</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: CUENTA ============================= -->
+<div class="page" id="p-cuenta">
+  <div class="cuenta-hdr">
+    <div class="cuenta-av" style="font-family:'Playfair Display',Georgia,serif">MG</div>
+    <h2 class="cuenta-name" style="font-family:'Playfair Display',Georgia,serif">Martina Garcia</h2>
+    <p class="cuenta-sub">martina@email.com · Miembro desde enero 2024</p>
+  </div>
+  <div class="vwallet">
+    <div class="vw-lbl">Saldo Great Phones</div>
+    <div class="vw-v" style="font-family:'Playfair Display',Georgia,serif">$520.000</div>
+    <div class="vw-info">Acumulaste este saldo de la venta de tu iPhone 13 Pro.</div>
+    <div class="vw-btns"><button class="vw-btn vw-use" onclick="nav('shop')">Usar en compras</button><button class="vw-btn vw-ret">Retirar</button></div>
+  </div>
+  <div class="sec-sm-t">Historial de compras</div>
+  <div id="orderHistory"></div>
+  <div class="sec-sm-t">Mis cotizaciones</div>
+  <div id="quotHistory"></div>
+  <div style="padding:0 1rem 1.5rem">
+    <button class="btn-fg" onclick="nav('mensajes')">&#128172; Abrir mensajes con GP</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: MENSAJES ============================= -->
+<div class="page" id="p-mensajes">
+  <div class="msg-hdr">
+    <button class="msg-back" onclick="nav('cuenta')">&#8592;</button>
+    <div class="msg-hdr-av">GP</div>
+    <div class="msg-hdr-info"><div class="msg-hdr-name">Mensajes</div><div class="msg-hdr-sub">Conversaciones con Great Phones</div></div>
+  </div>
+  <div style="padding:.875rem 0;background:var(--cream)">
+    <div style="font-size:10px;color:var(--gray);padding:.25rem 1rem .75rem">Tus conversaciones</div>
+    <div id="clientConvList"></div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: CHAT ============================= -->
+<div class="page" id="p-chat">
+  <div class="msg-hdr">
+    <button class="msg-back" onclick="nav('mensajes')">&#8592;</button>
+    <div class="msg-hdr-av" id="chatAv">GP</div>
+    <div class="msg-hdr-info"><div class="msg-hdr-name" id="chatTitle">Great Phones</div><div class="msg-hdr-sub" id="chatSub">Atencion al cliente</div></div>
+    <div class="msg-status-dot"></div>
+  </div>
+  <div class="msg-list" id="chatMsgList"></div>
+  <div class="msg-input-area">
+    <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto">&#128247;</button>
+    <input type="file" id="chatImgIn" accept="image/*" style="display:none">
+    <textarea class="msg-inp" id="chatInp" placeholder="Escribe un mensaje..." rows="1"></textarea>
+    <button class="msg-send" onclick="sendChatMsg()">&#10148;</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: ADMIN ============================= -->
+<div class="page" id="p-admin">
+  <div id="adminLogin" class="admin-login-wrap">
+    <div class="admin-login-card">
+      <span class="al-ico">&#128295;</span>
+      <div class="al-t" style="font-family:'Playfair Display',Georgia,serif">Panel de administracion</div>
+      <div class="al-s">Great Phones — Acceso restringido</div>
+      <input class="admin-inp" type="text" id="adUser" placeholder="Usuario" autocomplete="off">
+      <input class="admin-inp" type="password" id="adPass" placeholder="Contrasena" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="btn-fo" style="margin-top:4px" onclick="adminLogin()">Entrar</button>
+      <button class="btn-fout" style="margin-top:6px;border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.45)" onclick="nav('home')">Volver a la tienda</button>
+      <div style="font-size:9px;color:rgba(255,255,255,.18);margin-top:.875rem">admin / 1234</div>
+    </div>
+  </div>
+  <div id="adminPanel" class="admin-panel hidden">
+    <div class="admin-nav">
+      <div class="admin-nav-t" style="font-family:'Playfair Display',Georgia,serif">Admin — Great Phones</div>
+      <div style="display:flex;gap:6px">
+        <button class="admin-exit" onclick="nav('home')">Ver tienda</button>
+        <button class="admin-exit" onclick="adminLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="admin-tabs">
+      <button class="atab act" onclick="adminTab('dash',this)">Dashboard</button>
+      <button class="atab" onclick="adminTab('prods',this)">Productos</button>
+      <button class="atab" onclick="adminTab('ventas',this)">Ventas</button>
+      <button class="atab" onclick="adminTab('guar',this)">Garantias</button>
+    </div>
+    <div class="admin-sec act" id="as-dash">
+      <div class="stat-grid" id="dashStats"></div>
+    </div>
+    <div class="admin-sec" id="as-prods">
+      <div class="acard"><div class="acard-t">Catalogo</div><div id="adProdList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-ventas">
+      <div class="acard"><div class="acard-t">Historial de ventas</div><div id="ventasList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-guar">
+      <div class="acard"><div class="acard-t">Garantias vigentes</div><div id="guarList"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CART OVERLAY ===== -->
+<div id="cartOverlay" class="hidden" style="position:fixed;inset:0;z-index:800;display:flex">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="closeCart()"></div>
+  <div class="cart-panel">
+    <div class="cart-hdr"><div class="cart-htitle" style="font-family:'Playfair Display',Georgia,serif">Tu carrito</div><button class="cart-close" onclick="closeCart()">&#215;</button></div>
+    <div class="cart-body" id="cartBody"></div>
+  </div>
+</div>
+
+<!-- ===== IMAGE LIGHTBOX ===== -->
+<div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:900;align-items:center;justify-content:center;cursor:zoom-out" onclick="this.style.display='none'">
+  <img id="lightboxImg" style="max-width:95vw;max-height:90vh;border-radius:9px;object-fit:contain">
+</div>
+
+<script src="lib/constants.js"></script>
+<script src="lib/utils.js"></script>
+<script src="lib/navigation.js"></script>
+<script src="lib/search.js"></script>
+<script src="lib/favorites.js"></script>
+<script src="lib/cart.js"></script>
+<script src="lib/notifications.js"></script>
+<script src="lib/chat.js"></script>
+<script src="lib/sell.js"></script>
+<script src="lib/admin.js"></script>
+<script src="lib/render.js"></script>
+</body>
+</html>

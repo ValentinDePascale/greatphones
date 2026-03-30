@@ -1,0 +1,23 @@
+[
+  {"id":"c1","cn":"Martina Garcia","ini":"MG","subj":"Compra GP-2025-0001 iPhone 15 Pro","type":"compra","unread":1,"msgs":[
+    {"from":"admin","txt":"Hola Martina! Tu iPhone 15 Pro fue procesado y esta listo para envio.","img":null,"ts":"10:30"},
+    {"from":"client","txt":"Perfecto! Cuando llega?","img":null,"ts":"10:45"},
+    {"from":"admin","txt":"Entrega estimada manana entre 9 y 18hs. Te avisamos con seguimiento.","img":null,"ts":"10:47"},
+    {"from":"client","txt":"Genial gracias!","img":null,"ts":"11:00"},
+    {"from":"client","txt":"","img":"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNFREU2RDgiLz48cmVjdCB4PSI3MCIgeT0iMjUiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIHJ4PSI4IiBmaWxsPSIjMUExNTA4Ii8+PHJlY3QgeD0iNzUiIHk9IjM1IiB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHJ4PSI0IiBmaWxsPSIjMkQyRDJEIi8+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTE1IiByPSIzIiBmaWxsPSIjRjVGMEU4Ii8+PC9zdmc+","imgCap":"Foto del equipo recibido","ts":"11:30"},
+    {"from":"admin","txt":"Excelente! Llego perfecto. Cualquier consulta avisanos.","img":null,"ts":"11:35"}
+  ]},
+  {"id":"c2","cn":"Pedro Ramirez","ini":"PR","subj":"Cotizacion iPhone 13 Pro - Venta","type":"cotizacion","unread":2,"msgs":[
+    {"from":"client","txt":"Hola, quiero cotizar mi iPhone 13 Pro 256GB muy bueno.","img":null,"ts":"09:00"},
+    {"from":"admin","txt":"Hola Pedro! Estimado $275.000 sujeto a revision tecnica.","img":null,"ts":"09:17"},
+    {"from":"client","txt":"Bien! Te mando foto del equipo.","img":null,"ts":"09:20"},
+    {"from":"client","txt":"","img":"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNFREU2RDgiLz48cmVjdCB4PSI3MCIgeT0iMjUiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIHJ4PSI4IiBmaWxsPSIjMUExNTA4Ii8+PHJlY3QgeD0iNzUiIHk9IjM1IiB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHJ4PSI0IiBmaWxsPSIjMkQyRDJEIi8+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTE1IiByPSMzIiBmaWxsPSIjRjVGMEU4Ii8+PC9zdmc+","imgCap":"Estado del equipo muy bueno","ts":"09:22"},
+    {"from":"admin","txt":"Perfecto! Cuando lo recibamos confirmamos el precio final.","img":null,"ts":"09:30"}
+  ]},
+  {"id":"c3","cn":"Ana Gomez","ini":"AG","subj":"Reparacion pantalla Galaxy S22","type":"servicio","unread":0,"msgs":[
+    {"from":"client","txt":"Mi Galaxy S22 Ultra tiene la pantalla rota. Cuanto sale?","img":null,"ts":"14:00"},
+    {"from":"client","txt":"","img":"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjE1MCIgdmlld0JveD0iMCAwIDIwMCAxNTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjIwMCIgaGVpZ2h0PSIxNTAiIGZpbGw9IiNFREU2RDgiLz48cmVjdCB4PSI3MCIgeT0iMjUiIHdpZHRoPSI2MCIgaGVpZ2h0PSIxMDAiIHJ4PSI4IiBmaWxsPSIjMUExNTA4Ii8+PHJlY3QgeD0iNzUiIHk9IjM1IiB3aWR0aD0iNTAiIGhlaWdodD0iNzUiIHJ4PSI0IiBmaWxsPSIjMkQyRDJEIi8+PGNpcmNsZSBjeD0iMTAwIiBjeT0iMTE1IiByPSMzIiBmaWxsPSIjRjVGMEU4Ii8+PC9zdmc+","imgCap":"Foto del dano en la pantalla","ts":"14:02"},
+    {"from":"admin","txt":"Hola Ana! Pantalla S22 Ultra: $145.000. Tiempo de reparacion 24hs.","img":null,"ts":"14:30"},
+    {"from":"client","txt":"Perfecto, lo envio por Andreani esta semana.","img":null,"ts":"15:00"}
+  ]}
+]

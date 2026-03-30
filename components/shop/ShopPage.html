@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Shop - Great Phones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/globals.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/pages.css">
+  <link rel="stylesheet" href="../../styles/responsive.css">
+</head>
+<body style="background:#F5F0E8;padding:0;margin:0">
+  <div class="shop-hdr" style="background:#0E0B07;padding:1.5rem 1rem 1rem">
+    <h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:#F5F0E8;margin-bottom:.2rem">Catalogo</h1>
+    <p class="shop-s" style="font-size:11px;color:rgba(255,255,255,.35)">Todos los equipos verificados con garantia incluida</p>
+  </div>
+  <div class="filter-panel" style="background:#1A1510">
+    <div class="filter-row">
+      <button class="fchip act">Todos</button>
+      <button class="fchip">iPhone</button>
+      <button class="fchip">iPad</button>
+      <button class="fchip">MacBook</button>
+      <button class="fchip">Samsung</button>
+      <button class="fchip">Motorola</button>
+      <button class="fchip">Xiaomi</button>
+      <button class="fchip">Favoritos</button>
+    </div>
+    <button class="filter-expand-btn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+      Filtros avanzados
+    </button>
+  </div>
+  <div class="sort-bar" style="background:#F5F0E8;padding:.5rem 1rem;display:flex;gap:8px;border-bottom:1px solid rgba(0,0,0,.09)">
+    <select class="sort-sel" style="flex:1;padding:7px 10px;border:1px solid rgba(0,0,0,.09);border-radius:7px;background:#fff;font-size:11px">
+      <option>Relevancia</option>
+      <option>Menor precio</option>
+      <option>Mayor precio</option>
+    </select>
+    <span class="sort-count" style="font-size:11px;color:#9A9186">12 productos</span>
+  </div>
+  <div class="shop-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:.875rem 1rem 2rem;background:#F5F0E8">
+    <!-- Sample product card -->
+    <div class="sgcard" style="background:#F5F0E8;border-radius:13px;overflow:hidden;border:1px solid rgba(0,0,0,.09)">
+      <div class="sgcard-img" style="height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;background:#EDE6D8">
+        📱
+        <span class="bdg" style="position:absolute;top:6px;left:6px;display:inline-block;font-size:8px;font-weight:600;padding:2px 6px;border-radius:4px;background:#D1FAE5;color:#065F46">Impecable</span>
+      </div>
+      <div class="sgcard-body" style="padding:.65rem">
+        <div class="sgcard-name" style="font-size:11px;font-weight:500">iPhone 15 Pro</div>
+        <div class="sgcard-sub" style="font-size:9px;color:#9A9186;margin-top:2px;margin-bottom:.3rem">256 GB Titanio</div>
+        <div class="sgcard-btm" style="display:flex;align-items:flex-start;justify-content:space-between">
+          <span class="sgcard-price" style="font-family:'Playfair Display',Georgia,serif;font-size:13px;color:#FF6B2C">$1.150.000</span>
+        </div>
+      </div>
+    </div>
+    <div class="sgcard" style="background:#F5F0E8;border-radius:13px;overflow:hidden;border:1px solid rgba(0,0,0,.09)">
+      <div class="sgcard-img" style="height:110px;display:flex;align-items:center;justify-content:center;font-size:42px;background:#EDE6D8">
+        💻
+        <span class="bdg" style="position:absolute;top:6px;left:6px;display:inline-block;font-size:8px;font-weight:600;padding:2px 6px;border-radius:4px;background:#EDE9FE;color:#4C1D95">Nuevo</span>
+      </div>
+      <div class="sgcard-body" style="padding:.65rem">
+        <div class="sgcard-name" style="font-size:11px;font-weight:500">MacBook Air M2</div>
+        <div class="sgcard-sub" style="font-size:9px;color:#9A9186;margin-top:2px;margin-bottom:.3rem">256 GB Midnight</div>
+        <div class="sgcard-btm" style="display:flex;align-items:flex-start;justify-content:space-between">
+          <span class="sgcard-price" style="font-family:'Playfair Display',Georgia,serif;font-size:13px;color:#FF6B2C">$2.100.000</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

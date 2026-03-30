@@ -1,0 +1,22 @@
+/* RESPONSIVE */
+@media(max-width:480px){
+  .mainnav{height:52px;gap:6px}
+  .nav-logo-text{font-size:16px}
+  .tb-links{display:none}
+  .nav-acts .nbtn span{display:none}
+  .nav-acts .nbtn{padding:6px 8px}
+  .nbtn-o span{display:inline!important}
+  .hero-body{padding:1.75rem 1rem 1.5rem}
+  .hero-bg-logo{display:none}
+}
+@media(min-width:768px){
+  .topbar,.mainnav,.catnav{padding-left:1.5rem;padding-right:1.5rem}
+  .sec{padding:2rem 1.5rem}
+  .shop-grid{padding:1rem 1.5rem 2rem}
+  .repair-grid,.acc-grid{padding-left:1.5rem;padding-right:1.5rem}
+}
+@media(min-width:1024px){
+  .topbar,.mainnav,.catnav{padding-left:2rem;padding-right:2rem}
+  .shop-grid{grid-template-columns:repeat(4,1fr)}
+  .stat-grid{grid-template-columns:repeat(4,1fr)}
+}

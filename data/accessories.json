@@ -1,0 +1,13 @@
+[
+  {"id":0,"ico":"🔌","name":"Cargador USB-C 30W","sub":"Carga rapida","price":22000,"cat":"cargadores"},
+  {"id":1,"ico":"🔌","name":"Cargador MagSafe 15W","sub":"Original Apple","price":38000,"cat":"cargadores"},
+  {"id":2,"ico":"🧣","name":"AirPods Pro 2da gen","sub":"Cancelacion de ruido","price":280000,"cat":"auriculares"},
+  {"id":3,"ico":"🧣","name":"JBL Tune 720BT","sub":"Over-ear Pure Bass","price":120000,"cat":"auriculares"},
+  {"id":4,"ico":"🔊","name":"JBL Flip 7","sub":"Portatil 20hs IP68","price":165000,"cat":"parlantes"},
+  {"id":5,"ico":"🔊","name":"JBL Charge 5","sub":"Resistente agua USB-C","price":235000,"cat":"parlantes"},
+  {"id":6,"ico":"🔊","name":"JBL Go 4","sub":"Compacto IP67","price":68000,"cat":"parlantes"},
+  {"id":7,"ico":"🛡","name":"Funda MagSafe clara","sub":"iPhone proteccion total","price":14000,"cat":"fundas"},
+  {"id":8,"ico":"🛡","name":"Funda silicona Apple","sub":"Todos los colores","price":28000,"cat":"fundas"},
+  {"id":9,"ico":"🔗","name":"Cable USB-C trenzado 2m","sub":"Carga y datos","price":9500,"cat":"cables"},
+  {"id":10,"ico":"🔗","name":"Cable MagSafe 1m","sub":"Original Apple","price":16000,"cat":"cables"}
+]

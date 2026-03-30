@@ -1,0 +1,5 @@
+[
+  {"id":0,"name":"TechImport SRL","type":"Importador","tel":"+54 11 4567-8901","email":"compras@techimport.com","notas":"Proveedor principal Apple.","total":12500000},
+  {"id":1,"name":"Samsung Argentina","type":"Distribuidor","tel":"+54 11 5555-0000","email":"dist@samsung.ar","notas":"Distribuidor oficial Samsung","total":4800000},
+  {"id":2,"name":"Clientes particulares","type":"Cliente","tel":"","email":"","notas":"Equipos comprados a particulares","total":3200000}
+]

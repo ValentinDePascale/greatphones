@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Cart Overlay - Great Phones</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/globals.css">
+  <link rel="stylesheet" href="../../styles/components.css">
+  <link rel="stylesheet" href="../../styles/pages.css">
+</head>
+<body style="background:#0E0B07;padding:0;margin:0">
+  <div style="position:fixed;inset:0;z-index:800;display:flex;background:rgba(0,0,0,.5)">
+    <div class="cart-panel" style="position:absolute;right:0;top:0;bottom:0;width:400px;background:#F5F0E8;display:flex;flex-direction:column">
+      <div class="cart-hdr" style="background:#0E0B07;padding:1.1rem;display:flex;align-items:center;gap:9px">
+        <div class="cart-htitle" style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#F5F0E8;flex:1">Tu carrito</div>
+        <button class="cart-close" style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:transparent;color:rgba(255,255,255,.65);cursor:pointer;font-size:17px">×</button>
+      </div>
+      <div class="cart-body" style="flex:1;overflow-y:auto;padding:.875rem">
+        <div class="cart-item" style="display:flex;gap:9px;background:#fff;border-radius:11px;padding:.65rem;margin-bottom:7px;border:1px solid rgba(0,0,0,.09)">
+          <div class="ci-img" style="width:46px;height:46px;border-radius:7px;background:#EDE6D8;display:flex;align-items:center;justify-content:center;font-size:24px">📱</div>
+          <div class="ci-body" style="flex:1;min-width:0">
+            <div class="ci-name" style="font-size:11px;font-weight:500">iPhone 15 Pro</div>
+            <div class="ci-sub" style="font-size:9px;color:#9A9186">256 GB Titanio</div>
+            <div class="ci-price" style="font-family:'Playfair Display',Georgia,serif;font-size:13px;color:#FF6B2C;margin-top:2px">$1.150.000</div>
+          </div>
+          <button class="ci-rm" style="background:none;border:none;cursor:pointer;color:#9A9186;font-size:17px;padding:2px">×</button>
+        </div>
+      </div>
+      <div class="cart-footer" style="padding:.875rem;border-top:1px solid rgba(0,0,0,.09);background:#F5F0E8">
+        <div class="cart-total-row" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
+          <span class="cart-total-l" style="font-size:12px;color:#9A9186">Total</span>
+          <span class="cart-total-v" style="font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#FF6B2C">$1.150.000</span>
+        </div>
+        <button class="btn-fo" style="width:100%;padding:13px;border:none;border-radius:9px;background:#FF6B2C;color:#fff;font-size:13px;font-weight:500;cursor:pointer">Finalizar compra</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
