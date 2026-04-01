@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  /* V7 Colors */
+  --orange: #FF6B2C;
+  --orange2: #FF8C55;
+  --green: #2D5A27;
+  --green2: #3B7A32;
+  --cream: #F9F6F1;
+  --cream2: #F0EBE3;
+  --cream3: #E4DDD4;
+  --dk: #1A1208;
+  --dk2: #231A10;
+  --dk3: #2E2116;
+  --gray: #8A8078;
+  --gray2: #B8B0A8;
+  --red: #C0392B;
+  --white: #FFFFFF;
+  --border: rgba(0,0,0,.09);
+}
+
+@theme inline {
+  --color-orange: var(--orange);
+  --color-green: var(--green);
+  --color-cream: var(--cream);
+  --color-cream2: var(--cream2);
+  --color-dk: var(--dk);
+  --color-dk2: var(--dk2);
+  --color-gray: var(--gray);
+  --color-gray2: var(--gray2);
+  --color-red: var(--red);
+  --color-border: var(--border);
+}
+
+body {
+  background: var(--cream);
+  color: var(--dk);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Utilities */
+.ctr {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 clamp(0.875rem, 3vw, 1.75rem);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Page transition */
+.page-enter {
+  animation: fadeIn 0.18s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}

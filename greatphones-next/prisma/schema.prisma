@@ -1,0 +1,385 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== USUARIOS ====================
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String?
+  phone     String?
+  dni       String?
+  role      Role     @default(CLIENT)
+  avatar    String?
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders        Order[]
+  quotes        Quote[]
+  sales         Sale[]
+  repairs       Repair[]
+  guarantees    Guarantee[]
+  conversations Conversation[]
+  wallet        Wallet?
+  favorites     Favorite[]
+  accounts      Account[]
+  sessions      Session[]
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+// ==================== PRODUCTOS ====================
+model Product {
+  id          String    @id @default(cuid())
+  name        String
+  ico         String
+  imageUrl    String?
+  images      String[]
+  brand       String
+  sub         String
+  condition   String
+  price       Int
+  cost        Int
+  battery     Int?
+  stock       Int
+  score       Int?
+  color       String?
+  screen      Float?
+  type        String
+  imei        String?
+  discount    Int       @default(0)
+  isOffer     Boolean   @default(false)
+  sold        Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  slug        String?
+
+  supplierId  String?
+  supplier    Supplier?  @relation(fields: [supplierId], references: [id])
+  orderItems   OrderItem[]
+  favorites    Favorite[]
+}
+
+// ==================== PEDIDOS ====================
+model Order {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  status    OrderStatus @default(PENDING)
+  warranty  String
+  cuotas    Int         @default(1)
+  payment   String?
+  subtotal  Int
+  total     Int
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  items OrderItem[]
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  price     Int
+}
+
+// ==================== COTIZACIONES ====================
+model Quote {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+
+  device      String
+  storage     String
+  condition   String
+
+  basePrice   Int
+  finalPrice  Int
+  bonus       Int?
+
+  status      QuoteStatus @default(PENDING)
+
+  envio       String?
+  payment     String?
+
+  clientName  String?
+  clientDni   String?
+  clientPhone String?
+  clientCity  String?
+
+  signature   String?
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+enum QuoteStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+// ==================== VENTAS ====================
+model Sale {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  device      String
+  storage     String?
+  condition  String?
+  imei        String?
+
+  price       Int
+  payment     String
+  status      SaleStatus @default(PENDING)
+
+  createdAt   DateTime  @default(now())
+}
+
+enum SaleStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+// ==================== REPARACIONES ====================
+model Repair {
+  id          String       @id @default(cuid())
+  code        String       @unique
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+
+  device      String
+  issue       String
+  serviceId   String?
+  service     RepairService? @relation(fields: [serviceId], references: [id])
+
+  price       Int?
+  status      RepairStatus @default(PENDING)
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum RepairStatus {
+  PENDING
+  DIAGNOSIS
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  DELIVERED
+}
+
+model RepairService {
+  id          String    @id @default(cuid())
+  name        String
+  ico         String
+  description String?
+  price       Int
+  category    String?
+
+  repairs     Repair[]
+}
+
+// ==================== GARANTÍAS ====================
+model Guarantee {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+
+  product     String
+  type        String
+  price       Int?
+
+  startsAt    DateTime @default(now())
+  expiresAt   DateTime
+  status      GuaranteeStatus @default(ACTIVE)
+
+  createdAt   DateTime @default(now())
+}
+
+enum GuaranteeStatus {
+  ACTIVE
+  EXPIRED
+  USED
+  CANCELLED
+}
+
+// ==================== PROVEEDORES ====================
+model Supplier {
+  id        String    @id @default(cuid())
+  name      String
+  type      String
+  phone     String?
+  email     String?
+  notes     String?
+  total     Int       @default(0)
+
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+// ==================== CONVERSACIONES ====================
+model Conversation {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+
+  type      ConvType
+  subject   String?
+  unread    Int       @default(0)
+  lastMsgAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages Message[]
+}
+
+enum ConvType {
+  COMPRA
+  COTIZACION
+  SERVICIO
+  REPARACION
+  GENERIC
+}
+
+// ==================== MENSAJES ====================
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  from           String
+  text           String?
+  imageUrl       String?
+  imageCaption   String?
+
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+// ==================== WALLET ====================
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id])
+
+  balance     Int      @default(0)
+  totalEarned Int      @default(0)
+  totalSpent  Int      @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== FAVORITOS ====================
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+// ==================== NOTIFICACIONES ====================
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  
+  type      NotifType
+  title     String
+  text      String
+  read      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+enum NotifType {
+  OFFER
+  LOYALTY
+  ORDER
+  PROMO
+}
+
+// ==================== ACCESORIOS ====================
+model Accessory {
+  id          String   @id @default(cuid())
+  name        String
+  ico         String
+  description String?
+  category    String
+  price       Int
+  stock       Int      @default(0)
+
+  createdAt   DateTime @default(now())
+}
+
+// ==================== NEXT.AUTH ====================
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
