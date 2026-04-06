@@ -34,20 +34,26 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   try {
     const body = await request.json()
+    console.log('Updating product:', id, body)
     const updated = await prisma.product.update({
       where: { id },
       data: {
         name: body.name,
         brand: body.brand,
         sub: body.sub,
-        price: body.price,
-        stock: body.stock,
+        price: Number(body.price),
+        stock: Number(body.stock),
         condition: body.condition,
         type: body.type,
-        color: body.color,
-        screen: body.screen,
-        discount: body.discount,
-        isOffer: body.isOffer,
+        color: body.color || null,
+        screen: body.screen ? Number(body.screen) : null,
+        discount: Number(body.discount),
+        isOffer: Boolean(body.isOffer),
+        imageUrl: body.imageUrl || null,
+        images: body.images || [],
+        ico: body.ico,
+        offerStart: body.offerStart ? new Date(body.offerStart) : null,
+        offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
       }
     })
     return NextResponse.json(updated, {

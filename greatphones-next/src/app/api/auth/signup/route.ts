@@ -12,13 +12,6 @@ export async function OPTIONS() {
     },
   })
 }
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
-}
 
 export async function POST(request: Request) {
   try {

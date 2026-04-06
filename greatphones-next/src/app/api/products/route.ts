@@ -55,20 +55,27 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    console.log('Creating product with data:', body)
     
     const newProduct = await prisma.product.create({
       data: {
         name: body.name,
         ico: body.ico || '📱',
+        imageUrl: body.imageUrl || null,
         brand: body.brand,
         sub: body.sub,
         condition: body.condition || 'Nuevo',
-        price: body.price,
-        cost: body.cost || 0,
-        stock: body.stock || 0,
+        price: Number(body.price) || 0,
+        cost: Number(body.cost) || 0,
+        stock: Number(body.stock) || 0,
         type: body.type || 'celular',
         images: body.images || [],
-        ...body,
+        color: body.color || null,
+        screen: body.screen ? Number(body.screen) : null,
+        discount: Number(body.discount) || 0,
+        isOffer: Boolean(body.isOffer),
+        offerStart: body.offerStart ? new Date(body.offerStart) : null,
+        offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
       },
     })
     
