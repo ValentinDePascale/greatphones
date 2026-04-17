@@ -305,7 +305,7 @@
   height:150px;
   display:block;
   position:relative;
-  background:var(--cream2);
+  background:#fff;
   overflow:hidden
 }
 .pcard-img img,
