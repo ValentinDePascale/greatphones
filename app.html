@@ -755,6 +755,37 @@
   </div>
 </div>
 
+<!-- ============================= PAGE: REGISTER ============================= -->
+<div class="page" id="p-register">
+  <div style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+    <div class="ctr" style="max-width:480px">
+      <div style="background:#fff;border-radius:20px;padding:2rem;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+        <button onclick="nav('home')" style="background:none;border:none;font-size:14px;color:var(--gray);cursor:pointer;margin-bottom:1rem;display:flex;align-items:center;gap:4px">← Volver</button>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;margin-bottom:.5rem">Crear cuenta</h1>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem">Completá tus datos para registrarte</p>
+        
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <input type="text" id="regName" placeholder="Nombre *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+          <input type="text" id="regLastname" placeholder="Apellido *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+        </div>
+        <input type="email" id="regEmail" placeholder="Email *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="tel" id="regPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="password" id="regPassword" placeholder="Contraseña (min 6 caracteres) *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="password" id="regConfirmPassword" placeholder="Confirmar contraseña *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        
+        <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:1rem;display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:16px">✓</span>
+          <div style="font-size:12px;color:var(--green)">Usando Great Phones vas a poder comprar con garantia, cotizar tu equipo usado y acceder a precios exclusivos.</div>
+        </div>
+        
+        <button onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
+        
+        <p style="text-align:center;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="openLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============================= PAGE: CUENTA ============================= -->
 <div class="page" id="p-cuenta">
   <div style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
@@ -991,31 +1022,38 @@
 
 <!-- ===== LOGIN OVERLAY ===== -->
 <div id="loginOverlay" style="position:fixed;inset:0;z-index:900;pointer-events:none">
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .25s" onclick="closeLogin()"></div>
-  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:#fff;border-radius:var(--rlg);width:min(380px,90vw);opacity:0;transition:all .25s;box-shadow:var(--shlg)">
-    <div style="padding:1.5rem;border-bottom:1px solid var(--border)">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;transition:opacity .25s" onclick="closeLogin()"></div>
+  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:#fff;border-radius:24px;width:min(400px,90vw);opacity:0;transition:all .25s;box-shadow:0 25px 50px rgba(0,0,0,.25)">
+    <div style="padding:2rem 1.5rem 1.5rem;border-bottom:1px solid var(--border)">
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-family:'Playfair Display',Georgia,serif;font-size:18px" id="loginTitle">Iniciar sesion</span>
-        <button onclick="closeLogin()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray)">×</button>
+        <span style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700" id="loginTitle">Iniciar sesión</span>
+        <button onclick="closeLogin()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">×</button>
       </div>
     </div>
     <div style="padding:1.5rem">
       <div id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:10px;box-sizing:border-box">
-        <input type="password" id="loginPassword" placeholder="Contraseña" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:15px;box-sizing:border-box">
-        <button onclick="doLogin()" style="width:100%;padding:12px;border:none;border-radius:var(--rsm);background:var(--orange);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Iniciar sesion</button>
-        <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--gray)">No tenes cuenta? <a href="#" onclick="showSignup();return false" style="color:var(--orange)">Registrarse</a></p>
+        <input type="email" id="loginEmail" placeholder="Email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="password" id="loginPassword" placeholder="Contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
+        <button onclick="doLogin()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Iniciar sesión</button>
+        <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">No tenes cuenta? <button onclick="closeLogin();showSignup()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Registrate</button></p>
       </div>
       <div id="signupForm" style="display:none">
-        <input type="text" id="signupName" placeholder="Nombre completo" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:10px;box-sizing:border-box">
-        <input type="email" id="signupEmail" placeholder="Email" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:10px;box-sizing:border-box">
-        <input type="tel" id="signupPhone" placeholder="WhatsApp" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:10px;box-sizing:border-box">
-        <input type="password" id="signupPassword" placeholder="Contraseña (min 6 caracteres)" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:10px;box-sizing:border-box">
-        <input type="password" id="signupConfirmPassword" placeholder="Confirmar contraseña" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);font-size:13px;margin-bottom:15px;box-sizing:border-box">
-        <button onclick="doSignup()" style="width:100%;padding:12px;border:none;border-radius:var(--rsm);background:var(--green);color:#fff;font-size:13px;font-weight:600;cursor:pointer">Crear cuenta</button>
-        <p style="text-align:center;margin-top:12px;font-size:11px;color:var(--gray)">Ya tenes cuenta? <a href="#" onclick="showLogin();return false" style="color:var(--orange)">Iniciar sesion</a></p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <input type="text" id="signupName" placeholder="Nombre" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+          <input type="text" id="signupLastname" placeholder="Apellido" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+        </div>
+        <input type="email" id="signupEmail" placeholder="Email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="tel" id="signupPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="password" id="signupPassword" placeholder="Contraseña (min 6 caracteres)" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+        <input type="password" id="signupConfirmPassword" placeholder="Confirmar contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
+        <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
+          <span style="font-size:14px">✓</span>
+          <span style="font-size:11px;color:var(--green)">Con tu cuenta podrás comprar con garantía, cotizar tu equipo y acceder a precios exclusivos.</span>
+        </div>
+        <button onclick="doSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Crear cuenta</button>
+        <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="showLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
       </div>
-      <div id="loginError" style="display:none;padding:10px;background:rgba(192,57,43,.1);border-radius:var(--rsm);color:var(--red);font-size:12px;margin-bottom:15px;text-align:center"></div>
+      <div id="loginError" style="display:none;padding:12px;background:rgba(255,0,0,.1);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:16px;text-align:center"></div>
     </div>
   </div>
 </div>
