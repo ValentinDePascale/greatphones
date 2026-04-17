@@ -347,7 +347,7 @@
 .pcard-fav.saved{background:#fff0ec}
 .pcard-body{flex:1}
 .pcard-sub{font-size:9px;color:var(--gray);margin-bottom:.375rem}
-.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:var(--orange)}
+.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--orange)}
 .pcard-stock{font-size:9px;color:var(--red);font-weight:500;margin-top:2px}
 .pcard-btn{
   width:100%;
@@ -385,7 +385,7 @@
 .pcard-body{padding:.75rem;flex:1}
 .pcard-name{font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcard-sub{font-size:10px;color:var(--gray);margin-bottom:.4rem}
-.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:18px;color:var(--orange)}
+.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--orange)}
 .pcard-old{font-size:10px;color:var(--gray2);text-decoration:line-through;margin-left:4px}
 .pcard-cuota{font-size:9px;color:var(--green);margin-top:2px;margin-bottom:.4rem}
 .pcard-stock{font-size:9px;color:var(--red);margin-top:1px}
