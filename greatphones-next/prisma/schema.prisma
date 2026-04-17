@@ -17,6 +17,7 @@ model User {
   role      Role     @default(CLIENT)
   avatar    String?
   location  String?
+  verified  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -384,4 +385,16 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ==================== VERIFICACION EMAIL ====================
+model EmailVerification {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([email, code])
 }

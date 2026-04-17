@@ -34,34 +34,44 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params
   try {
     const body = await request.json()
-    console.log('Updating product:', id, body)
+    console.log('Updating product:', id)
+    console.log('Body:', JSON.stringify(body))
+    
+    const updateData: any = {}
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.brand !== undefined) updateData.brand = body.brand
+    if (body.sub !== undefined) updateData.sub = body.sub
+    if (body.price !== undefined) updateData.price = Number(body.price)
+    if (body.stock !== undefined) updateData.stock = Number(body.stock)
+    if (body.condition !== undefined) updateData.condition = body.condition
+    if (body.type !== undefined) updateData.type = body.type
+    if (body.color !== undefined) updateData.color = body.color || null
+    if (body.screen !== undefined) updateData.screen = body.screen ? Number(body.screen) : null
+    if (body.discount !== undefined) updateData.discount = Number(body.discount)
+    if (body.isOffer !== undefined) updateData.isOffer = Boolean(body.isOffer)
+    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl || null
+    if (body.images !== undefined) updateData.images = body.images || []
+    if (body.ico !== undefined) updateData.ico = body.ico
+    if (body.offerStart !== undefined) {
+      updateData.offerStart = body.offerStart ? new Date(body.offerStart) : null
+    }
+    if (body.offerEnd !== undefined) {
+      updateData.offerEnd = body.offerEnd ? new Date(body.offerEnd) : null
+    }
+
+    console.log('Update data:', JSON.stringify(updateData))
+    
     const updated = await prisma.product.update({
       where: { id },
-      data: {
-        name: body.name,
-        brand: body.brand,
-        sub: body.sub,
-        price: Number(body.price),
-        stock: Number(body.stock),
-        condition: body.condition,
-        type: body.type,
-        color: body.color || null,
-        screen: body.screen ? Number(body.screen) : null,
-        discount: Number(body.discount),
-        isOffer: Boolean(body.isOffer),
-        imageUrl: body.imageUrl || null,
-        images: body.images || [],
-        ico: body.ico,
-        offerStart: body.offerStart ? new Date(body.offerStart) : null,
-        offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
-      }
+      data: updateData
     })
+    console.log('Updated product:', updated)
     return NextResponse.json(updated, {
       headers: { 'Access-Control-Allow-Origin': '*' }
     })
   } catch (error) {
     console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update product', details: String(error) }, { status: 500 })
   }
 }
 
