@@ -1,6 +1,61 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
+var pendingEmail=null;
+var emailVerified=false;
+
+function showSignupStep1(){
+  document.getElementById('signupStep1').style.display='block';
+  document.getElementById('signupStep2').style.display='none';
+  document.getElementById('signupStep3').style.display='none';
+}
+
+async function sendVerifyCode(){
+  var email=document.getElementById('signupEmail').value.trim();
+  if(!email){showLoginError('Ingresa tu email');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showLoginError('Email inválido');return;}
+  
+  var btn=document.getElementById('sendCodeBtn');
+  btn.textContent='Enviando...';
+  btn.disabled=true;
+  
+  try{
+    var res=await fetch(API_URL+'/api/auth/verify-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'send',email:email})
+    });
+    var data=await res.json();
+    if(data.error){showLoginError(data.error);btn.textContent='Continuar';btn.disabled=false;return;}
+    
+    pendingEmail=email;
+    document.getElementById('verifyEmailDisplay').textContent=email;
+    document.getElementById('signupStep1').style.display='none';
+    document.getElementById('signupStep2').style.display='block';
+    document.getElementById('verifyCode').focus();
+    showLoginError('');
+  }catch(e){showLoginError('Error de conexión');btn.textContent='Continuar';btn.disabled=false;}
+}
+
+async function verifyEmailCode(){
+  var code=document.getElementById('verifyCode').value.trim();
+  if(!code||code.length!==6){showLoginError('Ingresa el código de 6 dígitos');return;}
+  
+  try{
+    var res=await fetch(API_URL+'/api/auth/verify-email',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'verify',email:pendingEmail,code:code})
+    });
+    var data=await res.json();
+    if(data.error){showLoginError(data.error);return;}
+    
+    emailVerified=true;
+    document.getElementById('signupStep2').style.display='none';
+    document.getElementById('signupStep3').style.display='block';
+    showLoginError('');
+  }catch(e){showLoginError('Error de conexión');}
+}
 function nav(id){
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
@@ -90,6 +145,7 @@ function closeLogin(){
 }
 function showSignup(){
   closeLogin();
+  resetSignupFlow();
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
   document.getElementById('p-register').classList.add('act');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -98,6 +154,13 @@ function openLoginFromRegister(){
   nav('home');
   openLogin();
 }
+
+function resetSignupFlow(){
+  pendingEmail=null;
+  emailVerified=false;
+  showSignupStep1();
+}
+
 function showLogin(){
   document.getElementById('signupForm').style.display='none';
   document.getElementById('loginForm').style.display='block';
@@ -139,12 +202,13 @@ async function doLogin(){
 async function doSignup(){
   var name=document.getElementById('signupName').value;
   var lastname=document.getElementById('signupLastname').value;
-  var email=document.getElementById('signupEmail').value;
+  var email=pendingEmail;
   var phone=document.getElementById('signupPhone').value;
   var password=document.getElementById('signupPassword').value;
   var confirmPassword=document.getElementById('signupConfirmPassword').value;
   var fullName=name+' '+lastname;
-  if(!email){showLoginError('Ingresa tu email');return;}
+  if(!emailVerified){showLoginError('Primero verificá tu email');return;}
+  if(!fullName.trim()){showLoginError('Ingresa tu nombre');return;}
   if(!password||password.length<6){showLoginError('Password debe tener al menos 6 caracteres');return;}
   if(password!==confirmPassword){showLoginError('Las passwords no coinciden');return;}
   showLoginError('');

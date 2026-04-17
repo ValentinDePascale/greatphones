@@ -1038,20 +1038,34 @@
         <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">No tenes cuenta? <button onclick="closeLogin();showSignup()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Registrate</button></p>
       </div>
       <div id="signupForm" style="display:none">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-          <input type="text" id="signupName" placeholder="Nombre" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          <input type="text" id="signupLastname" placeholder="Apellido" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+        <!-- Step 1: Email input -->
+        <div id="signupStep1">
+          <input type="email" id="signupEmail" placeholder="Tu email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+          <button id="sendCodeBtn" onclick="sendVerifyCode()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Continuar</button>
+          <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="showLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
         </div>
-        <input type="email" id="signupEmail" placeholder="Email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-        <input type="tel" id="signupPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-        <input type="password" id="signupPassword" placeholder="Contraseña (min 6 caracteres)" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-        <input type="password" id="signupConfirmPassword" placeholder="Confirmar contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
-        <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
-          <span style="font-size:14px">✓</span>
-          <span style="font-size:11px;color:var(--green)">Con tu cuenta podrás comprar con garantía, cotizar tu equipo y acceder a precios exclusivos.</span>
+        <!-- Step 2: Verification code -->
+        <div id="signupStep2" style="display:none">
+          <p style="font-size:13px;color:var(--dk);text-align:center;margin-bottom:16px">Ingresá el código que te enviamos a <span id="verifyEmailDisplay" style="font-weight:600"></span></p>
+          <input type="text" id="verifyCode" placeholder="Código de 6 dígitos" maxlength="6" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:18px;text-align:center;letter-spacing:8px;margin-bottom:12px;box-sizing:border-box">
+          <button onclick="verifyEmailCode()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Verificar código</button>
+          <button onclick="showSignupStep1()" style="width:100%;padding:10px;border:none;background:none;color:var(--gray);font-size:12px;cursor:pointer;margin-top:8px">Cambiar email</button>
         </div>
-        <button onclick="doSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Crear cuenta</button>
-        <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="showLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
+        <!-- Step 3: Complete registration -->
+        <div id="signupStep3" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <input type="text" id="signupName" placeholder="Nombre" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+            <input type="text" id="signupLastname" placeholder="Apellido" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
+          </div>
+          <input type="tel" id="signupPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+          <input type="password" id="signupPassword" placeholder="Contraseña (min 6 caracteres)" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+          <input type="password" id="signupConfirmPassword" placeholder="Confirmar contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
+          <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
+            <span style="font-size:14px">✓</span>
+            <span style="font-size:11px;color:var(--green)">Con tu cuenta podrás comprar con garantía, cotizar tu equipo y acceder a precios exclusivos.</span>
+          </div>
+          <button onclick="doSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Crear cuenta</button>
+        </div>
       </div>
       <div id="loginError" style="display:none;padding:12px;background:rgba(255,0,0,.1);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:16px;text-align:center"></div>
     </div>
