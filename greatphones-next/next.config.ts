@@ -13,18 +13,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/lib/:path*',
-        destination: '../lib/:path*',
-      },
-      {
-        source: '/styles/:path*',
-        destination: '../styles/:path*',
-      },
-    ];
-  },
 };
 
 export default nextConfig;
