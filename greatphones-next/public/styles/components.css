@@ -86,7 +86,7 @@
 @media(max-width:500px){.cat-grid{grid-template-columns:repeat(4,1fr)}}
 .cat-item{display:flex;flex-direction:column;align-items:center;gap:5px;padding:.7rem .4rem;border-radius:var(--r);cursor:pointer;transition:all .15s;border:1.5px solid transparent;background:var(--cream)}
 .cat-item:hover,.cat-item.act{border-color:var(--orange);background:rgba(255,107,44,.08);transform:translateY(-2px)}
-.cat-ico{font-size:24px}
+.cat-ico{width:32px;height:32px}
 .cat-lbl{font-size:10px;font-weight:600;color:var(--dk);text-align:center;line-height:1.2}
 .cat-item:hover .cat-lbl,.cat-item.act .cat-lbl{color:var(--orange)}
 
