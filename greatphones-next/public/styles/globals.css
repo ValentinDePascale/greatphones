@@ -1,0 +1,41 @@
+:root{
+  --orange:#FF6B2C;
+  --orange2:#FF8C55;
+  --green:#2D5A27;
+  --green2:#3B7A32;
+  --cream:#F9F6F1;
+  --cream2:#F0EBE3;
+  --cream3:#E4DDD4;
+  --dk:#1A1208;
+  --dk2:#231A10;
+  --dk3:#2E2116;
+  --gray:#8A8078;
+  --gray2:#B8B0A8;
+  --red:#C0392B;
+  --white:#FFFFFF;
+  --border:rgba(0,0,0,.09);
+  --sh:0 4px 20px rgba(0,0,0,.08);
+  --shlg:0 8px 36px rgba(0,0,0,.13);
+  --r:12px;
+  --rsm:8px;
+  --rlg:18px;
+  --W:1240px;
+  --pad:clamp(.875rem,3vw,1.75rem);
+}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+*{box-sizing:border-box;margin:0;padding:0}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes fadeOutDown{from{opacity:1;transform:translateX(-50%) translateY(0)}to{opacity:0;transform:translateX(-50%) translateY(10px)}}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--dk);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit}
+.hidden{display:none!important}
+.page{display:none;min-height:100vh;animation:pgIn .18s ease}
+.page.act{display:block}
+.ctr{max-width:var(--W);margin:0 auto;padding:0 var(--pad)}
+@keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@keyframes favPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+@keyframes scaleIn{from{opacity:0;transform:scale(0.9)}to{opacity:1;transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#detFavBtn.saved{color:var(--red);border-color:var(--red)}
