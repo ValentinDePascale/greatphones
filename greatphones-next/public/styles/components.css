@@ -291,7 +291,7 @@
 .prod-rail::-webkit-scrollbar{display:none}
 .pcard{
   flex-shrink:0;
-  width:160px;
+  width:190px;
   background:var(--cream);
   border-radius:13px;
   overflow:hidden;
@@ -302,7 +302,7 @@
 }
 .pcard:hover{transform:translateY(-2px);box-shadow:var(--sh)}
 .pcard-img{
-  height:125px;
+  height:150px;
   display:block;
   position:relative;
   background:var(--cream2);
@@ -317,7 +317,7 @@
   width:100%;
   height:100%;
   margin:0;
-  object-fit:cover
+  object-fit:contain
 }
 .pcard-img span{
   display:flex;
@@ -347,7 +347,7 @@
 .pcard-fav.saved{background:#fff0ec}
 .pcard-body{flex:1}
 .pcard-sub{font-size:9px;color:var(--gray);margin-bottom:.375rem}
-.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:14px;color:var(--orange)}
+.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:var(--orange)}
 .pcard-stock{font-size:9px;color:var(--red);font-weight:500;margin-top:2px}
 .pcard-btn{
   width:100%;
@@ -372,8 +372,8 @@
 @media(max-width:460px){.pgrid{grid-template-columns:repeat(2,1fr)}}
 .prail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
 .prail::-webkit-scrollbar{display:none}
-.prail .pcard{flex-shrink:0;width:170px}
-.pcard{background:#fff;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;position:relative;display:flex;flex-direction:column}
+.prail .pcard{flex-shrink:0;width:200px}
+.pcard{background:#fff;border-radius:var(--r);overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:all .2s;position:relative;display:flex;flex-direction:column;width:200px}
 .pcard:hover{transform:translateY(-3px);box-shadow:var(--shlg);border-color:var(--orange)}
 .pcard-bdg{position:absolute;top:8px;left:8px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px}
 .bdg-new{background:#EDE9FE;color:#4C1D95}
@@ -383,9 +383,9 @@
 .pcard:hover .pcard-fav,.pcard-fav.on{opacity:1}
 .pcard-fav.on{background:#FFF0EC;border-color:rgba(255,107,44,.35);color:var(--orange)}
 .pcard-body{padding:.75rem;flex:1}
-.pcard-name{font-size:12px;font-weight:600;margin-bottom:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pcard-name{font-size:13px;font-weight:600;margin-bottom:2px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pcard-sub{font-size:10px;color:var(--gray);margin-bottom:.4rem}
-.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--orange)}
+.pcard-price{font-family:'Playfair Display',Georgia,serif;font-size:18px;color:var(--orange)}
 .pcard-old{font-size:10px;color:var(--gray2);text-decoration:line-through;margin-left:4px}
 .pcard-cuota{font-size:9px;color:var(--green);margin-top:2px;margin-bottom:.4rem}
 .pcard-stock{font-size:9px;color:var(--red);margin-top:1px}
