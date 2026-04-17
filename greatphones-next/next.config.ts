@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
-import { copyFileSync, mkdirSync, existsSync, readdirSync, statSync } from "fs";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   async headers() {
     return [
       {
@@ -16,7 +14,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  output: 'standalone',
 };
 
 export default nextConfig;
