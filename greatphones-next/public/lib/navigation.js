@@ -1,23 +1,27 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
-var pendingEmail=null;
-var emailVerified=false;
+var pendingSignupData=null;
 
 function showSignupStep1(){
   document.getElementById('signupStep1').style.display='block';
   document.getElementById('signupStep2').style.display='none';
-  document.getElementById('signupStep3').style.display='none';
 }
 
-async function sendVerifyCode(){
+async function initiateSignup(){
+  var name=document.getElementById('signupName').value.trim();
+  var lastname=document.getElementById('signupLastname').value.trim();
   var email=document.getElementById('signupEmail').value.trim();
-  if(!email){showLoginError('Ingresa tu email');return;}
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showLoginError('Email inválido');return;}
+  var phone=document.getElementById('signupPhone').value.trim();
+  var password=document.getElementById('signupPassword').value;
+  var confirmPassword=document.getElementById('signupConfirmPassword').value;
   
-  var btn=document.getElementById('sendCodeBtn');
-  btn.textContent='Enviando...';
-  btn.disabled=true;
+  if(!name||!lastname){showLoginError('Ingresa tu nombre y apellido');return;}
+  if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showLoginError('Email inválido');return;}
+  if(!password||password.length<6){showLoginError('Password debe tener al menos 6 caracteres');return;}
+  if(password!==confirmPassword){showLoginError('Las passwords no coinciden');return;}
+  
+  pendingSignupData={name:name+' '+lastname,email:email,phone:phone,password:password};
   
   try{
     var res=await fetch(API_URL+'/api/auth/verify-email',{
@@ -26,18 +30,18 @@ async function sendVerifyCode(){
       body:JSON.stringify({action:'send',email:email})
     });
     var data=await res.json();
-    if(data.error){showLoginError(data.error);btn.textContent='Continuar';btn.disabled=false;return;}
+    if(data.error){showLoginError(data.error);return;}
     
-    pendingEmail=email;
     document.getElementById('verifyEmailDisplay').textContent=email;
     document.getElementById('signupStep1').style.display='none';
     document.getElementById('signupStep2').style.display='block';
+    document.getElementById('verifyCode').value='';
     document.getElementById('verifyCode').focus();
     showLoginError('');
-  }catch(e){showLoginError('Error de conexión');btn.textContent='Continuar';btn.disabled=false;}
+  }catch(e){showLoginError('Error de conexión');}
 }
 
-async function verifyEmailCode(){
+async function verifyAndCompleteSignup(){
   var code=document.getElementById('verifyCode').value.trim();
   if(!code||code.length!==6){showLoginError('Ingresa el código de 6 dígitos');return;}
   
@@ -45,15 +49,27 @@ async function verifyEmailCode(){
     var res=await fetch(API_URL+'/api/auth/verify-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'verify',email:pendingEmail,code:code})
+      body:JSON.stringify({action:'verify',email:pendingSignupData.email,code:code})
     });
     var data=await res.json();
     if(data.error){showLoginError(data.error);return;}
     
-    emailVerified=true;
-    document.getElementById('signupStep2').style.display='none';
-    document.getElementById('signupStep3').style.display='block';
-    showLoginError('');
+    var res2=await fetch(API_URL+'/api/auth/signup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(pendingSignupData)
+    });
+    var data2=await res2.json();
+    if(data2.error){showLoginError(data2.error);return;}
+    
+    currentUser=data2.user;
+    closeLogin();
+    updateUserUI();
+    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    loadUserFavorites();
+    initCart();
+    loadProducts();
+    pendingSignupData=null;
   }catch(e){showLoginError('Error de conexión');}
 }
 function nav(id){
@@ -156,8 +172,7 @@ function openLoginFromRegister(){
 }
 
 function resetSignupFlow(){
-  pendingEmail=null;
-  emailVerified=false;
+  pendingSignupData=null;
   showSignupStep1();
 }
 
