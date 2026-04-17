@@ -1,21 +1,23 @@
+import { NextResponse } from 'next/server'
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 
 export const dynamic = 'force-dynamic'
 
-export default function Page() {
+export async function GET() {
   const paths = [
     join(process.cwd(), 'public', 'index.html'),
     join(process.cwd(), '..', 'public', 'index.html'),
   ]
   
-  let html = ''
   for (const p of paths) {
     if (existsSync(p)) {
-      html = readFileSync(p, 'utf-8')
-      break
+      const html = readFileSync(p, 'utf-8')
+      return new NextResponse(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      })
     }
   }
   
-  return <div dangerouslySetInnerHTML={{ __html: html || '<h1>Not found</h1>' }} />
+  return new NextResponse('Not found', { status: 404 })
 }
