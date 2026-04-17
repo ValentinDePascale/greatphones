@@ -1,0 +1,116 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
+
+function generateCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString()
+}
+
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  })
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json()
+    const { action, email, code } = body
+
+    if (action === 'send') {
+      if (!email) {
+        return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+      }
+
+      const user = await prisma.user.findUnique({ where: { email } })
+      if (user) {
+        return NextResponse.json({ error: 'El email ya está registrado' }, { status: 400 })
+      }
+
+      const verifyCode = generateCode()
+      const expires = new Date(Date.now() + 10 * 60 * 1000)
+
+      const existing = await prisma.emailVerification.findUnique({
+        where: { email_code: { email, code: verifyCode } }
+      })
+
+      if (existing) {
+        await prisma.emailVerification.update({
+          where: { id: existing.id },
+          data: { code: verifyCode, expires, used: false },
+        })
+      } else {
+        await prisma.emailVerification.create({
+          data: { email, code: verifyCode, expires },
+        })
+      }
+
+      await resend.emails.send({
+        from: 'Great Phones <noreply@greatphones.com.ar>',
+        to: email,
+        subject: 'Código de verificación - Great Phones',
+        html: `
+          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+            <h2 style="color: #ff6b2c;">Great Phones</h2>
+            <p>Tu código de verificación es:</p>
+            <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+              ${verifyCode}
+            </div>
+            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
+          </div>
+        `,
+      })
+
+      return NextResponse.json({ message: 'Código enviado' })
+    }
+
+    if (action === 'verify') {
+      if (!email || !code) {
+        return NextResponse.json({ error: 'Email y código requeridos' }, { status: 400 })
+      }
+
+      const records = await prisma.emailVerification.findMany({
+        where: { email },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+      })
+      const record = records[0]
+
+      if (!record) {
+        return NextResponse.json({ error: 'Código no válido' }, { status: 400 })
+      }
+
+      if (record.used) {
+        return NextResponse.json({ error: 'Código ya usado' }, { status: 400 })
+      }
+
+      if (record.expires < new Date()) {
+        return NextResponse.json({ error: 'Código expirado' }, { status: 400 })
+      }
+
+      if (record.code !== code) {
+        return NextResponse.json({ error: 'Código incorrecto' }, { status: 400 })
+      }
+
+      await prisma.emailVerification.update({
+        where: { id: record.id },
+        data: { used: true },
+      })
+
+      return NextResponse.json({ verified: true })
+    }
+
+    return NextResponse.json({ error: 'Acción no válida' }, { status: 400 })
+
+  } catch (error) {
+    console.error('Verify error:', error)
+    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
+  }
+}
