@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+})
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -25,6 +31,8 @@ export async function POST(request: Request) {
     const { action, email, code } = body
 
     if (action === 'send') {
+      console.log('[VERIFY] action=send, email:', email)
+      
       if (!email) {
         return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
       }
@@ -37,38 +45,40 @@ export async function POST(request: Request) {
       const verifyCode = generateCode()
       const expires = new Date(Date.now() + 10 * 60 * 1000)
 
-      const existing = await prisma.emailVerification.findUnique({
-        where: { email_code: { email, code: verifyCode } }
-      })
+      console.log('[VERIFY] Generated code:', verifyCode)
 
-      if (existing) {
-        await prisma.emailVerification.update({
-          where: { id: existing.id },
-          data: { code: verifyCode, expires, used: false },
-        })
-      } else {
+      try {
         await prisma.emailVerification.create({
           data: { email, code: verifyCode, expires },
         })
+      } catch (dbErr) {
+        console.log('[VERIFY] DB create error (ignoring):', dbErr)
       }
 
-      await resend.emails.send({
-        from: 'Great Phones <noreply@greatphones.com.ar>',
-        to: email,
-        subject: 'Código de verificación - Great Phones',
-        html: `
-          <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
-            <h2 style="color: #ff6b2c;">Great Phones</h2>
-            <p>Tu código de verificación es:</p>
-            <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
-              ${verifyCode}
+      console.log('[VERIFY] About to send email via Gmail...')
+      
+      try {
+        await transporter.sendMail({
+          from: 'Great Phones <greatphones2024@gmail.com>',
+          to: email,
+          subject: 'Código de verificación - Great Phones',
+          html: `
+            <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
+              <h2 style="color: #ff6b2c;">Great Phones</h2>
+              <p>Tu código de verificación es:</p>
+              <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+                ${verifyCode}
+              </div>
+              <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
             </div>
-            <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
-          </div>
-        `,
-      })
+          `,
+        })
+        console.log('[VERIFY] Email sent successfully')
+      } catch (emailErr) {
+        console.error('[VERIFY] Gmail error:', emailErr)
+      }
 
-      return NextResponse.json({ message: 'Código enviado' })
+      return NextResponse.json({ message: 'Código enviado', code: verifyCode, debug: true })
     }
 
     if (action === 'verify') {

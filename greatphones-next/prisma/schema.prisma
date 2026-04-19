@@ -14,6 +14,8 @@ model User {
   password  String?
   phone     String?
   dni       String?
+  provincia String?
+  ciudad   String?
   role      Role     @default(CLIENT)
   avatar    String?
   location  String?

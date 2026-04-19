@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('[SIGNUP] Body:', body)
-    const { email, name, phone, password } = body
+    const { email, name, phone, dni, provincia, ciudad, password } = body
 
     if (!email) {
       return NextResponse.json({ error: 'Email es requerido' }, { status: 400 })
@@ -55,6 +55,9 @@ export async function POST(request: Request) {
         email,
         name: name || email,
         phone,
+        dni,
+        provincia,
+        ciudad,
         password: hashedPassword,
         role: 'CLIENT',
         verified: true,

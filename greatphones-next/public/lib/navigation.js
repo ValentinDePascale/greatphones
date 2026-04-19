@@ -3,6 +3,58 @@ var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
 var pendingSignupData=null;
 
+function checkPasswordStrength(){
+  var pwd=document.getElementById('regPassword').value;
+  var el=document.getElementById('passwordStrength');
+  if(!pwd){
+    el.innerHTML='';
+    document.getElementById('passwordMissing').innerHTML='';
+    return;
+  }
+  var passed=0;
+  if(pwd.length>=8)passed++;
+  if(/[A-Z]/.test(pwd))passed++;
+  if(/[a-z]/.test(pwd))passed++;
+  if(/[0-9]/.test(pwd))passed++;
+  var colors=['#e74c3c','#e74c3c','#f39c12','#f1c40f','#27ae60'];
+  var texts=['Muy débil','Débil','Regular','Buena','Fuerte'];
+  el.innerHTML=texts[passed];
+  el.style.color=colors[passed];
+}
+
+function checkPasswordRequirements(){
+  var pwd=document.getElementById('regPassword').value;
+  var reqs=[
+    {id:'req-length',ok:pwd.length>=8},
+    {id:'req-upper',ok:/[A-Z]/.test(pwd)},
+    {id:'req-lower',ok:/[a-z]/.test(pwd)},
+    {id:'req-number',ok:/[0-9]/.test(pwd)}
+  ];
+  reqs.forEach(function(r){
+    var el=document.getElementById(r.id);
+    el.style.color=r.ok?'var(--green)':'var(--gray)';
+    el.style.fontWeight=r.ok?'700':'400';
+  });
+}
+function checkPasswordStrength2(){
+  var pwd=document.getElementById('signupPassword').value;
+  var el=document.getElementById('passwordStrength2');
+  if(!pwd){
+    el.innerHTML='';
+    document.getElementById('passwordMissing2').innerHTML='';
+    return;
+  }
+  var passed=0;
+  if(pwd.length>=8)passed++;
+  if(/[A-Z]/.test(pwd))passed++;
+  if(/[a-z]/.test(pwd))passed++;
+  if(/[0-9]/.test(pwd))passed++;
+  var colors=['#e74c3c','#e74c3c','#f39c12','#f1c40f','#27ae60'];
+  var texts=['Muy débil','Débil','Regular','Buena','Fuerte'];
+  el.innerHTML=texts[passed];
+  el.style.color=colors[passed];
+}
+
 function showSignupStep1(){
   document.getElementById('signupStep1').style.display='block';
   document.getElementById('signupStep2').style.display='none';
@@ -35,14 +87,21 @@ async function initiateSignup(){
     document.getElementById('verifyEmailDisplay').textContent=email;
     document.getElementById('signupStep1').style.display='none';
     document.getElementById('signupStep2').style.display='block';
-    document.getElementById('verifyCode').value='';
-    document.getElementById('verifyCode').focus();
+    document.getElementById('v1').value='';
+    document.getElementById('v2').value='';
+    document.getElementById('v3').value='';
+    document.getElementById('v4').value='';
+    document.getElementById('v5').value='';
+    document.getElementById('v6').value='';
+    document.getElementById('v1').focus();
+    document.getElementById('codeTimer').style.color='var(--orange)';
+    startCodeTimer(600);
     showLoginError('');
-  }catch(e){showLoginError('Error de conexión');}
+  }catch(e){console.log('[CLIENT] Error:', e);showLoginError('Error de conexión');}
 }
 
 async function verifyAndCompleteSignup(){
-  var code=document.getElementById('verifyCode').value.trim();
+  var code=document.getElementById('v1').value+document.getElementById('v2').value+document.getElementById('v3').value+document.getElementById('v4').value+document.getElementById('v5').value+document.getElementById('v6').value;
   if(!code||code.length!==6){showLoginError('Ingresa el código de 6 dígitos');return;}
   
   try{
@@ -181,6 +240,19 @@ function showLogin(){
   document.getElementById('loginForm').style.display='block';
   document.getElementById('loginTitle').textContent='Iniciar sesion';
 }
+function showSignupFormInOverlay(){
+  var overlay=document.getElementById('loginOverlay');
+  if(overlay){
+    overlay.style.pointerEvents='auto';
+    overlay.querySelector('div').style.opacity='1';
+    overlay.querySelectorAll('div')[1].style.opacity='1';
+    overlay.querySelectorAll('div')[1].style.transform='translate(-50%,-50%) scale(1)';
+  }
+  document.getElementById('loginForm').style.display='none';
+  document.getElementById('signupForm').style.display='block';
+  document.getElementById('loginTitle').textContent='Crear cuenta';
+  resetSignupFlow();
+}
 function showLoginError(msg){
   var el=document.getElementById('loginError');
   if(el){
@@ -312,30 +384,139 @@ function notAvailable(){
   console.log('Funcionalidad no disponible - requiere conexion al backend');
 }
 async function doRegister(){
-  var name=document.getElementById('regName').value;
-  var lastname=document.getElementById('regLastname').value;
-  var email=document.getElementById('regEmail').value;
-  var phone=document.getElementById('regPhone').value;
+  var name=document.getElementById('regName').value.trim();
+  var lastname=document.getElementById('regLastname').value.trim();
+  var email=document.getElementById('regEmail').value.trim();
+  var phone=document.getElementById('regPhone').value.trim();
+  var dni=document.getElementById('regDni').value.trim();
+  var provincia=document.getElementById('regProvincia').value.trim();
+  var ciudad=document.getElementById('regCiudad').value.trim();
   var password=document.getElementById('regPassword').value;
   var confirmPassword=document.getElementById('regConfirmPassword').value;
-  var fullName=name+' '+lastname;
   if(!name||!lastname||!email||!password){alert('Completá los campos obligatorios');return;}
-  if(password.length<6){alert('La contraseña debe tener al menos 6 caracteres');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email inválido');return;}
+  var passed=0;
+  if(password.length>=8)passed++;
+  if(/[A-Z]/.test(password))passed++;
+  if(/[a-z]/.test(password))passed++;
+  if(/[0-9]/.test(password))passed++;
+  document.getElementById('passwordMissing').innerHTML='';
+  if(passed<4){
+    var msgs=[];
+    if(password.length<8)msgs.push('mínimo 8 caracteres');
+    if(!/[A-Z]/.test(password))msgs.push('una mayúscula');
+    if(!/[a-z]/.test(password))msgs.push('una minúscula');
+    if(!/[0-9]/.test(password))msgs.push('un número');
+    document.getElementById('passwordMissing').innerHTML='Faltan: '+msgs.join(', ');
+    document.getElementById('regPassword').focus();
+    return;
+  }
   if(password!==confirmPassword){alert('Las contraseñas no coinciden');return;}
+  
+  pendingSignupData={name:name+' '+lastname,email:email,phone:phone,dni:dni,provincia:provincia,ciudad:ciudad,password:password};
+  
   try{
-    var res=await fetch(API_URL+'/api/auth/signup',{
+    var res=await fetch(API_URL+'/api/auth/verify-email',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({name:fullName,email:email,phone:phone,password:password})
+      body:JSON.stringify({action:'send',email:email})
     });
     var data=await res.json();
     if(data.error){alert(data.error);return;}
-    currentUser=data.user;
-    localStorage.setItem('gp_user',JSON.stringify(currentUser));
-    updateUserUI();
-    loadUserFavorites();
-    initCart();
-    nav('home');
-    showToast('Cuenta creada, bienvenido '+name);
+    
+    document.getElementById('pageVerifyEmail').textContent=email;
+    document.getElementById('pageVerifyEmail').style.display='inline';
+    document.getElementById('registerFormStep1').style.display='none';
+    document.getElementById('pageVerifyStep').style.display='block';
+    document.getElementById('pv1').focus();
+    document.getElementById('pageCodeTimer').style.color='var(--orange)';
+    startPageTimer(600);
   }catch(e){alert('Error de conexión');}
+}
+
+function showPageRegisterStep(){
+  document.getElementById('pageVerifyStep').style.display='none';
+  document.getElementById('registerFormStep1').style.display='block';
+  if(pageTimerInterval)clearInterval(pageTimerInterval);
+}
+
+function verifyAndCompleteRegister(){
+  var code=document.getElementById('pv1').value+document.getElementById('pv2').value+document.getElementById('pv3').value+document.getElementById('pv4').value+document.getElementById('pv5').value+document.getElementById('pv6').value;
+  if(!code||code.length!==6){alert('Ingresa el código de 6 dígitos');return;}
+  
+  var email=pendingSignupData.email;
+  fetch(API_URL+'/api/auth/verify-email',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action:'verify',email:email,code:code})
+  }).then(function(res){return res.json();}).then(function(data){
+    if(data.error){alert(data.error);return;}
+    
+    fetch(API_URL+'/api/auth/signup',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(pendingSignupData)
+    }).then(function(r){return r.json();}).then(function(data2){
+      if(data2.error){alert(data2.error);return;}
+      
+      currentUser=data2.user;
+      localStorage.setItem('gp_user',JSON.stringify(currentUser));
+      updateUserUI();
+      loadUserFavorites();
+      initCart();
+      nav('home');
+      showToast('Cuenta creada, bienvenido '+pendingSignupData.name);
+      pendingSignupData=null;
+    }).catch(function(){alert('Error de conexión');});
+  }).catch(function(){alert('Error de conexión');});
+}
+
+var pageTimerInterval=null;
+function startPageTimer(duration){
+  var timerEl=document.getElementById('pageCodeTimer');
+  if(!timerEl)return;
+  if(pageTimerInterval)clearInterval(pageTimerInterval);
+  var timeLeft=duration||600;
+  pageTimerInterval=setInterval(function(){
+    timeLeft--;
+    var mins=Math.floor(timeLeft/60);
+    var secs=timeLeft%60;
+    timerEl.textContent=(mins<10?'0':'')+mins+':'+(secs<10?'0':'')+secs;
+    if(timeLeft<=0){
+      clearInterval(pageTimerInterval);
+      timerEl.textContent='Expirado';
+      timerEl.style.color='var(--red)';
+    }
+  },1000);
+}
+
+function moveToNext(current,nextId){
+  if(current.value.length>=1){
+    var next=document.getElementById(nextId);
+    if(next)next.focus();
+  }
+}
+function moveBack(event,prevId){
+  if(event.key==='Backspace'&&!event.target.value){
+    var prev=document.getElementById(prevId);
+    if(prev)prev.focus();
+  }
+}
+var codeTimerInterval=null;
+function startCodeTimer(duration){
+  var timerEl=document.getElementById('codeTimer');
+  if(!timerEl)return;
+  if(codeTimerInterval)clearInterval(codeTimerInterval);
+  var timeLeft=duration||600;
+  codeTimerInterval=setInterval(function(){
+    timeLeft--;
+    var mins=Math.floor(timeLeft/60);
+    var secs=timeLeft%60;
+    timerEl.textContent=(mins<10?'0':'')+mins+':'+(secs<10?'0':'')+secs;
+    if(timeLeft<=0){
+      clearInterval(codeTimerInterval);
+      timerEl.textContent='Expirado';
+      timerEl.style.color='var(--red)';
+    }
+  },1000);
 }
