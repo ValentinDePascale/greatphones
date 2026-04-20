@@ -785,10 +785,20 @@
             <input type="text" id="regProvincia" placeholder="Provincia" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
             <input type="text" id="regCiudad" placeholder="Ciudad" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
           </div>
-          <input type="password" id="regPassword" placeholder="Contraseña *" oninput="checkPasswordStrength()" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:6px;box-sizing:border-box">
+          <div style="position:relative;height:48px;margin-bottom:6px">
+            <input type="password" id="regPassword" placeholder="Contraseña *" oninput="checkPasswordStrength()" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:0;box-sizing:border-box;height:48px">
+            <button type="button" onclick="togglePassword('regPassword','regPasswordToggle')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0">
+              <img id="regPasswordToggle" src="/icons/eye-open.svg" width="18" height="18" alt="Mostrar">
+            </button>
+          </div>
           <div id="passwordStrength" style="font-size:12px;font-weight:600;margin-bottom:4px"></div>
           <div id="passwordMissing" style="font-size:11px;margin-bottom:12px;color:var(--red)"></div>
-          <input type="password" id="regConfirmPassword" placeholder="Confirmar contraseña *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
+          <div style="position:relative;height:48px;margin-bottom:12px">
+            <input type="password" id="regConfirmPassword" placeholder="Confirmar contraseña *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:0;box-sizing:border-box;height:48px">
+            <button type="button" onclick="togglePassword('regConfirmPassword','regConfirmPasswordToggle')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0">
+              <img id="regConfirmPasswordToggle" src="/icons/eye-open.svg" width="18" height="18" alt="Mostrar">
+            </button>
+          </div>
           
           <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:1rem;display:flex;gap:8px;align-items:flex-start">
             <span style="font-size:16px">✓</span>

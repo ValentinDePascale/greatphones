@@ -3,6 +3,18 @@ var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
 var pendingSignupData=null;
 
+function togglePassword(inputId,toggleIconId){
+  var input=document.getElementById(inputId);
+  var icon=document.getElementById(toggleIconId);
+  if(input.type==='password'){
+    input.type='text';
+    icon.src='/icons/eye-closed.svg';
+  }else{
+    input.type='password';
+    icon.src='/icons/eye-open.svg';
+  }
+}
+
 function checkPasswordStrength(){
   var pwd=document.getElementById('regPassword').value;
   var el=document.getElementById('passwordStrength');
