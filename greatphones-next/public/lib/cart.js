@@ -68,7 +68,7 @@ function cartTotal(){
   return Cart.reduce(function(sum,item){
     var p=getById(PRODUCTS,item.id);
     if(!p)return sum;
-    var price=p.isOffer?Math.round(p.price*(1-p.discount/100)):p.price;
+    var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
     return sum+(price*item.qty);
   },0);
 }
@@ -91,7 +91,7 @@ function renderCartBody(){
   body.innerHTML=Cart.map(function(item){
     var p=getById(PRODUCTS,item.id);
     if(!p)return '';
-    var price=p.isOffer?Math.round(p.price*(1-p.discount/100)):p.price;
+    var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
     var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>';
     return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
       '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+

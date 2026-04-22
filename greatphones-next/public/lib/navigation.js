@@ -186,10 +186,7 @@ function nav(id){
       document.getElementById('prodType').value='celular';
       document.getElementById('prodColor').value='';
       document.getElementById('prodScreen').value='';
-      document.getElementById('prodDiscount').value='0';
-      document.getElementById('prodIsOffer').value='false';
-      document.getElementById('prodOfferStart').value='';
-      document.getElementById('prodOfferEnd').value='';
+      
       document.getElementById('prodImageUrl').value='';
       document.getElementById('prodImages').value='';
       document.getElementById('prodImagePreview').innerHTML='📷';
@@ -531,4 +528,103 @@ function startCodeTimer(duration){
       timerEl.style.color='var(--red)';
     }
   },1000);
+}
+
+function setCatAct(el){
+  document.querySelectorAll('.cat-item').forEach(function(c){c.classList.remove('act');});
+  if(el)el.classList.add('act');
+}
+
+function loadEditProfile(){
+  if(!currentUser)return;
+  var nameEl=document.getElementById('editProfileName');
+  if(!nameEl)return;
+  var nameParts=currentUser.name?currentUser.name.split(' '):['',''];
+  var firstName=nameParts[0];
+  var lastName=nameParts.slice(1).join(' ');
+  nameEl.value=firstName;
+  document.getElementById('editProfileLastname').value=lastName;
+  document.getElementById('editProfilePhone').value=currentUser.phone||'';
+  document.getElementById('editProfileEmail').value=currentUser.email||'';
+  var initials=(firstName?firstName[0]:'')+(lastName?lastName[0]:'');
+  document.getElementById('editProfileAvatar').textContent=initials.toUpperCase()||'GP';
+}
+
+async function saveEditProfile(){
+  if(!currentUser)return;
+  var name=document.getElementById('editProfileName').value.trim();
+  var lastname=document.getElementById('editProfileLastname').value.trim();
+  var phone=document.getElementById('editProfilePhone').value.trim();
+  var fullName=name+' '+lastname;
+  try{
+    var res=await fetch(API_URL+'/api/auth/update',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:currentUser.id,name:fullName,phone:phone})
+    });
+    var data=await res.json();
+    if(data.error){alert(data.error);return;}
+    currentUser.name=fullName;
+    currentUser.phone=phone;
+    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    updateUserUI();
+    document.getElementById('cuentaName').textContent=fullName;
+    showToast('Perfil actualizado');
+    nav('cuenta');
+  }catch(e){alert('Error de conexión');}
+}
+
+function confirmDeleteAccount(){
+  if(!currentUser)return;
+  var overlay=document.getElementById('confirmOverlay');
+  var check=document.getElementById('deleteConfirmCheck');
+  var btn=document.getElementById('confirmDeleteBtn');
+  if(check)check.checked=false;
+  if(btn){
+    btn.disabled=true;
+    btn.style.background='var(--gray2)';
+    btn.style.cursor='not-allowed';
+  }
+  overlay.style.display='flex';
+  overlay.querySelector('div').style.opacity='1';
+}
+
+function closeConfirm(){
+  var overlay=document.getElementById('confirmOverlay');
+  overlay.style.display='none';
+}
+
+function confirmAction(confirmed){
+  closeConfirm();
+  if(!confirmed)return;
+  deleteAccount();
+}
+
+function deleteUserAccount(){
+  closeConfirm();
+  deleteAccount();
+}
+
+async function deleteAccount(){
+  console.log('[DELETE] Starting delete for currentUser:',currentUser);
+  if(!currentUser){
+    alert('No hay sesión activa');
+    return;
+  }
+  var userId=currentUser.id;
+  console.log('[DELETE] User ID:',userId,'API URL:',API_URL+'/api/auth/delete?userId='+userId);
+  try{
+    var res=await fetch(API_URL+'/api/auth/delete?userId='+userId,{method:'DELETE'});
+    console.log('[DELETE] Response status:',res.status);
+    var data=await res.json();
+    console.log('[DELETE] Response data:',data);
+    if(data.error){alert(data.error);return;}
+    localStorage.removeItem('gp_user');
+    currentUser=null;
+    updateUserUI();
+    initCart();
+    loadUserFavorites();
+    nav('home');
+    showToast('Cuenta eliminada permanentemente');
+  }catch(e){console.error('[DELETE] Error:',e);alert('Error de conexión: '+e.message);}
 }

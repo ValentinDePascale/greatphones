@@ -1,0 +1,15 @@
+<div class="page" id="p-chat">
+  <div class="msg-hdr">
+    <button class="msg-back" onclick="nav('mensajes')">&#8592;</button>
+    <div class="msg-hdr-av" id="chatAv">GP</div>
+    <div class="msg-hdr-info"><div class="msg-hdr-name" id="chatTitle">Great Phones</div><div class="msg-hdr-sub" id="chatSub">Atencion al cliente</div></div>
+    <div class="msg-status-dot"></div>
+  </div>
+  <div class="msg-list" id="chatMsgList"></div>
+  <div class="msg-input-area">
+    <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto">&#128247;</button>
+    <input type="file" id="chatImgIn" accept="image/*" style="display:none">
+    <textarea class="msg-inp" id="chatInp" placeholder="Escribe un mensaje..." rows="1"></textarea>
+    <button class="msg-send" onclick="sendChatMsg()">&#10148;</button>
+  </div>
+</div>

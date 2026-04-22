@@ -1,0 +1,18 @@
+<div class="page" id="p-mayorista">
+  <div class="sh-hdr">
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Mayoristas</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Para revendedores &middot; Descuento + asesor dedicado</p></div>
+  </div>
+  <div style="background:var(--cream);padding:2rem 0">
+    <div class="ctr">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:1.5rem">
+        <div class="plan-card" onclick="selPlan(this)"><div class="plan-n" style="font-family:'Playfair Display',Georgia,serif">Starter</div><div class="plan-price" style="font-family:'Playfair Display',Georgia,serif">Gratis <span>/mes</span></div><div class="plan-req">Min. 3 equipos/compra</div><div class="plan-feat"><span class="pfi">&#10003;</span>-8% descuento</div><button class="plan-btn" onclick="event.stopPropagation()">Solicitar</button></div>
+        <div class="plan-card feat" onclick="selPlan(this)"><div class="plan-badge">Mas elegido</div><div class="plan-n" style="font-family:'Playfair Display',Georgia,serif">Pro</div><div class="plan-price" style="font-family:'Playfair Display',Georgia,serif">$15.000 <span>/mes</span></div><div class="plan-req">Min. 10 equipos/mes</div><div class="plan-feat"><span class="pfi pfi-o">&#10003;</span>-20% descuento</div><button class="plan-btn" onclick="event.stopPropagation()">Solicitar</button></div>
+      </div>
+      <div style="background:var(--cream2);border-radius:11px;padding:.875rem;border:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:500;margin-bottom:.65rem">Formulario de solicitud</div>
+        <input class="inp-f" placeholder="Nombre / Razon social"><input class="inp-f" placeholder="CUIT o DNI"><input class="inp-f" placeholder="WhatsApp"><input class="inp-f" placeholder="Email">
+        <button class="btn btn-o" onclick="notAvailable()">Enviar solicitud</button>
+      </div>
+    </div>
+  </div>
+</div>

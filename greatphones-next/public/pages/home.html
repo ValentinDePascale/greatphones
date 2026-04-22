@@ -1,0 +1,198 @@
+<div class="page act" id="p-home">
+
+  <!-- SLIDER -->
+  <div class="slider" id="heroSlider">
+    <div class="slider-track" id="sliderTrack">
+      <div class="slide" style="background:linear-gradient(135deg,#1A1208 0%,#2E1A00 100%)">
+        <div class="slide-ctr">
+          <div class="slide-tag"><span class="pdot"></span>&nbsp;Nuevo en stock</div>
+          <h1 class="slide-h">iPhone 16 Pro.<br><em>A18 Pro. Titanio.</em></h1>
+          <p class="slide-s">Camara 48MP, Action Button, pantalla 6.3" ProMotion. Stock limitado.</p>
+          <div class="slide-ctas">
+            <button class="btn btn-o btn-lg" onclick="openDetail(8)">Ver iPhone 16 Pro</button>
+            <button class="btn btn-ghost" onclick="navShop('iPhone')">Ver todos los iPhone</button>
+          </div>
+        </div>
+      </div>
+      <div class="slide" style="background:linear-gradient(135deg,#0D1F0A 0%,#1A3D12 100%)">
+        <div class="slide-ctr">
+          <div class="slide-tag">Vende tu equipo</div>
+          <h1 class="slide-h">Cotiza en 60 segundos.<br><em>Cobras en 24hs.</em></h1>
+          <p class="slide-s">Precio justo, pago en 24hs. Saldo con +5% bonus o transferencia al instante.</p>
+          <div class="slide-ctas">
+            <button class="btn btn-g btn-lg" onclick="nav('sell')">Cotizar mi equipo</button>
+            <button class="btn btn-ghost" onclick="nav('mensajes')">Hablar con un asesor</button>
+          </div>
+        </div>
+      </div>
+      <div class="slide" style="background:linear-gradient(135deg,#0A1A2E 0%,#1A3D5E 100%)">
+        <div class="slide-ctr">
+          <div class="slide-tag">Mayoristas</div>
+          <h1 class="slide-h">Programa<br><em>mayorista Pro.</em></h1>
+          <p class="slide-s">Hasta 25% de descuento, asesor dedicado 24/7 y precios especiales en volumen.</p>
+          <div class="slide-ctas">
+            <button class="btn btn-o btn-lg" onclick="nav('mayorista')">Quiero ser mayorista</button>
+          </div>
+        </div>
+      </div>
+      <div class="slide" style="background:linear-gradient(135deg,#2E1A00 0%,#4D2E00 100%)">
+        <div class="slide-ctr">
+          <div class="slide-tag">&#128295;&nbsp;Servicio tecnico</div>
+          <h1 class="slide-h">Reparamos desde<br><em>cualquier lugar.</em></h1>
+          <p class="slide-s">Envianos tu equipo por DHL o Andreani. Presupuesto gratis, revision en 24hs.</p>
+          <div class="slide-ctas">
+            <button class="btn btn-o btn-lg" onclick="nav('servicio')">Pedir presupuesto</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="sarr sarr-l" onclick="sliderPrev()">&#8592;</button>
+    <button class="sarr sarr-r" onclick="sliderNext()">&#8594;</button>
+    <div class="slider-nav" id="sliderNav"></div>
+  </div>
+
+  <!-- CATEGORIAS -->
+  <div class="cat-section">
+    <div class="ctr">
+      <div class="cat-grid" id="catGrid">
+        <div class="cat-item" onclick="navShop('iPhone');setCatAct(this)"><img class="cat-ico" src="icons/apple-logo-svgrepo-com.svg"><span class="cat-lbl">iPhone</span></div>
+        <div class="cat-item" onclick="navShop('Samsung');setCatAct(this)"><img class="cat-ico" src="icons/samsung-svgrepo-com.svg"><span class="cat-lbl">Samsung</span></div>
+        <div class="cat-item" onclick="navShop('MacBook');setCatAct(this)"><img class="cat-ico" src="icons/macbook.svg"><span class="cat-lbl">MacBook</span></div>
+        <div class="cat-item" onclick="nav('notebooks');setCatAct(this)"><img class="cat-ico" src="icons/notebook.svg"><span class="cat-lbl">Notebooks</span></div>
+        <div class="cat-item" onclick="navShop('iPad');setCatAct(this)"><img class="cat-ico" src="icons/ipad.svg"><span class="cat-lbl">iPad</span></div>
+        <div class="cat-item" onclick="nav('accesorios');setCatAct(this)"><img class="cat-ico" src="icons/accesorios.svg"><span class="cat-lbl">Accesorios</span></div>
+        <div class="cat-item" onclick="nav('garantias');setCatAct(this)"><span class="cat-ico">&#128737;</span><span class="cat-lbl">Garantias</span></div>
+        <div class="cat-item" onclick="navShop('ofertas');setCatAct(this)"><span class="cat-ico">&#128293;</span><span class="cat-lbl">Ofertas</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DESTACADOS -->
+  <div class="sec sec-white">
+    <div class="ctr">
+      <div class="sec-hdr">
+        <div><div class="sec-tag">Catálogo destacado</div><h2 class="sec-title">Los mas buscados</h2></div>
+        <button class="sec-more" onclick="nav('shop')">Ver todo el catalogo</button>
+      </div>
+      <div class="pgrid" id="featuredGrid"></div>
+    </div>
+  </div>
+
+  <!-- OFERTA DEL DIA -->
+  <div class="sec" style="background:var(--dk2)">
+    <div class="ctr">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-tag" style="color:rgba(255,107,44,.85)">&#128293;&nbsp;Precios especiales</div>
+          <h2 class="sec-title sec-title-lt">Oferta del dia</h2>
+        </div>
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span style="font-size:12px;color:rgba(255,255,255,.5)">Termina en:</span>
+          <span class="timer-val" id="timerEl">06:00:00</span>
+        </div>
+      </div>
+      <div class="ostrip" id="offerStrip"></div>
+    </div>
+  </div>
+
+  <!-- MAS VENDIDOS -->
+  <div class="sec sec-cream">
+    <div class="ctr">
+      <div class="sec-hdr">
+        <div><div class="sec-tag">Tendencia</div><h2 class="sec-title">Los mas vendidos</h2></div>
+        <button class="sec-more" onclick="nav('shop')">Ver catalogo</button>
+      </div>
+      <div class="prail" id="homeRail"></div>
+    </div>
+  </div>
+
+  <!-- SERVICIOS -->
+  <div class="sec" style="background:var(--dk2)">
+    <div class="ctr">
+      <div class="sec-hdr" style="margin-bottom:1.25rem">
+        <h2 class="sec-title sec-title-lt">Nuestros servicios</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+        <div onclick="nav('sell')" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:30px;margin-bottom:.75rem">&#128176;</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:#fff;margin-bottom:.3rem">Vende tu equipo</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Cotizacion en tiempo real. Pago en 24hs. +5% bonus.</div>
+        </div>
+        <div onclick="nav('servicio')" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:30px;margin-bottom:.75rem">&#128295;</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:#fff;margin-bottom:.3rem">Servicio tecnico</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Pantalla, bateria, placa. Desde todo el pais. Sin cargo.</div>
+        </div>
+        <div onclick="showGiftCard()" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:30px;margin-bottom:.75rem">&#127873;</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:#fff;margin-bottom:.3rem">Tarjeta de regalo</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Regala tecnologia. En cuotas o al contado. Cualquier monto.</div>
+        </div>
+        <div onclick="nav('compare')" style="background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.08);border-radius:14px;padding:1.25rem;cursor:pointer;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='rgba(255,255,255,.08)'">
+          <div style="font-size:30px;margin-bottom:.75rem">&#9878;</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:15px;color:#fff;margin-bottom:.3rem">Comparar modelos</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);line-height:1.5">Compara hardware, bateria, camara y precio lado a lado.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GIFT CARD -->
+  <div class="sec sec-white">
+    <div class="ctr">
+      <div class="sec-hdr">
+        <div><div class="sec-tag">Tarjeta de regalo</div><h2 class="sec-title">Regala tecnologia</h2></div>
+      </div>
+      <div class="gift-card" onclick="showGiftCard()">
+        <div class="gift-card-t">Great Phones Gift Card</div>
+        <div class="gift-card-s">Elegi el monto, generamos el codigo. Canjeable en cualquier producto o servicio.</div>
+        <div style="display:flex;gap:8px;margin-top:1rem;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();buyGiftCard(5000)">$5.000</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();buyGiftCard(10000)">$10.000</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();buyGiftCard(25000)">$25.000</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();buyGiftCard(50000)">$50.000</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();buyGiftCard(0)">Monto libre</button>
+        </div>
+        <div class="gift-card-ico">&#127873;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="sec sec-cream">
+    <div class="ctr">
+      <div class="sec-hdr"><h2 class="sec-title">Preguntas frecuentes</h2></div>
+      <div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Puedo enviar mi equipo desde otra ciudad?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Si. Recibimos equipos desde cualquier parte del pais y del mundo via DHL, FedEx o Andreani. Te enviamos el presupuesto por mensajeria interna antes de tocar nada.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Como funciona la mensajeria privada?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Cada compra o cotizacion tiene su propia conversacion privada con nuestro equipo. Podes enviar fotos y recibir actualizaciones en tiempo real, sin WhatsApp.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Cuantas cuotas aceptan?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Hasta 24 cuotas con tarjeta de credito. Sin interes hasta 12 cuotas. Tambien aceptamos Mercado Pago, transferencia y efectivo.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Puedo armar mi notebook a medida?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Si. En la seccion Notebooks podes elegir el modelo base y configurarle el procesador, RAM, almacenamiento y extras. El precio se actualiza en tiempo real.</div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Como funciona la garantia extendida?<svg class="faq-arr" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></button><div class="faq-a">Disponible dentro de los primeros 90 dias de tu compra. Ingresa tu codigo de compra e IMEI en la seccion Garantias para ver las opciones disponibles para tu equipo.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="ctr">
+      <div class="footer-logo">
+        <div class="footer-mark">&#128241;</div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#fff">Great Phones</div>
+      </div>
+      <p class="footer-sub">Zelarrayan 179, Bahia Blanca &middot; 9hs a 21:30hs lunes a lunes<br>@greatphones.bb &middot; +54 9 2914 72-7351</p>
+      <div class="footer-links">
+        <button class="fl-lnk" onclick="navShop('todos')">Comprar</button>
+        <button class="fl-lnk" onclick="nav('sell')">Vender</button>
+        <button class="fl-lnk" onclick="nav('servicio')">Servicio tecnico</button>
+        <button class="fl-lnk" onclick="nav('garantias')">Garantias</button>
+        <button class="fl-lnk" onclick="nav('accesorios')">Accesorios</button>
+        <button class="fl-lnk" onclick="nav('mayorista')">Mayorista</button>
+        <button class="fl-lnk" onclick="navShop('ofertas')">Ofertas</button>
+        <button class="fl-lnk" onclick="nav('compare')">Comparar</button>
+        <button class="fl-lnk" onclick="nav('notebooks')">Notebooks</button>
+        <button class="fl-lnk" onclick="nav('mensajes')">Mensajes</button>
+        <button class="fl-lnk footer-arrepentimiento" onclick="notAvailable()" style="margin-left:auto">Botón de Arrepentimiento</button>
+      </div>
+      <div class="footer-bottom">2025 Great Phones Bahia Blanca &mdash; Todos los derechos reservados</div>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,32 @@
+<div class="page" id="p-notebooks">
+  <div class="sh-hdr">
+    <div class="ctr">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.5);margin-bottom:.5rem">Configurador</div>
+      <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(22px,4vw,36px);color:#fff;margin-bottom:.5rem">Armala a tu medida.</h1>
+      <p style="font-size:12px;color:rgba(255,255,255,.45)">Elegis el modelo base y configuras CPU, RAM, almacenamiento y extras.</p>
+    </div>
+  </div>
+  <div style="background:var(--cream)">
+    <div class="ctr">
+      <div class="nb-layout">
+        <div>
+          <div class="nb-card"><div class="nb-card-title">&#128187; Modelo base</div><div class="nb-opts" id="nbBaseOpts"></div></div>
+          <div class="nb-card"><div class="nb-card-title">&#9881; Procesador</div><div class="nb-opts" id="nbCpuOpts"></div></div>
+          <div class="nb-card"><div class="nb-card-title">&#129520; Memoria RAM</div><div class="nb-opts" id="nbRamOpts"></div></div>
+          <div class="nb-card"><div class="nb-card-title">&#128190; Almacenamiento</div><div class="nb-opts" id="nbStorOpts"></div></div>
+          <div class="nb-card"><div class="nb-card-title">&#10133; Extras opcionales</div><div class="nb-opts" id="nbExtraOpts"></div></div>
+        </div>
+        <div class="nb-sum">
+          <div class="nb-sum-img" id="nbSumImg">&#128187;</div>
+          <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;margin-bottom:.25rem" id="nbSumName">Selecciona un modelo</div>
+          <div style="font-size:10px;color:var(--gray)" id="nbSumSub">Configura tu equipo ideal</div>
+          <div class="nb-sum-items" id="nbSumItems"></div>
+          <div class="nb-total-row"><span class="nb-total-lbl">Total</span><span class="nb-total-val" id="nbTotal">$0</span></div>
+          <div style="font-size:10px;color:var(--gray);margin-bottom:1rem" id="nbCuota"></div>
+          <button class="btn btn-o btn-full btn-lg" onclick="addNbToCart()">Agregar al carrito</button>
+          <button class="btn btn-g btn-full" style="margin-top:8px" onclick="addNbToCart();openCart()">Comprar ahora</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

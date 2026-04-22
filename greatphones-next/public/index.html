@@ -159,7 +159,7 @@
   <div class="cat-section">
     <div class="ctr">
       <div class="cat-grid" id="catGrid">
-        <div class="cat-item act" onclick="navShop('iPhone');setCatAct(this)"><img class="cat-ico" src="icons/apple-logo-svgrepo-com.svg"><span class="cat-lbl">iPhone</span></div>
+        <div class="cat-item" onclick="navShop('iPhone');setCatAct(this)"><img class="cat-ico" src="icons/apple-logo-svgrepo-com.svg"><span class="cat-lbl">iPhone</span></div>
         <div class="cat-item" onclick="navShop('Samsung');setCatAct(this)"><img class="cat-ico" src="icons/samsung-svgrepo-com.svg"><span class="cat-lbl">Samsung</span></div>
         <div class="cat-item" onclick="navShop('MacBook');setCatAct(this)"><img class="cat-ico" src="icons/macbook.svg"><span class="cat-lbl">MacBook</span></div>
         <div class="cat-item" onclick="nav('notebooks');setCatAct(this)"><img class="cat-ico" src="icons/notebook.svg"><span class="cat-lbl">Notebooks</span></div>
@@ -413,8 +413,10 @@
           <!-- Name & Price -->
           <div>
             <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:42px;font-weight:700;line-height:1.1;margin-bottom:12px" id="detName">iPhone 16 Pro</h1>
-            <div style="display:flex;align-items:baseline;gap:12px">
-              <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <div style="display:flex;align-items:center;gap:8px" id="detPriceWrap">
+                <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+              </div>
               <span style="font-size:16px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
             </div>
           </div>
@@ -842,8 +844,13 @@
             <span style="color:#fff;font-size:12px">✓</span>
           </div>
         </div>
-        <div style="text-align:center;md:text-align:left">
-          <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;margin-bottom:.25rem" id="cuentaName">Guest</h1>
+        <div style="text-align:center;md:text-align:left;flex:1">
+          <div style="display:flex;align-items:center;justify-content:center;md:justify-content:flex-start;gap:8px">
+            <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700" id="cuentaName">Guest</h1>
+            <button onclick="nav('edit-profile');loadEditProfile()" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
           <p style="font-size:13px;color:var(--gray)" id="cuentaEmail">Inicia sesion para ver tu cuenta</p>
         </div>
       </div>
@@ -905,6 +912,98 @@
         <button onclick="doLogout();nav('home')" style="width:100%;padding:14px;border:1.5px solid var(--red);border-radius:12px;background:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Cerrar sesión</button>
         <p style="text-align:center;font-size:10px;color:var(--gray);margin-top:1rem">© 2024 Great Phones. Todos los derechos reservados.</p>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: EDIT PROFILE ============================= -->
+<div class="page" id="p-edit-profile">
+  <div style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+    <div style="max-width:1240px;margin:0 auto">
+      
+      <div style="margin-bottom:2rem">
+        <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Editar Perfil</h2>
+        <p style="font-size:15px;color:var(--gray)">Actualizá tu información personal y datos de tu cuenta</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;grid-template-columns:repeat(12,1fr)">
+        
+        <div style="grid-column:span 4;background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;justify-content:center">
+          <div style="position:relative">
+            <div id="editProfileAvatar" style="width:130px;height:130px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff;font-family:'Playfair Display',Georgia,serif">GP</div>
+            <button style="position:absolute;bottom:0;right:0;background:var(--orange);color:#fff;width:36px;height:36px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          </div>
+          <div style="text-align:center;margin-top:1rem">
+            <button style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer;text-decoration:underline">Cambiar Foto</button>
+            <p style="font-size:12px;color:var(--gray);margin-top:4px">JPG, GIF o PNG. Max 1MB.</p>
+          </div>
+        </div>
+
+        <div style="grid-column:span 8;background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh)">
+          <div style="display:grid;gap:1rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Nombre</label>
+                <input type="text" id="editProfileName" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Apellido</label>
+                <input type="text" id="editProfileLastname" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+            </div>
+            
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Teléfono</label>
+              <input type="tel" id="editProfilePhone" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+            </div>
+            
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Email</label>
+              <input type="email" id="editProfileEmail" disabled style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
+              <p style="font-size:11px;color:var(--gray);margin-top:4px">Tu email se usa para seguridad y notificaciones de la cuenta</p>
+            </div>
+            
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Contraseña</label>
+              <input type="password" disabled placeholder="••••••••" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
+            </div>
+          </div>
+        </div>
+
+        <div onclick="showToast('Próximamente: Configuración de seguridad')" style="grid-column:span 6;background:var(--cream);border:1px solid var(--border);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='var(--cream)'">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div style="background:var(--cream3);padding:10px;border-radius:8px;color:var(--dk2)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px;font-weight:600;color:var(--dk)">Seguridad de la Cuenta</h3>
+              <p style="font-size:12px;color:var(--gray)">Contraseña, 2FA y sesiones</p>
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+
+        <div onclick="confirmDeleteAccount()" style="grid-column:span 6;background:#fff;border:1px solid rgba(192,57,43,.2);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='#fff'">
+          <div style="display:flex;align-items:center;gap:1rem">
+            <div style="background:rgba(192,57,43,.1);padding:10px;border-radius:8px;color:var(--red)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+            <div>
+              <h3 style="font-size:16px;font-weight:600;color:var(--red)">Eliminar Cuenta</h3>
+              <p style="font-size:12px;color:var(--gray)">Permanentemente tus datos</p>
+            </div>
+          </div>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(192,57,43,.5)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:1rem;padding-top:2rem;border-top:1px solid var(--border)">
+        <button onclick="nav('cuenta')" style="padding:12px 24px;font-weight:600;color:var(--gray);background:none;border:1px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">Cancelar</button>
+        <button onclick="saveEditProfile()" style="padding:12px 32px;font-weight:600;color:#fff;background:var(--orange);border:none;border-radius:12px;font-size:14px;cursor:pointer;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--orange2)'" onmouseout="this.style.background='var(--orange)'">Guardar Cambios</button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -973,14 +1072,6 @@
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prodType"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="prodColor" placeholder="Titanio Natural"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Pantalla</label><input class="inp-f" id="prodScreen" placeholder="6.1"></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descuento %</label><input class="inp-f" id="prodDiscount" type="number" placeholder="0" min="0" max="100"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">En oferta?</label><select class="sel-f" id="prodIsOffer"><option value="false">No</option><option value="true">Si</option></select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio promo (opcional)</label><input class="inp-f" id="prodOfferStart" type="datetime-local"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin promo (opcional)</label><input class="inp-f" id="prodOfferEnd" type="datetime-local"></div>
         </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
@@ -1134,18 +1225,41 @@
 <!-- ===== CONFIRM OVERLAY ===== -->
 <div id="confirmOverlay" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)" onclick="closeConfirm()"></div>
-  <div style="position:relative;background:#fff;border-radius:20px;width:min(380px,90%);padding:2rem;box-shadow:0 25px 50px rgba(0,0,0,.25);text-align:center">
-    <div style="width:64px;height:64px;background:rgba(255,0,0,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
-      <span style="font-size:32px">🗑️</span>
+  <div style="position:relative;background:#fff;border-radius:20px;width:min(420px,90%);padding:2rem;box-shadow:0 25px 50px rgba(0,0,0,.25);text-align:center">
+    <div style="width:72px;height:72px;background:rgba(192,57,43,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
     </div>
-    <div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;margin-bottom:.5rem;color:var(--dk)" id="confirmTitle">Confirmar accion</div>
-    <div style="font-size:14px;color:var(--gray);margin-bottom:1.5rem;line-height:1.5" id="confirmMsg">Estas seguro?</div>
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Eliminar Cuenta</div>
+    <div style="font-size:14px;color:var(--gray);margin-bottom:1.5rem;line-height:1.6">
+      ¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es <strong style="color:#C0392B">permanente</strong> y no se puede deshacer.<br><br>
+      Perderás todos tus datos, pedidos y favoritos.
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;margin-bottom:1.5rem;text-align:left;padding:14px;background:var(--cream);border-radius:12px" onclick="event.stopPropagation()">
+      <input type="checkbox" id="deleteConfirmCheck" onchange="toggleDeleteBtn()" style="width:20px;height:20px;margin-top:2px;accent-color:var(--red);cursor:pointer">
+      <span style="font-size:13px;color:var(--dk);line-height:1.4">Entiendo que esta acción es irreversible y que perderé permanentemente todos mis datos</span>
+    </label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onclick="confirmAction(false)" style="padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk)">Cancelar</button>
-      <button onclick="confirmAction(true)" style="padding:14px;border:none;border-radius:12px;background:var(--red);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Eliminar</button>
+      <button onclick="closeConfirm()" style="padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk)">Cancelar</button>
+      <button id="confirmDeleteBtn" onclick="deleteUserAccount()" disabled style="padding:14px;border:none;border-radius:12px;background:var(--gray2);color:#fff;font-size:14px;font-weight:600;cursor:not-allowed">Eliminar Mi Cuenta</button>
     </div>
   </div>
 </div>
+
+<script>
+function toggleDeleteBtn(){
+  var check=document.getElementById('deleteConfirmCheck');
+  var btn=document.getElementById('confirmDeleteBtn');
+  if(check.checked){
+    btn.disabled=false;
+    btn.style.background='var(--red)';
+    btn.style.cursor='pointer';
+  }else{
+    btn.disabled=true;
+    btn.style.background='var(--gray2)';
+    btn.style.cursor='not-allowed';
+  }
+}
+</script>
 
 <!-- ===== IMAGE LIGHTBOX ===== -->
 <div id="lightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:900;align-items:center;justify-content:center;cursor:zoom-out" onclick="this.style.display='none'">

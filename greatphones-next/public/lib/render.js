@@ -29,11 +29,10 @@ function renderGrid(gid,prods){
   var now=new Date();
   grid.innerHTML=prods.map(function(p){
     var isPromoActive=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
-    var finalPrice=isPromoActive?Math.round(p.price*(1-p.discount/100)):p.price;
+    var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
     var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'">':'<span>📱</span>';
-    var badges=(p.condition==='Nuevo'?'<span class="pcard-bdg bdg-new">Nuevo</span>':(p.condition&&p.condition!=='Nuevo'?'<span class="pcard-bdg bdg-used">'+p.condition+'</span>':''))+
-      (isPromoActive?'<span class="pcard-bdg bdg-disc">-'+p.discount+'%</span>':'');
+    var badges=(p.condition==='Nuevo'?'<span class="pcard-bdg bdg-new">Nuevo</span>':(p.condition&&p.condition!=='Nuevo'?'<span class="pcard-bdg bdg-used">'+p.condition+'</span>':''));
     var isFav=isFavorite(p.id);
     return '<div class="pcard" onclick="openDetail(\''+p.id+'\')">'+
       '<div class="pcard-img">'+
@@ -44,7 +43,10 @@ function renderGrid(gid,prods){
       '<div class="pcard-body">'+
       '<div class="pcard-name">'+p.name+'</div>'+
       '<div class="pcard-sub">'+p.sub+'</div>'+
-      '<div><span class="pcard-price">'+fmt(finalPrice)+'</span>'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span>':'')+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:2px">'+
+        (isPromoActive?'<div style="display:flex;align-items:center;gap:6px"><span class="pcard-price">'+fmt(finalPrice)+'</span><span style="display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;padding:2px 5px;border-radius:5px;background:var(--red);color:#fff">'+p.discount+'%</span></div>':'<div><span class="pcard-price">'+fmt(finalPrice)+'</span></div>')+
+        (isPromoActive?'<div><span class="pcard-old" style="font-size:11px">'+fmt(p.price)+'</span></div>':'')+
+      '</div>'+
       '<div class="pcard-cuota">12x '+fmt(cuota)+' sin interes</div>'+
       (p.stock<=2&&p.stock>0?'<div class="pcard-stock">&#9888; Solo '+p.stock+' en stock</div>':'')+
       '</div>'+
@@ -63,7 +65,7 @@ function renderOfferStrip(){
   if(!strip)return;
   var offers=PRODUCTS.filter(function(p){return p.isOffer;});
   strip.innerHTML=offers.map(function(p){
-    var fp=Math.round(p.price*(1-p.discount/100));
+    var fp=Math.round(p.price-p.price*p.discount/100);
     return '<div class="ocard" onclick="openDetail(\''+p.id+'\')">'+
       '<div class="ocard-img"><span style="font-size:40px">'+p.ico+'</span><span class="ocard-disc">-'+p.discount+'%</span></div>'+
       '<div class="ocard-body"><div class="ocard-name">'+p.name+'</div><div class="ocard-old">'+fmt(p.price)+'</div><div class="ocard-price">'+fmt(fp)+'</div></div>'+
@@ -115,15 +117,18 @@ function openDetail(id){
   document.getElementById('detMeta').textContent=currentProd.sub+(currentProd.battery?(' — Batería '+currentProd.battery+'%'):'');
   var now=new Date();
   var isPromoActive=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
-  var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
+  var finalPrice=isPromoActive?Math.round(currentProd.price-currentProd.price*currentProd.discount/100):currentProd.price;
   document.getElementById('detPrice').innerHTML=fmt(finalPrice);
   document.getElementById('detTotal').innerHTML=fmt(finalPrice);
   var oldPrice=document.getElementById('detOld');
+  var detPriceWrap=document.getElementById('detPriceWrap');
   if(isPromoActive&&currentProd.discount){
-    var originalPrice=Math.round(currentProd.price/(1-currentProd.discount/100));
+    var originalPrice=currentProd.price;
+    detPriceWrap.innerHTML='<span style="font-family:\'Playfair Display\',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)">'+fmt(finalPrice)+'</span><span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;margin-left:8px">-'+currentProd.discount+'%</span>';
     oldPrice.innerHTML=fmt(originalPrice);
     oldPrice.classList.remove('hidden');
   }else{
+    detPriceWrap.innerHTML=fmt(finalPrice);
     oldPrice.classList.add('hidden');
   }
   detWMult=0;detDExtra=0;selCuotas=1;
@@ -406,10 +411,6 @@ function saveProduct(){
     type:getField(document.getElementById('prodType').value,originalProduct?originalProduct.type:null),
     color:getField(document.getElementById('prodColor').value,originalProduct?originalProduct.color:null),
     screen:getField(document.getElementById('prodScreen').value,originalProduct?originalProduct.screen:true),
-    discount:getField(document.getElementById('prodDiscount').value,originalProduct?originalProduct.discount:true),
-    isOffer:document.getElementById('prodIsOffer').value==='true',
-    offerStart:document.getElementById('prodOfferStart').value||null,
-    offerEnd:document.getElementById('prodOfferEnd').value||null,
     imageUrl:getField(document.getElementById('prodImageUrl').value,originalProduct?originalProduct.imageUrl:null),
     images:getAdditionalImages(),
     ico:originalProduct?originalProduct.ico:'📱'
@@ -451,10 +452,7 @@ function editProduct(id){
   document.getElementById('prodType').value=p.type||'celular';
   document.getElementById('prodColor').value=p.color||'';
   document.getElementById('prodScreen').value=p.screen||'';
-  document.getElementById('prodDiscount').value=p.discount||0;
-  document.getElementById('prodIsOffer').value=p.isOffer?'true':'false';
-  document.getElementById('prodOfferStart').value=p.offerStart?new Date(p.offerStart).toISOString().slice(0,16):'';
-  document.getElementById('prodOfferEnd').value=p.offerEnd?new Date(p.offerEnd).toISOString().slice(0,16):'';
+  
   document.getElementById('prodImageUrl').value=p.imageUrl||'';
   if(p.imageUrl){
     document.getElementById('prodImagePreview').innerHTML='<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
@@ -740,7 +738,7 @@ function renderPromoProducts(){
   });
   list.innerHTML=filtered.map(function(p){
     var isSelected=document.getElementById('promo-chk-'+p.id)?.checked;
-    var oldPrice=p.isOffer?Math.round(p.price/(1-p.discount/100)):p.price;
+    var oldPrice=p.isOffer?p.price:p.price;
     return'<div style="background:#fff;border-radius:12px;padding:10px;border:1px solid '+(isSelected?'var(--orange)':'var(--border)')+';cursor:pointer;transition:all .2s'+(isSelected?';box-shadow:0 2px 8px rgba(255,107,44,0.2)':'')+'" onclick="togglePromoProduct(\''+p.id+'\')">'+
       '<div style="position:absolute;top:6px;right:6px;z-index:10">'+
         '<input type="checkbox" id="promo-chk-'+p.id+'" '+(isSelected?'checked':'')+' style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);cursor:pointer" onclick="event.stopPropagation()">'+

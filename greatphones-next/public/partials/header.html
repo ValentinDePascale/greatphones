@@ -1,0 +1,80 @@
+<!-- ===== TOPBAR ===== -->
+<div class="topbar">
+  <div class="tb">
+    <button class="tb-loc" onclick="promptLocation()">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span>Envios a&nbsp;</span><span class="tb-lv" id="locVal">Bahia Blanca</span>
+    </button>
+    <div class="tb-sep"></div>
+    <div class="tb-links">
+      <button class="tb-lnk" onclick="nav('sell')">Vende tu equipo</button>
+      <button class="tb-lnk" onclick="nav('servicio')">Servicio tecnico</button>
+      <button class="tb-lnk" onclick="nav('mayorista')">Mayoristas</button>
+      <button class="tb-lnk" onclick="nav('compare')">Comparar modelos</button>
+    </div>
+    <div class="tb-right">
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN NAV ===== -->
+<div class="mainnav">
+  <div class="nav">
+    <button class="nav-logo" onclick="nav('home')">
+      <div class="nav-mark">&#128241;</div>
+      <div><span class="nav-txt">Great Phones</span><span class="nav-sub">Bahia Blanca</span></div>
+    </button>
+    <div class="nav-search">
+      <input class="nsi" id="searchInput" placeholder="Buscar iPhone, MacBook, Samsung..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="nsb" onclick="doSearch()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <div class="srdd" id="searchDD"></div>
+    </div>
+    <div class="nav-acts">
+      <div class="notif-wrap">
+        <button class="nbtn" onclick="toggleNotif(event)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="nbadge hidden" id="notifBadge">0</span>
+        </button>
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-hdr"><span class="notif-title">Notificaciones</span><button class="notif-clr" onclick="clearNotifs()">Marcar leidas</button></div>
+          <div id="notifList"></div>
+        </div>
+      </div>
+      <button class="nbtn" onclick="nav('favoritos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+        <span class="nbadge hidden" id="favBadge">0</span>
+      </button>
+      <button class="nbtn" onclick="openCart()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span>Carrito</span><span class="nbadge hidden" id="cartBadge">0</span>
+      </button>
+      <button class="nbtn" onclick="nav('mensajes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+        <span class="nbadge hidden" id="msgBadge">0</span>
+      </button>
+      <button class="nbtn" onclick="nav('cuenta')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Cuenta</span>
+      </button>
+      <button class="nbtn nbtn-sell" onclick="nav('sell')">Vender</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CATEGORY NAV ===== -->
+<div class="catnav">
+  <div class="catnav-inner">
+    <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
+    <button class="cni" id="cn-shop" onclick="navShop('todos');setCN('shop')">Catálogo</button>
+    <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
+    <button class="cni" id="cn-servicio" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
+    <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
+    <button class="cni" id="cn-notebooks" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
+    <button class="cni" id="cn-mayorista" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
+    <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantias</button>
+    <button class="cni" id="cn-compare" onclick="nav('compare');setCN('compare')">Comparar</button>
+    <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')">Ofertas</button>
+  </div>
+</div>
