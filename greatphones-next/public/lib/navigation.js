@@ -158,6 +158,10 @@ function nav(id){
     setCN('shop');
     document.querySelectorAll('#filterBar .fchip').forEach(function(c){c.classList.remove('act');});
     document.querySelector('#filterBar .fchip').classList.add('act');
+    var titleEl=document.getElementById('shopTitle');
+    if(titleEl)titleEl.textContent='Catálogo';
+    var subEl=document.getElementById('shopSub');
+    if(subEl)subEl.textContent='Todos los equipos verificados con garantia incluida';
   }
   if(id==='ofertas')renderOfertasGrid();
   if(id==='accesorios')renderAccGrid();

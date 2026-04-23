@@ -833,95 +833,104 @@
 </div>
 
 <!-- ============================= PAGE: CUENTA ============================= -->
-<div class="page" id="p-cuenta">
-  <div style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
-    <div class="ctr" style="max-width:800px">
-      <!-- Profile Header -->
-      <div style="display:flex;flex-direction:column;md:flex-direction:row;align-items:center;gap:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:1.5rem">
+<div class="page" id="p-cuenta" style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+    <div style="max-width:1240px;margin:0 auto">
+        <section style="display:flex;flex-direction:column;md:flex-direction:row;align-items:center;gap:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem">
         <div style="position:relative">
-          <div class="cuenta-av" id="cuentaAvatar" style="font-family:'Playfair Display',Georgia,serif;width:80px;height:80px;border-radius:50%;background:var(--orange);color:#fff;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center">GP</div>
-          <div style="position:absolute;bottom:0;right:0;background:var(--green);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--cream)">
-            <span style="color:#fff;font-size:12px">✓</span>
+          <div id="cuentaAvatar" style="width:90px;height:90px;border-radius:50%;background:var(--orange);color:#fff;font-size:30px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif">GP</div>
+          <div style="position:absolute;bottom:2px;right:2px;background:var(--green);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--cream)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
           </div>
         </div>
-        <div style="text-align:center;md:text-align:left;flex:1">
-          <div style="display:flex;align-items:center;justify-content:center;md:justify-content:flex-start;gap:8px">
-            <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700" id="cuentaName">Guest</h1>
-            <button onclick="nav('edit-profile');loadEditProfile()" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:50%;display:flex;align-items:center;justify-content:center">
+        <div style="flex:1;text-align:center">
+          <div style="display:inline-flex;align-items:center;gap:10px">
+            <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:36px;font-weight:700;color:var(--dk)" id="cuentaName">Administrador</h1>
+            <button onclick="nav('edit-profile');loadEditProfile()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
             </button>
           </div>
-          <p style="font-size:13px;color:var(--gray)" id="cuentaEmail">Inicia sesion para ver tu cuenta</p>
+          <p style="font-size:14px;font-weight:500;color:var(--gray);margin-top:4px;text-align:center" id="cuentaEmail">admin@greatphones.com</p>
         </div>
-      </div>
-      
-      <!-- Logged In Content -->
+        
+      </section>
+
       <div id="cuentaLoggedIn" style="display:block">
-        <!-- Balance Card -->
-        <div style="background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);border-radius:24px;padding:2rem;position:relative;overflow:hidden;min-height:200px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;margin-bottom:1.5rem">
-          <div style="position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:var(--orange);border-radius:50%;opacity:20;filter:blur(40px)"></div>
-          <div style="position:relative;z-index:1">
-            <div style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:70;color:rgba(255,255,255,.7)">Saldo Great Phones</div>
-            <div style="font-family:'Playfair Display',Georgia,serif;font-size:48px;font-weight:700;margin-top:8px" id="cuentaSaldo">$0</div>
-          </div>
-          <div style="position:relative;z-index:1;display:flex;gap:12px;flex-wrap:wrap;margin-top:1rem">
-            <button onclick="nav('shop')" style="background:var(--orange);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;gap:8px">Usar en compras <span>→</span></button>
-            <button style="background:rgba(255,255,255,.1);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.2);cursor:pointer">Retirar</button>
-          </div>
-        </div>
         
-        <!-- Grid Layout -->
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:1.5rem">
-          <!-- Purchase History -->
-          <div style="background:#fff;border-radius:20px;padding:1.5rem;grid-column:span 2;md:grid-column:span 1">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-              <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Historial de Compras</h3>
-              <span style="color:var(--gray)">📦</span>
-            </div>
-            <div id="orderHistory" style="text-align:center;padding:1.5rem 0;color:var(--gray)">
-              <div style="font-size:32px;margin-bottom:.5rem">📦</div>
-              <p style="font-size:13px">No tenes pedidos</p>
-              <button onclick="nav('shop')" style="margin-top:12px;color:var(--orange);background:none;border:none;font-size:12px;font-weight:600;cursor:pointer">Ir a la tienda</button>
-            </div>
-          </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;grid-template-columns:repeat(12,1fr)">
           
-          <!-- Quotations -->
-          <div style="background:#fff;border-radius:20px;padding:1.5rem;grid-column:span 2;md:grid-column:span 1">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
-              <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Mis Cotizaciones</h3>
-              <span style="color:var(--gray)">📄</span>
+          <div style="grid-column:span 8;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);border-radius:18px;padding:2rem;position:relative;overflow:hidden;min-height:220px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;box-shadow:var(--shlg)">
+            <div style="position:absolute;top:-30px;right:-30px;width:160px;height:160px;background:var(--green);border-radius:50%;opacity:20;filter:blur(60px)"></div>
+            <div style="position:relative;z-index:1">
+              <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;opacity:70;color:rgba(255,255,255,.7)">Saldo Great Phones</span>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-top:12px">
+                <span style="font-family:'Playfair Display',Georgia,serif;font-size:36px;font-weight:700">$</span>
+                <span style="font-family:'Playfair Display',Georgia,serif;font-size:56px;font-weight:700;letter-spacing:-2px" id="cuentaSaldo">0</span>
+              </div>
             </div>
-            <div id="quotHistory" style="text-align:center;padding:1.5rem 0;color:var(--gray)">
-              <div style="font-size:32px;margin-bottom:.5rem">📄</div>
-              <p style="font-size:13px">No tenes cotizaciones</p>
-              <button style="margin-top:12px;color:var(--orange);background:none;border:none;font-size:12px;font-weight:600;cursor:pointer">Solicitar una ahora</button>
+            <div style="position:relative;z-index:1;display:flex;gap:12px;flex-wrap:wrap;margin-top:1rem">
+              <button onclick="nav('shop')" style="background:var(--orange);color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--orange2)'" onmouseout="this.style.background='var(--orange)'">
+                <span>Usar en compras</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+              <button style="background:rgba(255,255,255,.1);color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:700;border:1px solid rgba(255,255,255,.2);cursor:pointer;backdrop-filter:blur(8px);transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.2)'" onmouseout="this.style.background='rgba(255,255,255,.1)'">Retirar</button>
             </div>
           </div>
-        </div>
-        
-        <!-- Messages -->
-        <div style="background:#fff;border-radius:20px;padding:1.5rem;margin-bottom:1.5rem">
-          <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk);margin-bottom:1rem">Canal Directo</h3>
-          <p style="font-size:13px;color:var(--gray);margin-bottom:1rem">¿Necesitás ayuda con una cotización o pedido? Hablá con nosotros.</p>
-          <button onclick="nav('mensajes')" style="width:100%;background:var(--green);color:#fff;padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">💬 Abrir mensajes con GP</button>
+
+          <div style="grid-column:span 4;background:var(--cream2);border-radius:18px;padding:1.5rem;display:flex;flex-direction:column;justify-content:space-between;box-shadow:var(--sh);border:1px solid var(--border)">
+            <div>
+              <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Canal Directo</h3>
+              <p style="font-size:13px;color:var(--gray);margin-top:8px;line-height:1.5">¿Necesitas ayuda con una cotización o pedido? Hablá con nosotros.</p>
+            </div>
+            <button onclick="nav('mensajes')" style="margin-top:12px;width:100%;background:var(--green);color:#fff;padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--green2)'" onmouseout="this.style.background='var(--green)'">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+              <span>Abrir mensajes con GP</span>
+            </button>
+          </div>
+
+          <div style="grid-column:span 6;background:var(--cream2);border-radius:18px;padding:1.5rem;border:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+              <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--green)">Historial de Compras</h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray2)" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div style="text-align:center;padding:2rem 0;color:var(--gray)">
+              <div style="width:60px;height:60px;background:var(--cream3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+              </div>
+              <p style="font-size:14px;font-weight:500">No tenes pedidos</p>
+              <button onclick="nav('shop')" style="margin-top:12px;color:var(--green);background:none;border:none;font-size:13px;font-weight:700;cursor:pointer">Ir a la tienda</button>
+            </div>
+          </div>
+
+          <div style="grid-column:span 6;background:var(--cream2);border-radius:18px;padding:1.5rem;border:1px solid var(--border)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+              <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--green)">Mis Cotizaciones</h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray2)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+            </div>
+            <div style="text-align:center;padding:2rem 0;color:var(--gray)">
+              <div style="width:60px;height:60px;background:var(--cream3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M12 13h.01"/></svg>
+              </div>
+              <p style="font-size:14px;font-weight:500">No tenes cotizaciones</p>
+              <button style="margin-top:12px;color:var(--green);background:none;border:none;font-size:13px;font-weight:700;cursor:pointer">Solicitar una ahora</button>
+            </div>
+          </div>
         </div>
       </div>
-      
-      <!-- Logout -->
+    
       <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border)">
-        <button onclick="doLogout();nav('home')" style="width:100%;padding:14px;border:1.5px solid var(--red);border-radius:12px;background:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">🚪 Cerrar sesión</button>
-        <p style="text-align:center;font-size:10px;color:var(--gray);margin-top:1rem">© 2024 Great Phones. Todos los derechos reservados.</p>
+        <button onclick="doLogout();nav('home')" style="width:100%;padding:14px;border:1.5px solid var(--red);border-radius:12px;background:none;color:var(--red);font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          Cerrar sesión
+        </button>
+        <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:1rem">© 2024 Great Phones. Todos los derechos reservados.</p>
       </div>
     </div>
-  </div>
+    </div>
 </div>
 
 <!-- ============================= PAGE: EDIT PROFILE ============================= -->
-<div class="page" id="p-edit-profile">
-  <div style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
-    <div style="max-width:1240px;margin:0 auto">
-      
-      <div style="margin-bottom:2rem">
+<div class="page" id="p-edit-profile" style="background:var(--cream);padding:2rem 1rem;min-height:100vh;max-width:1240px;margin:0 auto">
+    <div style="margin-bottom:2rem">
         <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Editar Perfil</h2>
         <p style="font-size:15px;color:var(--gray)">Actualizá tu información personal y datos de tu cuenta</p>
       </div>
@@ -1272,7 +1281,6 @@ function toggleDeleteBtn(){
 <script>
 console.log('[BROWSER] Page loaded');
 </script>
-<script src="lib/search.js"></script>
 <script src="lib/favorites.js"></script>
 <script src="lib/cart.js"></script>
 <script src="lib/notifications.js"></script>
@@ -1280,6 +1288,7 @@ console.log('[BROWSER] Page loaded');
 <script src="lib/sell.js"></script>
 <script src="lib/admin.js"></script>
 <script src="lib/render.js"></script>
+<script src="lib/search.js"></script>
 <script>initFavorites();initCart();loadProducts();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
 </body>
 </html>

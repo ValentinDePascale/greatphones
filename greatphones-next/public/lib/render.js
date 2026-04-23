@@ -256,6 +256,12 @@ function filterShop(f,btn){
   document.querySelectorAll('#filterBar .fchip').forEach(function(c){c.classList.remove('act');});
   btn.classList.add('act');
   renderShopGrid();
+  if(f==='todos'){
+    var titleEl=document.getElementById('shopTitle');
+    if(titleEl)titleEl.textContent='Catálogo';
+    var subEl=document.getElementById('shopSub');
+    if(subEl)subEl.textContent='Todos los equipos verificados con garantia incluida';
+  }
 }
 function filtAcc(f,btn){
   accFilter=f;
