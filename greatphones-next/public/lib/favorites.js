@@ -49,12 +49,15 @@ function toggleDetFav(){
 function isFavorite(id){
   return favorites.indexOf(id)!==-1;
 }
-function toggleFavFromCard(id){
+function toggleFavFromCard(id,btn){
   var idx=favorites.indexOf(id);
+  if(!btn)btn=event.currentTarget;
   if(idx===-1){
     favorites.push(id);
+    if(btn){btn.classList.remove('anim');void btn.offsetWidth;btn.classList.add('anim');}
   }else{
     favorites.splice(idx,1);
+    if(btn){btn.classList.remove('anim');}
   }
   saveFavorites();
   updFavBadge();
@@ -62,6 +65,7 @@ function toggleFavFromCard(id){
   renderShopGrid();
   renderOfertasGrid();
   renderFeaturedGrid();
+  if(typeof renderAccGrid==='function')renderAccGrid();
   if(document.getElementById('p-favoritos').classList.contains('act')){
     renderFavGrid();
   }
@@ -75,8 +79,10 @@ function renderFavGrid(){
     if(cnt)cnt.textContent='0 guardados';
   }else{
     empty.style.display='none';grid.style.display='grid';
-    grid.style.gridTemplateColumns='repeat(auto-fill,minmax(180px,1fr))';
-    grid.style.gap='12px';
+    grid.style.gridTemplateColumns='repeat(auto-fill,minmax(220px,1fr))';
+    grid.style.gap='20px';
+    grid.style.maxWidth='1200px';
+    grid.style.margin='0 auto';
     renderGrid('favGrid',favProducts);
     if(cnt)cnt.textContent=favProducts.length+' guardados';
   }

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "discount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "isOffer" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "offerEnd" TIMESTAMP(3),
+ADD COLUMN     "offerStart" TIMESTAMP(3);

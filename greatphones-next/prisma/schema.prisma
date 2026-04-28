@@ -14,6 +14,9 @@ model User {
   password  String?
   phone     String?
   dni       String?
+  direccion String?
+  piso     String?
+  cp        String?
   provincia String?
   ciudad   String?
   role      Role     @default(CLIENT)
@@ -23,16 +26,17 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders        Order[]
-  quotes        Quote[]
-  sales         Sale[]
-  repairs       Repair[]
-  guarantees    Guarantee[]
-  conversations Conversation[]
-  wallet        Wallet?
-  favorites     Favorite[]
-  accounts      Account[]
-  sessions      Session[]
+  orders          Order[]
+  quotes          Quote[]
+  sales           Sale[]
+  repairs         Repair[]
+  guarantees      Guarantee[]
+  conversations   Conversation[]
+  wallet          Wallet?
+  favorites       Favorite[]
+  accounts        Account[]
+  sessions        Session[]
+  arrepentimientos Arrepentimiento[]
 }
 
 enum Role {
@@ -60,14 +64,20 @@ model Product {
   type        String
   imei        String?
   sold        Int       @default(0)
+  
+  isOffer     Boolean   @default(false)
+  discount   Int       @default(0)
+  offerStart DateTime?
+  offerEnd   DateTime?
+  
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  slug        String?
+  slug       String?
 
   supplierId  String?
-  supplier    Supplier?  @relation(fields: [supplierId], references: [id])
-  orderItems   OrderItem[]
-  favorites    Favorite[]
+  supplier   Supplier?  @relation(fields: [supplierId], references: [id])
+  orderItems OrderItem[]
+  favorites  Favorite[]
 }
 
 // ==================== PEDIDOS ====================
@@ -86,7 +96,25 @@ model Order {
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
-  items OrderItem[]
+  // Shipping info
+  clientName     String?
+  clientDni      String?
+  clientEmail    String?
+  clientPhone    String?
+  shippingStreet String?
+  shippingNumber String?
+  shippingFloor  String?
+  shippingZip    String?
+  shippingCity   String?
+  shippingProvince String?
+  
+  // Mercado Pago
+  mpPreferenceId String?
+  mpPaymentId    String?
+  mpStatus       String?
+
+  items           OrderItem[]
+  arrepentimientos Arrepentimiento[]
 }
 
 enum OrderStatus {
@@ -338,15 +366,21 @@ enum NotifType {
 
 // ==================== ACCESORIOS ====================
 model Accessory {
-  id          String   @id @default(cuid())
-  name        String
-  ico         String
-  description String?
-  category    String
-  price       Int
-  stock       Int      @default(0)
-
-  createdAt   DateTime @default(now())
+  id               String   @id @default(cuid())
+  name             String
+  ico              String?  
+  description      String?
+  category         String
+  price            Int
+  compareAtPrice   Int?     
+  stock            Int      @default(0)
+  imageUrl         String?  
+  images           String[] @default([])
+  brand            String?  
+  color            String?  
+  compatibleModels String?  
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
 }
 
 // ==================== NEXT.AUTH ====================
@@ -395,4 +429,29 @@ model EmailVerification {
   createdAt DateTime @default(now())
 
   @@unique([email, code])
+}
+
+// ==================== ARREPENTIMIENTO (Ley 24.240 - Resolución 424/2020) ====================
+model Arrepentimiento {
+  id          String            @id @default(cuid())
+  orderId     String
+  order       Order            @relation(fields: [orderId], references: [id])
+  userId      String?
+  user        User?           @relation(fields: [userId], references: [id])
+  
+  email       String
+  telefono    String?
+  motivo      String?
+  estado      ArrepEstado      @default(PENDIENTE)
+  tramite     String?
+  
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+enum ArrepEstado {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  COMPLETADO
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { existsSync, readFileSync } from 'fs'
-import { join, extname, dirname } from 'path'
+import { join, extname } from 'path'
 
 const contentTypes: Record<string, string> = {
   '.js': 'application/javascript',
@@ -15,6 +15,8 @@ const contentTypes: Record<string, string> = {
   '.html': 'text/html',
   '.txt': 'text/plain',
 }
+
+const staticFiles = ['.js', '.css', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.txt', '.woff', '.woff2', '.ttf', '.eot']
 
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -34,5 +36,16 @@ export async function GET(request: Request) {
     return new NextResponse(file, { headers: { 'Content-Type': contentType } })
   }
   
-  return NextResponse.json({ error: 'Not found', path, cwd: process.cwd() }, { status: 404 })
+  const fileExt = extname(path)
+  if (fileExt && staticFiles.includes(fileExt)) {
+    return NextResponse.json({ error: 'Not found', path }, { status: 404 })
+  }
+  
+  const indexPath = join(publicDir, 'index.html')
+  if (existsSync(indexPath)) {
+    const indexHtml = readFileSync(indexPath, 'utf-8')
+    return new NextResponse(indexHtml, { headers: { 'Content-Type': 'text/html' } })
+  }
+  
+  return NextResponse.json({ error: 'Not found', path }, { status: 404 })
 }

@@ -1,16 +1,9 @@
-import { PrismaClient } from '@prisma/client'
-import { Pool } from 'pg'
-import { PrismaPg } from '@prisma/adapter-pg'
+import 'dotenv/config'
+import { prisma } from '../lib/prisma'
 import bcrypt from 'bcryptjs'
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-})
-const adapter = new PrismaPg(pool)
-const prisma = new PrismaClient({ adapter })
-
 async function main() {
-  const hashedPassword = await bcrypt.hash('123456', 10)
+  const hashedPassword = await bcrypt.hash('1234', 10)
   
   const admin = await prisma.user.upsert({
     where: { email: 'admin@greatphones.com' },
@@ -24,12 +17,16 @@ async function main() {
       name: 'Administrador',
       password: hashedPassword,
       role: 'ADMIN',
+      phone: '2915123456',
+      dni: '12345678',
+      provincia: 'Buenos Aires',
+      ciudad: 'Bahia Blanca',
+      verified: true
     },
   })
-
-  console.log('Admin user created:', admin.email, '- Role:', admin.role)
+  
+  console.log('Admin created:', admin.email, '- Role:', admin.role)
+  await prisma.$disconnect()
 }
 
-main()
-  .catch(console.error)
-  .finally(() => prisma.$disconnect())
+main().catch(console.error)

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="styles/pages.css">
   <link rel="stylesheet" href="styles/admin.css">
   <link rel="stylesheet" href="styles/responsive.css">
+  <link rel="stylesheet" href="styles/cookies.css">
 </head>
 <body>
 <div id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s">
@@ -43,7 +44,7 @@
 <div class="mainnav">
   <div class="nav">
     <button class="nav-logo" onclick="nav('home')">
-      <div class="nav-mark">&#128241;</div>
+      <img src="icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:40px;height:40px;border-radius:10px;object-fit:cover">
       <div><span class="nav-txt">Great Phones</span><span class="nav-sub">Bahia Blanca</span></div>
     </button>
     <div class="nav-search">
@@ -85,9 +86,12 @@
   </div>
 </div>
 
+  </div>
+</div>
+
 <!-- ===== CATEGORY NAV ===== -->
-<div class="catnav">
-  <div class="catnav-inner">
+<div class="catnav" style="background:#fff;border-bottom:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.04)">
+  <div class="catnav-inner" style="max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;height:48px;align-items:center;overflow-x:auto;scrollbar-width:none">
     <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
     <button class="cni" id="cn-shop" onclick="navShop('todos');setCN('shop')">Catálogo</button>
     <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
@@ -95,9 +99,9 @@
     <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
     <button class="cni" id="cn-notebooks" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
     <button class="cni" id="cn-mayorista" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
-    <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantias</button>
+    <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantías</button>
     <button class="cni" id="cn-compare" onclick="nav('compare');setCN('compare')">Comparar</button>
-    <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')">Ofertas</button>
+    <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')" style="color:var(--orange)">Ofertas</button>
   </div>
 </div>
 
@@ -105,7 +109,7 @@
 <div class="page act" id="p-home">
 
   <!-- SLIDER -->
-  <div class="slider" id="heroSlider">
+<div class="slider" id="heroSlider">
     <div class="slider-track" id="sliderTrack">
       <div class="slide" style="background:linear-gradient(135deg,#1A1208 0%,#2E1A00 100%)">
         <div class="slide-ctr">
@@ -149,27 +153,75 @@
           </div>
         </div>
       </div>
-    </div>
+</div>
     <button class="sarr sarr-l" onclick="sliderPrev()">&#8592;</button>
     <button class="sarr sarr-r" onclick="sliderNext()">&#8594;</button>
     <div class="slider-nav" id="sliderNav"></div>
   </div>
 
   <!-- CATEGORIAS -->
-  <div class="cat-section">
+  <section class="mb-section-gap">
     <div class="ctr">
-      <div class="cat-grid" id="catGrid">
-        <div class="cat-item" onclick="navShop('iPhone');setCatAct(this)"><img class="cat-ico" src="icons/apple-logo-svgrepo-com.svg"><span class="cat-lbl">iPhone</span></div>
-        <div class="cat-item" onclick="navShop('Samsung');setCatAct(this)"><img class="cat-ico" src="icons/samsung-svgrepo-com.svg"><span class="cat-lbl">Samsung</span></div>
-        <div class="cat-item" onclick="navShop('MacBook');setCatAct(this)"><img class="cat-ico" src="icons/macbook.svg"><span class="cat-lbl">MacBook</span></div>
-        <div class="cat-item" onclick="nav('notebooks');setCatAct(this)"><img class="cat-ico" src="icons/notebook.svg"><span class="cat-lbl">Notebooks</span></div>
-        <div class="cat-item" onclick="navShop('iPad');setCatAct(this)"><img class="cat-ico" src="icons/ipad.svg"><span class="cat-lbl">iPad</span></div>
-        <div class="cat-item" onclick="nav('accesorios');setCatAct(this)"><img class="cat-ico" src="icons/accesorios.svg"><span class="cat-lbl">Accesorios</span></div>
-        <div class="cat-item" onclick="nav('garantias');setCatAct(this)"><span class="cat-ico">&#128737;</span><span class="cat-lbl">Garantias</span></div>
-        <div class="cat-item" onclick="navShop('ofertas');setCatAct(this)"><span class="cat-ico">&#128293;</span><span class="cat-lbl">Ofertas</span></div>
+      <div class="flex items-center justify-between mb-element-gap">
+        <h2 class="font-headline-md text-headline-md">Categorías</h2>
+        <a class="text-secondary font-semibold hover:underline flex items-center gap-1" href="#" onclick="nav('shop')">
+                      Ver todo <span class="material-symbols-outlined text-sm">arrow_forward</span>
+        </a>
+      </div>
+      <div class="cat-scroll">
+        <div class="cat-flex">
+          <button class="cat-card cat-card-iphone" onclick="navShop('iPhone')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="smartphone">smartphone</span>
+            </div>
+            <span class="cat-label">iPhone</span>
+          </button>
+          <button class="cat-card cat-card-macbook" onclick="navShop('MacBook')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="laptop_mac">laptop</span>
+            </div>
+            <span class="cat-label">MacBook</span>
+          </button>
+          <button class="cat-card cat-card-ipad" onclick="navShop('iPad')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="tablet_mac">tablet</span>
+            </div>
+            <span class="cat-label">iPad</span>
+          </button>
+          <button class="cat-card cat-card-samsung" onclick="navShop('Samsung')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="ad_units">phone_android</span>
+            </div>
+            <span class="cat-label">Samsung</span>
+          </button>
+          <button class="cat-card cat-card-notebooks" onclick="nav('notebooks')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="computer">computer</span>
+            </div>
+            <span class="cat-label">Notebooks</span>
+          </button>
+          <button class="cat-card cat-card-accesorios" onclick="nav('accesorios')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="headphones">headphones</span>
+            </div>
+            <span class="cat-label">Accesorios</span>
+          </button>
+          <button class="cat-card cat-card-garantias" onclick="nav('garantias')">
+            <div class="cat-ico-wrap">
+              <span class="material-symbols-outlined text-3xl" data-icon="verified_user">verified</span>
+            </div>
+            <span class="cat-label">Garantías</span>
+          </button>
+          <button class="cat-card cat-card-accent" onclick="navShop('ofertas')">
+            <div class="cat-ico-wrap cat-ico-accent">
+              <span class="material-symbols-outlined text-3xl" data-icon="local_offer" style="font-variation-settings:'FILL'1">sell</span>
+            </div>
+            <span class="cat-label cat-label-accent">Ofertas</span>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 
   <!-- DESTACADOS -->
   <div class="sec sec-white">
@@ -195,20 +247,28 @@
           <span class="timer-val" id="timerEl">06:00:00</span>
         </div>
       </div>
-      <div class="ostrip" id="offerStrip"></div>
+      <div class="ostrip pgrid" id="offerStrip"></div>
     </div>
   </div>
 
+  <!-- LEGAL BANNER HOME -->
+  <div style="background:#F5F0EB;padding:12px;text-align:center;font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">
+    <span style="font-weight:600">Garantía legal 6 meses</span> &nbsp;|&nbsp; 
+    <span style="font-weight:600">Botón de Arrepentimiento</span> (10 días corridos) &nbsp;|&nbsp; 
+    <span style="font-weight:600">Data Fiscal</span>: Great Phones - CUIT: 30-12345678-9 &nbsp;|&nbsp; 
+    <a href="/terminos" style="color:var(--orange);text-decoration:none">Términos y Condiciones</a>
+  </div>
+
   <!-- MAS VENDIDOS -->
-  <div class="sec sec-cream">
+<div class="sec sec-cream" style="position:relative">
     <div class="ctr">
       <div class="sec-hdr">
         <div><div class="sec-tag">Tendencia</div><h2 class="sec-title">Los mas vendidos</h2></div>
         <button class="sec-more" onclick="nav('shop')">Ver catalogo</button>
       </div>
-      <div class="prail" id="homeRail"></div>
+      <div class="prail" id="homeRail" onmousedown="startDrag(event,this)" onmousemove="doDrag(event,this)" onmouseup="endDrag()" onmouseleave="endDrag()" ontouchstart="startDrag(event,this)" ontouchmove="doDrag(event,this)" ontouchend="endDrag()"></div>
     </div>
-  </div>
+</div>
 
   <!-- SERVICIOS -->
   <div class="sec" style="background:var(--dk2)">
@@ -276,27 +336,94 @@
     </div>
   </div>
 
-  <footer class="site-footer">
-    <div class="ctr">
-      <div class="footer-logo">
-        <div class="footer-mark">&#128241;</div>
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#fff">Great Phones</div>
+<footer class="site-footer">
+    <div class="ctr" style="max-width:1200px;margin:0 auto;padding:0 1rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:2rem">
+        
+        <!-- Column 1: Identity & Contact -->
+        <div style="font-family:'Playfair Display',Georgia,serif">
+          <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:1rem">Great Phones</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.5);line-height:2">
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="color:var(--orange)">📍</span>
+              <div>Zelarrayan 179, Bahia Blanca</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="color:var(--orange)">⏱</span>
+              <div>9hs a 21:30hs lunes a lunes</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="color:var(--orange)">📞</span>
+              <div>+54 9 2914 72-7351</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Column 2: Explorar -->
+        <div>
+          <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Explorar</h4>
+          <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
+            <li><a onclick="navShop('todos')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comprar</a></li>
+            <li><a onclick="nav('sell')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Vender</a></li>
+            <li><a onclick="nav('servicio')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Servicio técnico</a></li>
+            <li><a onclick="nav('garantias')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Garantías</a></li>
+            <li><a onclick="nav('accesorios')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Accesorios</a></li>
+          </ul>
+        </div>
+        
+        <!-- Column 3: Más -->
+        <div>
+          <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Más</h4>
+          <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
+            <li><a onclick="nav('mayorista')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Mayorista</a></li>
+            <li><a onclick="navShop('ofertas')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Ofertas</a></li>
+            <li><a onclick="nav('compare')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comparar</a></li>
+            <li><a onclick="nav('notebooks')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Notebooks</a></li>
+            <li><a onclick="nav('mensajes')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Mensajes</a></li>
+          </ul>
+        </div>
+        
+        <!-- Column 4: Legal & Arrepentimiento -->
+        <div>
+          <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Legal</h4>
+          <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
+            <li><a href="/terminos" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Términos y Condiciones</a></li>
+            <li><a href="/privacidad" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Políticas de Privacidad</a></li>
+            <li><a href="https://www.argentina.gob.ar/defensaconsumidor" target="_blank" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Defensa del Consumidor</a></li>
+          </ul>
+          
+          <button onclick="openArrepentimiento()" style="margin-top:1.25rem;padding:14px 24px;background:var(--orange);border:1px solid var(--orange);color:#fff;border-radius:14px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;width:100%;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.background='#fff';this.style.color='var(--orange)'" onmouseout="this.style.background='var(--orange)';this.style.color='#fff'">Botón de Arrepentimiento</button>
+          
+          <!-- Data Fiscal -->
+          <div style="margin-top:1.25rem;display:flex;align-items:center;gap:12px">
+            <div style="background:#fff;padding:10px;border-radius:10px;width:64px;height:64px;display:flex;align-items:center;justify-content:center">
+              <svg width="44" height="44" viewBox="0 0 80 80">
+                <rect width="80" height="80" fill="#fff" stroke="#ddd" rx="4"/>
+                <text x="40" y="42" text-anchor="middle" font-size="10" fill="#666">QR</text>
+              </svg>
+            </div>
+            <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;line-height:1.4">Data Fiscal<br/>Certificada</div>
+          </div>
+        </div>
       </div>
-      <p class="footer-sub">Zelarrayan 179, Bahia Blanca &middot; 9hs a 21:30hs lunes a lunes<br>@greatphones.bb &middot; +54 9 2914 72-7351</p>
-      <div class="footer-links">
-        <button class="fl-lnk" onclick="navShop('todos')">Comprar</button>
-        <button class="fl-lnk" onclick="nav('sell')">Vender</button>
-        <button class="fl-lnk" onclick="nav('servicio')">Servicio tecnico</button>
-        <button class="fl-lnk" onclick="nav('garantias')">Garantias</button>
-        <button class="fl-lnk" onclick="nav('accesorios')">Accesorios</button>
-        <button class="fl-lnk" onclick="nav('mayorista')">Mayorista</button>
-        <button class="fl-lnk" onclick="navShop('ofertas')">Ofertas</button>
-        <button class="fl-lnk" onclick="nav('compare')">Comparar</button>
-        <button class="fl-lnk" onclick="nav('notebooks')">Notebooks</button>
-        <button class="fl-lnk" onclick="nav('mensajes')">Mensajes</button>
-        <button class="fl-lnk footer-arrepentimiento" onclick="notAvailable()" style="margin-left:auto">Botón de Arrepentimiento</button>
+      
+      <!-- Bottom Row: Copyright & Social -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem">
+        <p style="font-size:12px;color:rgba(255,255,255,.35)">© 2026 Great Phones — Todos los derechos reservados.</p>
+        
+        <!-- Social Icons -->
+        <div style="display:flex;gap:14px">
+          <a href="https://instagram.com/greatphones.bb" target="_blank" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:20px;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.4)'" title="Instagram">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1.5" fill="currentColor"/></svg>
+          </a>
+          <a href="https://facebook.com/greatphones.bb" target="_blank" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:20px;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.4)'" title="Facebook">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+          <a href="https://wa.me/5492914727351" target="_blank" style="color:rgba(255,255,255,.4);text-decoration:none;font-size:20px;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.4)'" title="WhatsApp">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
       </div>
-      <div class="footer-bottom">2025 Great Phones Bahia Blanca &mdash; Todos los derechos reservados</div>
     </div>
   </footer>
 </div>
@@ -306,59 +433,94 @@
   <div class="sh-hdr">
     <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff;margin-bottom:.25rem" id="shopTitle">Catálogo</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="shopSub">Todos los equipos verificados con garantia incluida</p></div>
   </div>
-  <div class="filter-bar">
-    <div class="ctr">
-      <div class="frow" id="filterBar">
-        <button class="fchip act" onclick="filterShop('todos',this)">Todos</button>
-        <button class="fchip" onclick="filterShop('iPhone',this)">iPhone</button>
-        <button class="fchip" onclick="filterShop('iPad',this)">iPad</button>
-        <button class="fchip" onclick="filterShop('MacBook',this)">MacBook</button>
-        <button class="fchip" onclick="filterShop('iMac',this)">iMac</button>
-        <button class="fchip" onclick="filterShop('Samsung',this)">Samsung</button>
-        <button class="fchip" onclick="filterShop('Motorola',this)">Motorola</button>
-        <button class="fchip" onclick="filterShop('Xiaomi',this)">Xiaomi</button>
-        <button class="fchip" onclick="filterShop('ofertas',this)">Ofertas</button>
-        <button class="fchip" onclick="filterShop('fav',this)">Favoritos</button>
-      </div>
-      <button class="adv-btn" onclick="toggleAdvF()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-        Filtros avanzados
-        <svg id="afArr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-    </div>
-    <div class="adv-panel" id="advPanel">
-      <div class="ctr">
-        <div class="af-row">
-          <div class="af-grp"><span class="af-lbl">Almacenamiento</span><select class="af-sel" id="af-st" onchange="renderShopGrid()"><option value="">Cualquiera</option><option>64 GB</option><option>128 GB</option><option>256 GB</option><option>512 GB</option><option>1 TB</option></select></div>
-          <div class="af-grp"><span class="af-lbl">Estado</span><select class="af-sel" id="af-cd" onchange="renderShopGrid()"><option value="">Cualquiera</option><option>Nuevo</option><option>Impecable</option><option>Muy bueno</option><option>Bueno</option></select></div>
-          <div class="af-grp"><span class="af-lbl">Tipo</span><select class="af-sel" id="af-ty" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="celular">Celulares</option><option value="tablet">Tablets</option><option value="laptop">Laptops</option><option value="desktop">Desktop</option></select></div>
+  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:64px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+    <div class="ctr" style="padding:16px var(--pad)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">
+          <button class="fchip act" onclick="filterShop('todos',this)" style="margin:0">Todos</button>
+          <button class="fchip" onclick="filterShop('iPhone',this)" style="margin:0">iPhone</button>
+          <button class="fchip" onclick="filterShop('iPad',this)" style="margin:0">iPad</button>
+          <button class="fchip" onclick="filterShop('MacBook',this)" style="margin:0">MacBook</button>
+          <button class="fchip" onclick="filterShop('Samsung',this)" style="margin:0">Samsung</button>
+          <button class="fchip" onclick="filterShop('Motorola',this)" style="margin:0">Motorola</button>
+          <button class="fchip" onclick="filterShop('Xiaomi',this)" style="margin:0">Xiaomi</button>
+          <button class="fchip" onclick="filterShop('fav',this)" style="margin:0">Favoritos</button>
         </div>
-        <div class="af-row">
-          <div class="af-grp"><span class="af-lbl">Precio min</span><input class="af-inp" type="number" id="af-p1" placeholder="$0" oninput="renderShopGrid()"></div>
-          <div class="af-grp"><span class="af-lbl">Precio max</span><input class="af-inp" type="number" id="af-p2" placeholder="Sin limite" oninput="renderShopGrid()"></div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-o btn-sm" onclick="renderShopGrid()">Aplicar</button>
-          <button class="btn btn-s btn-sm" onclick="clearAdvF()">Limpiar</button>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <div style="position:relative">
+            <button id="sortBtn" onclick="toggleSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+              <span id="sortLabel">Relevantes</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="sortMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
+              <div onclick="setSort('rel',this)" class="sort-opt act">Relevantes</div>
+              <div onclick="setSort('asc',this)" class="sort-opt">Menor precio ↑</div>
+              <div onclick="setSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
+              <div onclick="setSort('new',this)" class="sort-opt">Más nuevos</div>
+              <div onclick="setSort('disc',this)" class="sort-opt">Mayor descuento</div>
+              <div onclick="setSort('bat',this)" class="sort-opt">Mayor batería</div>
+            </div>
+          </div>
+          <button onclick="toggleFilterPanel()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;background:var(--cream);border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
+            Filtros
+            <span id="filterCount" style="display:none;background:var(--orange);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:600">0</span>
+          </button>
         </div>
       </div>
     </div>
   </div>
-  <div style="background:#fff;border-bottom:1px solid var(--border)">
-    <div class="ctr">
-      <div class="sort-row">
-        <div class="sort-inner">
-          <select class="sort-sel" id="sortSel" onchange="renderShopGrid()">
-            <option value="rel">Relevancia</option><option value="asc">Menor precio</option>
-            <option value="desc">Mayor precio</option><option value="new">Mas nuevos</option><option value="bat">Mayor bateria</option>
-          </select>
-          <span class="sort-count" id="shopCount"></span>
+  <div id="filterOverlay" onclick="toggleFilterPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1400;backdrop-filter:blur(4px)"></div>
+  <div id="filterPanel" style="display:none;position:fixed;top:0;right:0;width:100%;max-width:380px;height:100%;background:#fff;z-index:1500;box-shadow:-4px 0 24px rgba(0,0,0,.15);overflow-y:auto;animation:slideIn .25s ease">
+    <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <h3 style="font-size:18px;font-weight:600">Filtros</h3>
+      <button onclick="toggleFilterPanel()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">×</button>
+    </div>
+    <div style="padding:20px">
+      <div style="margin-bottom:24px">
+        <h4 style="font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Condición</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" id="chk-new"><span>Nuevo</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-usado"><span>Usado</span></label>
         </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <h4 style="font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Almacenamiento</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" value="64 GB"><span>64 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="128 GB"><span>128 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="256 GB"><span>256 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="512 GB"><span>512 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="1 TB"><span>1 TB</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:24px">
+        <h4 style="font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Rango de Precio</h4>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="number" id="priceMin" placeholder="$0" style="flex:1;width:0;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:13px;outline:none;box-sizing:border-box">
+          <span style="color:var(--gray);flex-shrink:0">—</span>
+          <input type="number" id="priceMax" placeholder="Sin límite" style="flex:1;width:0;min-width:0;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#fff;font-size:13px;outline:none;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="margin-bottom:24px;padding:16px;background:var(--cream);border-radius:12px">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+          <span style="font-weight:500">Ocultar sin stock</span>
+          <div style="position:relative;width:48px;height:26px">
+            <input type="checkbox" id="hideNoStock" style="opacity:0;width:100%;height:100%;position:absolute;cursor:pointer">
+            <span style="position:absolute;inset:0;border-radius:13px;background:var(--border);transition:.2s"></span>
+            <span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:.2s"></span>
+          </div>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:24px">
+        <button onclick="clearFilters()" style="flex:1;padding:14px;background:#fff;color:var(--dk);border:1px solid var(--border);border-radius:24px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s">Limpiar todo</button>
+        <button onclick="applyFilters()" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:24px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(255,107,44,.3)">Ver resultados</button>
       </div>
     </div>
   </div>
   <div style="background:var(--cream)">
-    <div class="ctr">
+    <div class="ctr" style="padding:24px var(--pad)">
       <div class="shop-content"><div class="pgrid" id="shopGrid"></div></div>
     </div>
   </div>
@@ -390,15 +552,15 @@
 
 <!-- ============================= PAGE: DETAIL ============================= -->
 <div class="page" id="p-detail">
-  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="nav('shop')">&#8592; Volver al catalogo</button></div>
-  <div style="background:var(--cream);padding:2rem var(--pad);min-height:100vh">
+  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="nav('shop')">← Volver al catálogo</button></div>
+  <div style="background:var(--cream);padding:2rem var(--pad);min-height:100vh;position:relative;z-index:1">
     <div style="max-width:1200px;margin:0 auto">
       <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start">
         <!-- Column 1: Image Gallery -->
         <div style="display:flex;flex-direction:column;gap:16px;height:calc(100vh - 200px);position:sticky;top:120px">
-          <div class="det-main-img" id="detImgMain" style="flex:1;background:var(--cream2);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
-            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">♡</button>
-            <span id="detIco" style="font-size:90px">&#128241;</span>
+          <div class="det-main-img" id="detImgMain" style="flex:1;background:var(--white);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:var(--sh)">
+            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">♡</button>
+            <span id="detIco" style="font-size:90px">📱</span>
           </div>
           <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;height:100px"></div>
         </div>
@@ -406,54 +568,66 @@
         <div style="display:flex;flex-direction:column;gap:24px">
           <!-- Breadcrumb -->
           <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">
-            <span id="detBrand">Apple</span><span style="color:var(--gray2)">›</span>
+            <span id="detBrand" style="color:var(--green);font-weight:600">Apple</span><span style="color:var(--gray2)">›</span>
             <span id="detType">iPhone</span><span style="color:var(--gray2)">›</span>
             <span style="color:var(--dk)" id="detName2">iPhone 16 Pro</span>
           </nav>
-          <!-- Name & Price -->
-          <div>
-            <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:42px;font-weight:700;line-height:1.1;margin-bottom:12px" id="detName">iPhone 16 Pro</h1>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="display:flex;align-items:center;gap:8px" id="detPriceWrap">
-                <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+          <!-- Header con rating -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:38px;font-weight:700;line-height:1.1;margin-bottom:8px" id="detName">iPhone 16 Pro</h1>
+              <div style="display:flex;align-items:center;gap:4px">
+                <span style="color:var(--orange);font-size:18px">★</span>
+                <span style="font-size:13px;font-weight:600">4.9</span>
               </div>
-              <span style="font-size:16px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
+            </div>
+          </div>
+          <!-- Price Section -->
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;align-items:center;gap:8px" id="detPriceWrap">
+              <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:14px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <span style="color:var(--orange);font-size:14px;font-weight:600">12x sin interés</span>
             </div>
           </div>
           <!-- Meta info -->
-          <div style="font-size:13px;color:var(--gray)" id="detMeta">256 GB — Bateria 94%</div>
+          <div style="font-size:14px;color:var(--gray);padding:12px 0;border-top:1px solid var(--border)" id="detMeta">256 GB — Batería 94%</div>
           <!-- Trust Badges -->
           <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> 90 Días Garantía</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> IMEI Verificado</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> Cable + funda gratis</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> Dev. 7 días</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ 90 Días Garantía</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ IMEI Verificado</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ Cable + funda</div>
+            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ Dev. 7 días</div>
           </div>
           <!-- Installments -->
           <div>
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan de Cuotas</div>
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="cuotaOpts">
-              <button class="cuota-btn" data-cuota="1" onclick="selCuota(this,1)" style="padding:10px;border-radius:10px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green)"><span style="font-size:14px;font-weight:700;display:block">1</span><span style="font-size:8px;text-transform:uppercase">Sin Int.</span></button>
-              <button class="cuota-btn" data-cuota="3" onclick="selCuota(this,3)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">3</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="6" onclick="selCuota(this,6)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">6</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="12" onclick="selCuota(this,12)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">12</span><span style="font-size:8px;text-transform:uppercase">Fijas</span></button>
+              <button class="cuota-btn" data-cuota="1" onclick="selCuota(this,1)" style="padding:12px;border-radius:12px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green)"><span style="font-size:16px;font-weight:700;display:block">1</span><span style="font-size:8px;text-transform:uppercase">Sin Int.</span></button>
+              <button class="cuota-btn" data-cuota="3" onclick="selCuota(this,3)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">3</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
+              <button class="cuota-btn" data-cuota="6" onclick="selCuota(this,6)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">6</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
+              <button class="cuota-btn" data-cuota="12" onclick="selCuota(this,12)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">12</span><span style="font-size:8px;text-transform:uppercase">Fijas</span></button>
             </div>
           </div>
           <!-- Options -->
-          <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:16px">
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Garantía Extendida</div>
               <div style="display:flex;flex-direction:column;gap:8px" id="warrantyOpts">
-                <div class="warranty-btn" data-w="0" onclick="selOpt(this,'w',0)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">90 días</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
+                <div class="warranty-btn" data-w="0" onclick="selOpt(this,'w',0)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">90 días</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Garantía básica incluida</div>
                 </div>
-                <div class="warranty-btn" data-w="85000" onclick="selOpt(this,'w',85000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
+                <div class="warranty-btn" data-w="85000" onclick="selOpt(this,'w',85000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total extendida</div>
                 </div>
-                <div class="warranty-btn" data-w="150000" onclick="selOpt(this,'w',150000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700">+$150.000</span></div>
+                <div class="warranty-btn" data-w="150000" onclick="selOpt(this,'w',150000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700">+$150.000</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total premium</div>
                 </div>
               </div>
@@ -461,16 +635,16 @@
             <div>
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Entrega</div>
               <div style="display:flex;flex-direction:column;gap:8px" id="deliveryOpts">
-                <div class="delivery-btn" data-d="0" onclick="selOpt(this,'d',0)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Retiro en tienda</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
+                <div class="delivery-btn" data-d="0" onclick="selOpt(this,'d',0)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Retiro en tienda</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Bahía Blanca</div>
                 </div>
-                <div class="delivery-btn" data-d="5000" onclick="selOpt(this,'d',5000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700">+$5.000</span></div>
+                <div class="delivery-btn" data-d="5000" onclick="selOpt(this,'d',5000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700">+$5.000</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Entrega hoy</div>
                 </div>
-                <div class="delivery-btn" data-d="8000" onclick="selOpt(this,'d',8000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Envío 24-48hs</span><span style="color:var(--orange);font-weight:700">+$8.000</span></div>
+                <div class="delivery-btn" data-d="8000" onclick="selOpt(this,'d',8000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Envío 24-48hs</span><span style="color:var(--orange);font-weight:700">+$8.000</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">A todo el país</div>
                 </div>
               </div>
@@ -482,8 +656,8 @@
               <div><div style="font-size:9px;font-weight:700;color:var(--gray);text-transform:uppercase">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700" id="detTotal">$1.200.000</div></div>
             </div>
             <div style="display:flex;gap:10px">
-              <button onclick="if(currentProd)addToCart(currentProd.id)" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">Agregar al carrito</button>
-              <button onclick="if(currentProd){addToCart(currentProd.id);openCart()}" style="flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">Comprar ahora</button>
+              <button onclick="addToCartFromDetail()" style="flex:1;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Agregar al carrito</button>
+              <button onclick="buyNow()" style="flex:1;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Comprar ahora</button>
             </div>
           </div>
         </div>
@@ -505,7 +679,7 @@
       <div style="background:#fff;border:1px solid var(--border);border-radius:var(--rlg);padding:1.5rem;margin-bottom:1.5rem">
         <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;margin-bottom:.25rem">Verificar mi compra</div>
         <div style="font-size:11px;color:var(--gray);margin-bottom:1.1rem">Ingresa tu codigo de compra e IMEI para ver las garantias disponibles</div>
-        <input class="inp-f" id="garCodigo" placeholder="Codigo de compra (ej: GP-2025-0001)" oninput="garChk()">
+        <input class="inp-f" id="garCodigo" placeholder="Codigo de compra (ej: GP-2026-0001)" oninput="garChk()">
         <input class="inp-f" id="garImei" placeholder="IMEI del equipo (15 digitos)" oninput="garChk()" maxlength="15">
         <button class="btn btn-o btn-full" id="garVerBtn" disabled onclick="garVerificar()">Verificar compra</button>
       </div>
@@ -689,17 +863,34 @@
 <!-- ============================= PAGE: ACCESORIOS ============================= -->
 <div class="page" id="p-accesorios">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Accesorios</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Apple &middot; JBL &middot; MAX &middot; Originales con garantia</p></div>
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Accesorios</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Apple &middot; Samsung &middot; Originales con garantia</p></div>
   </div>
-  <div style="background:#fff;border-bottom:1px solid var(--border)">
-    <div class="ctr"><div class="frow" id="accFilterBar">
-      <button class="fchip act" onclick="filtAcc('todos',this)">Todos</button>
-      <button class="fchip" onclick="filtAcc('cargadores',this)">Cargadores</button>
-      <button class="fchip" onclick="filtAcc('auriculares',this)">Auriculares</button>
-      <button class="fchip" onclick="filtAcc('parlantes',this)">Parlantes JBL</button>
-      <button class="fchip" onclick="filtAcc('fundas',this)">Fundas</button>
-      <button class="fchip" onclick="filtAcc('cables',this)">Cables</button>
-    </div></div>
+  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:64px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+    <div class="ctr" style="padding:16px var(--pad)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">
+          <button class="fchip act" onclick="filtAcc('todos',this)">Todos</button>
+          <button class="fchip" onclick="filtAcc('Cargadores',this)">Cargadores</button>
+          <button class="fchip" onclick="filtAcc('Auriculares',this)">Auriculares</button>
+          <button class="fchip" onclick="filtAcc('Fundas',this)">Fundas</button>
+          <button class="fchip" onclick="filtAcc('Bandas',this)">Bandas</button>
+          <button class="fchip" onclick="filtAcc('Cables',this)">Cables</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <div style="position:relative">
+            <button id="sortAccBtn" onclick="toggleAccSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+              <span id="sortAccLabel">Relevantes</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="sortAccMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
+              <div onclick="setAccSort('rel',this)" class="sort-opt act">Relevantes</div>
+              <div onclick="setAccSort('asc',this)" class="sort-opt">Menor precio ↑</div>
+              <div onclick="setAccSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
+            </div>
+          </div>
+        </div></div>
+    </div>
   </div>
   <div style="background:var(--cream)">
     <div class="ctr">
@@ -778,15 +969,8 @@
             <input type="text" id="regName" placeholder="Nombre *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
             <input type="text" id="regLastname" placeholder="Apellido *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <input type="email" id="regEmail" placeholder="Email *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="tel" id="regPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-            <input type="text" id="regDni" placeholder="DNI" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="text" id="regProvincia" placeholder="Provincia" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="text" id="regCiudad" placeholder="Ciudad" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          </div>
+          <input type="email" id="regEmail" placeholder="Email *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;margin-bottom:12px">
+          
           <div style="position:relative;height:48px;margin-bottom:6px">
             <input type="password" id="regPassword" placeholder="Contraseña *" oninput="checkPasswordStrength()" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:0;box-sizing:border-box;height:48px">
             <button type="button" onclick="togglePassword('regPassword','regPasswordToggle')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0">
@@ -805,6 +989,11 @@
           <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:1rem;display:flex;gap:8px;align-items:flex-start">
             <span style="font-size:16px">✓</span>
             <div style="font-size:12px;color:var(--green)">Usando Great Phones vas a poder comprar con garantia, cotizar tu equipo usado y acceder a precios exclusivos.</div>
+          </div>
+          
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:1rem">
+            <input type="checkbox" id="regTyC" style="margin-top:3px;width:16px;height:16px">
+            <label for="regTyC" style="font-size:11px;color:var(--gray);line-height:1.5">Acepto los <a href="/terminos" onclick="nav('terminos')" style="color:var(--orange)">Terminos y Condiciones</a> y las <a href="/privacidad" onclick="nav('privacidad')" style="color:var(--orange)">Politicas de Privacidad</a>. Conozco y acepto la garantia legal de 6 meses y el derecho de arrepentimiento segun Resolucion 424/2020.</label>
           </div>
           
           <button onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
@@ -922,7 +1111,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
           Cerrar sesión
         </button>
-        <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:1rem">© 2024 Great Phones. Todos los derechos reservados.</p>
+        <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:1rem">© 2026 Great Phones. Todos los derechos reservados.</p>
       </div>
     </div>
     </div>
@@ -932,25 +1121,30 @@
 <div class="page" id="p-edit-profile" style="background:var(--cream);padding:2rem 1rem;min-height:100vh;max-width:1240px;margin:0 auto">
     <div style="margin-bottom:2rem">
         <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Editar Perfil</h2>
-        <p style="font-size:15px;color:var(--gray)">Actualizá tu información personal y datos de tu cuenta</p>
+        <p style="font-size:15px;color:var(--gray)">Actualizá tu información personal y datos de facturación</p>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr;gap:1.5rem;grid-template-columns:repeat(12,1fr)">
-        
-        <div style="grid-column:span 4;background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh);display:flex;flex-direction:column;align-items:center;justify-content:center">
-          <div style="position:relative">
-            <div id="editProfileAvatar" style="width:130px;height:130px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:700;color:#fff;font-family:'Playfair Display',Georgia,serif">GP</div>
-            <button style="position:absolute;bottom:0;right:0;background:var(--orange);color:#fff;width:36px;height:36px;border-radius:50%;border:4px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-          </div>
-          <div style="text-align:center;margin-top:1rem">
-            <button style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer;text-decoration:underline">Cambiar Foto</button>
-            <p style="font-size:12px;color:var(--gray);margin-top:4px">JPG, GIF o PNG. Max 1MB.</p>
-          </div>
+      <div style="display:flex;align-items:center;gap:1.5rem;margin-bottom:2rem;padding:1.5rem;background:#fff;border:1px solid var(--border);border-radius:16px">
+        <div style="position:relative">
+          <div id="editProfileAvatar" style="width:100px;height:100px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;color:#fff;font-family:'Playfair Display',Georgia,serif">GP</div>
+          <label style="position:absolute;bottom:0;right:0;background:var(--orange);color:#fff;width:32px;height:32px;border-radius:50%;border:3px solid #fff;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--sh)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            <input type="file" id="profileAvatarInput" accept="image/*" style="display:none" onchange="uploadProfileAvatar(this)">
+          </label>
         </div>
+        <div>
+          <div style="font-weight:600;color:var(--dk);margin-bottom:4px">Foto de perfil</div>
+          <div style="font-size:13px;color:var(--gray)">JPG, PNG o GIF. Máximo 1MB.</div>
+        </div>
+      </div>
 
-        <div style="grid-column:span 8;background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh)">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:var(--sh)">
+        <div style="display:flex;border-bottom:1px solid var(--border);background:var(--cream2)">
+          <button class="ep-tab act" id="epTabPersonal" onclick="switchEditProfileTab('personal')">Mis Datos</button>
+          <button class="ep-tab" id="epTabFacturacion" onclick="switchEditProfileTab('facturacion')">Datos de Facturación y Envío</button>
+        </div>
+        
+        <div id="epPersonalContent" style="padding:1.5rem">
           <div style="display:grid;gap:1rem">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
               <div>
@@ -977,42 +1171,168 @@
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Contraseña</label>
               <input type="password" disabled placeholder="••••••••" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
+              <p style="font-size:11px;color:var(--gray);margin-top:4px">Para cambiar la contraseña, solicitá ayuda al soporte</p>
             </div>
           </div>
         </div>
-
-        <div onclick="showToast('Próximamente: Configuración de seguridad')" style="grid-column:span 6;background:var(--cream);border:1px solid var(--border);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='var(--cream)'">
-          <div style="display:flex;align-items:center;gap:1rem">
-            <div style="background:var(--cream3);padding:10px;border-radius:8px;color:var(--dk2)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        
+        <div id="epFacturacionContent" style="padding:1.5rem;display:none">
+          <div style="display:grid;gap:1rem">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">DNI / CUIT</label>
+                <input type="text" id="editProfileDni" placeholder="12345678" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Teléfono</label>
+                <input type="tel" id="editProfileFactPhone" placeholder="+54 9 291 1234567" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
             </div>
-            <div>
-              <h3 style="font-size:16px;font-weight:600;color:var(--dk)">Seguridad de la Cuenta</h3>
-              <p style="font-size:12px;color:var(--gray)">Contraseña, 2FA y sesiones</p>
+            
+            <div style="display:grid;grid-template-columns:2fr 1fr;gap:1rem">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Calle</label>
+                <input type="text" id="editProfileCalle" placeholder="Av. Belgrano" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Número</label>
+                <input type="text" id="editProfileNumero" placeholder="1234" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Piso / Depto</label>
+                <input type="text" id="editProfilePiso" placeholder="2do A (opcional)" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Código Postal</label>
+                <input type="text" id="editProfileCp" placeholder="8000" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
+            </div>
+            
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Provincia</label>
+                <select id="editProfileProvincia" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box;appearance:none;cursor:pointer">
+                  <option value="">Seleccionar...</option>
+                  <option value="Buenos Aires">Buenos Aires</option>
+                  <option value="CABA">Capital Federal</option>
+                  <option value="Córdoba">Córdoba</option>
+                  <option value="Santa Fe">Santa Fe</option>
+                  <option value="Mendoza">Mendoza</option>
+                  <option value="Tucumán">Tucumán</option>
+                  <option value="Entre Ríos">Entre Ríos</option>
+                  <option value="Salta">Salta</option>
+                  <option value="Neuquén">Neuquén</option>
+                  <option value="Río Negro">Río Negro</option>
+                  <option value="Chubut">Chubut</option>
+                  <option value="Santa Cruz">Santa Cruz</option>
+                  <option value="Tierra del Fuego">Tierra del Fuego</option>
+                  <option value="San Juan">San Juan</option>
+                  <option value="San Luis">San Luis</option>
+                  <option value="La Rioja">La Rioja</option>
+                  <option value="Catamarca">Catamarca</option>
+                  <option value="Santiago del Estero">Santiago del Estero</option>
+                  <option value="Formosa">Formosa</option>
+                  <option value="Corrientes">Corrientes</option>
+                  <option value="Misiones">Misiones</option>
+                  <option value="La Pampa">La Pampa</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Localidad</label>
+                <input type="text" id="editProfileCiudad" placeholder="Bahía Blanca" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+              </div>
             </div>
           </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-        </div>
-
-        <div onclick="confirmDeleteAccount()" style="grid-column:span 6;background:#fff;border:1px solid rgba(192,57,43,.2);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='#fff'">
-          <div style="display:flex;align-items:center;gap:1rem">
-            <div style="background:rgba(192,57,43,.1);padding:10px;border-radius:8px;color:var(--red)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            </div>
-            <div>
-              <h3 style="font-size:16px;font-weight:600;color:var(--red)">Eliminar Cuenta</h3>
-              <p style="font-size:12px;color:var(--gray)">Permanentemente tus datos</p>
-            </div>
-          </div>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(192,57,43,.5)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </div>
       </div>
-
-      <div style="display:flex;justify-content:flex-end;gap:1rem;padding-top:2rem;border-top:1px solid var(--border)">
-        <button onclick="nav('cuenta')" style="padding:12px 24px;font-weight:600;color:var(--gray);background:none;border:1px solid var(--border);border-radius:12px;font-size:14px;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">Cancelar</button>
-        <button onclick="saveEditProfile()" style="padding:12px 32px;font-weight:600;color:#fff;background:var(--orange);border:none;border-radius:12px;font-size:14px;cursor:pointer;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--orange2)'" onmouseout="this.style.background='var(--orange)'">Guardar Cambios</button>
+      
+<div style="margin-top:1.5rem;display:flex;gap:1rem">
+        <button onclick="saveEditProfile()" style="padding:14px 28px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Guardar Cambios</button>
+        <button onclick="nav('cuenta')" style="padding:14px 28px;background:var(--cream2);color:var(--gray);border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer">Cancelar</button>
       </div>
 
+      <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)">
+        <h3 style="font-size:18px;font-weight:600;color:var(--dk);margin-bottom:1rem">Seguridad y Otros</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div onclick="showToast('Próximamente: Seguridad de cuenta')" style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.25rem;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="display:flex;align-items:center;gap:1rem">
+              <div style="background:var(--cream);padding:12px;border-radius:10px">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:600;color:var(--dk)">Seguridad de la Cuenta</div>
+                <div style="font-size:12px;color:var(--gray)">Cambiar contraseña</div>
+              </div>
+            </div>
+          </div>
+          <div onclick="confirmDeleteAccount()" style="background:#fff;border:1px solid rgba(192,57,43,.2);border-radius:16px;padding:1.25rem;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--red)'" onmouseout="this.style.borderColor='rgba(192,57,43,.2)'">
+            <div style="display:flex;align-items:center;gap:1rem">
+              <div style="background:rgba(192,57,43,.1);padding:12px;border-radius:10px">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </div>
+              <div>
+                <div style="font-weight:600;color:var(--red)">Eliminar Cuenta</div>
+                <div style="font-size:12px;color:var(--gray)">Borrar datos permanently</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+
+<!-- ============================= PAGE: ADMIN ACC ADD ============================= -->
+<div class="page" id="p-admin-acc">
+  <div class="sh-hdr">
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Completa los datos del nuevo accesorio</p></div>
+  </div>
+  <div style="background:var(--cream);padding:1.5rem 0">
+    <div class="ctr" style="max-width:600px">
+      <input type="hidden" id="accId">
+      <input type="hidden" id="accImageUrl">
+      <input type="hidden" id="accImages">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="accImagePreview" style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:40px;border:2px dashed var(--border);cursor:pointer" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.1)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream2)';handleAccImageDrop(event)">📦</div>
+        <div style="margin-top:8px">
+          <label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:var(--rsm);font-size:12px;cursor:pointer;margin-right:8px">
+            Imagen principal
+            <input type="file" id="accImageInput" accept="image/*" style="display:none" onchange="uploadAccImage(this)">
+          </label>
+          <span style="font-size:11px;color:var(--gray)">o arrastra una imagen aqui</span>
+        </div>
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Imagenes adicionales (opcional)</div>
+        <div id="accAdditionalImages" style="display:flex;gap:8px;flex-wrap:wrap;min-height:60px;padding:10px;background:var(--cream2);border-radius:var(--rsm);border:1px dashed var(--border)">
+          <div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>
+        </div>
+        <input type="file" id="accAdditionalImagesInput" accept="image/*" multiple style="display:none" onchange="uploadAccAdditionalImages(this)">
+        <button onclick="document.getElementById('accAdditionalImagesInput').click()" style="margin-top:8px;padding:6px 12px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer">+ Agregar mas imagenes</button>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="accName" placeholder="AirPods Pro"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><input class="inp-f" id="accBrand" placeholder="Apple"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="25000"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="accStock" type="number" placeholder="10"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio anterior</label><input class="inp-f" id="accCompareAtPrice" type="number" placeholder="35000"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Otros">Otros</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="accColor" placeholder="Negro"></div>
+        </div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelos compatibles</label><input class="inp-f" id="accCompatibleModels" placeholder="iPhone 14, iPhone 15, iPhone 16"></div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Icono (emoji)</label><input class="inp-f" id="accIco" placeholder="🎧" style="width:60px;text-align:center;font-size:18px"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:1rem">
+        <button class="btn btn-g" style="flex:1" onclick="saveAccessory()">Guardar</button>
+        <button class="btn btn-o" style="flex:1" onclick="nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1026,9 +1346,11 @@
     <div class="ctr">
       <div style="display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap">
         <button class="fchip act" id="adm-prods" onclick="adminTab('prods',this)">Productos</button>
+        <button class="fchip" id="adm-acc" onclick="adminTab('acc',this)">Accesorios</button>
         <button class="fchip" id="adm-stock" onclick="adminTab('stock',this)">Stock</button>
         <button class="fchip" id="adm-promos" onclick="adminTab('promos',this)">Promociones</button>
         <button class="fchip" id="adm-orders" onclick="adminTab('orders',this)">Pedidos</button>
+        <button class="fchip" id="adm-arrep" onclick="adminTab('arrep',this)">Arrepentimientos</button>
         <button class="fchip" id="adm-users" onclick="adminTab('users',this)">Usuarios</button>
       </div>
       <div id="adminContent">
@@ -1091,6 +1413,58 @@
   </div>
 </div>
 
+<!-- ============================= PAGE: ADMIN-ACCESSORY ============================= -->
+<div class="page" id="p-admin-acc">
+  <div class="sh-hdr">
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Completa los datos del nuevo accesorio</p></div>
+  </div>
+  <div style="background:var(--cream);padding:1.5rem 0">
+    <div class="ctr" style="max-width:600px">
+      <input type="hidden" id="accId">
+      <input type="hidden" id="accImageUrl">
+      <input type="hidden" id="accImages">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="accImagePreview" style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:40px;border:2px dashed var(--border);cursor:pointer" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.1)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream2)';handleAccImageDrop(event)">📷</div>
+        <div style="margin-top:8px">
+          <label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:var(--rsm);font-size:12px;cursor:pointer;margin-right:8px">
+            Imagen principal
+            <input type="file" id="accImageInput" accept="image/*" style="display:none" onchange="uploadAccImage(this)">
+          </label>
+          <span style="font-size:11px;color:var(--gray)">o arrastra una imagen aqui</span>
+        </div>
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Imagenes adicionales (opcional)</div>
+        <div id="accAdditionalImages" style="display:flex;gap:8px;flex-wrap:wrap;min-height:60px;padding:10px;background:var(--cream2);border-radius:var(--rsm);border:1px dashed var(--border)">
+          <div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>
+        </div>
+        <input type="file" id="accAdditionalImagesInput" accept="image/*" multiple style="display:none" onchange="uploadAccAdditionalImages(this)">
+        <button onclick="document.getElementById('accAdditionalImagesInput').click()" style="margin-top:8px;padding:6px 12px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer">+ Agregar mas imagenes</button>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="accName" placeholder="AirPods Pro"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="accBrand"><option value="Apple">Apple</option><option value="Samsung">Samsung</option><option value="Sony">Sony</option><option value="JBL">JBL</option><option value="Belkin">Belkin</option><option value="Otro">Otro</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="200000"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="accStock" type="number" placeholder="10"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Bandas">Bandas</option></select></div>
+        </div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="accColor" placeholder="Blanco"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Icono emoji</label><input class="inp-f" id="accIco" placeholder="🎧"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:1rem">
+          <button class="btn btn-o" onclick="saveAccessory()">Guardar Accesorio</button>
+          <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ============================= PAGE: MENSAJES ============================= -->
 <div class="page" id="p-mensajes">
   <div class="msg-hdr">
@@ -1118,6 +1492,113 @@
     <input type="file" id="chatImgIn" accept="image/*" style="display:none">
     <textarea class="msg-inp" id="chatInp" placeholder="Escribe un mensaje..." rows="1"></textarea>
     <button class="msg-send" onclick="sendChatMsg()">&#10148;</button>
+  </div>
+</div>
+
+<!-- ============================= PAGE: TERMINOS ============================= -->
+<div class="page" id="p-terminos" style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+  <div style="max-width:800px;margin:0 auto">
+    <button onclick="nav('home')" style="background:none;border:none;font-size:14px;color:var(--orange);cursor:pointer;margin-bottom:1.5rem;display:flex;align-items:center;gap:6px;font-weight:600">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7 7"/></svg>
+      Volver a la tienda
+    </button>
+    <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:32px;margin-bottom:.5rem;color:var(--dk)">Términos y Condiciones</h1>
+    <p style="font-size:14px;color:var(--gray);margin-bottom:2rem">Última actualización: Abril 2026</p>
+    
+    <div style="background:#fff;border-radius:16px;padding:2rem;font-size:15px;line-height:1.8;color:var(--gray2)">
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">1. ACEPTACIÓN DE LOS TÉRMINOS</h3>
+      <p>El presente documento establece los Términos y Condiciones legales aplicables al uso del sitio web Great Phones y a la compra de productos a través del mismo. Al acceder, navegar y/o realizar una compra, el usuario acepta incondicionalmente estos términos. Si no está de acuerdo, le rogamos no utilizar el sitio.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">2. INFORMACIÓN DE LA EMPRESA</h3>
+      <div style="background:var(--cream);padding:1.25rem;border-radius:12px;margin:.5rem 0">
+        <p style="margin-bottom:.5rem"><strong>Razón Social:</strong> Great Phones</p>
+        <p style="margin-bottom:.5rem"><strong>CUIT:</strong> 30-12345678-9</p>
+        <p style="margin-bottom:.5rem"><strong>Domicilio Legal:</strong> Zelarrayan 179, Bahía Blanca, Provincia de Buenos Aires.</p>
+        <p style="margin-bottom:.5rem"><strong>Correo de Contacto:</strong> contacto@greatphones.com.ar</p>
+        <p><strong>Teléfono:</strong> +54 9 291 123-4567</p>
+      </div>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">3. PRECIOS Y FACTURACIÓN</h3>
+      <p>Todos los precios publicados en el sitio están expresados en Pesos Argentinos (ARS) e incluyen el Impuesto al Valor Agregado (IVA). Los precios y promociones pueden ser modificados sin previo aviso, pero siempre se respetará el precio publicado al momento de confirmar la compra. Se emitirá la factura correspondiente (A, B o C según corresponda y los datos aportados por el cliente) la cual será enviada al correo electrónico registrado.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">4. ENVÍOS Y RETIROS</h3>
+      <p style="margin-bottom:1rem"><strong>Retiro en el local:</strong> Los pedidos seleccionados con la opción "Retiro en tienda" podrán ser retirados sin costo por nuestro local ubicado en Zelarrayan 179, Bahía Blanca, dentro de los horarios de atención comerciales, una vez que el cliente reciba la confirmación por correo electrónico.</p>
+      <p><strong>Envíos a domicilio:</strong> Realizamos envíos a través de Correo Argentino / Andreani / Cadetería local. El costo y tiempo de envío dependerán de la ubicación del usuario y serán informados antes de finalizar el pago.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">5. GARANTÍA LEGAL (Ley 24.240)</h3>
+      <p>De conformidad con el Art. 11 de la Ley 24.240 de Defensa del Consumidor, todos nuestros productos nuevos cuentan con una garantía legal por defectos o vicios de cualquier índole de seis (6) meses, contados a partir de la entrega del producto. La garantía pierde validez si el producto presenta golpes, roturas, o signos de uso indebido.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">6. POLÍTICA DE DEVOLUCIÓN Y BOTÓN DE ARREPENTIMIENTO</h3>
+      <p style="margin-bottom:1rem">Según lo establecido por la Resolución 424/2020 y el Art. 34 de la Ley 24.240, el usuario tiene derecho a revocar la aceptación del producto durante el plazo de diez (10) días corridos contados a partir de la fecha en que se entregue el bien o se celebre el contrato, lo último que ocurra, sin responsabilidad alguna.</p>
+      <p style="margin-bottom:.5rem">• Para ejercer este derecho, el usuario puede utilizar el "Botón de Arrepentimiento" ubicado en nuestro sitio web o contactarnos por correo electrónico.</p>
+      <p style="margin-bottom:.5rem">• El producto debe ser devuelto en las mismas condiciones en que fue recibido, sin uso y con sus embalajes originales.</p>
+      <p>• Los gastos de devolución correan por cuenta de nuestra empresa.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">7. PROTECCIÓN DE DATOS PERSONALES</h3>
+      <p>Los datos personales recabados en el sitio (nombre, documento, dirección, email) serán utilizados exclusivamente para el procesamiento de las compras, envíos y facturación, en estricto cumplimiento de la Ley 25.326 de Protección de Datos Personales. El titular de los datos podrá solicitar en cualquier momento la actualización, rectificación o eliminación de los mismos enviando un correo a contacto@greatphones.com.ar</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">8. JURISDICCIÓN Y LEY APLICABLE</h3>
+      <p>Estos Términos y Condiciones se rigen por las leyes de la República Argentina. Cualquier controversia que derive de su aplicación o interpretación será sometida a la jurisdicción de los Tribunales Ordinarios de la ciudad de Bahía Blanca, Provincia de Buenos Aires, renunciando a cualquier otro fuero que pudiera corresponder.</p>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: PRIVACIDAD ============================= -->
+<div class="page" id="p-privacidad" style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+  <div style="max-width:800px;margin:0 auto">
+    <button onclick="nav('home')" style="background:none;border:none;font-size:14px;color:var(--orange);cursor:pointer;margin-bottom:1.5rem;display:flex;align-items:center;gap:6px;font-weight:600">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7 7"/></svg>
+      Volver a la tienda
+    </button>
+    <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:32px;margin-bottom:.5rem;color:var(--dk)">Políticas de Privacidad</h1>
+    <p style="font-size:14px;color:var(--gray);margin-bottom:2rem">Última actualización: Abril 2026</p>
+    
+    <div style="background:#fff;border-radius:16px;padding:2rem;font-size:15px;line-height:1.8;color:var(--gray2)">
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">1. RESPONSABLE DEL TRATAMIENTO DE DATOS</h3>
+      <p>El responsable de la recolección y tratamiento de los datos personales facilitados en este sitio web es <strong>Great Phones</strong>, con domicilio en Zelarrayan 179, Bahía Blanca, Provincia de Buenos Aires, y correo electrónico de contacto <strong>contacto@greatphones.com.ar</strong>.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">2. DATOS RECOLECTADOS</h3>
+      <p style="margin-bottom:1rem">Para el correcto funcionamiento de la tienda y la prestación de nuestros servicios, recolectamos los siguientes datos:</p>
+      <div style="background:var(--cream);padding:1.25rem;border-radius:12px;margin:.5rem 0">
+        <p style="margin-bottom:.5rem"><strong>Datos de Registro y Compra:</strong> Nombre, apellido, DNI/CUIT, correo electrónico, teléfono y dirección de envío.</p>
+        <p style="margin-bottom:.5rem"><strong>Datos de Navegación:</strong> Dirección IP, tipo de navegador y cookies para mejorar la experiencia de usuario.</p>
+        <p><strong>Datos de Pago:</strong> Informamos que nuestro sitio no almacena ni procesa de forma directa los números de tarjeta de crédito o débito. Dichos datos son gestionados exclusivamente por la pasarela de pago autorizada <strong>MercadoPago</strong>, bajo sus propios estándares de seguridad.</p>
+      </div>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">3. FINALIDAD DEL TRATAMIENTO</h3>
+      <p>Los datos personales serán utilizados exclusivamente para los siguientes fines:</p>
+      <ul style="margin:.5rem 0;padding-left:1.25rem">
+        <li style="margin-bottom:.5rem">Procesar y gestionar las órdenes de compra.</li>
+        <li style="margin-bottom:.5rem">Coordinar el envío de productos con las empresas de logística.</li>
+        <li style="margin-bottom:.5rem">Emitir las facturas legales correspondientes ante ARCA (ex AFIP).</li>
+        <li style="margin-bottom:.5rem">Enviar notificaciones sobre el estado del pedido o actualizaciones del servicio.</li>
+        <li>Enviar comunicaciones comerciales o promociones, siempre que el usuario haya dado su consentimiento explícito.</li>
+      </ul>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">4. COMPARTICIÓN DE DATOS CON TERCEROS</h3>
+      <p>Tus datos solo serán compartidos con terceros en los casos estrictamente necesarios para completar tu compra:</p>
+      <ul style="margin:.5rem 0;padding-left:1.25rem">
+        <li style="margin-bottom:.5rem"><strong>Empresas de Correo y Logística:</strong> Para que puedan entregar tu paquete en el domicilio indicado.</li>
+        <li style="margin-bottom:.5rem"><strong>Organismos Públicos:</strong> Cuando sea requerido por ley (ej. ARCA/AFIP por facturación).</li>
+        <li><strong>Proveedores de Servicios Tecnológicos:</strong> Como nuestro hosting o servicios de email para asegurar el funcionamiento del sitio.</li>
+      </ul>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">5. SEGURIDAD DE LOS DATOS</h3>
+      <p>Adoptamos las medidas técnicas y organizativas necesarias para garantizar la seguridad y confidencialidad de tus datos personales, a fin de evitar su adulteración, pérdida o tratamiento no autorizado. El sitio cuenta con certificado SSL (HTTPS) para cifrar la información transferida entre tu navegador y nuestro servidor.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">6. DERECHOS DEL TITULAR (DERECHOS ARCO)</h3>
+      <p style="margin-bottom:1rem">En cumplimiento de la Ley 25.326, el usuario tiene derecho a solicitar el acceso, rectificación, actualización o supresión de sus datos personales de nuestra base de datos.</p>
+      <p style="margin-bottom:1rem">Para ejercer estos derechos, podés enviar una solicitud a <strong>contacto@greatphones.com.ar</strong>.</p>
+      <p>El titular de los datos personales tiene la facultad de ejercer el derecho de acceso a los mismos en forma gratuita a intervalos no inferiores a seis meses, salvo que se acredite un interés legítimo al efecto conforme lo establecido en el artículo 14, inciso 3 de la Ley Nº 25.326.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">7. USO DE COOKIES</h3>
+      <p>Este sitio utiliza cookies para personalizar la navegación, recordar los productos agregados al carrito y analizar el tráfico de forma anónima. El usuario puede configurar su navegador para bloquear o eliminar las cookies, aunque esto podría afectar algunas funcionalidades de la tienda.</p>
+      
+      <h3 style="font-size:18px;color:var(--dk);margin:2rem 0 1rem;font-weight:700">8. MODIFICACIONES</h3>
+      <p>Nos reservamos el derecho de modificar esta Política de Privacidad en cualquier momento. Los cambios serán publicados en esta misma sección y entrarán en vigencia de forma inmediata.</p>
+    </div>
   </div>
 </div>
 
@@ -1222,6 +1703,165 @@
   </div>
 </div>
 
+<!-- ===== CHECKOUT VIEW ===== -->
+<div class="page" id="p-checkout">
+<div style="min-height:100vh;background:var(--cream);padding:2rem var(--pad)">
+  <div style="max-width:1280px;margin:0 auto">
+    <button onclick="openCart()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gray);font-size:14px;margin-bottom:1.5rem">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver al carrito
+    </button>
+    <div style="display:grid;grid-template-columns:1fr 400px;gap:48px;align-items:start">
+      <div style="display:flex;flex-direction:column;gap:24px">
+        <!-- Contacto -->
+        <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Contacto</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Email</label>
+              <input id="checkout-email" type="email" placeholder="nombre@ejemplo.com" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Teléfono</label>
+              <input id="checkout-phone" type="tel" placeholder="11 2345 6789" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+        </section>
+
+        <!-- Envío -->
+        <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Envío</h2>
+          </div>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Calle</label>
+              <input id="checkout-street" type="text" placeholder="Av. del Libertador" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Número</label>
+              <input id="checkout-number" type="text" placeholder="1234" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Piso / Depto (opcional)</label>
+              <input id="checkout-floor" type="text" placeholder="4° B" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Código Postal</label>
+              <input id="checkout-zip" type="text" placeholder="1425" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad</label>
+              <input id="checkout-city" type="text" placeholder="CABA" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Provincia</label>
+              <select id="checkout-province" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:#fff;appearance:none;cursor:pointer" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                <option value="">Seleccionar...</option>
+                <option value="Buenos Aires">Buenos Aires</option>
+                <option value="CABA">Capital Federal</option>
+                <option value="Córdoba">Córdoba</option>
+                <option value="Santa Fe">Santa Fe</option>
+                <option value="Mendoza">Mendoza</option>
+                <option value="Tucumán">Tucumán</option>
+                <option value="Entre Ríos">Entre Ríos</option>
+                <option value="Salta">Salta</option>
+                <option value="Neuquén">Neuquén</option>
+                <option value="Río Negro">Río Negro</option>
+                <option value="Chubut">Chubut</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+                <option value="Tierra del Fuego">Tierra del Fuego</option>
+                <option value="San Juan">San Juan</option>
+                <option value="San Luis">San Luis</option>
+                <option value="La Rioja">La Rioja</option>
+                <option value="Catamarca">Catamarca</option>
+                <option value="Santiago del Estero">Santiago del Estero</option>
+                <option value="Formosa">Formosa</option>
+                <option value="Corrientes">Corrientes</option>
+                <option value="Misiones">Misiones</option>
+                <option value="La Pampa">La Pampa</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Facturación -->
+        <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </div>
+            <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Facturación</h2>
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI o CUIT</label>
+            <input id="checkout-document" type="text" placeholder="20-34567890-9" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            <p style="font-size:11px;color:var(--gray);margin-top:6px;margin-left:4px">Para consumidor final o factura A.</p>
+          </div>
+        </section>
+      </div>
+
+      <!-- Resumen -->
+      <aside style="position:sticky;top:100px">
+        <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--sh)">
+          <h3 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin-bottom:1.25rem">Resumen de compra</h3>
+          
+          <div id="checkout-items" style="margin-bottom:1.25rem;max-height:300px;overflow-y:auto"></div>
+
+          <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem">
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gray);margin-bottom:8px">
+              <span>Subtotal</span>
+              <span id="checkout-subtotal">$0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gray)">
+              <span>Costo de envío</span>
+              <span style="color:var(--orange);font-weight:600">A calcular</span>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
+            <span style="font-size:18px;font-weight:700">Total</span>
+            <span id="checkout-total" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
+          </div>
+
+          <button id="btn-checkout" onclick="submitCheckout()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)">
+            Pagar con Mercado Pago
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+
+          <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--gray);margin-top:12px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Pago 100% seguro</span>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,107,44,.05);border:1px dashed rgba(255,107,44,.3);border-radius:16px;padding:1rem;margin-top:1rem">
+          <div style="display:flex;gap:12px">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <div>
+              <h5 style="font-size:13px;font-weight:600;margin-bottom:4px">Compra Protegida</h5>
+              <p style="font-size:11px;color:var(--gray)">Si no recibes lo que esperabas, te devolvemos tu dinero.</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+</div>
+
 <!-- ===== CART OVERLAY ===== -->
 <div id="cartOverlay" style="position:fixed;inset:0;z-index:800;pointer-events:none">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .25s" onclick="closeCart()"></div>
@@ -1231,25 +1871,125 @@
   </div>
 </div>
 
-<!-- ===== CONFIRM OVERLAY ===== -->
-<div id="confirmOverlay" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center">
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,.6)" onclick="closeConfirm()"></div>
-  <div style="position:relative;background:#fff;border-radius:20px;width:min(420px,90%);padding:2rem;box-shadow:0 25px 50px rgba(0,0,0,.25);text-align:center">
-    <div style="width:72px;height:72px;background:rgba(192,57,43,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+<!-- ===== ARREPENTIMIENTO MODAL (Resolución 424/2020) ===== -->
+<div id="arrepentimientoModal" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeArrepentimiento()"></div>
+  <div style="position:relative;background:#fff;border-radius:24px;width:min(500px,90%);padding:2.5rem;box-shadow:0 25px 80px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;transform:scale(.9);transition:transform .3s">
+    <button onclick="closeArrepentimiento()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .2s" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">×</button>
+    
+    <div style="width:72px;height:72px;background:linear-gradient(135deg,#FF6B2C,#FF8F5E);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 24px rgba(255,107,44,.3)">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
-    <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Eliminar Cuenta</div>
-    <div style="font-size:14px;color:var(--gray);margin-bottom:1.5rem;line-height:1.6">
-      ¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es <strong style="color:#C0392B">permanente</strong> y no se puede deshacer.<br><br>
-      Perderás todos tus datos, pedidos y favoritos.
+    
+    <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;margin-bottom:.75rem;color:var(--dk);text-align:center">Botón de Arrepentimiento</h2>
+    <p style="font-size:14px;color:var(--gray);margin-bottom:1.75rem;line-height:1.6;text-align:center">Según la Resolución 424/2020 de la Secretaría de Comercio Interior, podés desistir de tu compra dentro de los <strong style="color:var(--orange)">10 días corridos</strong> desde la recepción del producto, sin costo y sin expresión de causa.</p>
+    
+    <form id="formArrepentimiento" onsubmit="submitArrepentimiento(event)">
+      <div style="margin-bottom:1rem">
+        <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Número de Orden *</label>
+        <input type="text" id="arrepOrden" required placeholder="Ej: GP-2026-XXXXX" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+      </div>
+      
+      <div style="margin-bottom:1rem">
+        <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Email de compra *</label>
+        <input type="email" id="arrepEmail" required placeholder="tu@email.com" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+      </div>
+      
+      <div style="margin-bottom:1rem">
+        <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Teléfono de contacto</label>
+        <input type="tel" id="arrepTelefono" placeholder="+54 9 291 1234567" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+      </div>
+      
+      <div style="margin-bottom:1.25rem">
+        <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Motivo (opcional)</label>
+        <textarea id="arrepMotivo" rows="3" placeholder="Contanos por qué desistís de la compra..." style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'"></textarea>
+      </div>
+      
+      <label style="display:flex;align-items:flex-start;gap:14px;cursor:pointer;margin-bottom:1.75rem;text-align:left;padding:16px;background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border-radius:14px;border:1px solid #FED7AA" onclick="event.stopPropagation()">
+        <input type="checkbox" id="arrepConfirm" required style="width:22px;height:22px;margin-top:2px;accent-color:var(--orange);cursor:pointer">
+        <span style="font-size:14px;color:var(--dk);line-height:1.4">Confirmo que quiero desistir de mi compra según el Artículo 34 de la Ley 24.240 de Defensa del Consumidor.</span>
+      </label>
+      
+      <button type="submit" style="width:100%;padding:16px;background:linear-gradient(135deg,#FF6B2C,#FF8F5E);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,107,44,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255,107,44,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(255,107,44,.3)'">Enviar Solicitud</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== ARREPENTIMIENTO MODAL ===== -->
+<div id="arrepModal" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeArrepModal()"></div>
+  <div style="position:relative;background:#fff;border-radius:20px;width:min(500px,90%);padding:2rem;box-shadow:0 25px 80px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;transform:scale(.9);transition:transform .3s">
+    <button onclick="closeArrepModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%">×</button>
+    
+    <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;margin-bottom:1.5rem;color:var(--dk)">Gestionar Arrepentimiento</h2>
+    
+    <input type="hidden" id="arrepId">
+    
+    <div style="display:grid;gap:1rem;margin-bottom:1.5rem">
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">ID Trámite</label>
+        <div id="arrepDetailId" style="font-size:13px;color:var(--dk);font-family:monospace"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Fecha</label>
+          <div id="arrepDetailFecha" style="font-size:13px;color:var(--dk)"></div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Número de Orden</label>
+          <div id="arrepDetailOrden" style="font-size:13px;color:var(--dk);font-weight:600"></div>
+        </div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Email del Cliente</label>
+        <div id="arrepDetailEmail" style="font-size:13px;color:var(--dk)"></div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Teléfono</label>
+        <div id="arrepDetailTelefono" style="font-size:13px;color:var(--dk)"></div>
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Motivo</label>
+        <div id="arrepDetailMotivo" style="font-size:13px;color:var(--dk);background:var(--cream);padding:12px;border-radius:8px;min-height:60px"></div>
+      </div>
     </div>
-    <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;margin-bottom:1.5rem;text-align:left;padding:14px;background:var(--cream);border-radius:12px" onclick="event.stopPropagation()">
-      <input type="checkbox" id="deleteConfirmCheck" onchange="toggleDeleteBtn()" style="width:20px;height:20px;margin-top:2px;accent-color:var(--red);cursor:pointer">
-      <span style="font-size:13px;color:var(--dk);line-height:1.4">Entiendo que esta acción es irreversible y que perderé permanentemente todos mis datos</span>
-    </label>
+    
+    <div style="margin-bottom:1.5rem">
+      <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px">Cambiar Estado</label>
+      <select id="arrepNewEstado" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px">
+        <option value="PENDIENTE">PENDIENTE</option>
+        <option value="EN PROCESO">EN PROCESO</option>
+        <option value="RESUELTO">RESUELTO</option>
+        <option value="RECHAZADO">RECHAZADO</option>
+      </select>
+    </div>
+    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button onclick="closeConfirm()" style="padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk)">Cancelar</button>
-      <button id="confirmDeleteBtn" onclick="deleteUserAccount()" disabled style="padding:14px;border:none;border-radius:12px;background:var(--gray2);color:#fff;font-size:14px;font-weight:600;cursor:not-allowed">Eliminar Mi Cuenta</button>
+      <button onclick="closeArrepModal()" style="padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk)">Cancelar</button>
+      <button onclick="saveArrepEstado()" style="padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Guardar Cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONFIRM OVERLAY ===== -->
+<div id="confirmOverlay" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeConfirm()"></div>
+  <div style="position:relative;background:#fff;border-radius:24px;width:min(420px,90%);padding:2.5rem;box-shadow:0 25px 80px rgba(0,0,0,.35);text-align:center;transform:scale(.9);transition:transform .3s">
+    <div style="width:80px;height:80px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+    </div>
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;margin-bottom:.75rem;color:var(--dk)">Eliminar Cuenta</div>
+    <div style="font-size:15px;color:var(--gray);margin-bottom:1.75rem;line-height:1.7">
+      ¿Estás seguro de que quieres eliminar tu cuenta? Esta acción es <strong style="color:#DC2626">permanente</strong> y no se puede deshacer.<br><br>
+      <span style="font-size:13px">Perderás todos tus datos, pedidos y favoritos.</span>
+    </div>
+    <label style="display:flex;align-items:flex-start;gap:14px;cursor:pointer;margin-bottom:1.75rem;text-align:left;padding:16px;background:linear-gradient(135deg,#fef2f2,#fee2e2);border-radius:14px;border:1px solid #fecaca" onclick="event.stopPropagation()">
+      <input type="checkbox" id="deleteConfirmCheck" onchange="toggleDeleteBtn()" style="width:22px;height:22px;margin-top:1px;accent-color:#DC2626;cursor:pointer">
+      <span style="font-size:14px;color:var(--dk);line-height:1.4">Entiendo que esta acción es irreversible y que perderé permanentemente todos mis datos</span>
+    </label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <button onclick="closeConfirm()" style="padding:16px;border:2px solid var(--border);border-radius:14px;background:#fff;font-size:15px;font-weight:600;cursor:pointer;color:var(--dk);transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">Cancelar</button>
+      <button id="confirmDeleteBtn" onclick="deleteUserAccount()" disabled style="padding:16px;border:none;border-radius:14px;background:var(--gray2);color:#fff;font-size:15px;font-weight:600;cursor:not-allowed;transition:all .2s">Eliminar Mi Cuenta</button>
     </div>
   </div>
 </div>
@@ -1278,17 +2018,74 @@ function toggleDeleteBtn(){
 <script src="lib/constants.js"></script>
 <script src="lib/utils.js"></script>
 <script src="lib/navigation.js"></script>
+<!-- Cookie Banner -->
+<div id="cookieBanner">
+  <div class="cb-container">
+    <div class="cb-text">
+      <p>Utilizamos cookies para mejorar tu experiencia. некоторые son esenciales para el funcionamiento del sitio, mientras que otras nos ayudan a analizar el tráfico y personalizar el contenido. <a href="/privacidad">Leer Política de Privacidad</a></p>
+    </div>
+    <div class="cb-buttons">
+      <button class="cb-btn cb-btn-primary" onclick="acceptAllCookies()">Aceptar todas</button>
+      <button class="cb-btn cb-btn-outline" onclick="rejectNonEssential()">Rechazar no esenciales</button>
+      <button class="cb-btn cb-btn-secondary" onclick="showCookieModal()">Configurar cookies</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie Modal -->
+<div id="cookieModal">
+  <div class="cm-content">
+    <div class="cm-header">
+      <h2>Configurar Cookies</h2>
+      <button class="cm-close" onclick="hideCookieModal()">&times;</button>
+    </div>
+    <div class="cm-body">
+      <div class="cm-cookie-item">
+        <div class="cm-cookie-header">
+          <span class="cm-cookie-title">Necesarias</span>
+          <span class="cm-cookie-required">Siempre activas</span>
+        </div>
+        <p class="cm-cookie-desc">Son esenciales para el funcionamiento del sitio web y no pueden desactivarse.</p>
+      </div>
+      <div class="cm-cookie-item">
+        <div class="cm-cookie-header">
+          <span class="cm-cookie-title">Analytics</span>
+          <label class="cm-toggle">
+            <input type="checkbox" id="cookieAnalytics" checked>
+            <span class="cm-toggle-slider"></span>
+          </label>
+        </div>
+        <p class="cm-cookie-desc">Nos ayudan a entender cómo interactúas con el sitio para mejorar nuestra oferta.</p>
+      </div>
+      <div class="cm-cookie-item">
+        <div class="cm-cookie-header">
+          <span class="cm-cookie-title">Marketing</span>
+          <label class="cm-toggle">
+            <input type="checkbox" id="cookieMarketing">
+            <span class="cm-toggle-slider"></span>
+          </label>
+        </div>
+        <p class="cm-cookie-desc">Se utilizan para mostrarte publicidad relevante y medir la eficacia de nuestras campañas.</p>
+      </div>
+    </div>
+    <div class="cm-footer">
+      <button class="cm-btn cm-btn-accept" onclick="saveCookiePreferences()">Guardar preferencias</button>
+    </div>
+  </div>
+</div>
+
 <script>
 console.log('[BROWSER] Page loaded');
 </script>
 <script src="lib/favorites.js"></script>
 <script src="lib/cart.js"></script>
+<script src="lib/checkout.js"></script>
 <script src="lib/notifications.js"></script>
-<script src="lib/chat.js"></script>
+<script src="lib/cookies.js"></script>
 <script src="lib/sell.js"></script>
 <script src="lib/admin.js"></script>
 <script src="lib/render.js"></script>
 <script src="lib/search.js"></script>
-<script>initFavorites();initCart();loadProducts();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
+<script>initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
 </body>
 </html>

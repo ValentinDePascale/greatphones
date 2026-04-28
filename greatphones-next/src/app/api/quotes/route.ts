@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { QuoteCreateSchema, formatZodError } from '@/lib/validations'
+import { z } from 'zod'
 
 export async function GET(request: Request) {
   try {
@@ -37,6 +39,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    
+    // Validar body con Zod (solo device es obligatorio)
+    const validation = QuoteCreateSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+    }
     
     const {
       userId,

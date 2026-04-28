@@ -37,6 +37,6 @@ export async function DELETE(request: Request) {
 
   } catch (error) {
     console.error('[DELETE API] Delete account error:', error)
-    return NextResponse.json({ error: 'Error al eliminar cuenta: ' + error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Error al eliminar cuenta: ' + (error as Error).message }, { status: 500 })
   }
 }

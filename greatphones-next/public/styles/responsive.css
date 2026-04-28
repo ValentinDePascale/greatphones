@@ -17,6 +17,5 @@
 }
 @media(min-width:1024px){
   .topbar,.mainnav,.catnav{padding-left:2rem;padding-right:2rem}
-  .shop-grid{grid-template-columns:repeat(4,1fr)}
-  .stat-grid{grid-template-columns:repeat(4,1fr)}
+  .shop-grid{grid-template-columns:repeat(4,1fr);gap:16px}
 }

@@ -34,7 +34,7 @@ export default function Footer() {
             </span>
           </div>
           <div className="text-xs text-[var(--gray2)]">
-            Zelarrayan 179, Bahia Blanca &middot; © 2025 Great Phones
+            Zelarrayan 179, Bahia Blanca &middot; © 2026 Great Phones
           </div>
           <div className="flex items-center gap-3 text-lg">
             <a href="#" className="hover:text-[var(--orange)]">📷</a>

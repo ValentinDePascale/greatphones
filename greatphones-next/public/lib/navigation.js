@@ -3,6 +3,130 @@ var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
 var pendingSignupData=null;
 
+// =========== ARREPENTIMIENTO (Resolución 424/2020) ===========
+function openArrepentimiento(){
+  var modal=document.getElementById('arrepentimientoModal');
+  if(modal){
+    modal.style.display='flex';
+    setTimeout(function(){modal.style.opacity='1';modal.querySelector('[style*="transform"]').style.transform='scale(1)';},10);
+  }
+}
+
+function closeArrepentimiento(){
+  var modal=document.getElementById('arrepentimientoModal');
+  if(modal){
+    modal.style.opacity='0';
+    modal.querySelector('[style*="transform"]').style.transform='scale(.9)';
+    setTimeout(function(){modal.style.display='none';},300);
+  }
+  document.getElementById('formArrepentimiento').reset();
+}
+
+async function submitArrepentimiento(event){
+  event.preventDefault();
+  var orden=document.getElementById('arrepOrden').value.trim();
+  var email=document.getElementById('arrepEmail').value.trim();
+  var telefono=document.getElementById('arrepTelefono').value.trim();
+  var motivo=document.getElementById('arrepMotivo').value.trim();
+  var confirm=document.getElementById('arrepConfirm').checked;
+  if(!orden||!email||!confirm){alert('Por favor completá los campos obligatorios');return;}
+  
+  var btn=event.target.querySelector('button[type="submit"]');
+  var originalText=btn.textContent;
+  btn.textContent='Enviando...';
+  btn.disabled=true;
+  
+  try{
+    var res=await fetch(API_URL+'/api/arrepentimiento',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({orderId:orden,email:email,telefono:telefono,motivo:motivo})
+    });
+    var data=await res.json();
+    btn.textContent=originalText;
+    btn.disabled=false;
+    
+    if(data.success){
+      closeArrepentimiento();
+      showSuccessModal('Tu solicitud ha sido registrada','Gracias por contactarnos. Te enviaremos un email con el número de trámite: <strong>'+data.tramite?.substring(0,12)+'...</strong><br><br>Según la Resolución 424/2020, procesaremos tu solicitud en un máximo de 3 días hábiles.');
+    }else{
+      showSuccessModal('Error',data.message||'Error al procesar la solicitud','error');
+    }
+  }catch(e){
+    btn.textContent=originalText;
+    btn.disabled=false;
+    showSuccessModal('Error de conexión','Intentalo más tarde.','error');
+  }
+}
+
+function showSuccessModal(title,message,type){
+  var existing=document.getElementById('successModal');
+  if(existing)existing.remove();
+  
+  var overlay=document.createElement('div');
+  overlay.id='successModal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);animation:fadeIn .3s ease';
+  
+  var bgColor=type==='error'?'#FEF2F2':'#F0FDF4';
+  var borderColor=type==='error'?'#FECACA':'#BBF7D0';
+  var iconColor=type==='error'?'#DC2626':'#16A34A';
+  var icon=type==='error'
+    ?'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
+    :'<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></svg>';
+  
+  overlay.innerHTML='<div style="background:'+bgColor+';border-radius:24px;padding:2.5rem;text-align:center;max-width:420px;box-shadow:0 25px 80px rgba(0,0,0,.35);animation:scaleIn .3s ease">'+
+    '<div style="margin-bottom:1rem">'+icon+'</div>'+
+    '<h2 style="font-family:Playfair Display,serif;font-size:24px;font-weight:700;margin-bottom:.5rem;color:#129344">'+title+'</h2>'+
+    '<p style="font-size:14px;color:#64748B;line-height:1.6;margin-bottom:1.5rem">'+message+'</p>'+
+    '<button onclick="document.getElementById(\'successModal\').remove()" style="padding:14px 32px;background:var(--orange);color:#fff;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer">Aceptar</button>'+
+  '</div>';
+  
+  document.body.appendChild(overlay);
+}
+
+// =========== BROWSER HISTORY ===========
+var currentPage='home';
+window.historyData={
+  home:'home',shop:'shop',cuenta:'cuenta',ofertas:'ofertas',
+  accesorios:'accesorios',servicio:'servicio',mayorista:'mayorista',
+  garantias:'garantias',notebooks:'notebooks',compare:'compare',
+  favoritos:'favoritos',mensajes:'mensajes','edit-profile':'edit-profile',
+  terminos:'terminos','privacidad':'privacidad'
+};
+
+// Save current page to history
+function saveToHistory(page){
+  if(page===currentPage)return;
+  window.history.pushState({page:page},'',window.historyData[page]||page);
+  currentPage=page;
+}
+
+// Handle browser back/forward
+window.onpopstate=function(event){
+  var page=event.state&&event.state.page;
+  if(page){
+    nav(page,false);
+  }
+};
+
+// Initialize history on page load
+window.addEventListener('DOMContentLoaded',function(){
+  var path=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
+  if(path&&window.historyData[path]){
+    nav(path,false);
+  }else if(path){
+    nav('home',false);
+  }
+});
+
+// Also initialize on load
+window.addEventListener('load',function(){
+  var path=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
+  if(path&&window.historyData[path]){
+    currentPage=path;
+  }
+});
+
 function togglePassword(inputId,toggleIconId){
   var input=document.getElementById(inputId);
   var icon=document.getElementById(toggleIconId);
@@ -143,28 +267,40 @@ async function verifyAndCompleteSignup(){
     pendingSignupData=null;
   }catch(e){showLoginError('Error de conexión');}
 }
-function nav(id){
+function nav(id,pushHistory){
+  if(pushHistory===undefined)pushHistory=true;
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
   var el=document.getElementById('p-'+id);
   if(el)el.classList.add('act');
-  window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='terminos'||id==='privacidad'){
+    document.documentElement.scrollTop=0;
+    document.body.scrollTop=0;
+  }else{
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  if(pushHistory){
+    window.history.pushState({page:id},'',window.historyData[id]||id);
+  }
+  currentPage=id;
   if(id==='home'){renderHomeRail();renderOfferStrip();}
   if(id==='register'){closeLogin();}
   if(id==='shop'){
     window.shopFilter='todos';
     renderShopGrid();
     setCN('shop');
-    document.querySelectorAll('#filterBar .fchip').forEach(function(c){c.classList.remove('act');});
-    document.querySelector('#filterBar .fchip').classList.add('act');
     var titleEl=document.getElementById('shopTitle');
     if(titleEl)titleEl.textContent='Catálogo';
     var subEl=document.getElementById('shopSub');
     if(subEl)subEl.textContent='Todos los equipos verificados con garantia incluida';
   }
+  if(id==='checkout'){
+    renderCheckoutSummary();
+    prefillCheckoutFields();
+  }
   if(id==='ofertas')renderOfertasGrid();
-  if(id==='accesorios')renderAccGrid();
+  if(id==='accesorios')loadAccessories();
   if(id==='favoritos')renderFavGrid();
   if(id==='servicio')renderRepairGrid();
   if(id==='notebooks')renderNotebookConfig();
@@ -173,6 +309,7 @@ function nav(id){
     renderOrderHistory();
     renderQuotHistory();
   }
+  if(id==='edit-profile'){loadEditProfile();}
   if(id==='admin'){
     window.currentAdminTab='prods';
     renderAdminContent('prods');
@@ -199,14 +336,39 @@ function nav(id){
     }
     window.isEditingProduct=false;
   }
+  if(id==='admin-acc'){
+    if(!window.isEditingAcc){
+      document.getElementById('accId').value='';
+      document.getElementById('accName').value='';
+      document.getElementById('accBrand').value='';
+      document.getElementById('accPrice').value='';
+      document.getElementById('accStock').value='';
+      document.getElementById('accCompareAtPrice').value='';
+      document.getElementById('accCategory').value='Cargadores';
+      document.getElementById('accColor').value='';
+      document.getElementById('accCompatibleModels').value='';
+      document.getElementById('accIco').value='📦';
+      document.getElementById('accImageUrl').value='';
+      document.getElementById('accImages').value='';
+      document.getElementById('accImagePreview').innerHTML='📦';
+      document.getElementById('accAdditionalImages').innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
+      additionalAccImages=[];
+    }
+    window.isEditingAcc=false;
+  }
 }
 function navShop(cat){
-  nav('shop');
-  if(cat && cat!==''){
-    window.shopFilter=cat;
-    renderShopGrid();
+  if(cat==='ofertas'){
+    nav('ofertas');
+    renderOfertasGrid();
+  }else{
+    nav('shop');
+    if(cat && cat!==''){
+      window.shopFilter=cat;
+      renderShopGrid();
+    }
   }
-  setCN('shop');
+  setCN(cat==='ofertas'?'ofertas':'shop');
 }
 function setCN(id){
   document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
@@ -397,16 +559,24 @@ function notAvailable(){
   console.log('Funcionalidad no disponible - requiere conexion al backend');
 }
 async function doRegister(){
-  var name=document.getElementById('regName').value.trim();
-  var lastname=document.getElementById('regLastname').value.trim();
-  var email=document.getElementById('regEmail').value.trim();
-  var phone=document.getElementById('regPhone').value.trim();
-  var dni=document.getElementById('regDni').value.trim();
-  var provincia=document.getElementById('regProvincia').value.trim();
-  var ciudad=document.getElementById('regCiudad').value.trim();
-  var password=document.getElementById('regPassword').value;
-  var confirmPassword=document.getElementById('regConfirmPassword').value;
+  var nameEl=document.getElementById('regName');
+  var lastnameEl=document.getElementById('regLastname');
+  var emailEl=document.getElementById('regEmail');
+  var passwordEl=document.getElementById('regPassword');
+  var confirmEl=document.getElementById('regConfirmPassword');
+  var tycEl=document.getElementById('regTyC');
+  
+  if(!nameEl||!lastnameEl||!emailEl||!passwordEl){
+    alert('El formulario de registro no está cargado');return;}
+  
+  var name=nameEl.value.trim();
+  var lastname=lastnameEl.value.trim();
+  var email=emailEl.value.trim();
+  var password=passwordEl.value;
+  var confirmPassword=confirmEl?confirmEl.value:'';
+  var tyc=tycEl?tycEl.checked:false;
   if(!name||!lastname||!email||!password){alert('Completá los campos obligatorios');return;}
+  if(!tyc){alert('Debés aceptar los Términos y Condiciones para registrarte');return;}
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){alert('Email inválido');return;}
   var passed=0;
   if(password.length>=8)passed++;
@@ -426,7 +596,20 @@ async function doRegister(){
   }
   if(password!==confirmPassword){alert('Las contraseñas no coinciden');return;}
   
-  pendingSignupData={name:name+' '+lastname,email:email,phone:phone,dni:dni,provincia:provincia,ciudad:ciudad,password:password};
+  var phoneEl=document.getElementById('regPhone');
+  var dniEl=document.getElementById('regDni');
+  var provEl=document.getElementById('regProvincia');
+  var cityEl=document.getElementById('regCiudad');
+  
+  pendingSignupData={
+    name:name+' '+lastname,
+    email:email,
+    phone:phoneEl?phoneEl.value.trim():'',
+    dni:dniEl?dniEl.value.trim():'',
+    provincia:provEl?provEl.value.trim():'',
+    ciudad:cityEl?cityEl.value.trim():'',
+    password:password
+  };
   
   try{
     var res=await fetch(API_URL+'/api/auth/verify-email',{
@@ -539,6 +722,20 @@ function setCatAct(el){
   if(el)el.classList.add('act');
 }
 
+function switchEditProfileTab(tab){
+  document.getElementById('epTabPersonal').classList.remove('act');
+  document.getElementById('epTabFacturacion').classList.remove('act');
+  document.getElementById('epPersonalContent').style.display='none';
+  document.getElementById('epFacturacionContent').style.display='none';
+  if(tab==='personal'){
+    document.getElementById('epTabPersonal').classList.add('act');
+    document.getElementById('epPersonalContent').style.display='block';
+  }else{
+    document.getElementById('epTabFacturacion').classList.add('act');
+    document.getElementById('epFacturacionContent').style.display='block';
+  }
+}
+
 function loadEditProfile(){
   if(!currentUser)return;
   var nameEl=document.getElementById('editProfileName');
@@ -550,8 +747,27 @@ function loadEditProfile(){
   document.getElementById('editProfileLastname').value=lastName;
   document.getElementById('editProfilePhone').value=currentUser.phone||'';
   document.getElementById('editProfileEmail').value=currentUser.email||'';
-  var initials=(firstName?firstName[0]:'')+(lastName?lastName[0]:'');
-  document.getElementById('editProfileAvatar').textContent=initials.toUpperCase()||'GP';
+  document.getElementById('editProfileDni').value=currentUser.dni||'';
+  document.getElementById('editProfileFactPhone').value=currentUser.phone||'';
+  var fullDireccion=currentUser.direccion||'';
+  var direccionMatch=fullDireccion.match(/^(.+?)\s+(\d+)$/);
+  if(direccionMatch){
+    document.getElementById('editProfileCalle').value=direccionMatch[1]||'';
+    document.getElementById('editProfileNumero').value=direccionMatch[2]||'';
+  }else{
+    document.getElementById('editProfileCalle').value=fullDireccion;
+    document.getElementById('editProfileNumero').value='';
+  }
+  document.getElementById('editProfilePiso').value=currentUser.piso||'';
+  document.getElementById('editProfileCp').value=currentUser.cp||'';
+  document.getElementById('editProfileProvincia').value=currentUser.provincia||'';
+  document.getElementById('editProfileCiudad').value=currentUser.ciudad||'';
+  if(currentUser.avatar){
+    document.getElementById('editProfileAvatar').innerHTML='<img src="'+currentUser.avatar+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+  }else{
+    var initials=(firstName?firstName[0]:'')+(lastName?lastName[0]:'');
+    document.getElementById('editProfileAvatar').textContent=initials.toUpperCase()||'GP';
+  }
 }
 
 async function saveEditProfile(){
@@ -559,17 +775,32 @@ async function saveEditProfile(){
   var name=document.getElementById('editProfileName').value.trim();
   var lastname=document.getElementById('editProfileLastname').value.trim();
   var phone=document.getElementById('editProfilePhone').value.trim();
+  var dni=document.getElementById('editProfileDni').value.trim();
+  var factPhone=document.getElementById('editProfileFactPhone').value.trim();
+  var calle=document.getElementById('editProfileCalle').value.trim();
+  var numero=document.getElementById('editProfileNumero').value.trim();
+  var piso=document.getElementById('editProfilePiso').value.trim();
+  var cp=document.getElementById('editProfileCp').value.trim();
+  var provincia=document.getElementById('editProfileProvincia').value;
+  var ciudad=document.getElementById('editProfileCiudad').value.trim();
   var fullName=name+' '+lastname;
+  var direccion=calle+(numero?' '+numero:'');
   try{
     var res=await fetch(API_URL+'/api/auth/update',{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({userId:currentUser.id,name:fullName,phone:phone})
+      body:JSON.stringify({userId:currentUser.id,name:fullName,phone:phone,dni:dni,direccion:direccion,piso:piso,cp:cp,provincia:provincia,ciudad:ciudad,avatar:currentUser.avatar})
     });
     var data=await res.json();
     if(data.error){alert(data.error);return;}
     currentUser.name=fullName;
     currentUser.phone=phone;
+    currentUser.dni=dni;
+    currentUser.direccion=direccion;
+    currentUser.cp=cp;
+    currentUser.provincia=provincia;
+    currentUser.ciudad=ciudad;
+    if(data.user&&data.user.avatar)currentUser.avatar=data.user.avatar;
     localStorage.setItem('gp_user',JSON.stringify(currentUser));
     updateUserUI();
     document.getElementById('cuentaName').textContent=fullName;
@@ -590,12 +821,17 @@ function confirmDeleteAccount(){
     btn.style.cursor='not-allowed';
   }
   overlay.style.display='flex';
+  setTimeout(function(){overlay.style.opacity='1';overlay.querySelector('[style*="transform"]').style.transform='scale(1)';},10);
   overlay.querySelector('div').style.opacity='1';
 }
 
 function closeConfirm(){
   var overlay=document.getElementById('confirmOverlay');
-  overlay.style.display='none';
+  if(overlay){
+    overlay.style.opacity='0';
+    overlay.querySelector('[style*="transform"]').style.transform='scale(.9)';
+    setTimeout(function(){overlay.style.display='none';},300);
+  }
 }
 
 function confirmAction(confirmed){

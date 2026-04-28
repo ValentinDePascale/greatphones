@@ -1,7 +1,8 @@
-// ============ SIGNUP API (TEST) ============
+// ============ SIGNUP API ============
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { SignupSchema, formatZodError } from '@/lib/validations'
 
 export async function GET() {
   return NextResponse.json({ 
@@ -26,15 +27,14 @@ export async function POST(request: Request) {
   
   try {
     const body = await request.json()
-    console.log('[SIGNUP] Body:', body)
+    
+    // Validar body con Zod
+    const validation = SignupSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+    }
+    
     const { email, name, phone, dni, provincia, ciudad, password } = body
-
-    if (!email) {
-      return NextResponse.json({ error: 'Email es requerido' }, { status: 400 })
-    }
-    if (!password || password.length < 6) {
-      return NextResponse.json({ error: 'Password debe tener al menos 6 caracteres' }, { status: 400 })
-    }
 
     console.log('[SIGNUP] Checking if user exists:', email)
     const existing = await prisma.user.findUnique({
@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(password, 10)
 
     console.log('[SIGNUP] Creating user...')
+    console.log('[SIGNUP] Data:', { email, name, phone, dni, provincia, ciudad })
     const user = await prisma.user.create({
       data: {
         email,

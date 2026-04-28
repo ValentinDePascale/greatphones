@@ -21,4 +21,5 @@ function doSearch(){
   document.getElementById('p-shop').classList.add('act');
   setCN('shop');
   window.scrollTo({top:0,behavior:'smooth'});
+  window.history.pushState({page:'shop'},'','shop');
 }

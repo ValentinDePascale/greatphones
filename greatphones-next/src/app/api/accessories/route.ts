@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { 
-  ProductCreateSchema, 
-  ProductUpdateSchema,
+  AccessoryCreateSchema, 
+  AccessoryUpdateSchema,
   formatZodError 
 } from '@/lib/validations'
 
@@ -19,37 +19,38 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
+  const category = searchParams.get('category')
   const brand = searchParams.get('brand')
-  const offer = searchParams.get('offer')
   const search = searchParams.get('search')
    
   try {
-    const where: any = {}
+    const where: any = { isActive: true }
+    
+    if (category && category !== 'todos') {
+      where.category = category
+    }
     
     if (brand) {
       where.brand = { equals: brand, mode: 'insensitive' }
-    }
-    
-    if (offer === 'true') {
-      where.isOffer = true
     }
     
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { brand: { contains: search, mode: 'insensitive' } },
+        { category: { contains: search, mode: 'insensitive' } },
       ]
     }
     
-    const products = await prisma.product.findMany({
+    const accessories = await prisma.accessory.findMany({
       where,
       orderBy: { createdAt: 'desc' },
     })
     
-    return NextResponse.json(products)
+    return NextResponse.json(accessories)
   } catch (error) {
-    console.error('Error fetching products:', error)
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
+    console.error('Error fetching accessories:', error)
+    return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500 })
   }
 }
 
@@ -58,39 +59,35 @@ export async function POST(request: Request) {
     const body = await request.json()
     
     // Validar body
-    const validation = ProductCreateSchema.safeParse(body)
+    const validation = AccessoryCreateSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
-    console.log('Creating product with data:', body)
+    console.log('Creating accessory with data:', body)
     
-    const newProduct = await prisma.product.create({
+    const newAccessory = await prisma.accessory.create({
       data: {
         name: body.name,
-        ico: body.ico || '📱',
-        imageUrl: body.imageUrl || null,
-        brand: body.brand,
-        sub: body.sub,
-        condition: body.condition || 'Nuevo',
+        ico: body.ico || '📦',
+        description: body.description || null,
+        category: body.category,
         price: Number(body.price) || 0,
-        cost: Number(body.cost) || 0,
+        compareAtPrice: body.compareAtPrice ? Number(body.compareAtPrice) : null,
         stock: Number(body.stock) || 0,
-        type: body.type || 'celular',
+        imageUrl: body.imageUrl || null,
         images: body.images || [],
+        brand: body.brand || null,
         color: body.color || null,
-        screen: body.screen ? Number(body.screen) : null,
-        isOffer: Boolean(body.isOffer),
-        discount: Number(body.discount) || 0,
-        offerStart: body.offerStart ? new Date(body.offerStart) : null,
-        offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
+        compatibleModels: body.compatibleModels || null,
+        isActive: body.isActive !== false,
       },
     })
     
-    return NextResponse.json(newProduct, { status: 201 })
+    return NextResponse.json(newAccessory, { status: 201 })
   } catch (error) {
-    console.error('Error creating product:', error)
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
+    console.error('Error creating accessory:', error)
+    return NextResponse.json({ error: 'Failed to create accessory' }, { status: 500 })
   }
 }
 
@@ -106,38 +103,34 @@ export async function PUT(request: Request) {
     const body = await request.json()
     
     // Validar body (partial para updates)
-    const validation = ProductUpdateSchema.safeParse(body)
+    const validation = AccessoryUpdateSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
-    const updatedProduct = await prisma.product.update({
+    const updatedAccessory = await prisma.accessory.update({
       where: { id },
       data: {
         ...(body.name && { name: body.name }),
         ...(body.ico && { ico: body.ico }),
-        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl || null }),
-        ...(body.brand && { brand: body.brand }),
-        ...(body.sub && { sub: body.sub }),
-        ...(body.condition && { condition: body.condition }),
+        ...(body.description !== undefined && { description: body.description || null }),
+        ...(body.category && { category: body.category }),
         ...(body.price !== undefined && { price: Number(body.price) }),
-        ...(body.cost !== undefined && { cost: Number(body.cost) }),
+        ...(body.compareAtPrice !== undefined && { compareAtPrice: body.compareAtPrice ? Number(body.compareAtPrice) : null }),
         ...(body.stock !== undefined && { stock: Number(body.stock) }),
-        ...(body.type && { type: body.type }),
+        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl || null }),
         ...(body.images && { images: body.images }),
+        ...(body.brand !== undefined && { brand: body.brand || null }),
         ...(body.color !== undefined && { color: body.color || null }),
-        ...(body.screen !== undefined && { screen: body.screen ? Number(body.screen) : null }),
-        ...(body.isOffer !== undefined && { isOffer: Boolean(body.isOffer) }),
-        ...(body.discount !== undefined && { discount: Number(body.discount) }),
-        ...(body.offerStart && { offerStart: new Date(body.offerStart) }),
-        ...(body.offerEnd && { offerEnd: new Date(body.offerEnd) }),
+        ...(body.compatibleModels !== undefined && { compatibleModels: body.compatibleModels || null }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
       },
     })
     
-    return NextResponse.json(updatedProduct)
+    return NextResponse.json(updatedAccessory)
   } catch (error) {
-    console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
+    console.error('Error updating accessory:', error)
+    return NextResponse.json({ error: 'Failed to update accessory' }, { status: 500 })
   }
 }
 
@@ -150,13 +143,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
     }
     
-    await prisma.product.delete({
+    await prisma.accessory.delete({
       where: { id },
     })
     
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
+    console.error('Error deleting accessory:', error)
+    return NextResponse.json({ error: 'Failed to delete accessory' }, { status: 500 })
   }
 }

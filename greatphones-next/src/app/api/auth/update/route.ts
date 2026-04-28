@@ -15,23 +15,30 @@ export async function OPTIONS() {
 export async function PUT(request: Request) {
   try {
     const body = await request.json()
-    const { userId, name, phone } = body
+    const { userId, name, phone, dni, direccion, cp, provincia, ciudad, avatar } = body
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID requerido' }, { status: 400 })
     }
 
+    const updateData: any = {}
+    if (name) updateData.name = name
+    if (phone !== undefined) updateData.phone = phone
+    if (dni !== undefined) updateData.dni = dni
+    if (direccion !== undefined) updateData.direccion = direccion
+    if (cp !== undefined) updateData.cp = cp
+    if (provincia !== undefined) updateData.provincia = provincia
+    if (ciudad !== undefined) updateData.ciudad = ciudad
+    if (avatar !== undefined) updateData.avatar = avatar
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data: {
-        name: name,
-        phone: phone
-      }
+      data: updateData
     })
 
     return NextResponse.json({ 
       message: 'Usuario actualizado',
-      user: { id: user.id, email: user.email, name: user.name, phone: user.phone }
+      user: { id: user.id, email: user.email, name: user.name, phone: user.phone, dni: user.dni, direccion: user.direccion, cp: user.cp, provincia: user.provincia, ciudad: user.ciudad, avatar: user.avatar }
     }, { 
       status: 200,
       headers: { 'Access-Control-Allow-Origin': '*' }
