@@ -118,18 +118,21 @@ function renderAccAdditionalImage(url){
 
 function saveAccessory(){
   var id=document.getElementById('accId').value;
-  var name=document.getElementById('accName').value;
-  var price=parseInt(document.getElementById('accPrice').value);
-  var stock=parseInt(document.getElementById('accStock').value)||0;
-  var category=document.getElementById('accCategory').value;
-  var brand=document.getElementById('accBrand').value;
-  var description=document.getElementById('accDescription').value;
-  var color=document.getElementById('accColor').value;
-  var ico=document.getElementById('accIco').value;
-  var imageUrl=document.getElementById('accImageUrl').value;
-  var images=window.accAdditionalImages||[];
+  var data={};
   
-  if(!name||!price){
+  data.name=document.getElementById('accName').value;
+  data.price=parseInt(document.getElementById('accPrice').value)||0;
+  data.stock=parseInt(document.getElementById('accStock').value)||0;
+  data.category=document.getElementById('accCategory').value;
+  data.brand=document.getElementById('accBrand').value;
+  data.description=document.getElementById('accDescription').value;
+  data.color=document.getElementById('accColor').value;
+  data.ico=document.getElementById('accIco').value;
+  data.imageUrl=document.getElementById('accImageUrl').value;
+  data.images=window.accAdditionalImages||[];
+  data.compatibleModels=document.getElementById('accCompatibleModels').value||null;
+  
+  if(!data.name||!data.price){
     alert('Nombre y precio son requeridos');
     return;
   }
@@ -140,35 +143,39 @@ function saveAccessory(){
   fetch(API_URL+endpoint,{
     method:method,
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name,price,stock,category,brand,description,color,ico,imageUrl,images})
-  }).then(function(r){return r.json();}).then(function(data){
-    alert(id?'Accesorio actualizado':'Accesorio creado');
+    body:JSON.stringify(data)
+  }).then(function(r){return r.json();}).then(function(){
+    showToast(id?'Accesorio actualizado':'Accesorio creado');
     resetAccessoryForm();
+    loadAccessories();
     nav('admin');
-    adminTab('acc');
+    renderAdminContent('acc');
   }).catch(function(e){alert('Error: '+e.message);});
 }
 
 function editAccessory(id){
+  window.isEditingAcc=true;
   fetch(API_URL+'/api/accessories?id='+id).then(function(r){return r.json();}).then(function(a){
-    if(a){
-      document.getElementById('accId').value=a.id;
-      document.getElementById('accName').value=a.name;
-      document.getElementById('accPrice').value=a.price;
-      document.getElementById('accStock').value=a.stock;
-      document.getElementById('accCategory').value=a.category;
-      document.getElementById('accBrand').value=a.brand||'';
-      document.getElementById('accDescription').value=a.description||'';
-      document.getElementById('accColor').value=a.color||'';
-      document.getElementById('accIco').value=a.ico||'';
-      document.getElementById('accImageUrl').value=a.imageUrl||'';
-      window.accAdditionalImages=a.images||[];
-      if(a.imageUrl){
-        document.getElementById('accImagePreview').innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
-      }
-      renderAccAdditionalImagesList();
-      nav('admin-acc');
+    if(!a)return;
+    document.getElementById('accId').value=a.id;
+    document.getElementById('accName').value=a.name||'';
+    document.getElementById('accPrice').value=a.price||'';
+    document.getElementById('accStock').value=a.stock||0;
+    document.getElementById('accCategory').value=a.category||'Cargadores';
+    document.getElementById('accBrand').value=a.brand||'';
+    document.getElementById('accDescription').value=a.description||'';
+    document.getElementById('accColor').value=a.color||'';
+    document.getElementById('accIco').value=a.ico||'📦';
+    document.getElementById('accImageUrl').value=a.imageUrl||'';
+    document.getElementById('accCompatibleModels').value=a.compatibleModels||'';
+    window.accAdditionalImages=a.images||[];
+    if(a.imageUrl){
+      document.getElementById('accImagePreview').innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
     }
+    document.getElementById('accFormTitle').textContent='Editar Accesorio';
+    document.getElementById('accFormSubtitle').textContent=a.name;
+    renderAccAdditionalImagesList();
+    nav('admin-acc');
   });
 }
 
@@ -186,7 +193,8 @@ function renderAccAdditionalImagesList(){
 function deleteAccessory(id){
   if(!confirm('Eliminar accesorio?'))return;
   fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
-    alert('Eliminado');
+    showToast('Accesorio eliminado');
+    loadAccessories();
     loadAdminAccessories();
   }).catch(function(){alert('Error eliminando');});
 }
@@ -200,11 +208,14 @@ function resetAccessoryForm(){
   document.getElementById('accBrand').value='';
   document.getElementById('accDescription').value='';
   document.getElementById('accColor').value='';
-  document.getElementById('accIco').value='';
+  document.getElementById('accIco').value='📦';
   document.getElementById('accImageUrl').value='';
   document.getElementById('accImages').value='';
-  document.getElementById('accImagePreview').innerHTML='📷';
+  document.getElementById('accCompatibleModels').value='';
+  document.getElementById('accImagePreview').innerHTML='📦';
   document.getElementById('accAdditionalImages').innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
+  document.getElementById('accFormTitle').textContent='Agregar Accesorio';
+  document.getElementById('accFormSubtitle').textContent='Completa los datos del nuevo accesorio';
   window.accAdditionalImages=[];
 }
 
@@ -235,7 +246,8 @@ function editProduct(id){
 function deleteProduct(id){
   if(!confirm('Eliminar producto?'))return;
   fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
-    alert('Eliminado');
+    showToast('Producto eliminado');
+    loadProducts();
     loadAdminProducts();
   }).catch(function(){alert('Error eliminando');});
 }

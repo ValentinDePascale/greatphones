@@ -58,6 +58,11 @@ export const AccessoryCreateSchema = z.object({
   compatibleModels: z.string().optional(),
   ico: z.string().optional(),
   isActive: z.boolean().optional(),
+  description: z.string().optional(),
+  discount: z.number().int().min(0).max(100).nullable().optional(),
+  isOffer: z.boolean().optional(),
+  offerStart: z.string().datetime().nullable().optional(),
+  offerEnd: z.string().datetime().nullable().optional(),
 })
 
 export const AccessoryQuerySchema = z.object({

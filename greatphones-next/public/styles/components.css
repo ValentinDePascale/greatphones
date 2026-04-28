@@ -321,6 +321,9 @@
 
 .pcard{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:all .3s;display:flex;flex-direction:column;position:relative;box-shadow:0 4px 24px rgba(26,28,30,.08)}
 .pcard:hover{box-shadow:0 16px 48px rgba(26,28,30,.15);transform:translateY(-4px)}
+.pcard-out-of-stock{opacity:.7;pointer-events:none}
+.pcard-out-of-stock:hover{transform:none;box-shadow:0 4px 24px rgba(26,28,30,.08)}
+.pcard-out-of-stock .pcard-add{background:var(--gray)!important;cursor:default!important;box-shadow:none!important}
 .pcard>div:first-child{position:relative;aspect-ratio:1/1;background:var(--cream);overflow:hidden;margin:16px;display:flex;align-items:center;justify-content:center}
 .pcard>div:first-child img{object-fit:cover;width:100%;height:100%;transition:transform .5s}
 .pcard:hover>div:first-child img{transform:scale(1.05)}

@@ -42,18 +42,19 @@ function renderGrid(gid,prods){
     var isPromoActive=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s">':'<span style="font-size:72px">'+p.ico+'</span>';
-    var badge=p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':'');
+    var isOutOfStock=p.stock===0;
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
     var isFav=isFavorite(p.id);
-    return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
-      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
+    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
+      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
       badge+
       '<div style="position:absolute;top:16px;right:16px;z-index:3">'+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:all .25s"'+(isFav?'background:#fff0ec;color:var(--orange)':'')+'>'+(isFav?'♥':'♡')+'</button>'+
       '</div>'+
       imgHtml+
       '</div>'+
-      '<div class="pcard-body" style="padding:0 20px 20px">'+
+      '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
       '<div>'+
       '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+p.name+'</h3>'+
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
@@ -64,7 +65,7 @@ function renderGrid(gid,prods){
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
       '</div>'+
-      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
+      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
       '</div>'+
       '</article>';
   }).join('');
@@ -149,26 +150,31 @@ function renderAccGrid(){
   if(!window.accFilter)window.accFilter='todos';
   if(window.accFilter!=='todos')accs=accs.filter(function(a){return a.category===window.accFilter;});
   grid.innerHTML=accs.map(function(a){
-    var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s">':'<span style="font-size:72px">'+(a.ico||'📦')+'</span>';
-    var badge=a.category?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+a.category+'</div>':'';
+    var now=new Date();
+    var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+    var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
+    var isOutOfStock=a.stock===0;
+    var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'📦')+'</span>';
+    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(isPromoActive?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+a.discount+'% OFF</div>':(a.category?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+a.category+'</div>':''));
     var isFav=isFavorite(a.id);
-    return '<article class="pcard" onclick="openAccDetail(\''+a.id+'\')" style="cursor:pointer">'+
-      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
+    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openAccDetail(\''+a.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
+      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
       badge+
       '<div style="position:absolute;top:16px;right:16px;z-index:3">'+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+a.id+'\')" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:all .25s"'+(isFav?'background:#fff0ec;color:var(--orange)':'')+'>'+(isFav?'♥':'♡')+'</button>'+
       '</div>'+
       imgHtml+
       '</div>'+
-      '<div class="pcard-body" style="padding:0 20px 20px">'+
+      '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
       '<div>'+
       '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+(a.name||a.brand)+'</h3>'+
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+(a.brand||a.description||'')+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(a.price)+'</div>'+
+      (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--gray);text-decoration:line-through">'+fmt(a.price)+'</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff">-'+a.discount+'%</span></div>':'')+
+      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
       '</div>'+
-      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
+      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
       '</div>'+
       '</article>';
   }).join('');
@@ -182,10 +188,23 @@ function openAccDetail(id){
   var detPrice=document.getElementById('detPrice');
   var detTotal=document.getElementById('detTotal');
   var imgWrap=document.getElementById('detImgWrap');
+  var now=new Date();
+  var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+  var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
   if(detName)detName.textContent=a.name;
   if(detMeta)detMeta.textContent=(a.brand||'')+' '+(a.description||'');
-  if(detPrice)detPrice.innerHTML=fmt(a.price);
-  if(detTotal)detTotal.innerHTML=fmt(a.price);
+  if(detPrice)detPrice.innerHTML=fmt(finalPrice);
+  if(detTotal)detTotal.innerHTML=fmt(finalPrice);
+  var oldPrice=document.getElementById('detOld');
+  var detPriceWrap=document.getElementById('detPriceWrap');
+  if(isPromoActive&&a.discount){
+    if(detPriceWrap)detPriceWrap.innerHTML='<span style="font-family:\'Playfair Display\',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)">'+fmt(finalPrice)+'</span><span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;margin-left:8px">-'+a.discount+'%</span>';
+    if(oldPrice)oldPrice.innerHTML=fmt(a.price);
+    if(oldPrice)oldPrice.classList.remove('hidden');
+  }else{
+    if(detPriceWrap)detPriceWrap.innerHTML=fmt(finalPrice);
+    if(oldPrice)oldPrice.classList.add('hidden');
+  }
   if(imgWrap)imgWrap.innerHTML=a.imageUrl?'<img src="'+a.imageUrl+'">':(a.ico?'<span style="font-size:80px">'+a.ico+'</span>':'<span style="font-size:80px">📦</span>');
   nav('detail');
 }
@@ -787,24 +806,34 @@ function renderAdminContent(tab){
       }).join('')+
       '</div>';
   }else if(tab==='stock'){
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Gestion de Stock</h3><div style="display:flex;gap:8px"><button onclick="undoAllStock()" class="btn btn-g btn-sm">Deshacer todo</button><button onclick="saveAllStock()" class="btn btn-o btn-sm">Guardar cambios</button></div></div>'+
-      '<div style="display:grid;gap:8px">'+
-      PRODUCTS.map(function(p){
-        var lowStock=p.stock<=2;
-        var medStock=p.stock>2&&p.stock<=5;
-        var statusText=lowStock?'⚠ Stock critico':medStock?'⚠ Stock bajo':'';
-        return'<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:8px;border:1px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+'"><div style="font-size:24px">'+p.ico+'</div><div style="flex:1"><div style="font-weight:600">'+p.name+'</div><div style="font-size:11px;color:var(--gray)">'+p.sub+'</div></div><div style="display:flex;align-items:center;gap:6px;min-width:120px"><button onclick="adjustStock(\''+p.id+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">-</button><input type="number" id="stock-'+p.id+'" data-original="'+p.stock+'" value="'+p.stock+'" min="0" style="width:50px;padding:6px;border:1.5px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+';border-radius:var(--rsm);font-size:14px;text-align:center;font-weight:600'+(lowStock?';color:var(--red)':medStock?';color:var(--orange)':'')+'"><button onclick="adjustStock(\''+p.id+'\',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">+</button></div><div style="font-size:11px;font-weight:600;color:'+(lowStock?'var(--red)':medStock?'var(--orange)':'transparent')+'">'+statusText+'</div></div>';}).join('')+
-      '</div>';
+    var allBrands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
+    var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
+    var allBrandsSet=new Set(allBrands.concat(accBrands));
+    var brandsHtml=Array.from(allBrandsSet).map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:12px">'+
+      '<h3 style="font-size:16px">Gestion de Stock</h3>'+
+      '<div style="display:flex;gap:12px;align-items:center">'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="stockFilterType" onchange="renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="stockFilterBrand" onchange="renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
+        '<div style="display:flex;gap:8px;align-items:flex-end"><button onclick="undoAllStock()" class="btn btn-g btn-sm">Deshacer</button><button onclick="saveAllStock()" class="btn btn-o btn-sm">Guardar</button></div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:grid;gap:8px" id="stockList"></div>';
+    renderStockList();
   }else if(tab==='promos'){
     var brands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
-    var types=[...new Set(PRODUCTS.map(function(p){return p.type;}).filter(function(t){return t;}))];
+    var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
+    var allBrandsSet=new Set(brands.concat(accBrands));
+    var allBrands=Array.from(allBrandsSet);
+    var brandsHtml=allBrands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
     el.innerHTML='<div style="margin-bottom:2rem">'+
       '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Crear Promoción</h3>'+
       '<p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem">Diseña ofertas exclusivas para tu colección.</p>'+
       
-      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('')+'</select></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Tipo de Producto</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Categorías</option>'+types.map(function(t){return'<option value="'+t+'">'+t+'</option>';}).join('')+'</select></div>'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Tipo</label><select class="sel-f" id="promoItemType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brandsHtml+'</select></div>'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Categoría</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas</option></select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
       '</div>'+
       
@@ -817,8 +846,8 @@ function renderAdminContent(tab){
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">'+
           '<h4 style="font-size:18px;font-weight:600">Seleccionar Productos</h4>'+
           '<div style="display:flex;gap:8px">'+
-            '<button onclick="selectAllPromo(true)" style="background:var(--green);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer">Seleccionar todas</button>'+
-            '<button onclick="selectAllPromo(false)" style="background:var(--cream2);color:var(--dk);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);cursor:pointer">Deseleccionar todas</button>'+
+            '<button onclick="selectAllPromo(true)" style="background:var(--green);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer">Seleccionar todos</button>'+
+            '<button onclick="selectAllPromo(false)" style="background:var(--cream2);color:var(--dk);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);cursor:pointer">Deseleccionar todos</button>'+
           '</div>'+
         '</div>'+
         '<div id="promoProductList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px"></div>'+
@@ -829,6 +858,10 @@ function renderAdminContent(tab){
       '<div style="margin-top:3rem;border-top:1px solid var(--border);padding-top:2rem">'+
         '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Administrar Promociones Activas</h3>'+
         '<div style="height:4px;width:80px;background:var(--orange);border-radius:2px;margin-bottom:1.5rem"></div>'+
+        '<div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-end">'+
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="activePromoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="activePromoFilterBrand" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
+        '</div>'+
         '<div style="background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border)">'+
           '<table style="width:100%;text-align:left;border-collapse:collapse">'+
             '<tbody id="activePromosTable">'+
@@ -917,26 +950,29 @@ function saveAllStock(){
     var newStock=parseInt(input.value)||0;
     var original=parseInt(input.getAttribute('data-original'));
     if(newStock!==original){
-      promises.push(fetch(API_URL+'/api/products/'+id,{
+      var isAcc=id.startsWith('acc-');
+      var realId=isAcc?id.replace('acc-',''):id;
+      var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+      promises.push(fetch(API_URL+endpoint,{
         method:'PUT',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({stock:newStock})
       }));
     }
   });
-  if(promises.length===0){
-    showToast('No hay cambios para guardar');
-    return;
-  }
   Promise.all(promises).then(function(){
     inputs.forEach(function(input){
       var id=input.id.replace('stock-','');
       var newStock=parseInt(input.value)||0;
-      var p=getById(PRODUCTS,id);
+      var isAcc=id.startsWith('acc-');
+      var realId=isAcc?id.replace('acc-',''):id;
+      var p=getById(PRODUCTS,realId);
       if(p)p.stock=newStock;
+      var a=getById(window.ACCS,realId);
+      if(a)a.stock=newStock;
       input.setAttribute('data-original',input.value);
     });
-    renderAdminContent('stock');
+    renderStockList();
     showToast('Stock guardado correctamente');
   }).catch(function(){alert('Error guardando stock');});
 }
@@ -947,60 +983,115 @@ function undoAllStock(){
   });
   showToast('Cambios revertidos');
 }
-function updateArrep(id,estado){
-  fetch(API_URL+'/api/arrepentimiento?id='+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({estado:estado})
-  }).then(function(){
-    showToast('Actualizado: '+estado);
-    renderAdminContent('arrep');
-  }).catch(function(){alert('Error actualizando');});
+function renderStockList(){
+  var list=document.getElementById('stockList');
+  if(!list)return;
+  var filterType=document.getElementById('stockFilterType')?document.getElementById('stockFilterType').value:'todos';
+  var filterBrand=document.getElementById('stockFilterBrand')?document.getElementById('stockFilterBrand').value:'';
+  var items=[];
+  if(filterType==='todos'||filterType==='productos'){
+    PRODUCTS.forEach(function(p){
+      if(filterBrand&&p.brand!==filterBrand)return;
+      items.push({id:p.id,name:p.name,sub:p.sub||'',stock:p.stock,type:'producto',ico:p.ico||'📱',brand:p.brand});
+    });
+  }
+  if(filterType==='todos'||filterType==='accesorios'){
+    (window.ACCS||[]).forEach(function(a){
+      if(filterBrand&&a.brand!==filterBrand)return;
+      items.push({id:a.id,name:a.name,sub:a.category||'',stock:a.stock,type:'accesorio',ico:a.ico||'📦',brand:a.brand});
+    });
+  }
+  list.innerHTML=items.map(function(item){
+    var lowStock=item.stock<=2;
+    var medStock=item.stock>2&&item.stock<=5;
+    var statusText=lowStock?'⚠ Stock critico':medStock?'⚠ Stock bajo':'';
+    var stockId=item.type==='accesorio'?'acc-'+item.id:item.id;
+    return'<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:8px;border:1px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+'">'+
+      '<div style="font-size:24px">'+item.ico+'</div>'+
+      '<div style="flex:1">'+
+        '<div style="font-weight:600">'+item.name+'</div>'+
+        '<div style="font-size:11px;color:var(--gray)">'+item.sub+' <span style="color:var(--orange);font-weight:500">['+item.type+']</span></div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;min-width:120px">'+
+        '<button onclick="adjustStock(\''+stockId+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">-</button>'+
+        '<input type="number" id="stock-'+stockId+'" data-original="'+item.stock+'" value="'+item.stock+'" min="0" style="width:50px;padding:6px;border:1.5px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+';border-radius:var(--rsm);font-size:14px;text-align:center;font-weight:600'+(lowStock?';color:var(--red)':medStock?';color:var(--orange)':'')+'">'+
+        '<button onclick="adjustStock(\''+stockId+'\',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">+</button>'+
+      '</div>'+
+      '<div style="font-size:11px;font-weight:600;color:'+(lowStock?'var(--red)':medStock?'var(--orange)':'transparent')+'">'+statusText+'</div>'+
+    '</div>';
+  }).join('');
 }
 function renderPromoProducts(){
   var brand=document.getElementById('promoBrand').value;
-  var type=document.getElementById('promoType').value;
+  var typeFilter=document.getElementById('promoType').value;
+  var itemType=document.getElementById('promoItemType')?document.getElementById('promoItemType').value:'todos';
   var list=document.getElementById('promoProductList');
   if(!list)return;
-  var filtered=PRODUCTS.filter(function(p){
-    return(!brand||p.brand===brand)&&(!type||p.type===type);
-  });
-  list.innerHTML=filtered.map(function(p){
-    var isSelected=document.getElementById('promo-chk-'+p.id)?.checked;
-    var oldPrice=p.isOffer?p.price:p.price;
-    return'<div style="background:#fff;border-radius:12px;padding:10px;border:1px solid '+(isSelected?'var(--orange)':'var(--border)')+';cursor:pointer;transition:all .2s'+(isSelected?';box-shadow:0 2px 8px rgba(255,107,44,0.2)':'')+'" onclick="togglePromoProduct(\''+p.id+'\')">'+
+  var items=[];
+  if(itemType==='todos'||itemType==='productos'){
+    PRODUCTS.forEach(function(p){
+      if(brand&&p.brand!==brand)return;
+      if(typeFilter&&p.type!==typeFilter)return;
+      items.push({id:p.id,name:p.name,brand:p.brand,price:p.price,isOffer:p.isOffer,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱'});
+    });
+  }
+  if(itemType==='todos'||itemType==='accesorios'){
+    (window.ACCS||[]).forEach(function(a){
+      if(brand&&a.brand!==brand)return;
+      if(typeFilter&&a.category!==typeFilter)return;
+      items.push({id:a.id,name:a.name,brand:a.brand,price:a.price,isOffer:a.isOffer,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦'});
+    });
+  }
+  list.innerHTML=items.map(function(item){
+    var chkId=item.type==='accesorio'?'promo-chk-acc-'+item.id:'promo-chk-'+item.id;
+    var isSelected=document.getElementById(chkId)?.checked;
+    return'<div style="background:#fff;border-radius:12px;padding:10px;border:1px solid '+(isSelected?'var(--orange)':'var(--border)')+';cursor:pointer;transition:all .2s;position:relative'+(isSelected?';box-shadow:0 2px 8px rgba(255,107,44,0.2)':'')+'" onclick="togglePromoProduct(\''+item.id+'\')">'+
       '<div style="position:absolute;top:6px;right:6px;z-index:10">'+
-        '<input type="checkbox" id="promo-chk-'+p.id+'" '+(isSelected?'checked':'')+' style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);cursor:pointer" onclick="event.stopPropagation()">'+
+        '<input type="checkbox" id="'+chkId+'" '+(isSelected?'checked':'')+' style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);cursor:pointer" onclick="event.stopPropagation()">'+
       '</div>'+
       '<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;margin-bottom:8px;background:var(--cream2);display:flex;align-items:center;justify-content:center">'+
-        (p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px">📱</span>')+
+        (item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px">'+item.ico+'</span>')+
       '</div>'+
       '<div style="margin-bottom:2px">'+
-        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange)">'+p.brand+'</div>'+
-        '<div style="font-size:11px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
+        '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange)">'+item.brand+' <span style="color:var(--gray);font-weight:400">['+item.type+']</span></div>'+
+        '<div style="font-size:11px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.name+'</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:4px">'+
-        '<span style="font-size:12px;font-weight:700;color:var(--dk)">'+fmt(p.price)+'</span>'+
-        (p.isOffer?'<span style="font-size:9px;color:var(--red);font-weight:700;background:rgba(255,0,0,0.05);padding:2px 6px;border-radius:8px">-'+p.discount+'%</span>':'')+
+        '<span style="font-size:12px;font-weight:700;color:var(--dk)">'+fmt(item.price)+'</span>'+
+        (item.isOffer?'<span style="font-size:9px;color:var(--red);font-weight:700;background:rgba(255,0,0,0.05);padding:2px 6px;border-radius:8px">-'+item.discount+'%</span>':'')+
       '</div>'+
     '</div>';
   }).join('');
 }
 function togglePromoProduct(id){
-  var chk=document.getElementById('promo-chk-'+id);
+  var isAcc=getById(window.ACCS||[],id)?true:false;
+  var chkId=isAcc?'promo-chk-acc-'+id:'promo-chk-'+id;
+  var chk=document.getElementById(chkId);
   if(chk)chk.checked=!chk.checked;
   renderPromoProducts();
 }
 function selectAllPromo(selectAll){
   var brand=document.getElementById('promoBrand').value;
   var type=document.getElementById('promoType').value;
-  var filtered=PRODUCTS.filter(function(p){
-    return(!brand||p.brand===brand)&&(!type||p.type===type);
-  });
-  filtered.forEach(function(p){
-    var chk=document.getElementById('promo-chk-'+p.id);
-    if(chk)chk.checked=selectAll;
-  });
+  var itemType=document.getElementById('promoItemType')?document.getElementById('promoItemType').value:'todos';
+  if(itemType==='todos'||itemType==='productos'){
+    var filtered=PRODUCTS.filter(function(p){
+      return(!brand||p.brand===brand)&&(!type||p.type===type);
+    });
+    filtered.forEach(function(p){
+      var chk=document.getElementById('promo-chk-'+p.id);
+      if(chk)chk.checked=selectAll;
+    });
+  }
+  if(itemType==='todos'||itemType==='accesorios'){
+    var filteredAcc=(window.ACCS||[]).filter(function(a){
+      return(!brand||a.brand===brand)&&(!type||a.category===type);
+    });
+    filteredAcc.forEach(function(a){
+      var chk=document.getElementById('promo-chk-acc-'+a.id);
+      if(chk)chk.checked=selectAll;
+    });
+  }
   renderPromoProducts();
 }
 function applyPromo(){
@@ -1011,9 +1102,14 @@ function applyPromo(){
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
   if(checkboxes.length===0){alert('Selecciona al menos un producto');return;}
   var promises=[];
+  var prodCount=0,accCount=0;
   checkboxes.forEach(function(chk){
-    var id=chk.id.replace('promo-chk-','');
-    promises.push(fetch(API_URL+'/api/products/'+id,{
+    var rawId=chk.id.replace('promo-chk-','');
+    var isAcc=rawId.startsWith('acc-');
+    var realId=isAcc?rawId.replace('acc-',''):rawId;
+    var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+    if(isAcc)accCount++;else prodCount++;
+    promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({discount:discount,isOffer:discount>0,offerStart:start||null,offerEnd:end||null})
@@ -1021,16 +1117,32 @@ function applyPromo(){
   });
   Promise.all(promises).then(function(){
     loadProducts();
-    showToast('Promo aplicada a '+checkboxes.length+' productos');
+    loadAccessories();
+    var msg='Promo aplicada';
+    if(prodCount>0&&accCount>0)msg+=' a '+prodCount+' producto(s) y '+accCount+' accesorio(s)';
+    else if(prodCount>0)msg+=' a '+prodCount+' producto(s)';
+    else if(accCount>0)msg+=' a '+accCount+' accesorio(s)';
+    showToast(msg);
   }).catch(function(){alert('Error aplicando promoción');});
 }
 function renderActivePromos(){
   var tbody=document.getElementById('activePromosTable');
   var filterBrand=document.getElementById('promoFilterBrand')?.value||'';
   var filterStatus=document.getElementById('promoFilterStatus')?.value||'';
+  var filterType=document.getElementById('promoFilterType')?.value||'todos';
   if(!tbody)return;
   var now=new Date();
-  var allOffers=PRODUCTS.filter(function(p){return p.isOffer&&p.discount>0;});
+  var allOffers=[];
+  if(filterType==='todos'||filterType==='productos'){
+    PRODUCTS.filter(function(p){return p.isOffer&&p.discount>0;}).forEach(function(p){
+      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,offerStart:p.offerStart,offerEnd:p.offerEnd,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱'});
+    });
+  }
+  if(filterType==='todos'||filterType==='accesorios'){
+    (window.ACCS||[]).filter(function(a){return a.isOffer&&a.discount>0;}).forEach(function(a){
+      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,offerStart:a.offerStart,offerEnd:a.offerEnd,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦'});
+    });
+  }
   var offers=allOffers.filter(function(p){
     var endDate=p.offerEnd?new Date(p.offerEnd):null;
     var isActive=!endDate||endDate>now;
@@ -1043,8 +1155,13 @@ function renderActivePromos(){
   var brands=[...new Set(allOffers.map(function(p){return p.brand;}).filter(function(b){return b;}))];
   
   tbody.innerHTML='<tr>'+
-    '<td colspan="5" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
+    '<td colspan="6" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<select id="promoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
+          '<option value="todos" '+(filterType==='todos'?'selected':'')+'>Todos</option>'+
+          '<option value="productos" '+(filterType==='productos'?'selected':'')+'>Productos</option>'+
+          '<option value="accesorios" '+(filterType==='accesorios'?'selected':'')+'>Accesorios</option>'+
+        '</select>'+
         '<select id="promoFilterBrand" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
           '<option value="" '+(filterBrand===''?'selected':'')+'>Todas las marcas</option>'+brands.map(function(b){return'<option value="'+b+'" '+(filterBrand===b?'selected':'')+'>'+b+'</option>';}).join('')+
         '</select>'+
@@ -1060,7 +1177,7 @@ function renderActivePromos(){
   '</tr>';
   
   if(offers.length===0){
-    tbody.innerHTML+='<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
+    tbody.innerHTML+='<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
     return;
   }
   tbody.innerHTML+=offers.map(function(p){
@@ -1068,16 +1185,17 @@ function renderActivePromos(){
     var isActive=!endDateVal||endDateVal>now;
     var startDate=p.offerStart?new Date(p.offerStart).toLocaleDateString('es-AR'):'—';
     var endDate=p.offerEnd?new Date(p.offerEnd).toLocaleDateString('es-AR'):'—';
-    return'<tr onclick="togglePromoRow(\''+p.id+'\')" style="border-top:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
+    var chkVal=p.type==='accesorio'?'acc-'+p.id:p.id;
+    return'<tr onclick="togglePromoRow(\''+chkVal+'\')" style="border-top:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
       '<td style="padding:12px;width:40px">'+
-        '<input type="checkbox" class="promo-del-chk" value="'+p.id+'" style="width:18px;height:18px;cursor:pointer" onclick="event.stopPropagation()">'+
+        '<input type="checkbox" class="promo-del-chk" value="'+chkVal+'" style="width:18px;height:18px;cursor:pointer" onclick="event.stopPropagation()">'+
       '</td>'+
       '<td style="padding:12px">'+
         '<div style="display:flex;align-items:center;gap:10px">'+
           '<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center">'+
-            (p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>')+
+            (p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+p.ico+'</span>')+
           '</div>'+
-          '<div><div style="font-weight:600;font-size:13px">'+p.name+'</div><div style="font-size:10px;color:var(--gray)">'+p.sub+'</div></div>'+
+          '<div><div style="font-weight:600;font-size:13px">'+p.name+'</div><div style="font-size:10px;color:var(--gray)">'+p.sub+' <span style="color:var(--orange);font-weight:600">['+p.type+']</span></div></div>'+
         '</div>'+
       '</td>'+
       '<td style="padding:12px"><span style="font-size:10px;font-weight:600;background:var(--cream2);padding:4px 10px;border-radius:20px">'+p.brand+'</span></td>'+
@@ -1090,12 +1208,16 @@ function renderActivePromos(){
   }).join('');
 }
 function removePromo(id){
-  fetch(API_URL+'/api/products/'+id,{
+  var isAcc=id.startsWith('acc-');
+  var realId=isAcc?id.replace('acc-',''):id;
+  var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+  fetch(API_URL+endpoint,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
   }).then(function(){
     loadProducts();
+    loadAccessories();
     renderActivePromos();
     showToast('Promoción eliminada');
   }).catch(function(){alert('Error eliminando promoción');});
@@ -1112,8 +1234,11 @@ function deleteSelectedPromos(){
   window.confirmCallback=function(confirmed){
     if(confirmed&&promoDeleteIds.length>0){
       var promises=[];
-      promoDeleteIds.forEach(function(id){
-        promises.push(fetch(API_URL+'/api/products/'+id,{
+      promoDeleteIds.forEach(function(rawId){
+        var isAcc=rawId.startsWith('acc-');
+        var realId=isAcc?rawId.replace('acc-',''):rawId;
+        var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+        promises.push(fetch(API_URL+endpoint,{
           method:'PUT',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
@@ -1121,6 +1246,7 @@ function deleteSelectedPromos(){
       });
       Promise.all(promises).then(function(){
         loadProducts();
+        loadAccessories();
         renderActivePromos();
         showToast(promoDeleteIds.length+' promoción(es) eliminada(s)');
       }).catch(function(){alert('Error eliminando promociones');});

@@ -8,17 +8,49 @@ export async function OPTIONS() {
     status: 204,
     headers: {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
   })
+}
+
+export async function GET() {
+  try {
+    const list = await prisma.arrepentimiento.findMany({
+      orderBy: { createdAt: 'desc' }
+    })
+    return NextResponse.json(list)
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    const body = await request.json()
+    const { estado } = body
+    
+    if (!id) {
+      return NextResponse.json({ success: false, message: 'ID requerido' }, { status: 400 })
+    }
+    
+    const updated = await prisma.arrepentimiento.update({
+      where: { id },
+      data: { estado }
+    })
+    
+    return NextResponse.json({ success: true, data: updated })
+  } catch (e) {
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     
-    // Validar body con Zod
     const validation = ArrepentimientoSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
@@ -44,7 +76,7 @@ export async function POST(request: Request) {
 
     if (diasDiff > 10) {
       return NextResponse.json(
-        { success: false, message: 'El plazo de 10 días hábiles para desistir ha vencido. Según Resolución 424/2020, este derecho expira a los 10 días corridos desde la recepción del producto.' },
+        { success: false, message: 'El plazo de 10 días hábiles para desistir ha vencido.' },
         { status: 400 }
       )
     }
@@ -78,13 +110,6 @@ export async function POST(request: Request) {
       }
     })
 
-    console.log('[ARREPENTIMIENTO] Nueva solicitud:', {
-      id: registro.id,
-      orderId: orderId,
-      email: email,
-      fecha: new Date().toISOString()
-    })
-
     await sendArrepentimientoEmail({
       orderCode: orderData.code,
       email: email,
@@ -95,7 +120,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Tu solicitud ha sido registrada. Te hemos enviado un email de confirmación con el número de trámite.',
+      message: 'Tu solicitud ha sido registrada.',
       tramite: registro.id
     })
 

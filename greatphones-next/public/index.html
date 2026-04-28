@@ -1284,10 +1284,10 @@
     </div>
 </div>
 
-<!-- ============================= PAGE: ADMIN ACC ADD ============================= -->
+<!-- ============================= PAGE: ADMIN-ACCESSORY ============================= -->
 <div class="page" id="p-admin-acc">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Completa los datos del nuevo accesorio</p></div>
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff" id="accFormTitle">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="accFormSubtitle">Completa los datos del nuevo accesorio</p></div>
   </div>
   <div style="background:var(--cream);padding:1.5rem 0">
     <div class="ctr" style="max-width:600px">
@@ -1320,18 +1320,18 @@
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="25000"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="accStock" type="number" placeholder="10"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio anterior</label><input class="inp-f" id="accCompareAtPrice" type="number" placeholder="35000"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Otros">Otros</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Otros">Otros</option></select></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="accColor" placeholder="Negro"></div>
         </div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelos compatibles</label><input class="inp-f" id="accCompatibleModels" placeholder="iPhone 14, iPhone 15, iPhone 16"></div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Icono (emoji)</label><input class="inp-f" id="accIco" placeholder="🎧" style="width:60px;text-align:center;font-size:18px"></div>
-      </div>
-      <div style="display:flex;gap:12px;margin-top:1rem">
-        <button class="btn btn-g" style="flex:1" onclick="saveAccessory()">Guardar</button>
-        <button class="btn btn-o" style="flex:1" onclick="nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
+        <div style="display:flex;gap:12px;margin-top:1rem">
+          <button class="btn btn-o" style="flex:1" onclick="saveAccessory()">Guardar Accesorio</button>
+          <button class="btn btn-g" style="flex:1" onclick="nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1406,58 +1406,6 @@
         </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
-          <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ============================= PAGE: ADMIN-ACCESSORY ============================= -->
-<div class="page" id="p-admin-acc">
-  <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Completa los datos del nuevo accesorio</p></div>
-  </div>
-  <div style="background:var(--cream);padding:1.5rem 0">
-    <div class="ctr" style="max-width:600px">
-      <input type="hidden" id="accId">
-      <input type="hidden" id="accImageUrl">
-      <input type="hidden" id="accImages">
-      <div style="text-align:center;margin-bottom:1rem">
-        <div id="accImagePreview" style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:40px;border:2px dashed var(--border);cursor:pointer" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.1)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream2)';handleAccImageDrop(event)">📷</div>
-        <div style="margin-top:8px">
-          <label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:var(--rsm);font-size:12px;cursor:pointer;margin-right:8px">
-            Imagen principal
-            <input type="file" id="accImageInput" accept="image/*" style="display:none" onchange="uploadAccImage(this)">
-          </label>
-          <span style="font-size:11px;color:var(--gray)">o arrastra una imagen aqui</span>
-        </div>
-      </div>
-      <div style="margin-bottom:1rem">
-        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Imagenes adicionales (opcional)</div>
-        <div id="accAdditionalImages" style="display:flex;gap:8px;flex-wrap:wrap;min-height:60px;padding:10px;background:var(--cream2);border-radius:var(--rsm);border:1px dashed var(--border)">
-          <div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>
-        </div>
-        <input type="file" id="accAdditionalImagesInput" accept="image/*" multiple style="display:none" onchange="uploadAccAdditionalImages(this)">
-        <button onclick="document.getElementById('accAdditionalImagesInput').click()" style="margin-top:8px;padding:6px 12px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer">+ Agregar mas imagenes</button>
-      </div>
-      <div style="display:grid;gap:16px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="accName" placeholder="AirPods Pro"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="accBrand"><option value="Apple">Apple</option><option value="Samsung">Samsung</option><option value="Sony">Sony</option><option value="JBL">JBL</option><option value="Belkin">Belkin</option><option value="Otro">Otro</option></select></div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="200000"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="accStock" type="number" placeholder="10"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Bandas">Bandas</option></select></div>
-        </div>
-        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="accColor" placeholder="Blanco"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Icono emoji</label><input class="inp-f" id="accIco" placeholder="🎧"></div>
-        </div>
-        <div style="display:flex;gap:12px;margin-top:1rem">
-          <button class="btn btn-o" onclick="saveAccessory()">Guardar Accesorio</button>
           <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
         </div>
       </div>

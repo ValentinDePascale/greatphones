@@ -81,6 +81,10 @@ export async function POST(request: Request) {
         color: body.color || null,
         compatibleModels: body.compatibleModels || null,
         isActive: body.isActive !== false,
+        discount: body.discount ? Number(body.discount) : null,
+        isOffer: body.isOffer || false,
+        offerStart: body.offerStart ? new Date(body.offerStart) : null,
+        offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
       },
     })
     
@@ -124,6 +128,10 @@ export async function PUT(request: Request) {
         ...(body.color !== undefined && { color: body.color || null }),
         ...(body.compatibleModels !== undefined && { compatibleModels: body.compatibleModels || null }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(body.discount !== undefined && { discount: body.discount !== null ? Number(body.discount) : null }),
+        ...(body.isOffer !== undefined && { isOffer: body.isOffer }),
+        ...(body.offerStart !== undefined && { offerStart: body.offerStart ? new Date(body.offerStart) : null }),
+        ...(body.offerEnd !== undefined && { offerEnd: body.offerEnd ? new Date(body.offerEnd) : null }),
       },
     })
     

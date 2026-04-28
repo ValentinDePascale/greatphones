@@ -343,16 +343,17 @@ function nav(id,pushHistory){
       document.getElementById('accBrand').value='';
       document.getElementById('accPrice').value='';
       document.getElementById('accStock').value='';
-      document.getElementById('accCompareAtPrice').value='';
       document.getElementById('accCategory').value='Cargadores';
       document.getElementById('accColor').value='';
-      document.getElementById('accCompatibleModels').value='';
       document.getElementById('accIco').value='📦';
       document.getElementById('accImageUrl').value='';
-      document.getElementById('accImages').value='';
+      document.getElementById('accDescription').value='';
+      document.getElementById('accCompatibleModels').value='';
       document.getElementById('accImagePreview').innerHTML='📦';
       document.getElementById('accAdditionalImages').innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
-      additionalAccImages=[];
+      document.getElementById('accFormTitle').textContent='Agregar Accesorio';
+      document.getElementById('accFormSubtitle').textContent='Completa los datos del nuevo accesorio';
+      window.accAdditionalImages=[];
     }
     window.isEditingAcc=false;
   }

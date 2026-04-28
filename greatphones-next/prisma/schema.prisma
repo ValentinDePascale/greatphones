@@ -380,6 +380,10 @@ model Accessory {
   color            String?  
   compatibleModels String?  
   isActive         Boolean  @default(true)
+  discount         Int?     
+  isOffer          Boolean  @default(false)
+  offerStart       DateTime?
+  offerEnd         DateTime?
   createdAt        DateTime @default(now())
 }
 
