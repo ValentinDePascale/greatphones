@@ -866,7 +866,28 @@ function renderAdminContent(tab){
       }).join('')+
       '</div>';
   }else if(tab==='arrep'){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Arrepentimientos</p><p style="font-size:12px">Proximamente podras gestionar arrepentimientos</p></div>';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Arrepentimientos</h3></div><div class="adm-list" id="arrepList">Cargando...</div>';
+    fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+      var html=list.length===0?'<div style="text-align:center;padding:2rem;color:var(--gray)">No hay arrepentimientos</div>':
+        list.map(function(a){
+          var estadoColor=a.estado==='PENDIENTE'?'var(--orange)':a.estado==='APROBADO'?'var(--green)':'var(--red)';
+          return'<div style="background:#fff;border-radius:12px;padding:14px;border:1px solid var(--border);margin-bottom:10px">'+
+            '<div style="display:flex;justify-content:space-between;margin-bottom:8px">'+
+              '<span style="font-weight:600">'+a.email+'</span>'+
+              '<span style="padding:4px 10px;border-radius:12px;background:'+estadoColor+';color:#fff;font-size:11px;font-weight:600">'+a.estado+'</span>'+
+            '</div>'+
+            '<div style="font-size:12px;color:var(--gray);margin-bottom:6px">Orden: '+a.orderId+'</div>'+
+            '<div style="font-size:12px;color:var(--gray);margin-bottom:8px">Teléfono: '+(a.telefono||'-')+'</div>'+
+            (a.motivo?'<div style="font-size:12px;margin-bottom:8px;padding:8px;background:var(--cream2);border-radius:8px">Motivo: '+a.motivo+'</div>':'')+
+            '<div style="font-size:11px;color:var(--gray)">'+new Date(a.createdAt).toLocaleDateString('es-AR')+'</div>'+
+            '<div style="display:flex;gap:8px;margin-top:10px">'+
+              '<button class="btn btn-o btn-sm" onclick="updateArrep(\''+a.id+'\',\'APROBADO\')">Aprobar</button>'+
+              '<button class="btn btn-g btn-sm" onclick="updateArrep(\''+a.id+'\',\'RECHAZADO\')">Rechazar</button>'+
+            '</div>'+
+          '</div>';
+        }).join('');
+      document.getElementById('arrepList').innerHTML=html;
+    }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
   }else if(tab==='users'){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Usuarios</p><p style="font-size:12px">Proximamente podras gestionar usuarios</p></div>';
   }
@@ -925,6 +946,16 @@ function undoAllStock(){
     input.value=input.getAttribute('data-original');
   });
   showToast('Cambios revertidos');
+}
+function updateArrep(id,estado){
+  fetch(API_URL+'/api/arrepentimiento?id='+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({estado:estado})
+  }).then(function(){
+    showToast('Actualizado: '+estado);
+    renderAdminContent('arrep');
+  }).catch(function(){alert('Error actualizando');});
 }
 function renderPromoProducts(){
   var brand=document.getElementById('promoBrand').value;
