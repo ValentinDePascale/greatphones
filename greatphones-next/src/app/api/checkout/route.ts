@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import MercadoPago from 'mercadopago';
+import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
 
-MercadoPago.configure({
-  access_token: process.env.MP_ACCESS_TOKEN!,
-  integrator_version: '1.0.0'
+const client = new MercadoPagoConfig({
+  accessToken: process.env.MP_ACCESS_TOKEN!
 });
 
 function generateOrderCode() {
@@ -43,7 +42,7 @@ export async function POST(request: NextRequest) {
 
     let userId = 'anonymous';
     
-    const preference = {
+    const preferenceData = {
       items: items.map((item: any) => ({
         title: item.name,
         unit_price: item.price,
@@ -85,9 +84,10 @@ export async function POST(request: NextRequest) {
       }
     };
 
-    const mpResponse = await MercadoPago.preferences.create(preference);
-    const preferenceId = mpResponse.body.id;
-    const initPoint = mpResponse.body.init_point;
+    const mpPreference = new Preference(client);
+    const mpResponse = await mpPreference.create({ body: preferenceData });
+    const preferenceId = mpResponse.id;
+    const initPoint = mpResponse.init_point;
 
     const orderCode = generateOrderCode();
     const order = await prisma.order.create({
@@ -120,12 +120,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    await MercadoPago.preferences.update({
-      id: preferenceId,
-      update: {
-        external_reference: order.id
-      }
-    });
+    await mpPreference.update({ id: preferenceId, body: { external_reference: order.id } });
 
     return NextResponse.json({
       success: true,
