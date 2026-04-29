@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import MercadoPago from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
 
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
           state: province,
           zip_code: zip
         }
-      }),
+      },
       back_urls: {
         success: `${process.env.NEXTAUTH_URL}/success`,
         failure: `${process.env.NEXTAUTH_URL}/failure`,
