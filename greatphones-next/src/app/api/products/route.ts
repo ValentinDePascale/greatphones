@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     // Validar body
     const validation = ProductCreateSchema.safeParse(body)
     if (!validation.success) {
-      console.error('Product validation failed:', JSON.stringify(validation.error.issues || validation.error.errors, null, 2))
+      console.error('Product validation failed:', JSON.stringify(validation.error.issues, null, 2))
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     

@@ -119,7 +119,7 @@ export async function PUT(request: Request) {
     // Validar body (partial para updates)
     const validation = AccessoryUpdateSchema.safeParse(body)
     if (!validation.success) {
-      console.error('Zod validation failed:', JSON.stringify(validation.error.issues || validation.error.errors, null, 2))
+      console.error('Zod validation failed:', JSON.stringify(validation.error.issues, null, 2))
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     

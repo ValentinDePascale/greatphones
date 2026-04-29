@@ -3,7 +3,7 @@ import { z } from 'zod'
 // === HELPER PARA FORMATEAR ERRORES ===
 export function formatZodError(error: z.ZodError) {
   const formattedErrors: Record<string, string> = {}
-  const issues = error.issues || error.errors || []
+  const issues = error.issues || []
   issues.forEach((err: any) => {
     const field = err.path.join('.')
     formattedErrors[field] = err.message
