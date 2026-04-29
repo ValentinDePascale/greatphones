@@ -87,7 +87,7 @@ model Order {
   userId    String
   user      User        @relation(fields: [userId], references: [id])
   status    OrderStatus @default(PENDING)
-  warranty  String
+  warranty  String?
   cuotas    Int         @default(1)
   payment   String?
   subtotal  Int

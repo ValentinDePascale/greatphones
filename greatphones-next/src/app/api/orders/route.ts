@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         shippingZip: zip,
         shippingCity: city,
         shippingProvince: province,
-        warranty: warranty ? '90 dias' : null,
+        ...(warranty && { warranty: '90 dias' }),
         cuotas: cuotas || 1,
         subtotal,
         total,

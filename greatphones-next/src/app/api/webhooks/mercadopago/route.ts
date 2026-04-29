@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { MercadoPagoConfig, Payment, Webhook } from 'mercadopago';
+import { MercadoPagoConfig, Payment } from 'mercadopago';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -17,8 +17,9 @@ export async function POST(request: NextRequest) {
       const paymentData = await payment.get({ id: paymentId });
 
       if (paymentData) {
-        const preferenceId = paymentData.preference_id;
-        const status = paymentData.status;
+        const pd = paymentData as any;
+        const preferenceId = pd.preference_id;
+        const status = pd.status;
 
         const order = await prisma.order.findFirst({
           where: { mpPreferenceId: preferenceId }
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
             data: {
               mpPaymentId: paymentId.toString(),
               mpStatus: status,
-              status: orderStatus
+              status: orderStatus as any
             }
           });
         }

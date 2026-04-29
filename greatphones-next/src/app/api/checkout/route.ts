@@ -86,7 +86,8 @@ export async function POST(request: NextRequest) {
 
     const mpPreference = new Preference(client);
     const mpResponse = await mpPreference.create({ body: preferenceData });
-    const preferenceId = mpResponse.id;
+    const preferenceId = mpResponse.id || '';
+    if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
     const initPoint = mpResponse.init_point;
 
     const orderCode = generateOrderCode();
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
         code: orderCode,
         userId: userId,
         status: 'PENDING',
-        warranty: warranty ? '90 dias' : null,
+        ...(warranty && { warranty: '90 dias' }),
         cuotas: 1,
         subtotal: subtotal,
         total: total,
@@ -119,8 +120,6 @@ export async function POST(request: NextRequest) {
         }
       }
     });
-
-    await mpPreference.update({ id: preferenceId, body: { external_reference: order.id } });
 
     return NextResponse.json({
       success: true,
