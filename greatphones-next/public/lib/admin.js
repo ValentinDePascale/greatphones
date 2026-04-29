@@ -98,22 +98,23 @@ function uploadAccAdditionalImages(input){
       fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
         if(data.url){
           window.accAdditionalImages.push(data.url);
-          document.getElementById('accImages').value=JSON.stringify(window.accAdditionalImages);
-          renderAccAdditionalImage(data.url);
+          renderAccAdditionalImagesList();
         }
       });
     });
   }
 }
 
-function renderAccAdditionalImage(url){
-  var container=document.getElementById('accAdditionalImages');
-  var placeholder=document.getElementById('addAccImgPlaceholder');
-  if(placeholder)placeholder.style.display='none';
-  var div=document.createElement('div');
-  div.style.cssText='width:60px;height:60px;border-radius:8px;overflow:hidden;position:relative;flex-shrink:0';
-  div.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><button onclick="this.parentElement.remove()" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px">×</button>';
-  container.appendChild(div);
+function removeAccImage(btn,url){
+  var idx=window.accAdditionalImages.indexOf(url);
+  if(idx>-1)window.accAdditionalImages.splice(idx,1);
+  btn.parentElement.remove();
+  if(!window.accAdditionalImages.length){
+    var container=document.getElementById('accAdditionalImages');
+    if(container&&!document.getElementById('addAccImgPlaceholder')){
+      container.innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
+    }
+  }
 }
 
 function saveAccessory(){
@@ -144,7 +145,11 @@ function saveAccessory(){
     method:method,
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(data)
-  }).then(function(r){return r.json();}).then(function(){
+  }).then(function(r){
+    if(!r.ok)throw new Error('Error '+r.status);
+    return r.json();
+  }).then(function(result){
+    if(result.error||result.success===false)throw new Error(result.message||'Error de validación');
     showToast(id?'Accesorio actualizado':'Accesorio creado');
     resetAccessoryForm();
     loadAccessories();
@@ -155,37 +160,58 @@ function saveAccessory(){
 
 function editAccessory(id){
   window.isEditingAcc=true;
-  fetch(API_URL+'/api/accessories?id='+id).then(function(r){return r.json();}).then(function(a){
-    if(!a)return;
-    document.getElementById('accId').value=a.id;
-    document.getElementById('accName').value=a.name||'';
-    document.getElementById('accPrice').value=a.price||'';
-    document.getElementById('accStock').value=a.stock||0;
-    document.getElementById('accCategory').value=a.category||'Cargadores';
-    document.getElementById('accBrand').value=a.brand||'';
-    document.getElementById('accDescription').value=a.description||'';
-    document.getElementById('accColor').value=a.color||'';
-    document.getElementById('accIco').value=a.ico||'📦';
-    document.getElementById('accImageUrl').value=a.imageUrl||'';
-    document.getElementById('accCompatibleModels').value=a.compatibleModels||'';
-    window.accAdditionalImages=a.images||[];
-    if(a.imageUrl){
-      document.getElementById('accImagePreview').innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+  var accFromMemory=getById(window.ACCS||[],id);
+  fetch(API_URL+'/api/accessories?id='+id).then(function(r){
+    if(!r.ok)throw new Error('Network error');
+    return r.json();
+  }).then(function(a){
+    if(!a)throw new Error('No data');
+    fillAccForm(a);
+  }).catch(function(){
+    if(accFromMemory){
+      fillAccForm(accFromMemory);
+    }else{
+      alert('Error cargando accesorio');
+      window.isEditingAcc=false;
+      return;
     }
-    document.getElementById('accFormTitle').textContent='Editar Accesorio';
-    document.getElementById('accFormSubtitle').textContent=a.name;
-    renderAccAdditionalImagesList();
-    nav('admin-acc');
   });
+}
+function fillAccForm(a){
+  document.getElementById('accId').value=a.id;
+  document.getElementById('accName').value=a.name||'';
+  document.getElementById('accPrice').value=a.price||'';
+  document.getElementById('accStock').value=a.stock||0;
+  document.getElementById('accCategory').value=a.category||'Cargadores';
+  document.getElementById('accBrand').value=a.brand||'';
+  document.getElementById('accDescription').value=a.description||'';
+  document.getElementById('accColor').value=a.color||'';
+  document.getElementById('accIco').value=a.ico||'\uD83D\uDCE6';
+  document.getElementById('accImageUrl').value=a.imageUrl||'';
+  document.getElementById('accCompatibleModels').value=a.compatibleModels||'';
+  window.accAdditionalImages=Array.isArray(a.images)?a.images.slice():[];
+  if(a.imageUrl){
+    document.getElementById('accImagePreview').innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+  }
+  document.getElementById('accFormTitle').textContent='Editar Accesorio';
+  document.getElementById('accFormSubtitle').textContent=a.name;
+  window.isEditingAcc=true;
+  renderAccAdditionalImagesList();
+  nav('admin-acc');
 }
 
 function renderAccAdditionalImagesList(){
   var container=document.getElementById('accAdditionalImages');
+  if(!container)return;
   container.innerHTML='';
+  if(!window.accAdditionalImages.length){
+    container.innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
+    return;
+  }
   window.accAdditionalImages.forEach(function(url){
     var div=document.createElement('div');
     div.style.cssText='width:60px;height:60px;border-radius:8px;overflow:hidden;position:relative;flex-shrink:0';
-    div.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><button onclick="this.parentElement.remove()" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px">×</button>';
+    div.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover"><button onclick="removeAccImage(this,\''+url+'\')" style="position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;font-size:12px">\u00D7</button>';
     container.appendChild(div);
   });
 }

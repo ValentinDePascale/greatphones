@@ -3,8 +3,8 @@ import { z } from 'zod'
 // === HELPER PARA FORMATEAR ERRORES ===
 export function formatZodError(error: z.ZodError) {
   const formattedErrors: Record<string, string> = {}
-  
-  error.errors.forEach((err) => {
+  const issues = error.issues || error.errors || []
+  issues.forEach((err: any) => {
     const field = err.path.join('.')
     formattedErrors[field] = err.message
   })
@@ -12,7 +12,8 @@ export function formatZodError(error: z.ZodError) {
   return {
     success: false,
     message: 'Error de validación',
-    errors: formattedErrors
+    errors: formattedErrors,
+    rawIssues: issues.map((e: any) => ({ path: e.path, message: e.message, code: e.code }))
   }
 }
 
@@ -54,8 +55,8 @@ export const AccessoryCreateSchema = z.object({
   compareAtPrice: z.number().int().positive().optional(),
   color: z.string().optional(),
   imageUrl: z.string().url().optional().or(z.literal('')),
-  images: z.array(z.string()).default([]),
-  compatibleModels: z.string().optional(),
+  images: z.array(z.string()).optional(),
+  compatibleModels: z.string().nullable().optional(),
   ico: z.string().optional(),
   isActive: z.boolean().optional(),
   description: z.string().optional(),

@@ -19,11 +19,20 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
   const category = searchParams.get('category')
   const brand = searchParams.get('brand')
   const search = searchParams.get('search')
    
   try {
+    if (id) {
+      const accessory = await prisma.accessory.findUnique({ where: { id } })
+      if (!accessory) {
+        return NextResponse.json({ error: 'Accesorio no encontrado' }, { status: 404 })
+      }
+      return NextResponse.json(accessory)
+    }
+    
     const where: any = { isActive: true }
     
     if (category && category !== 'todos') {
@@ -105,40 +114,47 @@ export async function PUT(request: Request) {
     }
     
     const body = await request.json()
+    console.log('PUT accessory body:', JSON.stringify(body, null, 2))
     
     // Validar body (partial para updates)
     const validation = AccessoryUpdateSchema.safeParse(body)
     if (!validation.success) {
+      console.error('Zod validation failed:', JSON.stringify(validation.error.issues || validation.error.errors, null, 2))
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
+    const data: any = {}
+    if (body.name) data.name = body.name
+    if (body.ico) data.ico = body.ico
+    if (body.description !== undefined) data.description = body.description || null
+    if (body.category) data.category = body.category
+    if (body.price !== undefined) data.price = Number(body.price)
+    if (body.compareAtPrice !== undefined) data.compareAtPrice = body.compareAtPrice ? Number(body.compareAtPrice) : null
+    if (body.stock !== undefined) data.stock = Number(body.stock)
+    if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl || null
+    if (body.images !== undefined) data.images = Array.isArray(body.images) ? body.images : []
+    if (body.brand !== undefined) data.brand = body.brand || null
+    if (body.color !== undefined) data.color = body.color || null
+    if (body.compatibleModels !== undefined) data.compatibleModels = body.compatibleModels || null
+    if (body.isActive !== undefined) data.isActive = body.isActive
+    if (body.discount !== undefined) data.discount = body.discount !== null ? Number(body.discount) : null
+    if (body.isOffer !== undefined) data.isOffer = body.isOffer
+    if (body.offerStart !== undefined) data.offerStart = body.offerStart ? new Date(body.offerStart) : null
+    if (body.offerEnd !== undefined) data.offerEnd = body.offerEnd ? new Date(body.offerEnd) : null
+    
+    console.log('Prisma update data:', JSON.stringify(data, null, 2))
+    
     const updatedAccessory = await prisma.accessory.update({
       where: { id },
-      data: {
-        ...(body.name && { name: body.name }),
-        ...(body.ico && { ico: body.ico }),
-        ...(body.description !== undefined && { description: body.description || null }),
-        ...(body.category && { category: body.category }),
-        ...(body.price !== undefined && { price: Number(body.price) }),
-        ...(body.compareAtPrice !== undefined && { compareAtPrice: body.compareAtPrice ? Number(body.compareAtPrice) : null }),
-        ...(body.stock !== undefined && { stock: Number(body.stock) }),
-        ...(body.imageUrl !== undefined && { imageUrl: body.imageUrl || null }),
-        ...(body.images && { images: body.images }),
-        ...(body.brand !== undefined && { brand: body.brand || null }),
-        ...(body.color !== undefined && { color: body.color || null }),
-        ...(body.compatibleModels !== undefined && { compatibleModels: body.compatibleModels || null }),
-        ...(body.isActive !== undefined && { isActive: body.isActive }),
-        ...(body.discount !== undefined && { discount: body.discount !== null ? Number(body.discount) : null }),
-        ...(body.isOffer !== undefined && { isOffer: body.isOffer }),
-        ...(body.offerStart !== undefined && { offerStart: body.offerStart ? new Date(body.offerStart) : null }),
-        ...(body.offerEnd !== undefined && { offerEnd: body.offerEnd ? new Date(body.offerEnd) : null }),
-      },
+      data,
     })
     
     return NextResponse.json(updatedAccessory)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating accessory:', error)
-    return NextResponse.json({ error: 'Failed to update accessory' }, { status: 500 })
+    console.error('Error code:', error?.code)
+    console.error('Error meta:', error?.meta)
+    return NextResponse.json({ error: 'Failed to update accessory', details: error?.message }, { status: 500 })
   }
 }
 

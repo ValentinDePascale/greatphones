@@ -31,7 +31,7 @@ html{scroll-behavior:smooth}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--dk);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:inherit}
 .hidden{display:none!important}
-.page{display:none;min-height:100vh;animation:pgIn .18s ease;position:relative;z-index:1}
+.page{display:none;min-height:100vh;animation:pgIn .18s ease;position:relative}
 .page.act{display:block}
 .ctr{max-width:var(--W);margin:0 auto;padding:0 var(--pad)}
 @keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}

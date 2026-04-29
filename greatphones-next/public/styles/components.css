@@ -315,9 +315,20 @@
 .b-red{background:#FEE2E2;color:#991B1B}
 
 /* PRODUCT GRID - LARGER CARDS */
-.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1280px;margin:0 auto}
-@media(max-width:1200px){.pgrid{grid-template-columns:repeat(3,1fr);gap:20px}}
-@media(max-width:900px){.pgrid{grid-template-columns:repeat(2,1fr);gap:16px}}
+/* STATIC PRODUCT GRID - 4 cols max */
+.pgrid-static{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;max-width:1280px;margin:0 auto}
+@media(max-width:1200px){.pgrid-static{grid-template-columns:repeat(3,1fr);gap:20px}}
+@media(max-width:900px){.pgrid-static{grid-template-columns:repeat(2,1fr);gap:16px}}
+@media(max-width:460px){.pgrid-static{grid-template-columns:repeat(2,1fr);gap:12px}}
+
+/* DRAG-TO-SCROLL CAROUSEL */
+.carousel{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-ms-overflow-style:none;padding-bottom:8px;cursor:grab;user-select:none;-webkit-user-select:none}
+.carousel::-webkit-scrollbar{display:none}
+.carousel.dragging{cursor:grabbing;scroll-snap-type:none}
+.carousel .pcard{flex-shrink:0;width:281px;scroll-snap-align:start}
+@media(max-width:1200px){.carousel .pcard{width:260px}}
+@media(max-width:900px){.carousel .pcard{width:240px}}
+@media(max-width:460px){.carousel .pcard{width:200px;gap:12px}}
 
 .pcard{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:all .3s;display:flex;flex-direction:column;position:relative;box-shadow:0 4px 24px rgba(26,28,30,.08)}
 .pcard:hover{box-shadow:0 16px 48px rgba(26,28,30,.15);transform:translateY(-4px)}

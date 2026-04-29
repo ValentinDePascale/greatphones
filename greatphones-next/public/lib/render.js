@@ -2,6 +2,7 @@
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
 var PRODUCTS=[];
 var currentProd=null;
+var currentAcc=null;
 var detWMult=0,detDExtra=0,selCuotas=1;
 
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
@@ -74,7 +75,56 @@ function renderHomeRail(){
   var rail=document.getElementById('homeRail');
   if(!rail)return;
   var sorted=PRODUCTS.slice().sort(function(a,b){return b.sold-a.sold;});
-  renderGrid('homeRail',sorted.slice(0,4));
+  var items=sorted.slice(0,8);
+  var now=new Date();
+  rail.innerHTML=items.map(function(p){
+    var isPromoActive=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+    var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
+    var isOutOfStock=p.stock===0;
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var badge;
+    if(isOutOfStock){
+      badge='<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>';
+    }else if(isPromoActive){
+      badge='<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+p.discount+'% OFF</div>';
+    }else if(p.condition==='Nuevo'){
+      badge='<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+'\uD83D\uDD25 Nuevo</div>';
+    }else if(p.condition&&p.condition!=='Nuevo'){
+      badge='<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>';
+    }else{
+      badge='';
+    }
+    var isFav=isFavorite(p.id);
+    var cardClass='pcard'+(isOutOfStock?' pcard-out-of-stock':'');
+    var cardStyle='cursor:'+(isOutOfStock?'default':'pointer');
+    var imgWrapStyle='position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'');
+    var bodyStyle='padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'');
+    var favBg=isFav?'background:#fff0ec;color:var(--orange)':'';
+    var favIcon=isFav?'\u2665':'\u2661';
+    var priceHtml=isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff">-'+p.discount+'%</span></div>':'';
+    var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
+    var onclick=isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"';
+    return '<article class="'+cardClass+'"'+onclick+' style="'+cardStyle+'">'+
+      '<div style="'+imgWrapStyle+'">'+
+      badge+
+      '<div style="position:absolute;top:16px;right:16px;z-index:3">'+
+      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:2;box-shadow:0 4px 16px rgba(0,0,0,.15);transition:all .25s" '+favBg+'>'+favIcon+'</button>'+
+      '</div>'+
+      imgHtml+
+      '</div>'+
+      '<div class="pcard-body" style="'+bodyStyle+'">'+
+      '<div>'+
+      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+(p.name||p.brand)+'</h3>'+
+      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+(p.sub||p.brand||'')+'</p>'+
+      '</div>'+
+      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
+      priceHtml+
+      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
+      '</div>'+
+      actionHtml+
+      '</div>'+
+      '</article>';
+  }).join('');
 }
 function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
@@ -146,9 +196,16 @@ function renderRepairGrid(){
 function renderAccGrid(){
   var grid=document.getElementById('accGrid');
   if(!grid)return;
-  var accs=window.ACCS||[];
+  var accs=(window.ACCS||[]).slice();
   if(!window.accFilter)window.accFilter='todos';
   if(window.accFilter!=='todos')accs=accs.filter(function(a){return a.category===window.accFilter;});
+  if(currentAccSort==='asc'){
+    accs.sort(function(a,b){return a.price-b.price;});
+  }else if(currentAccSort==='desc'){
+    accs.sort(function(a,b){return b.price-a.price;});
+  }else if(currentAccSort==='new'){
+    accs.sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+  }
   grid.innerHTML=accs.map(function(a){
     var now=new Date();
     var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
@@ -183,30 +240,75 @@ function openAccDetail(id){
   var a=getById(window.ACCS,id);
   if(!a)return;
   currentAcc=a;
+  var now=new Date();
+  var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+  var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
+  var allImages=[];
+  if(a.imageUrl)allImages.push(a.imageUrl);
+  if(a.images&&a.images.length)allImages=allImages.concat(a.images);
   var detName=document.getElementById('detName');
   var detMeta=document.getElementById('detMeta');
   var detPrice=document.getElementById('detPrice');
   var detTotal=document.getElementById('detTotal');
-  var imgWrap=document.getElementById('detImgWrap');
-  var now=new Date();
-  var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
-  var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
+  var detOld=document.getElementById('detOld');
+  var detPriceWrap=document.getElementById('detPriceWrap');
+  var detImgMain=document.getElementById('detImgMain');
+  var detIco=document.getElementById('detIco');
+  var detThumbnails=document.getElementById('detThumbnails');
+  var detFavBtn=document.getElementById('detFavBtn');
+  var detBrand=document.getElementById('detBrand');
+  var detType=document.getElementById('detType');
+  var detName2=document.getElementById('detName2');
+  var cuotaOpts=document.getElementById('cuotaOpts');
+  var warrantyOpts=document.getElementById('warrantyOpts');
+  var dExtraSection=document.getElementById('dExtraSection');
+  if(detBrand)detBrand.textContent=a.brand||'Accesorio';
+  if(detType)detType.textContent=a.category||'';
+  if(detName2)detName2.textContent=a.name;
   if(detName)detName.textContent=a.name;
-  if(detMeta)detMeta.textContent=(a.brand||'')+' '+(a.description||'');
+  if(detMeta)detMeta.textContent=(a.brand?a.brand+' — ':'')+(a.description||a.category||'');
   if(detPrice)detPrice.innerHTML=fmt(finalPrice);
   if(detTotal)detTotal.innerHTML=fmt(finalPrice);
-  var oldPrice=document.getElementById('detOld');
-  var detPriceWrap=document.getElementById('detPriceWrap');
   if(isPromoActive&&a.discount){
     if(detPriceWrap)detPriceWrap.innerHTML='<span style="font-family:\'Playfair Display\',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)">'+fmt(finalPrice)+'</span><span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;margin-left:8px">-'+a.discount+'%</span>';
-    if(oldPrice)oldPrice.innerHTML=fmt(a.price);
-    if(oldPrice)oldPrice.classList.remove('hidden');
+    if(detOld)detOld.innerHTML=fmt(a.price);
+    if(detOld)detOld.classList.remove('hidden');
   }else{
     if(detPriceWrap)detPriceWrap.innerHTML=fmt(finalPrice);
-    if(oldPrice)oldPrice.classList.add('hidden');
+    if(detOld)detOld.classList.add('hidden');
   }
-  if(imgWrap)imgWrap.innerHTML=a.imageUrl?'<img src="'+a.imageUrl+'">':(a.ico?'<span style="font-size:80px">'+a.ico+'</span>':'<span style="font-size:80px">📦</span>');
+  if(detImgMain){
+    var mainImg=allImages.length?'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">':(a.ico?'<span style="font-size:90px">'+a.ico+'</span>':'<span style="font-size:90px">📦</span>');
+    detImgMain.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">'+(isFavorite(a.id)?'♥':'♡')+'</button>'+mainImg;
+  }
+  if(detThumbnails){
+    if(allImages.length>1){
+      detThumbnails.innerHTML=allImages.map(function(src,i){
+        return'<div onclick="switchAccMainImg('+i+')" style="border-radius:12px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';
+      }).join('');
+    }else{
+      detThumbnails.innerHTML='';
+    }
+  }
+  if(cuotaOpts)cuotaOpts.style.display='none';
+  if(warrantyOpts)warrantyOpts.parentElement.style.display='none';
+  if(dExtraSection)dExtraSection.style.display='none';
+  window._accImages=allImages;
   nav('detail');
+}
+function switchAccMainImg(idx){
+  if(!window._accImages||!window._accImages[idx])return;
+  var detImgMain=document.getElementById('detImgMain');
+  var detThumbnails=document.getElementById('detThumbnails');
+  if(detImgMain){
+    detImgMain.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">'+(isFavorite(currentAcc.id)?'♥':'♡')+'</button><img src="'+window._accImages[idx]+'" style="width:100%;height:100%;object-fit:contain">';
+  }
+  if(detThumbnails){
+    var thumbs=detThumbnails.children;
+    for(var i=0;i<thumbs.length;i++){
+      thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';
+    }
+  }
 }
 function openDetail(id){
   currentProd=getById(PRODUCTS,id);
@@ -451,6 +553,20 @@ function filtAcc(f,btn){
   btn.classList.add('act');
   renderAccGrid();
 }
+var currentAccSort='rel';
+function toggleAccSortMenu(){
+  var menu=document.getElementById('sortAccMenu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+function setAccSort(val,btn){
+  currentAccSort=val;
+  var label=document.getElementById('sortAccLabel');
+  if(label)label.textContent=btn.textContent;
+  document.querySelectorAll('#sortAccMenu .sort-opt').forEach(function(o){o.classList.remove('act');});
+  btn.classList.add('act');
+  document.getElementById('sortAccMenu').style.display='none';
+  renderAccGrid();
+}
 function clearAdvF(){
   document.getElementById('af-st').value='';
   document.getElementById('af-cd').value='';
@@ -529,7 +645,8 @@ function startSliderTimer(){
 function renderFeaturedGrid(){
   var grid=document.getElementById('featuredGrid');
   if(!grid)return;
-  renderGrid('featuredGrid',PRODUCTS.slice(0,5));
+  var sorted=PRODUCTS.slice().sort(function(a,b){return b.sold-a.sold;});
+  renderGrid('featuredGrid',sorted.slice(0,4));
 }
 
 // =========== TIMER ===========
@@ -858,10 +975,6 @@ function renderAdminContent(tab){
       '<div style="margin-top:3rem;border-top:1px solid var(--border);padding-top:2rem">'+
         '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Administrar Promociones Activas</h3>'+
         '<div style="height:4px;width:80px;background:var(--orange);border-radius:2px;margin-bottom:1.5rem"></div>'+
-        '<div style="display:flex;gap:12px;margin-bottom:1rem;align-items:flex-end">'+
-          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="activePromoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
-          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="activePromoFilterBrand" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
-        '</div>'+
         '<div style="background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border)">'+
           '<table style="width:100%;text-align:left;border-collapse:collapse">'+
             '<tbody id="activePromosTable">'+
@@ -1127,20 +1240,20 @@ function applyPromo(){
 }
 function renderActivePromos(){
   var tbody=document.getElementById('activePromosTable');
-  var filterBrand=document.getElementById('promoFilterBrand')?.value||'';
+  var filterType=document.getElementById('activePromoFilterType')?.value||'todos';
+  var filterBrand=document.getElementById('activePromoFilterBrand')?.value||'';
   var filterStatus=document.getElementById('promoFilterStatus')?.value||'';
-  var filterType=document.getElementById('promoFilterType')?.value||'todos';
   if(!tbody)return;
   var now=new Date();
   var allOffers=[];
   if(filterType==='todos'||filterType==='productos'){
     PRODUCTS.filter(function(p){return p.isOffer&&p.discount>0;}).forEach(function(p){
-      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,offerStart:p.offerStart,offerEnd:p.offerEnd,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱'});
+      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,offerStart:p.offerStart,offerEnd:p.offerEnd,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'\uD83D\uDCF1'});
     });
   }
   if(filterType==='todos'||filterType==='accesorios'){
     (window.ACCS||[]).filter(function(a){return a.isOffer&&a.discount>0;}).forEach(function(a){
-      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,offerStart:a.offerStart,offerEnd:a.offerEnd,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦'});
+      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,offerStart:a.offerStart,offerEnd:a.offerEnd,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'\uD83D\uDCE6'});
     });
   }
   var offers=allOffers.filter(function(p){
@@ -1155,14 +1268,14 @@ function renderActivePromos(){
   var brands=[...new Set(allOffers.map(function(p){return p.brand;}).filter(function(b){return b;}))];
   
   tbody.innerHTML='<tr>'+
-    '<td colspan="6" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
+    '<td colspan="5" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
-        '<select id="promoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
+        '<select id="activePromoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
           '<option value="todos" '+(filterType==='todos'?'selected':'')+'>Todos</option>'+
           '<option value="productos" '+(filterType==='productos'?'selected':'')+'>Productos</option>'+
           '<option value="accesorios" '+(filterType==='accesorios'?'selected':'')+'>Accesorios</option>'+
         '</select>'+
-        '<select id="promoFilterBrand" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
+        '<select id="activePromoFilterBrand" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
           '<option value="" '+(filterBrand===''?'selected':'')+'>Todas las marcas</option>'+brands.map(function(b){return'<option value="'+b+'" '+(filterBrand===b?'selected':'')+'>'+b+'</option>';}).join('')+
         '</select>'+
         '<select id="promoFilterStatus" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
@@ -1177,7 +1290,7 @@ function renderActivePromos(){
   '</tr>';
   
   if(offers.length===0){
-    tbody.innerHTML+='<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
+    tbody.innerHTML+='<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
     return;
   }
   tbody.innerHTML+=offers.map(function(p){

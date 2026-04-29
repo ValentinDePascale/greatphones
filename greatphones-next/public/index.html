@@ -230,7 +230,7 @@
         <div><div class="sec-tag">Catálogo destacado</div><h2 class="sec-title">Los mas buscados</h2></div>
         <button class="sec-more" onclick="nav('shop')">Ver todo el catalogo</button>
       </div>
-      <div class="pgrid" id="featuredGrid"></div>
+      <div class="pgrid-static" id="featuredGrid"></div>
     </div>
   </div>
 
@@ -266,7 +266,7 @@
         <div><div class="sec-tag">Tendencia</div><h2 class="sec-title">Los mas vendidos</h2></div>
         <button class="sec-more" onclick="nav('shop')">Ver catalogo</button>
       </div>
-      <div class="prail" id="homeRail" onmousedown="startDrag(event,this)" onmousemove="doDrag(event,this)" onmouseup="endDrag()" onmouseleave="endDrag()" ontouchstart="startDrag(event,this)" ontouchmove="doDrag(event,this)" ontouchend="endDrag()"></div>
+      <div class="carousel" id="homeRail" onmousedown="startDrag(event,this)" onmousemove="doDrag(event,this)" onmouseup="endDrag()" onmouseleave="endDrag()" ontouchstart="startDrag(event,this)" ontouchmove="doDrag(event,this)" ontouchend="endDrag()"></div>
     </div>
 </div>
 
@@ -885,8 +885,9 @@
             </button>
             <div id="sortAccMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
               <div onclick="setAccSort('rel',this)" class="sort-opt act">Relevantes</div>
-              <div onclick="setAccSort('asc',this)" class="sort-opt">Menor precio ↑</div>
-              <div onclick="setAccSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
+              <div onclick="setAccSort('asc',this)" class="sort-opt">Menor precio \u2191</div>
+              <div onclick="setAccSort('desc',this)" class="sort-opt">Mayor precio \u2193</div>
+              <div onclick="setAccSort('new',this)" class="sort-opt">M\u00E1s nuevos</div>
             </div>
           </div>
         </div></div>

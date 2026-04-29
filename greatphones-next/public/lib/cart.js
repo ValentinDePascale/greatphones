@@ -157,3 +157,18 @@ function renderCartBody(){
 function checkout(){
   openCheckout();
 }
+function addToCartFromDetail(){
+  if(currentProd){
+    addToCart(currentProd.id);
+  }else if(currentAcc){
+    addToCart(currentAcc.id);
+  }
+}
+function buyNow(){
+  if(currentProd){
+    addToCart(currentProd.id);
+  }else if(currentAcc){
+    addToCart(currentAcc.id);
+  }
+  setTimeout(function(){nav('checkout');},300);
+}
