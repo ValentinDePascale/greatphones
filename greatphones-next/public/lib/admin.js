@@ -270,12 +270,17 @@ function editProduct(id){
 }
 
 function deleteProduct(id){
-  if(!confirm('Eliminar producto?'))return;
-  fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
-    showToast('Producto eliminado');
+  if(!confirm('Eliminar producto? Esta accion no se puede deshacer.'))return;
+  var p=getById(PRODUCTS,id);
+  var pname=p?p.name:'este producto';
+  fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){
+    if(!r.ok)throw new Error('Error '+r.status);
+    return r.json();
+  }).then(function(){
+    showToast('Producto eliminado: '+pname);
     loadProducts();
     loadAdminProducts();
-  }).catch(function(){alert('Error eliminando');});
+  }).catch(function(e){alert('Error eliminando: '+e.message);});
 }
 
 function renderDash(){notAvailable();}

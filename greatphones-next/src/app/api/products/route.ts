@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     // Validar body
     const validation = ProductCreateSchema.safeParse(body)
     if (!validation.success) {
+      console.error('Product validation failed:', JSON.stringify(validation.error.issues || validation.error.errors, null, 2))
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
@@ -150,13 +151,15 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
     }
     
-    await prisma.product.delete({
-      where: { id },
-    })
+    await prisma.$transaction([
+      prisma.orderItem.deleteMany({ where: { productId: id } }),
+      prisma.favorite.deleteMany({ where: { productId: id } }),
+      prisma.product.delete({ where: { id } }),
+    ])
     
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete product', details: (error as Error).message }, { status: 500 })
   }
 }

@@ -91,7 +91,9 @@
 .cat-item:hover .cat-lbl,.cat-item.act .cat-lbl{color:var(--orange)}
 
 /* NEW CATEGORY CARD STYLE */
-.mb-section-gap{margin-bottom:2rem}
+.mb-section-gap{margin-top:2.5rem;margin-bottom:2rem}
+.mb-section-gap .font-headline-md{font-size:1.25rem;font-weight:700;color:var(--orange)}
+.mb-section-gap a.text-secondary{font-size:.8rem;color:var(--orange)}
 .mb-element-gap{margin-bottom:1rem}
 .font-headline-md{font-size:1.5rem;font-weight:700;color:var(--dk)}
 .text-headline-md{color:var(--dk)}
@@ -304,7 +306,7 @@
 .sec-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--orange);margin-bottom:.2rem}
 .sec-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:500;letter-spacing:-.3px}
 .sec-title-lt{color:#fff}
-.sec-more{font-size:12px;color:var(--orange);cursor:pointer;font-weight:500;white-space:nowrap;background:none;border:none;padding:0;font-family:inherit}
+.sec-more{font-size:11px;color:var(--orange);cursor:pointer;font-weight:600;white-space:nowrap;background:none;border:none;padding:0;font-family:inherit}
 .sec-more:hover{text-decoration:underline}
 
 /* BADGES */
