@@ -44,20 +44,18 @@
 <div class="mainnav">
   <div class="nav">
     <button class="nav-logo" onclick="nav('home')">
-      <img src="icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:40px;height:40px;border-radius:10px;object-fit:cover">
+      <img src="icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:36px;height:36px;border-radius:10px;object-fit:cover">
       <div><span class="nav-txt">Great Phones</span><span class="nav-sub">Bahia Blanca</span></div>
     </button>
     <div class="nav-search">
+      <svg class="nsi-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input class="nsi" id="searchInput" placeholder="Buscar iPhone, MacBook, Samsung..." oninput="handleSearch(this.value)" onkeydown="if(event.key==='Enter')doSearch()">
-      <button class="nsb" onclick="doSearch()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </button>
       <div class="srdd" id="searchDD"></div>
     </div>
     <div class="nav-acts">
       <div class="notif-wrap">
-        <button class="nbtn" onclick="toggleNotif(event)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <button class="nbtn" onclick="toggleNotif(event)" title="Notificaciones">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           <span class="nbadge hidden" id="notifBadge">0</span>
         </button>
         <div class="notif-panel" id="notifPanel">
@@ -65,23 +63,25 @@
           <div id="notifList"></div>
         </div>
       </div>
-      <button class="nbtn" onclick="nav('favoritos')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
+      <button class="nbtn" onclick="nav('favoritos')" title="Favoritos">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
         <span class="nbadge hidden" id="favBadge">0</span>
       </button>
-      <button class="nbtn" onclick="openCart()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <span>Carrito</span><span class="nbadge hidden" id="cartBadge">0</span>
+      <button class="nbtn nbtn-cart" onclick="openCart()" title="Carrito">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span class="nbadge hidden" id="cartBadge">0</span>
       </button>
-      <button class="nbtn" onclick="nav('mensajes')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <button class="nbtn" onclick="nav('mensajes')" title="Mensajes">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         <span class="nbadge hidden" id="msgBadge">0</span>
       </button>
-      <button class="nbtn" onclick="nav('cuenta')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <span>Cuenta</span>
+      <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
-      <button class="nbtn nbtn-sell" onclick="nav('sell')">Vender</button>
+      <button class="nbtn nbtn-sell" onclick="nav('sell')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        <span>Vender</span>
+      </button>
     </div>
   </div>
 </div>
@@ -433,7 +433,7 @@
   <div class="sh-hdr">
     <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff;margin-bottom:.25rem" id="shopTitle">Catálogo</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="shopSub">Todos los equipos verificados con garantia incluida</p></div>
   </div>
-  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:64px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06)">
     <div class="ctr" style="padding:16px var(--pad)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">
@@ -865,7 +865,7 @@
   <div class="sh-hdr">
     <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Accesorios</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Apple &middot; Samsung &middot; Originales con garantia</p></div>
   </div>
-  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06);position:sticky;top:64px;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.04)">
+  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06)">
     <div class="ctr" style="padding:16px var(--pad)">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">

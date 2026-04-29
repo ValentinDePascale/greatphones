@@ -542,7 +542,7 @@ function updDetTotal(){
 function filterShop(f,btn){
   window.shopFilter=f;
   if(btn){
-    document.querySelectorAll('.fchip').forEach(function(c){c.classList.remove('act');});
+    document.querySelectorAll('#p-shop .fchip').forEach(function(c){c.classList.remove('act');});
     btn.classList.add('act');
   }
   renderShopGrid();
@@ -626,7 +626,7 @@ function clearFilters(){
 }
 function filtAcc(f,btn){
   accFilter=f;
-  document.querySelectorAll('.fchip').forEach(function(c){c.classList.remove('act');});
+  document.querySelectorAll('#p-accesorios .fchip').forEach(function(c){c.classList.remove('act');});
   btn.classList.add('act');
   renderAccGrid();
 }

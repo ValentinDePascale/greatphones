@@ -1,11 +1,14 @@
 /* RESPONSIVE */
 @media(max-width:480px){
-  .mainnav{height:52px;gap:6px}
-  .nav-logo-text{font-size:16px}
-  .tb-links{display:none}
-  .nav-acts .nbtn span{display:none}
-  .nav-acts .nbtn{padding:6px 8px}
-  .nbtn-o span{display:inline!important}
+  .nav{gap:8px;height:52px}
+  .nav-txt{font-size:14px}
+  .nav-sub{display:none}
+  .nav-search{max-width:200px}
+  .nbtn{width:34px;height:34px}
+  .nbtn-cart{padding:0 10px}
+  .nbtn-cart span:not(.nbadge){display:none}
+  .nbtn-sell{padding:0 10px}
+  .nbtn-sell span:not(.nbadge){display:none}
   .hero-body{padding:1.75rem 1rem 1.5rem}
   .hero-bg-logo{display:none}
 }
