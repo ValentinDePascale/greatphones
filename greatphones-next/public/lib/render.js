@@ -213,21 +213,27 @@ function renderOfferStrip(){
   strip.innerHTML=offers.map(function(p){
     var fp=Math.round(p.price*(1-p.discount/100));
     var cuota=Math.round(fp/12);
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'">':'<span>'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s">':'<span style="font-size:72px">'+p.ico+'</span>';
     var isFav=favorites.indexOf(p.id)!==-1;
-    return '<div class="pcard" onclick="openDetail(\''+p.id+'\')">'+
-      '<div class="pcard-img">'+imgHtml+
-      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'♥':'♡')+'</button>'+
-      '<span class="pcard-bdg bdg-disc" style="position:absolute;top:12px;left:12px;z-index:10;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">-'+p.discount+'%</span>'+
+    return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
+      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
+      '<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+p.discount+'% OFF</div>'+
+      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
+      imgHtml+
       '</div>'+
-      '<div class="pcard-body">'+
-      '<div class="pcard-name">'+p.name+'</div>'+
-      '<div class="pcard-sub">'+p.sub+'</div>'+
-      '<div><span class="pcard-price">'+fmt(fp)+'</span> <span class="pcard-old">'+fmt(p.price)+'</span></div>'+
-      '<div class="pcard-cuota">12x '+fmt(cuota)+' sin interes</div>'+
+      '<div class="pcard-body" style="padding:0 20px 20px">'+
+      '<div>'+
+      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+p.name+'</h3>'+
+      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
       '</div>'+
-      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')">+ Agregar al carrito</button>'+
-      '</div>';
+      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
+      '<div style="display:flex;align-items:center;gap:10px"><span class="pcard-old" style="font-size:14px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:12px;background:var(--red);color:#fff">'+p.discount+'% OFF</span></div>'+
+      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(fp)+'</div>'+
+      '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
+      '</div>'+
+      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
+      '</div>'+
+      '</article>';
   }).join('');
 }
 function renderShopGrid(){
@@ -241,10 +247,16 @@ function renderShopGrid(){
     prods=prods.filter(function(p){return favorites.indexOf(p.id)!==-1;});
   }
   if(filterState.conditions.length>0){
-    prods=prods.filter(function(p){return filterState.conditions.indexOf(p.condition)!==-1||(p.condition==='Usado'&&filterState.conditions.indexOf('Usado')!==-1);});
+    prods=prods.filter(function(p){return filterState.conditions.indexOf(p.condition)!==-1;});
   }
   if(filterState.storage.length>0){
     prods=prods.filter(function(p){return filterState.storage.some(function(s){return p.sub&&p.sub.indexOf(s)!==-1;});});
+  }
+  if(filterState.ram.length>0){
+    prods=prods.filter(function(p){return p.ram&&filterState.ram.indexOf(p.ram)!==-1;});
+  }
+  if(filterState.batteryMin>0){
+    prods=prods.filter(function(p){return p.battery&&p.battery>=filterState.batteryMin;});
   }
   if(filterState.priceMin){
     prods=prods.filter(function(p){return p.price>=filterState.priceMin;});
@@ -570,7 +582,7 @@ function filterShop(f,btn){
   }
 }
 var currentSort='rel';
-var filterState={conditions:[],storage:[],priceMin:null,priceMax:null,hideNoStock:false};
+var filterState={conditions:[],storage:[],ram:[],priceMin:null,priceMax:null,hideNoStock:false,batteryMin:0};
 function toggleSortMenu(){
   var menu=document.getElementById('sortMenu');
   menu.style.display=menu.style.display==='none'?'block':'none';
@@ -607,20 +619,29 @@ function toggleFilterPanel(){
   }
 }
 function applyFilters(){
-  var state={conditions:[],storage:[],priceMin:null,priceMax:null,hideNoStock:false};
-  if(document.getElementById('chk-new').checked)state.conditions.push('Nuevo');
-  if(document.getElementById('chk-usado').checked)state.conditions.push('Usado');
+  var state={conditions:[],storage:[],ram:[],priceMin:null,priceMax:null,hideNoStock:false,batteryMin:0};
+  if(document.getElementById('chk-nuevo').checked)state.conditions.push('Nuevo');
+  if(document.getElementById('chk-impecable').checked)state.conditions.push('Impecable');
+  if(document.getElementById('chk-muybueno').checked)state.conditions.push('Muy bueno');
+  if(document.getElementById('chk-bueno').checked)state.conditions.push('Bueno');
   document.querySelectorAll('#filterPanel input[type="checkbox"][value]').forEach(function(cb){
     if(cb.checked&&cb.value.match(/GB|TB/))state.storage.push(cb.value);
   });
+  if(document.getElementById('ram-4').checked)state.ram.push('4 GB');
+  if(document.getElementById('ram-6').checked)state.ram.push('6 GB');
+  if(document.getElementById('ram-8').checked)state.ram.push('8 GB');
+  if(document.getElementById('ram-12').checked)state.ram.push('12 GB');
+  if(document.getElementById('ram-16').checked)state.ram.push('16 GB');
   var pMin=document.getElementById('priceMin');
   var pMax=document.getElementById('priceMax');
   if(pMin&&pMin.value)state.priceMin=parseInt(pMin.value);
   if(pMax&&pMax.value)state.priceMax=parseInt(pMax.value);
   var hideNoStock=document.getElementById('hideNoStock');
   state.hideNoStock=hideNoStock?hideNoStock.checked:false;
+  var batMin=document.getElementById('batteryMin');
+  state.batteryMin=batMin?parseInt(batMin.value):0;
   filterState=state;
-  var count=state.conditions.length+state.storage.length+(state.priceMin?1:0)+(state.priceMax?1:0)+(state.hideNoStock?1:0);
+  var count=state.conditions.length+state.storage.length+state.ram.length+(state.priceMin?1:0)+(state.priceMax?1:0)+(state.hideNoStock?1:0)+(state.batteryMin>0?1:0);
   var badge=document.getElementById('filterCount');
   if(badge){
     badge.textContent=count;
@@ -630,13 +651,22 @@ function applyFilters(){
   toggleFilterPanel();
 }
 function clearFilters(){
-  document.getElementById('chk-new').checked=false;
-  document.getElementById('chk-usado').checked=false;
+  document.getElementById('chk-nuevo').checked=false;
+  document.getElementById('chk-impecable').checked=false;
+  document.getElementById('chk-muybueno').checked=false;
+  document.getElementById('chk-bueno').checked=false;
   document.querySelectorAll('#filterPanel input[type="checkbox"][value]').forEach(function(cb){cb.checked=false;});
+  document.getElementById('ram-4').checked=false;
+  document.getElementById('ram-6').checked=false;
+  document.getElementById('ram-8').checked=false;
+  document.getElementById('ram-12').checked=false;
+  document.getElementById('ram-16').checked=false;
   document.getElementById('priceMin').value='';
   document.getElementById('priceMax').value='';
   document.getElementById('hideNoStock').checked=false;
-  filterState={conditions:[],storage:[],priceMin:null,priceMax:null,hideNoStock:false};
+  document.getElementById('batteryMin').value=0;
+  document.getElementById('batteryMinVal').textContent='0%';
+  filterState={conditions:[],storage:[],ram:[],priceMin:null,priceMax:null,hideNoStock:false,batteryMin:0};
   document.getElementById('filterCount').style.display='none';
   renderShopGrid();
 }
@@ -806,6 +836,9 @@ function saveProduct(){
     type:document.getElementById('prodType').value||'celular',
     color:document.getElementById('prodColor').value.trim(),
     screen:parseFloat(document.getElementById('prodScreen').value)||null,
+    storage:document.getElementById('prodStorage').value.trim()||null,
+    ram:document.getElementById('prodRam').value.trim()||null,
+    battery:parseInt(document.getElementById('prodBattery').value)||null,
     imageUrl:document.getElementById('prodImageUrl').value.trim()||null,
     images:getAdditionalImages(),
     ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1',
@@ -851,6 +884,9 @@ function editProduct(id){
   document.getElementById('prodType').value=p.type||'celular';
   document.getElementById('prodColor').value=p.color||'';
   document.getElementById('prodScreen').value=p.screen||'';
+  document.getElementById('prodStorage').value=p.storage||'';
+  document.getElementById('prodRam').value=p.ram||'';
+  document.getElementById('prodBattery').value=p.battery||'';
   
   document.getElementById('prodImageUrl').value=p.imageUrl||'';
   if(p.imageUrl){

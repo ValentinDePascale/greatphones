@@ -327,6 +327,9 @@ function nav(id,pushHistory){
       document.getElementById('prodType').value='celular';
       document.getElementById('prodColor').value='';
       document.getElementById('prodScreen').value='';
+      document.getElementById('prodStorage').value='';
+      document.getElementById('prodRam').value='';
+      document.getElementById('prodBattery').value='';
       
       document.getElementById('prodImageUrl').value='';
       document.getElementById('prodImages').value='';

@@ -28,6 +28,8 @@ export const ProductCreateSchema = z.object({
   type: z.enum(['celular', 'laptop', 'tablet', 'desktop']).optional().or(z.literal('')),
   color: z.string().optional(),
   screen: z.number().optional(),
+  storage: z.string().optional(),
+  ram: z.string().optional(),
   imageUrl: z.string().url().nullable().optional().or(z.literal('')),
   images: z.array(z.string()).default([]),
   cost: z.number().int().optional().default(0),

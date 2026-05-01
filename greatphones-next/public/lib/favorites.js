@@ -56,10 +56,10 @@ function toggleFavFromCard(id,btn){
   if(!btn)btn=event.currentTarget;
   if(idx===-1){
     favorites.push(id);
-    if(btn){btn.classList.remove('anim');void btn.offsetWidth;btn.classList.add('anim');}
+    if(btn){btn.classList.add('on');btn.classList.remove('anim');void btn.offsetWidth;btn.classList.add('anim');btn.innerHTML='\u2665';}
   }else{
     favorites.splice(idx,1);
-    if(btn){btn.classList.remove('anim');}
+    if(btn){btn.classList.remove('on','anim');btn.innerHTML='\u2661';}
   }
   saveFavorites();
   updFavBadge();

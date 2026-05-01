@@ -605,10 +605,12 @@
     </div>
     <div style="padding:24px">
       <div style="margin-bottom:28px">
-        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Condici�n</h4>
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Condición</h4>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <label class="filter-chk"><input type="checkbox" id="chk-new"><span>Nuevo</span></label>
-          <label class="filter-chk"><input type="checkbox" id="chk-usado"><span>Usado</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-nuevo"><span>Nuevo</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-impecable"><span>Impecable</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-muybueno"><span>Muy bueno</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-bueno"><span>Bueno</span></label>
         </div>
       </div>
       <div style="margin-bottom:28px">
@@ -619,6 +621,23 @@
           <label class="filter-chk"><input type="checkbox" value="256 GB"><span>256 GB</span></label>
           <label class="filter-chk"><input type="checkbox" value="512 GB"><span>512 GB</span></label>
           <label class="filter-chk"><input type="checkbox" value="1 TB"><span>1 TB</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Memoria RAM</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" id="ram-4"><span>4 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-6"><span>6 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-8"><span>8 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-12"><span>12 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-16"><span>16 GB</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Batería mínima</h4>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="range" id="batteryMin" min="0" max="100" value="0" step="5" style="flex:1;accent-color:var(--orange)" oninput="document.getElementById('batteryMinVal').textContent=this.value+'%'">
+          <span id="batteryMinVal" style="font-size:13px;font-weight:600;color:var(--dk);min-width:36px;text-align:right">0%</span>
         </div>
       </div>
       <div style="margin-bottom:28px">
@@ -1240,7 +1259,6 @@
         <p style="text-align:center;font-size:11px;color:var(--gray);margin-top:1rem">© 2026 Great Phones. Todos los derechos reservados.</p>
       </div>
     </div>
-    </div>
 </div>
 
 <!-- ============================= PAGE: EDIT PROFILE ============================= -->
@@ -1406,7 +1424,6 @@
             </div>
           </div>
         </div>
-      </div>
     </div>
 </div>
 
@@ -1531,6 +1548,11 @@
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="prodColor" placeholder="Titanio Natural"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Pantalla</label><input class="inp-f" id="prodScreen" placeholder="6.1"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><input class="inp-f" id="prodStorage" placeholder="256 GB"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">RAM</label><input class="inp-f" id="prodRam" placeholder="8 GB"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Bateria (%)</label><input class="inp-f" id="prodBattery" type="number" placeholder="91"></div>
+        </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
           <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
@@ -1617,8 +1639,6 @@
     </div>
   </div>
 </div>
-  </div>
-</div>
 
 <!-- ============================= PAGE: PRIVACIDAD ============================= -->
 <div class="page" id="p-privacidad" style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
@@ -1689,7 +1709,6 @@
       <button class="btn-fout" style="margin-top:6px;border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.45)" onclick="nav('home')">Volver a la tienda</button>
       <div style="font-size:9px;color:rgba(255,255,255,.18);margin-top:.875rem">admin / 1234</div>
     </div>
-  </div>
   <div id="adminPanel" class="admin-panel hidden">
     <div class="admin-nav">
       <div class="admin-nav-t" style="font-family:'Playfair Display',Georgia,serif">Admin — Great Phones</div>

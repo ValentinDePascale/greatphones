@@ -57,6 +57,8 @@ model Product {
   price       Int
   cost        Int
   battery     Int?
+  storage     String?
+  ram         String?
   stock       Int
   score       Int?
   color       String?
