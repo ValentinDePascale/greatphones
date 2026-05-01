@@ -23,12 +23,12 @@
   border-bottom:1px solid var(--border);
   box-shadow:0 2px 10px rgba(0,0,0,.06)
 }
-.nav{max-width:var(--W);margin:0 auto;padding:0 var(--pad);display:flex;align-items:center;gap:12px;height:64px}
-.nav-logo{display:flex;align-items:center;gap:9px;cursor:pointer;flex-shrink:0;background:none;border:none;padding:0}
+.nav{width:100%;padding:0 var(--pad);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:64px}
+.nav-logo{display:flex;align-items:center;gap:9px;cursor:pointer;flex-shrink:0;background:none;border:none;padding:0;justify-self:start}
 .nav-mark{width:40px;height:40px;background:var(--orange);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
 .nav-txt{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:var(--dk);letter-spacing:.3px;display:block}
 .nav-sub{font-size:8px;color:var(--gray2);letter-spacing:.7px;text-transform:uppercase;display:block}
-.nav-search{flex:1;max-width:500px;position:relative}
+.nav-search{position:relative;max-width:500px;justify-self:center}
 .nsi{width:100%;padding:9px 44px 9px 14px;border-radius:var(--rsm);border:1.5px solid var(--border);background:var(--cream);color:var(--dk);font-size:13px;transition:all .18s;outline:none}
 .nsi::placeholder{color:var(--gray2)}
 .nsi:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 3px rgba(255,107,44,.1)}
@@ -39,7 +39,7 @@
 .srdd-item{display:flex;align-items:center;gap:10px;padding:.6rem 1rem;cursor:pointer;font-size:12px;transition:background .12s}
 .srdd-item:hover{background:var(--cream)}
 .srdd-cat{font-size:10px;color:var(--gray);margin-left:auto}
-.nav-acts{display:flex;align-items:center;gap:3px;flex-shrink:0}
+.nav-acts{display:flex;align-items:center;gap:8px;flex-shrink:0;justify-self:end}
 .nbtn{position:relative;display:flex;align-items:center;gap:5px;padding:7px 10px;border-radius:var(--rsm);border:1.5px solid var(--border);background:transparent;color:var(--dk);font-size:11px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
 .nbtn:hover{border-color:var(--orange);color:var(--orange);background:#fff}
 .nbadge{position:absolute;top:-5px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:var(--orange);color:#fff;font-size:8px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff}
@@ -54,7 +54,7 @@
   scrollbar-width:none
 }
 .catnav::-webkit-scrollbar{display:none}
-.catnav-inner{max-width:var(--W);margin:0 auto;padding:0 var(--pad);display:flex;gap:2px;height:42px;align-items:center}
+.catnav-inner{width:100%;padding:0 var(--pad);display:flex;gap:2px;height:42px;align-items:center}
 .cni{flex-shrink:0;padding:.35rem .875rem;border-radius:6px;font-size:11px;font-weight:500;color:var(--gray);cursor:pointer;transition:all .15s;white-space:nowrap;border:none;background:transparent}
 .cni:hover{color:var(--orange);background:rgba(255,107,44,.08)}
 .cni.act{color:var(--orange);background:rgba(255,107,44,.1);font-weight:600}
@@ -391,6 +391,8 @@
 .pcard-stock{font-size:9px;color:var(--red);margin-top:1px}
 .pcard-add{width:100%;padding:7px;border:none;background:var(--orange);color:#fff;font-size:10px;font-weight:500;cursor:pointer;border-radius:0 0 10px 10px;transition:background .15s}
 .pcard-add:hover{background:var(--orange2)}
+.pcard.ocard-out{opacity:.65;filter:grayscale(.6);pointer-events:none}
+.pcard.ocard-out .pcard-img{position:relative}
 
 /* OFFER STRIP */
 .ostrip{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}

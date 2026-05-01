@@ -21,15 +21,27 @@
 
 @theme inline {
   --color-orange: var(--orange);
+  --color-orange2: var(--orange2);
   --color-green: var(--green);
+  --color-green2: var(--green2);
   --color-cream: var(--cream);
   --color-cream2: var(--cream2);
+  --color-cream3: var(--cream3);
   --color-dk: var(--dk);
   --color-dk2: var(--dk2);
+  --color-dk3: var(--dk3);
   --color-gray: var(--gray);
   --color-gray2: var(--gray2);
   --color-red: var(--red);
   --color-border: var(--border);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 20px rgba(0,0,0,.08);
+  --shadow-lg: 0 8px 36px rgba(0,0,0,.13);
+  --shadow-xl: 0 16px 48px rgba(0,0,0,.16);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 }
 
 body {

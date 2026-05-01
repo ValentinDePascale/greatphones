@@ -205,12 +205,28 @@ function renderHomeRail(){
 function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
   if(!strip)return;
-  var offers=PRODUCTS.filter(function(p){return p.isOffer;});
+  var now=new Date();
+  var offers=PRODUCTS.filter(function(p){
+    return p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+  });
+  if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';return;}
   strip.innerHTML=offers.map(function(p){
-    var fp=Math.round(p.price-p.price*p.discount/100);
-    return '<div class="ocard" onclick="openDetail(\''+p.id+'\')">'+
-      '<div class="ocard-img"><span style="font-size:40px">'+p.ico+'</span><span class="ocard-disc">-'+p.discount+'%</span></div>'+
-      '<div class="ocard-body"><div class="ocard-name">'+p.name+'</div><div class="ocard-old">'+fmt(p.price)+'</div><div class="ocard-price">'+fmt(fp)+'</div></div>'+
+    var fp=Math.round(p.price*(1-p.discount/100));
+    var cuota=Math.round(fp/12);
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'">':'<span>'+p.ico+'</span>';
+    var isFav=favorites.indexOf(p.id)!==-1;
+    return '<div class="pcard" onclick="openDetail(\''+p.id+'\')">'+
+      '<div class="pcard-img">'+imgHtml+
+      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'♥':'♡')+'</button>'+
+      '<span class="pcard-bdg bdg-disc" style="position:absolute;top:12px;left:12px;z-index:10;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">-'+p.discount+'%</span>'+
+      '</div>'+
+      '<div class="pcard-body">'+
+      '<div class="pcard-name">'+p.name+'</div>'+
+      '<div class="pcard-sub">'+p.sub+'</div>'+
+      '<div><span class="pcard-price">'+fmt(fp)+'</span> <span class="pcard-old">'+fmt(p.price)+'</span></div>'+
+      '<div class="pcard-cuota">12x '+fmt(cuota)+' sin interes</div>'+
+      '</div>'+
+      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')">+ Agregar al carrito</button>'+
       '</div>';
   }).join('');
 }
@@ -1480,33 +1496,26 @@ var promoDeleteIds=[];
 function deleteSelectedPromos(){
   var checkboxes=document.querySelectorAll('.promo-del-chk:checked');
   if(checkboxes.length===0){alert('Selecciona al menos una promoción');return;}
+  if(!confirm('Eliminar '+checkboxes.length+' promoción(es)? Esta acción no se puede deshacer.'))return;
   promoDeleteIds=Array.from(checkboxes).map(function(chk){return chk.value;});
-  var overlay=document.getElementById('confirmOverlay');
-  document.getElementById('confirmTitle').textContent='Eliminar promoción';
-  document.getElementById('confirmMsg').textContent='¿Eliminar '+checkboxes.length+' promoción(es)? Esta acción no se puede deshacer.';
-  overlay.style.display='flex';
-  window.confirmCallback=function(confirmed){
-    if(confirmed&&promoDeleteIds.length>0){
-      var promises=[];
-      promoDeleteIds.forEach(function(rawId){
-        var isAcc=rawId.startsWith('acc-');
-        var realId=isAcc?rawId.replace('acc-',''):rawId;
-        var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
-        promises.push(fetch(API_URL+endpoint,{
-          method:'PUT',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
-        }));
-      });
-      Promise.all(promises).then(function(){
-        loadProducts();
-        loadAccessories();
-        renderActivePromos();
-        showToast(promoDeleteIds.length+' promoción(es) eliminada(s)');
-      }).catch(function(){alert('Error eliminando promociones');});
-    }
-    promoDeleteIds=[];
-  };
+  var promises=[];
+  promoDeleteIds.forEach(function(rawId){
+    var isAcc=rawId.startsWith('acc-');
+    var realId=isAcc?rawId.replace('acc-',''):rawId;
+    var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+    promises.push(fetch(API_URL+endpoint,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
+    }));
+  });
+  Promise.all(promises).then(function(){
+    loadProducts();
+    loadAccessories();
+    renderActivePromos();
+    showToast(promoDeleteIds.length+' promoción(es) eliminada(s)');
+  }).catch(function(){alert('Error eliminando promociones');});
+  promoDeleteIds=[];
 }
 function toggleSelectAllPromos(selectAll){
   var checkboxes=document.querySelectorAll('.promo-del-chk');
@@ -1516,13 +1525,17 @@ function togglePromoRow(id){
   var chk=document.querySelector('.promo-del-chk[value="'+id+'"]');
   if(chk)chk.checked=!chk.checked;
 }
-function showToast(msg){
+function showToast(msg,type){
   var existing=document.getElementById('toast');
   if(existing)existing.remove();
   var toast=document.createElement('div');
   toast.id='toast';
-  toast.textContent=msg;
-  toast.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--dk);color:#fff;padding:12px 24px;border-radius:var(--rsm);font-size:14px;font-weight:500;z-index:1000;animation:fadeInUp .3s ease';
+  var colors={success:'var(--green)',error:'var(--red)',warning:'var(--orange)',info:'var(--blue)'};
+  var icons={success:'\u2705',error:'\u274C',warning:'\u26A0\uFE0F',info:'\u2139\uFE0F'};
+  var c=colors[type]||'var(--dk)';
+  var i=icons[type]||'';
+  toast.innerHTML=(i?'<span style="margin-right:8px">'+i+'</span>':'')+'<span>'+msg+'</span>';
+  toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+c+';color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;animation:fadeInUp .3s ease;max-width:90vw;text-align:center;backdrop-filter:blur(8px)';
   document.body.appendChild(toast);
-  setTimeout(function(){toast.style.animation='fadeOutDown .3s ease';setTimeout(function(){toast.remove();},300);},2500);
+  setTimeout(function(){toast.style.animation='fadeOutDown .3s ease';setTimeout(function(){toast.remove();},300);},3000);
 }

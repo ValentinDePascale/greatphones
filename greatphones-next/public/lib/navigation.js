@@ -557,7 +557,7 @@ document.addEventListener('click',function(e){
   }
 })();
 function notAvailable(){
-  console.log('Funcionalidad no disponible - requiere conexion al backend');
+  showToast('Esta funcionalidad estar\u00E1 disponible pronto','info');
 }
 async function doRegister(){
   var nameEl=document.getElementById('regName');
