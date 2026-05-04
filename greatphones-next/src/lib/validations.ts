@@ -22,6 +22,7 @@ export const ProductCreateSchema = z.object({
   name: z.string().min(1, 'Nombre requerido'),
   brand: z.string().optional(),
   sub: z.string().optional(),
+  description: z.string().optional(),
   price: z.number().int().positive('Precio debe ser positivo'),
   stock: z.number().int().min(0).default(0),
   condition: z.enum(['Nuevo', 'Impecable', 'Muy bueno', 'Bueno', 'Usado']).optional().or(z.literal('')),
@@ -120,7 +121,7 @@ export const UserUpdateSchema = z.object({
 export const CheckoutSchema = z.object({
   items: z.array(OrderItemSchema).min(1, 'Carrito vacío'),
   email: z.string().email('Email inválido'),
-  phone: z.string().min(8, 'Teléfono inválido'),
+  phone: z.string().optional(),
   document: z.string().min(7, 'DNI/CUIT requerido'),
   street: z.string().min(1, 'Dirección requerida'),
   number: z.string().min(1, 'Número requerido'),
@@ -128,8 +129,13 @@ export const CheckoutSchema = z.object({
   zip: z.string().min(4, 'Código postal requerido'),
   city: z.string().min(1, 'Ciudad requerida'),
   province: z.string().min(1, 'Provincia requerida'),
-  warranty: z.boolean().optional(),
-  cuotas: z.number().int().min(1).max(12).optional(),
+  warranty: z.string().optional().default('90 dias'),
+  delivery: z.string().optional().default('Retiro en tienda'),
+  cuotas: z.number().int().min(1).max(24).optional().default(1),
+  subtotal: z.number().int().positive(),
+  warrantyCost: z.number().int().min(0).optional().default(0),
+  deliveryCost: z.number().int().min(0).optional().default(0),
+  total: z.number().int().positive(),
 })
 
 // === AUTH ===
@@ -141,6 +147,7 @@ export const SignupSchema = z.object({
   dni: z.string().optional(),
   provincia: z.string().optional(),
   ciudad: z.string().optional(),
+  verified: z.boolean().optional(),
 })
 
 export const SigninSchema = z.object({

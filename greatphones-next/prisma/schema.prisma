@@ -53,6 +53,7 @@ model Product {
   images      String[]
   brand       String
   sub         String
+  description String?
   condition   String
   price       Int
   cost        Int
@@ -93,6 +94,8 @@ model Order {
   cuotas    Int         @default(1)
   payment   String?
   subtotal  Int
+  warrantyCost Int      @default(0)
+  deliveryCost Int      @default(0)
   total     Int
   notes     String?
   createdAt DateTime    @default(now())

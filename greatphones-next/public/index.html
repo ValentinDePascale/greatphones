@@ -273,7 +273,7 @@
     <span style="font-weight:600">Garantía legal 6 meses</span> &nbsp;|&nbsp; 
     <span style="font-weight:600">Botón de Arrepentimiento</span> (10 días corridos) &nbsp;|&nbsp; 
     <span style="font-weight:600">Data Fiscal</span>: Great Phones - CUIT: 30-12345678-9 &nbsp;|&nbsp; 
-    <a href="/terminos" style="color:var(--orange);text-decoration:none">Términos y Condiciones</a>
+    <a onclick="nav('terminos')" style="color:var(--orange);text-decoration:none;cursor:pointer">Términos y Condiciones</a>
   </div>
 
   <!-- MAS VENDIDOS -->
@@ -510,8 +510,8 @@
         <div>
           <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Legal</h4>
           <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
-            <li><a href="/terminos" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Términos y Condiciones</a></li>
-            <li><a href="/privacidad" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Políticas de Privacidad</a></li>
+            <li><a onclick="nav('terminos')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Términos y Condiciones</a></li>
+            <li><a onclick="nav('privacidad')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Políticas de Privacidad</a></li>
             <li><a href="https://www.argentina.gob.ar/defensaconsumidor" target="_blank" style="font-size:13px;color:rgba(255,255,255,.5);transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Defensa del Consumidor</a></li>
           </ul>
           
@@ -697,112 +697,54 @@
 
 <!-- ============================= PAGE: DETAIL ============================= -->
 <div class="page" id="p-detail">
-  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="nav('shop')">← Volver al catálogo</button></div>
-  <div style="background:var(--cream);padding:2rem var(--pad);min-height:100vh;position:relative;z-index:1">
+  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="goBackFromDetail()">← Volver</button></div>
+  <div style="background:var(--cream);padding:1.5rem var(--pad) 3rem;min-height:100vh;position:relative;z-index:1">
     <div style="max-width:1200px;margin:0 auto">
-      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
         <!-- Column 1: Image Gallery -->
-        <div style="display:flex;flex-direction:column;gap:16px;height:calc(100vh - 200px);position:sticky;top:120px">
-          <div class="det-main-img" id="detImgMain" style="flex:1;background:var(--white);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:var(--sh)">
-            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">♡</button>
-            <span id="detIco" style="font-size:90px">📱</span>
+        <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:120px">
+          <div class="det-main-img" id="detImgMain" style="aspect-ratio:1/1;background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">♡</button>
+            <span id="detIco" style="font-size:80px">📱</span>
           </div>
-          <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;height:100px"></div>
+          <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
         </div>
         <!-- Column 2: Product Info -->
-        <div style="display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:0">
           <!-- Breadcrumb -->
-          <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">
+          <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);margin-bottom:16px">
             <span id="detBrand" style="color:var(--green);font-weight:600">Apple</span><span style="color:var(--gray2)">›</span>
             <span id="detType">iPhone</span><span style="color:var(--gray2)">›</span>
-            <span style="color:var(--dk)" id="detName2">iPhone 16 Pro</span>
+            <span style="color:var(--dk);font-weight:600" id="detName2">iPhone 16 Pro</span>
           </nav>
-          <!-- Header con rating -->
-          <div style="display:flex;justify-content:space-between;align-items:flex-start">
-            <div>
-              <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:38px;font-weight:700;line-height:1.1;margin-bottom:8px" id="detName">iPhone 16 Pro</h1>
-              <div style="display:flex;align-items:center;gap:4px">
-                <span style="color:var(--orange);font-size:18px">★</span>
-                <span style="font-size:13px;font-weight:600">4.9</span>
-              </div>
-            </div>
+          <!-- Name -->
+          <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:16px" id="detName">iPhone 16 Pro</h1>
+          <!-- Price Block -->
+          <div id="detPriceWrap" style="margin-bottom:4px">
+            <span style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+            <span style="font-size:16px;color:var(--gray);text-decoration:line-through;margin-left:10px;display:none" id="detOld"></span>
           </div>
-          <!-- Price Section -->
-          <div style="display:flex;flex-direction:column;gap:4px">
-            <div style="display:flex;align-items:center;gap:8px" id="detPriceWrap">
-              <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:14px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-              <span style="color:var(--orange);font-size:14px;font-weight:600">12x sin interés</span>
-            </div>
+          <!-- Installment Price -->
+          <div id="detCuotaInfo" style="font-size:14px;color:var(--green);font-weight:600;margin-bottom:20px;padding:10px 14px;background:rgba(45,90,39,.06);border-radius:10px;display:inline-block">
+            <span id="detCuotaText">12x $100.000 sin interes</span>
           </div>
-          <!-- Meta info -->
-          <div style="font-size:14px;color:var(--gray);padding:12px 0;border-top:1px solid var(--border)" id="detMeta">256 GB — Batería 94%</div>
+          <!-- Description -->
+          <div id="detDesc" style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);display:none"></div>
+          <!-- Specs Section -->
+          <div style="margin-bottom:24px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Caracteristicas</div>
+            <div id="detSpecs" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+          </div>
           <!-- Trust Badges -->
-          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ 90 Días Garantía</div>
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ IMEI Verificado</div>
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ Cable + funda</div>
-            <div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600;color:var(--green)">✓ Dev. 7 días</div>
-          </div>
-          <!-- Installments -->
-          <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan de Cuotas</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="cuotaOpts">
-              <button class="cuota-btn" data-cuota="1" onclick="selCuota(this,1)" style="padding:12px;border-radius:12px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green)"><span style="font-size:16px;font-weight:700;display:block">1</span><span style="font-size:8px;text-transform:uppercase">Sin Int.</span></button>
-              <button class="cuota-btn" data-cuota="3" onclick="selCuota(this,3)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">3</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="6" onclick="selCuota(this,6)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">6</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="12" onclick="selCuota(this,12)" style="padding:12px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">12</span><span style="font-size:8px;text-transform:uppercase">Fijas</span></button>
-            </div>
-          </div>
-          <!-- Options -->
-          <div style="display:flex;flex-direction:column;gap:16px">
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Garantía Extendida</div>
-              <div style="display:flex;flex-direction:column;gap:8px" id="warrantyOpts">
-                <div class="warranty-btn" data-w="0" onclick="selOpt(this,'w',0)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">90 días</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Garantía básica incluida</div>
-                </div>
-                <div class="warranty-btn" data-w="85000" onclick="selOpt(this,'w',85000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total extendida</div>
-                </div>
-                <div class="warranty-btn" data-w="150000" onclick="selOpt(this,'w',150000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700">+$150.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total premium</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Entrega</div>
-              <div style="display:flex;flex-direction:column;gap:8px" id="deliveryOpts">
-                <div class="delivery-btn" data-d="0" onclick="selOpt(this,'d',0)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Retiro en tienda</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Bahía Blanca</div>
-                </div>
-                <div class="delivery-btn" data-d="5000" onclick="selOpt(this,'d',5000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700">+$5.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Entrega hoy</div>
-                </div>
-                <div class="delivery-btn" data-d="8000" onclick="selOpt(this,'d',8000)" style="padding:14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Envío 24-48hs</span><span style="color:var(--orange);font-weight:700">+$8.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">A todo el país</div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <div id="detBadges" style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)"></div>
           <!-- Total & Buttons -->
-          <div style="padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
+          <div style="padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-size:9px;font-weight:700;color:var(--gray);text-transform:uppercase">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700" id="detTotal">$1.200.000</div></div>
+              <div><div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700" id="detTotal">$1.200.000</div></div>
             </div>
             <div style="display:flex;gap:10px">
-              <button onclick="addToCartFromDetail()" style="flex:1;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Agregar al carrito</button>
-              <button onclick="buyNow()" style="flex:1;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Comprar ahora</button>
+              <button id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Agregar al carrito</button>
+              <button id="detBuyNow" onclick="buyNow()" style="flex:1;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">Comprar ahora</button>
             </div>
           </div>
         </div>
@@ -1138,7 +1080,7 @@
           
           <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:1rem">
             <input type="checkbox" id="regTyC" style="margin-top:3px;width:16px;height:16px">
-            <label for="regTyC" style="font-size:11px;color:var(--gray);line-height:1.5">Acepto los <a href="/terminos" onclick="nav('terminos')" style="color:var(--orange)">Terminos y Condiciones</a> y las <a href="/privacidad" onclick="nav('privacidad')" style="color:var(--orange)">Politicas de Privacidad</a>. Conozco y acepto la garantia legal de 6 meses y el derecho de arrepentimiento segun Resolucion 424/2020.</label>
+            <label for="regTyC" style="font-size:11px;color:var(--gray);line-height:1.5">Acepto los <a onclick="nav('terminos')" style="color:var(--orange);cursor:pointer">Terminos y Condiciones</a> y las <a onclick="nav('privacidad')" style="color:var(--orange);cursor:pointer">Politicas de Privacidad</a>. Conozco y acepto la garantia legal de 6 meses y el derecho de arrepentimiento segun Resolucion 424/2020.</label>
           </div>
           
           <button onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
@@ -1149,7 +1091,7 @@
         <div id="pageVerifyStep" style="display:none">
           <h3 style="font-size:16px;margin-bottom:8px;text-align:center">Verificá tu email</h3>
           <p style="font-size:13px;color:var(--gray);text-align:center;margin-bottom:4px">Te enviamos un código a <span id="pageVerifyEmail" style="font-weight:600"></span></p>
-          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">10:00</span></p>
+          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">05:00</span></p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
             <input type="text" id="pv1" maxlength="1" oninput="moveToNext(this,'pv2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700;outline:none">
             <input type="text" id="pv2" maxlength="1" oninput="moveToNext(this,'pv3')" onkeydown="moveBack(event,'pv1')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
@@ -1159,7 +1101,10 @@
             <input type="text" id="pv6" maxlength="1" onkeydown="moveBack(event,'pv5')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
           </div>
           <button onclick="verifyAndCompleteRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Verificar y crear cuenta</button>
-          <button onclick="showPageRegisterStep()" style="width:100%;padding:10px;border:none;background:none;color:var(--gray);font-size:12px;cursor:pointer">Volver</button>
+          <div style="display:flex;gap:8px;margin-bottom:1rem">
+            <button onclick="resendVerificationCode()" style="flex:1;padding:10px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">Reenviar codigo</button>
+            <button onclick="showPageRegisterStep()" style="flex:1;padding:10px;background:none;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">¿Escribiste mal tu mail?</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1538,6 +1483,7 @@
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prodBrand"><option value="iPhone">iPhone</option><option value="Samsung">Samsung</option><option value="MacBook">MacBook</option><option value="iPad">iPad</option><option value="Motorola">Motorola</option><option value="Xiaomi">Xiaomi</option><option value="Otro">Otro</option></select></div>
         </div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><input class="inp-f" id="prodSub" placeholder="256 GB Titanio Natural"></div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion detallada</label><textarea class="inp-f" id="prodDescription" placeholder="Descripcion completa del producto..." style="height:80px;resize:none"></textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="prodPrice" type="number" placeholder="1320000"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="prodStock" type="number" placeholder="3"></div>
@@ -1778,7 +1724,7 @@
         <!-- Step 2: Verification code -->
         <div id="signupStep2" style="display:none">
           <p style="font-size:13px;color:var(--dk);text-align:center;margin-bottom:4px">Te enviamos un código a <span id="verifyEmailDisplay" style="font-weight:600"></span></p>
-          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="codeTimer" style="font-weight:700">10:00</span></p>
+          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="codeTimer" style="font-weight:700">05:00</span></p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
             <input type="text" id="v1" maxlength="1" oninput="moveToNext(this,'v2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700;outline:none">
             <input type="text" id="v2" maxlength="1" oninput="moveToNext(this,'v3')" onkeydown="moveBack(event,'v1')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
@@ -1787,8 +1733,11 @@
             <input type="text" id="v5" maxlength="1" oninput="moveToNext(this,'v6')" onkeydown="moveBack(event,'v4')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
             <input type="text" id="v6" maxlength="1" onkeydown="moveBack(event,'v5')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
           </div>
-          <button onclick="verifyAndCompleteSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Verificar y crear cuenta</button>
-          <button onclick="showSignupStep1()" style="width:100%;padding:10px;border:none;background:none;color:var(--gray);font-size:12px;cursor:pointer;margin-top:8px">Volver</button>
+          <button onclick="verifyAndCompleteSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Verificar y crear cuenta</button>
+          <div style="display:flex;gap:8px">
+            <button onclick="resendSignupCode()" style="flex:1;padding:10px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">Reenviar codigo</button>
+            <button onclick="showSignupStep1()" style="flex:1;padding:10px;background:none;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">¿Escribiste mal tu mail?</button>
+          </div>
         </div>
       </div>
       <div id="loginError" style="display:none;padding:12px;background:rgba(255,0,0,.1);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:16px;text-align:center"></div>
@@ -1822,6 +1771,65 @@
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Teléfono</label>
               <input id="checkout-phone" type="tel" placeholder="11 2345 6789" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            </div>
+          </div>
+        </section>
+
+        <!-- Opciones de compra -->
+        <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Opciones de compra</h2>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:24px">
+            <!-- Cuotas -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Plan de cuotas</div>
+              <div id="checkout-cuotas" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+                <button class="cuota-btn" data-cuota="1" onclick="selCheckoutCuota(this,1)" style="padding:12px 8px;border-radius:10px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">1</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Sin Int.</span></button>
+                <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)" style="padding:12px 8px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">3</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Cuotas</span></button>
+                <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)" style="padding:12px 8px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">6</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Cuotas</span></button>
+                <button class="cuota-btn" data-cuota="12" onclick="selCheckoutCuota(this,12)" style="padding:12px 8px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">12</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Fijas</span></button>
+              </div>
+            </div>
+            <!-- Garantia -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Garantia extendida</div>
+              <div id="checkout-warranty" style="display:flex;flex-direction:column;gap:8px">
+                <div class="warranty-btn" data-w="0" onclick="selCheckoutWarranty(this,0)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">90 dias</span><span style="color:var(--green);font-weight:700;font-size:13px">GRATIS</span></div>
+                </div>
+                <div class="warranty-btn" data-w="85000" onclick="selCheckoutWarranty(this,85000)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700;font-size:13px">+$85.000</span></div>
+                </div>
+                <div class="warranty-btn" data-w="150000" onclick="selCheckoutWarranty(this,150000)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700;font-size:13px">+$150.000</span></div>
+                </div>
+              </div>
+            </div>
+            <!-- Entrega -->
+            <div>
+              <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Entrega</div>
+              <div id="checkout-delivery" style="display:flex;flex-direction:column;gap:8px">
+                <div class="delivery-btn" data-d="0" onclick="selCheckoutDelivery(this,0)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Retiro en Tienda</span><span style="color:var(--green);font-weight:700;font-size:13px">GRATIS</span></div>
+                  <div style="font-size:11px;color:var(--gray);margin-top:2px">Zelarrayan 179, Bahia Blanca</div>
+                </div>
+                <div class="delivery-btn" data-d="5000" onclick="selCheckoutDelivery(this,5000)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700;font-size:13px">+$5.000</span></div>
+                  <div style="font-size:11px;color:var(--gray);margin-top:2px">Dentro de Bahia Blanca</div>
+                </div>
+                <div class="delivery-btn" data-d="andreani" onclick="selCheckoutDelivery(this,'andreani')" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Envio Argentina</span><span id="andreani-price" style="color:var(--orange);font-weight:700;font-size:13px">Calcular</span></div>
+                  <div style="font-size:11px;color:var(--gray);margin-top:2px">Andreani a todo el pais</div>
+                  <button id="btn-calc-shipping" onclick="event.stopPropagation();calcAndreaniShipping()" style="margin-top:8px;width:100%;padding:8px;background:var(--cream);border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--dk);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    Calcular envio
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -1918,10 +1926,19 @@
               <span>Subtotal</span>
               <span id="checkout-subtotal">$0</span>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gray)">
-              <span>Costo de envío</span>
-              <span style="color:var(--orange);font-weight:600">A calcular</span>
+            <div id="checkout-warranty-line" style="display:none;justify-content:space-between;font-size:14px;color:var(--gray);margin-bottom:8px">
+              <span>Garantia</span>
+              <span id="checkout-warranty-cost" style="color:var(--orange);font-weight:600">+$0</span>
             </div>
+            <div id="checkout-delivery-line" style="display:none;justify-content:space-between;font-size:14px;color:var(--gray);margin-bottom:8px">
+              <span>Envio</span>
+              <span id="checkout-delivery-cost" style="color:var(--orange);font-weight:600">+$0</span>
+            </div>
+          </div>
+
+          <div id="checkout-cuotas-box" style="background:var(--cream);border-radius:10px;padding:10px 14px;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;font-weight:600;color:var(--dk)" id="checkout-cuotas-label">1x sin interes</span>
+            <span style="font-size:15px;font-weight:700;color:var(--green)" id="checkout-cuotas-amount">$0</span>
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
@@ -2119,7 +2136,7 @@ function toggleDeleteBtn(){
 <div id="cookieBanner">
   <div class="cb-container">
     <div class="cb-text">
-      <p>Utilizamos cookies para mejorar tu experiencia. некоторые son esenciales para el funcionamiento del sitio, mientras que otras nos ayudan a analizar el tráfico y personalizar el contenido. <a href="/privacidad">Leer Política de Privacidad</a></p>
+      <p>Utilizamos cookies para mejorar tu experiencia. некоторые son esenciales para el funcionamiento del sitio, mientras que otras nos ayudan a analizar el tráfico y personalizar el contenido. <a onclick="nav('privacidad')" style="color:var(--orange);cursor:pointer">Leer Política de Privacidad</a></p>
     </div>
     <div class="cb-buttons">
       <button class="cb-btn cb-btn-primary" onclick="acceptAllCookies()">Aceptar todas</button>
@@ -2183,6 +2200,7 @@ console.log('[BROWSER] Page loaded');
 <script src="lib/admin.js"></script>
 <script src="lib/render.js"></script>
 <script src="lib/search.js"></script>
-<script>initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
+<script>initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);
+(function(){var p=window.location.pathname;if(p==='/edit-profile'){setTimeout(function(){nav('edit-profile');loadEditProfile();},500);}else if(p==='/terminos'){setTimeout(function(){nav('terminos');},500);}else if(p==='/privacidad'){setTimeout(function(){nav('privacidad');},500);}})();</script>
 </body>
 </html>

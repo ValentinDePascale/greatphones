@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
-    const { email, name, phone, dni, provincia, ciudad, password } = body
+    const { email, name, phone, dni, provincia, ciudad, password, verified } = body
 
     console.log('[SIGNUP] Checking if user exists:', email)
     const existing = await prisma.user.findUnique({
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         ciudad,
         password: hashedPassword,
         role: 'CLIENT',
-        verified: true,
+        verified: verified || false,
       }
     })
     console.log('[SIGNUP] User created:', user.id)

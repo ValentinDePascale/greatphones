@@ -8,6 +8,60 @@ var detWMult=0,detDExtra=0,selCuotas=1;
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
 function getById(arr,id){for(var i=0;i<arr.length;i++)if(arr[i].id===id)return arr[i];return null;}
 
+var detailBackTarget='shop';
+var _accImages=[];
+
+function goBackFromDetail(){nav(detailBackTarget);}
+
+function buildSpecsForProduct(p){
+  var specs=[];
+  var type=(p.type||'').toLowerCase();
+  var cond=p.condition||'';
+  if(type==='celular'){
+    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
+    if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
+    if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F50B}',label:'Bateria',val:batPct+'%',color:batColor});}
+    if(p.screen)specs.push({ico:'\u{1F4F1}',label:'Pantalla',val:p.screen+'"'});
+  }else if(type==='laptop'||type==='desktop'){
+    if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({ico:'\u{1F527}',label:'Procesador',val:cpuMatch[0]});}
+    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
+    if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
+    if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
+  }
+  if(cond==='Nuevo'){specs.push({ico:'\u2728',label:'Estado',val:'Nuevo',color:'var(--green)'});}
+  else if(cond){specs.push({ico:'\u{1F4CB}',label:'Estado',val:cond+' (Usado)',color:'var(--orange)'});}
+  return specs;
+}
+
+function renderSpecsGrid(specs){
+  var el=document.getElementById('detSpecs');if(!el)return;
+  if(!specs.length){el.style.display='none';return;}
+  el.style.display='grid';
+  el.innerHTML=specs.map(function(s){
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px">'+
+      '<div style="width:40px;height:40px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.ico+'</div>'+
+      '<div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">'+s.label+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:var(--dk)'+(s.color?';color:'+s.color:'')+'">'+s.val+'</div></div></div>';
+  }).join('');
+}
+
+function renderDetBadges(p){
+  var el=document.getElementById('detBadges');if(!el)return;
+  var type=(p.type||'').toLowerCase();
+  var badges=[{ico:'\u2713',text:'90 Dias Garantia'},{ico:'\u2713',text:'Cable + funda gratis'},{ico:'\u2713',text:'Dev. 7 dias'}];
+  if(type==='celular')badges.splice(1,0,{ico:'\u2713',text:'IMEI Verificado'});
+  el.innerHTML=badges.map(function(b){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">'+b.ico+' '+b.text+'</div>';}).join('');
+}
+
+function addToCartAcc(id){
+  var a=getById(window.ACCS,id);if(!a)return;
+  var existing=Cart.find(function(item){return item.id===id;});
+  if(existing){existing.qty++;}else{Cart.push({id:id,qty:1});}
+  saveCart();updCartBadge();openCart();showToast('Agregado al carrito');
+}
+function addToCartFromDetail(){if(currentProd)addToCart(currentProd.id);}
+function buyNow(){if(currentProd){addToCart(currentProd.id);openCheckout();}}
+
 function loadProducts(){
   fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(data){
     PRODUCTS=data;
@@ -342,195 +396,131 @@ function renderAccGrid(){
   }).join('');
 }
 function openAccDetail(id){
-  var a=getById(window.ACCS,id);
-  if(!a)return;
-  currentAcc=a;
+  detailBackTarget='accesorios';
+  currentAcc=getById(window.ACCS,id);if(!currentAcc)return;
   var now=new Date();
-  var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
-  var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
-  var allImages=[];
-  if(a.imageUrl)allImages.push(a.imageUrl);
-  if(a.images&&a.images.length)allImages=allImages.concat(a.images);
-  var detName=document.getElementById('detName');
-  var detMeta=document.getElementById('detMeta');
-  var detPrice=document.getElementById('detPrice');
-  var detTotal=document.getElementById('detTotal');
-  var detOld=document.getElementById('detOld');
-  var detPriceWrap=document.getElementById('detPriceWrap');
-  var detImgMain=document.getElementById('detImgMain');
-  var detIco=document.getElementById('detIco');
-  var detThumbnails=document.getElementById('detThumbnails');
-  var detFavBtn=document.getElementById('detFavBtn');
-  var detBrand=document.getElementById('detBrand');
-  var detType=document.getElementById('detType');
-  var detName2=document.getElementById('detName2');
-  var cuotaOpts=document.getElementById('cuotaOpts');
-  var warrantyOpts=document.getElementById('warrantyOpts');
-  var dExtraSection=document.getElementById('dExtraSection');
-  if(detBrand)detBrand.textContent=a.brand||'Accesorio';
-  if(detType)detType.textContent=a.category||'';
-  if(detName2)detName2.textContent=a.name;
-  if(detName)detName.textContent=a.name;
-  if(detMeta)detMeta.textContent=(a.brand?a.brand+' — ':'')+(a.description||a.category||'');
-  if(detPrice)detPrice.innerHTML=fmt(finalPrice);
-  if(detTotal)detTotal.innerHTML=fmt(finalPrice);
-  if(isPromoActive&&a.discount){
-    if(detPriceWrap)detPriceWrap.innerHTML='<span style="font-family:\'Playfair Display\',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)">'+fmt(finalPrice)+'</span><span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;margin-left:8px">-'+a.discount+'%</span>';
-    if(detOld)detOld.innerHTML=fmt(a.price);
-    if(detOld)detOld.classList.remove('hidden');
-  }else{
-    if(detPriceWrap)detPriceWrap.innerHTML=fmt(finalPrice);
-    if(detOld)detOld.classList.add('hidden');
+  var isPromoActive=currentAcc.isOffer&&(!currentAcc.offerEnd||new Date(currentAcc.offerEnd)>now)&&(!currentAcc.offerStart||new Date(currentAcc.offerStart)<=now);
+  var finalPrice=isPromoActive?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
+  var cuota12=Math.round(finalPrice/12);
+
+  var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentAcc.brand||'Accesorio';
+  var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentAcc.category||'';
+  var name2El=document.getElementById('detName2');if(name2El)name2El.textContent=currentAcc.name;
+  var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentAcc.name;
+  var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
+  var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
+  var oldEl=document.getElementById('detOld');
+  if(isPromoActive&&currentAcc.discount){if(oldEl){oldEl.textContent=fmt(currentAcc.price);oldEl.style.display='inline';}}
+  else{if(oldEl)oldEl.style.display='none';}
+  var cuotaInfo=document.getElementById('detCuotaInfo');var cuotaText=document.getElementById('detCuotaText');
+  if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';if(cuotaInfo)cuotaInfo.style.display='inline-block';
+  var descEl=document.getElementById('detDesc');
+  if(descEl){var descParts=[];if(currentAcc.brand)descParts.push(currentAcc.brand);if(currentAcc.description)descParts.push(currentAcc.description);if(descParts.length){descEl.textContent=descParts.join(' \u2014 ');descEl.style.display='block';}else{descEl.style.display='none';}}
+
+  var accSpecs=[];
+  if(currentAcc.compatibleModels)accSpecs.push({ico:'\u{1F4F1}',label:'Compatible con',val:currentAcc.compatibleModels});
+  if(currentAcc.color)accSpecs.push({ico:'\u{1F3A8}',label:'Color',val:currentAcc.color});
+  if(currentAcc.stock!==undefined){var stockColor=currentAcc.stock>5?'var(--green)':currentAcc.stock>0?'var(--orange)':'var(--red)';accSpecs.push({ico:'\u{1F4E6}',label:'Stock',val:currentAcc.stock>0?currentAcc.stock+' disponibles':'Agotado',color:stockColor});}
+  renderSpecsGrid(accSpecs);
+  var badgesEl=document.getElementById('detBadges');
+  if(badgesEl)badgesEl.innerHTML='<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">\u2713 Garantia incluida</div>';
+
+  var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
+  if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartAcc(currentAcc.id);};}
+  if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){addToCartAcc(currentAcc.id);openCart();};}
+
+  _accImages=[];
+  if(currentAcc.imageUrl)_accImages.push(currentAcc.imageUrl);
+  if(currentAcc.images&&currentAcc.images.length)_accImages=_accImages.concat(currentAcc.images);
+  var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
+  if(mainImg){var ico=currentAcc.ico||'\u{1F4E6}';
+    if(_accImages.length){mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><img src="'+_accImages[0]+'" style="width:100%;height:100%;object-fit:contain">';}
+    else{mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><span style="font-size:80px">'+ico+'</span>';}
   }
-  if(detImgMain){
-    var mainImg=allImages.length?'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">':(a.ico?'<span style="font-size:90px">'+a.ico+'</span>':'<span style="font-size:90px">📦</span>');
-    detImgMain.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">'+(isFavorite(a.id)?'♥':'♡')+'</button>'+mainImg;
+  if(thumbsContainer){
+    if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div onclick="switchAccMainImg('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    else{thumbsContainer.style.display='none';}
   }
-  if(detThumbnails){
-    if(allImages.length>1){
-      detThumbnails.innerHTML=allImages.map(function(src,i){
-        return'<div onclick="switchAccMainImg('+i+')" style="border-radius:12px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';
-      }).join('');
-    }else{
-      detThumbnails.innerHTML='';
-    }
-  }
-  if(cuotaOpts)cuotaOpts.style.display='none';
-  if(warrantyOpts)warrantyOpts.parentElement.style.display='none';
-  if(dExtraSection)dExtraSection.style.display='none';
-  window._accImages=allImages;
-  nav('detail');
+  detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
 }
 function switchAccMainImg(idx){
-  if(!window._accImages||!window._accImages[idx])return;
-  var detImgMain=document.getElementById('detImgMain');
-  var detThumbnails=document.getElementById('detThumbnails');
-  if(detImgMain){
-    detImgMain.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">'+(isFavorite(currentAcc.id)?'♥':'♡')+'</button><img src="'+window._accImages[idx]+'" style="width:100%;height:100%;object-fit:contain">';
-  }
-  if(detThumbnails){
-    var thumbs=detThumbnails.children;
-    for(var i=0;i<thumbs.length;i++){
-      thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';
-    }
-  }
+  if(!_accImages||!_accImages[idx])return;
+  var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><img src="'+_accImages[idx]+'" style="width:100%;height:100%;object-fit:contain">';
+  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';}}
 }
 function openDetail(id){
-  currentProd=getById(PRODUCTS,id);
-  if(!currentProd)return;
-  var brandEl=document.getElementById('detBrand');
-  if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
-  var typeEl=document.getElementById('detType');
-  if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
-  var name2El=document.getElementById('detName2');
-  if(name2El)name2El.textContent=currentProd.name;
-  var detName=document.getElementById('detName');
-  if(detName)detName.textContent=currentProd.name;
-  var detMeta=document.getElementById('detMeta');
-  if(detMeta)detMeta.textContent=currentProd.sub+(currentProd.battery?(' — Batería '+currentProd.battery+'%'):'');
+  detailBackTarget='shop';
+  currentProd=getById(PRODUCTS,id);if(!currentProd)return;
   var now=new Date();
   var isPromoActive=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
-  var finalPrice=isPromoActive?Math.round(currentProd.price-currentProd.price*currentProd.discount/100):currentProd.price;
-  var detPrice=document.getElementById('detPrice');
-  var detTotal=document.getElementById('detTotal');
-  if(detPrice)detPrice.innerHTML=fmt(finalPrice);
-  if(detTotal)detTotal.innerHTML=fmt(finalPrice);
-  var oldPrice=document.getElementById('detOld');
-  var detPriceWrap=document.getElementById('detPriceWrap');
-  if(isPromoActive&&currentProd.discount){
-    var originalPrice=currentProd.price;
-    if(detPriceWrap)detPriceWrap.innerHTML='<span style="font-family:\'Playfair Display\',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)">'+fmt(finalPrice)+'</span><span style="font-size:12px;font-weight:700;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;margin-left:8px">-'+currentProd.discount+'%</span>';
-    if(oldPrice)oldPrice.innerHTML=fmt(originalPrice);
-    if(oldPrice)oldPrice.classList.remove('hidden');
-  }else{
-    if(detPriceWrap)detPriceWrap.innerHTML=fmt(finalPrice);
-    if(oldPrice)oldPrice.classList.add('hidden');
-  }
-  detWMult=0;detDExtra=0;selCuotas=1;
-  resetDetailSelections();
-  renderDetailImages();
+  var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
+  var cuota12=Math.round(finalPrice/12);
+
+  var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
+  var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
+  var name2El=document.getElementById('detName2');if(name2El)name2El.textContent=currentProd.name;
+  var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentProd.name;
+  var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
+  var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
+  var oldEl=document.getElementById('detOld');
+  if(isPromoActive&&currentProd.discount){var originalPrice=currentProd.price;if(oldEl){oldEl.textContent=fmt(originalPrice);oldEl.style.display='inline';}}
+  else{if(oldEl)oldEl.style.display='none';}
+  var cuotaInfo=document.getElementById('detCuotaInfo');var cuotaText=document.getElementById('detCuotaText');
+  if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';if(cuotaInfo)cuotaInfo.style.display='inline-block';
+  var descEl=document.getElementById('detDesc');
+  if(descEl){var descText=currentProd.description||currentProd.sub||'';if(descText){descEl.textContent=descText;descEl.style.display='block';}else{descEl.style.display='none';}}
+
+  renderSpecsGrid(buildSpecsForProduct(currentProd));
+  renderDetBadges(currentProd);
+
+  var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
+  if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartFromDetail();};}
+  if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){buyNow();};}
+
+  renderDetailImages();updDetTotal();
   var fb=document.getElementById('detFavBtn');
-  if(fb){
-    if(isFavorite(currentProd.id)){fb.innerHTML='♥';fb.style.color='var(--red)';fb.classList.add('saved');}
-    else{fb.innerHTML='♡';fb.style.color='var(--gray)';fb.classList.remove('saved');}
-  }
+  if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
   nav('detail');
 }
-
-
 
 function resetDetailSelections(){
   document.querySelectorAll('.cuota-btn').forEach(function(c,i){
-    if(i===0){
-      c.style.background='var(--green)';
-      c.style.color='#fff';
-      c.style.border='2px solid var(--green)';
-    }else{
-      c.style.background='var(--cream2)';
-      c.style.color='var(--dk)';
-      c.style.border='2px solid var(--border)';
-    }
+    if(i===0){c.style.background='var(--green)';c.style.color='#fff';c.style.border='2px solid var(--green)';}
+    else{c.style.background='var(--cream2)';c.style.color='var(--dk)';c.style.border='2px solid var(--border)';}
   });
   document.querySelectorAll('.warranty-btn').forEach(function(c,i){
-    if(i===0){
-      c.style.border='2px solid var(--green)';
-    }else{
-      c.style.border='2px solid var(--border)';
-    }
+    c.style.border=i===0?'2px solid var(--green)':'2px solid var(--border)';
   });
   document.querySelectorAll('.delivery-btn').forEach(function(c,i){
-    if(i===0){
-      c.style.border='2px solid var(--green)';
-    }else{
-      c.style.border='2px solid var(--border)';
-    }
+    c.style.border=i===0?'2px solid var(--green)':'2px solid var(--border)';
   });
 }
-var detailCurrentImageIndex=0;
 function renderDetailImages(){
   var allImages=[];
   if(currentProd&&currentProd.imageUrl)allImages.push(currentProd.imageUrl);
   if(currentProd&&currentProd.images)allImages=allImages.concat(currentProd.images);
-  var mainImg=document.getElementById('detImgMain');
-  var thumbsContainer=document.getElementById('detThumbnails');
-  if(allImages.length===0){
-    if(!currentProd)return;
-    var isFav=isFavorite(currentProd.id);
-    if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:'+(isFav?'var(--red)':'var(--gray)')+'">'+(isFav?'♥':'♡')+'</button><span style="font-size:90px">📱</span>';
-    if(thumbsContainer)thumbsContainer.style.display='none';
-    return;
-  }
-  if(mainImg)mainImg.style.display='flex';
-  detailCurrentImageIndex=0;
-  if(mainImg)mainImg.innerHTML=getDetailImageHtml(allImages,0);
-  if(allImages.length>1){
-    if(thumbsContainer)thumbsContainer.style.display='grid';
-    if(thumbsContainer)thumbsContainer.innerHTML=allImages.map(function(url,i){
-      return'<img src="'+url+'" onclick="setDetailImage('+i+')"'+(i===0?' class="act"':'')+'>';
-    }).join('');
-  }else{
-    if(thumbsContainer)thumbsContainer.style.display='none';
-  }
-}
-function getDetailImageHtml(allImages,index){
-  var prev=index>0?index-1:allImages.length-1;
-  var next=index<allImages.length-1?index+1:0;
+  var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
+  if(!mainImg)return;
   var isFav=isFavorite(currentProd.id);
-  return'<div style="position:relative;width:100%;height:100%">'+
-    '<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:'+(isFav?'var(--red)':'var(--gray)')+'">'+(isFav?'♥':'♡')+'</button>'+
-    '<img src="'+allImages[index]+'" style="width:100%;height:100%;object-fit:contain">'+
-    (allImages.length>1?'<button onclick="event.stopPropagation();setDetailImage('+prev+')" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(255,255,255,0.9);border:1px solid var(--border);border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8592;</button><button onclick="event.stopPropagation();setDetailImage('+next+')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);width:36px;height:36px;background:rgba(255,255,255,0.9);border:1px solid var(--border);border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8594;</button>':'')+
-  '</div>';
+  var favBtn='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button>';
+  if(allImages.length===0){mainImg.innerHTML=favBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
+  mainImg.innerHTML=favBtn+'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">';
+  detailCurrentImageIndex=0;
+  if(thumbsContainer){
+    if(allImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div onclick="setDetailImage('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+url+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    else{thumbsContainer.style.display='none';}
+  }
 }
 function setDetailImage(index){
   var allImages=[];
-  if(currentProd.imageUrl)allImages.push(currentProd.imageUrl);
-  if(currentProd.images)allImages=allImages.concat(currentProd.images);
+  if(currentProd&&currentProd.imageUrl)allImages.push(currentProd.imageUrl);
+  if(currentProd&&currentProd.images)allImages=allImages.concat(currentProd.images);
   detailCurrentImageIndex=index;
-  document.getElementById('detImgMain').innerHTML=getDetailImageHtml(allImages,index);
-  document.querySelectorAll('.det-thumbnails img').forEach(function(img,i){
-    img.classList.toggle('act',i===index);
-  });
+  var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
+  var isFav=isFavorite(currentProd.id);
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><img src="'+allImages[index]+'" style="width:100%;height:100%;object-fit:contain">';
+  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===index?'var(--orange)':'var(--border)';}}
 }
 function selCuota(el,n){
   document.querySelectorAll('.cuota-btn').forEach(function(c){
@@ -563,9 +553,19 @@ function selOpt(el,type,val){
   updDetTotal();
 }
 function updDetTotal(){
-  if(!currentProd)return;
-  var total=currentProd.price+detWMult+detDExtra;
-  document.getElementById('detTotal').innerHTML=fmt(total);
+  var total=0;
+  if(currentProd){
+    var now=new Date();
+    var isPromo=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
+    var base=isPromo?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
+    total=base+detWMult+detDExtra;
+  }else if(currentAcc){
+    var now2=new Date();
+    var isPromo2=currentAcc.isOffer&&(!currentAcc.offerEnd||new Date(currentAcc.offerEnd)>now2)&&(!currentAcc.offerStart||new Date(currentAcc.offerStart)<=now2);
+    total=isPromo2?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
+  }
+  var totalEl=document.getElementById('detTotal');
+  if(totalEl)totalEl.textContent=fmt(total);
 }
 function filterShop(f,btn){
   window.shopFilter=f;
@@ -830,6 +830,7 @@ function saveProduct(){
     name:document.getElementById('prodName').value.trim(),
     brand:document.getElementById('prodBrand').value.trim(),
     sub:document.getElementById('prodSub').value.trim(),
+    description:document.getElementById('prodDescription').value.trim()||null,
     price:parseInt(document.getElementById('prodPrice').value)||0,
     stock:parseInt(document.getElementById('prodStock').value)||0,
     condition:document.getElementById('prodCondition').value||'Nuevo',
@@ -878,6 +879,7 @@ function editProduct(id){
   document.getElementById('prodName').value=p.name||'';
   document.getElementById('prodBrand').value=p.brand||'iPhone';
   document.getElementById('prodSub').value=p.sub||'';
+  document.getElementById('prodDescription').value=p.description||'';
   document.getElementById('prodPrice').value=p.price||'';
   document.getElementById('prodStock').value=p.stock||'';
   document.getElementById('prodCondition').value=p.condition||'Nuevo';

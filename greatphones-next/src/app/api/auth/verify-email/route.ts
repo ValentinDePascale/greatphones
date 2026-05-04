@@ -114,6 +114,15 @@ export async function POST(request: Request) {
         data: { used: true },
       })
 
+      // Solo actualizar si el usuario ya existe (caso de re-verificacion)
+      const existingUser = await prisma.user.findUnique({ where: { email } })
+      if (existingUser) {
+        await prisma.user.update({
+          where: { email },
+          data: { verified: true },
+        })
+      }
+
       return NextResponse.json({ verified: true })
     }
 

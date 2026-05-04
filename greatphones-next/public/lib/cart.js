@@ -82,7 +82,10 @@ function cartTotal(){
     }
     var a=getById(window.ACCS,item.id);
     if(a){
-      return sum+(a.price*item.qty);
+      var now=new Date();
+      var isPromo=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+      var price=isPromo?Math.round(a.price-a.price*a.discount/100):a.price;
+      return sum+(price*item.qty);
     }
     return sum;
   },0);
@@ -106,8 +109,15 @@ function renderCartBody(){
   body.innerHTML=Cart.map(function(item){
     var p=getById(PRODUCTS,item.id);
     if(p){
-      var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
+      var now=new Date();
+      var isPromo=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+      var finalPrice=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>';
+      var priceHtml=isPromo?
+        '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>'+
+        '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(p.price*item.qty)+'</div>'+
+        '<div style="font-size:10px;color:var(--red);font-weight:600">-'+p.discount+'%</div>':
+        '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
       return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
         '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
@@ -120,16 +130,24 @@ function renderCartBody(){
           '</div>'+
         '</div>'+
         '<div style="text-align:right">'+
-          '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(price*item.qty)+'</div>'+
+          priceHtml+
           '<button onclick="removeFromCart(\''+p.id+'\')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px">Eliminar</button>'+
         '</div>'+
       '</div>';
     }
     var a=getById(window.ACCS,item.id);
     if(!a)return '';
-    var img=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
+    var now2=new Date();
+    var isPromo2=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now2)&&(!a.offerStart||new Date(a.offerStart)<=now2);
+    var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
+    var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
+    var priceHtml2=isPromo2?
+      '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>'+
+      '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(a.price*item.qty)+'</div>'+
+      '<div style="font-size:10px;color:var(--red);font-weight:600">-'+a.discount+'%</div>':
+      '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>';
     return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
-      '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
+      '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
         '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(a.brand||'')+' '+(a.color||'')+'</div>'+
@@ -140,7 +158,7 @@ function renderCartBody(){
         '</div>'+
       '</div>'+
       '<div style="text-align:right">'+
-        '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(a.price*item.qty)+'</div>'+
+        priceHtml2+
         '<button onclick="removeFromCart(\''+a.id+'\')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px">Eliminar</button>'+
       '</div>'+
     '</div>';

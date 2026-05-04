@@ -36,7 +36,11 @@ export async function POST(request: NextRequest) {
       province, 
       document,
       warranty,
+      delivery,
+      cuotas,
       subtotal,
+      warrantyCost,
+      deliveryCost,
       total 
     } = body;
 
@@ -96,10 +100,12 @@ export async function POST(request: NextRequest) {
         code: orderCode,
         userId: userId,
         status: 'PENDING',
-        ...(warranty && { warranty: '90 dias' }),
-        cuotas: 1,
+        warranty: warranty || '90 dias',
+        cuotas: cuotas || 1,
         subtotal: subtotal,
         total: total,
+        warrantyCost: warrantyCost || 0,
+        deliveryCost: deliveryCost || 0,
         clientEmail: email,
         clientPhone: phone,
         clientDni: document,
