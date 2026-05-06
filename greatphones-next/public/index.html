@@ -1948,10 +1948,14 @@
             <span id="checkout-total" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
           </div>
 
-          <button id="btn-checkout" onclick="submitCheckout()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)">
-            Pagar con Mercado Pago
+          <button id="btn-checkout" onclick="openVerification()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)">
+            Continuar con la compra
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
+
+          <div style="text-align:center;margin-top:8px">
+            <button onclick="closeCheckout()" style="background:none;border:none;color:var(--gray);font-size:12px;cursor:pointer;text-decoration:underline">Volver al carrito</button>
+          </div>
 
           <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--gray);margin-top:12px">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
@@ -1972,6 +1976,54 @@
     </div>
   </div>
 </div>
+</div>
+
+<!-- ===== VERIFICATION MODAL ===== -->
+<div id="verificationModal" style="display:none;position:fixed;inset:0;z-index:850;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeVerification()"></div>
+  <div style="position:relative;background:#fff;border-radius:24px;width:min(650px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">
+    <button onclick="closeVerification()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;z-index:10" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">×</button>
+    
+    <div style="padding:2rem 2rem 0">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        </div>
+        <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700">Verificar pedido</h2>
+      </div>
+      <p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem">Revisá que todo esté correcto antes de pagar</p>
+    </div>
+    
+    <div id="verifyItems" style="padding:0 2rem;border-bottom:1px solid var(--border)"></div>
+    
+    <div id="verifyOptions" style="padding:1.25rem 2rem;border-bottom:1px solid var(--border)"></div>
+    
+    <div id="verifyUser" style="padding:1.25rem 2rem;border-bottom:1px solid var(--border)"></div>
+    
+    <div style="padding:1.5rem 2rem">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
+        <span>Subtotal</span><span id="verifySubtotal">$0</span>
+      </div>
+      <div id="verifyWarrantyLine" style="display:none;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
+        <span>Garantía</span><span id="verifyWarrantyCost" style="color:var(--orange)">$0</span>
+      </div>
+      <div id="verifyDeliveryLine" style="display:none;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
+        <span>Envío</span><span id="verifyDeliveryCost" style="color:var(--orange)">$0</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:12px;border-top:2px solid var(--dk)">
+        <span style="font-size:16px;font-weight:700">Total a pagar</span>
+        <span id="verifyTotal" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
+      </div>
+      <button id="btn-verify-pay" onclick="submitCheckout()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3);margin-top:1.25rem">
+        Pagar con Mercado Pago
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;color:var(--gray);margin-top:12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Pago 100% seguro</span>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ===== CART OVERLAY ===== -->

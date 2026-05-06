@@ -175,6 +175,134 @@ function openCheckout(){
   nav('checkout');
 }
 
+function openVerification(){
+  var errors=validateCheckoutForm();
+  if(errors.length>0){
+    showToast('Por favor completa: '+errors.join(', '));
+    return;
+  }
+  
+  var modal=document.getElementById('verificationModal');
+  if(!modal)return;
+  
+  var itemsContainer=document.getElementById('verifyItems');
+  var optionsContainer=document.getElementById('verifyOptions');
+  var userContainer=document.getElementById('verifyUser');
+  var subtotalEl=document.getElementById('verifySubtotal');
+  var totalEl=document.getElementById('verifyTotal');
+  var warrantyLine=document.getElementById('verifyWarrantyLine');
+  var warrantyCost=document.getElementById('verifyWarrantyCost');
+  var deliveryLine=document.getElementById('verifyDeliveryLine');
+  var deliveryCost=document.getElementById('verifyDeliveryCost');
+  
+  var subtotal=cartTotal();
+  var deliveryCostVal=checkoutState.delivery==='andreani'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+  var total=subtotal+checkoutState.warranty+deliveryCostVal;
+  
+  itemsContainer.innerHTML=Cart.map(function(item){
+    var p=getById(PRODUCTS,item.id);
+    if(p){
+      var now=new Date();
+      var isPromo=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+      var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
+      var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>';
+      return'<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">'+
+        '<div style="width:56px;height:56px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
+          '<div style="font-size:11px;color:var(--gray);margin-bottom:2px">'+p.sub+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">Cantidad: '+item.qty+'</div>'+
+        '</div>'+
+        '<div style="font-size:14px;font-weight:700;color:var(--dk);white-space:nowrap">'+fmt(price*item.qty)+'</div>'+
+      '</div>';
+    }
+    var a=getById(window.ACCS,item.id);
+    if(!a)return '';
+    var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
+    return'<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">'+
+      '<div style="width:56px;height:56px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
+        '<div style="font-size:11px;color:var(--gray)">Cantidad: '+item.qty+'</div>'+
+      '</div>'+
+      '<div style="font-size:14px;font-weight:700;color:var(--dk);white-space:nowrap">'+fmt(a.price*item.qty)+'</div>'+
+    '</div>';
+  }).join('');
+  
+  var warrantyLabel=checkoutState.warranty===0?'90 dias (incluida)':checkoutState.warranty===85000?'+12 meses':checkoutState.warranty===150000?'+24 meses':'90 dias';
+  var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':checkoutState.delivery===5000?'Express':checkoutState.delivery==='andreani'?'Andreani':'Envio 24-48hs';
+  
+  optionsContainer.innerHTML=
+    '<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Opciones seleccionadas</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px">'+
+      '<div><span style="color:var(--gray)">Cuotas:</span><br><strong>'+checkoutState.cuotas+'x sin interes</strong></div>'+
+      '<div><span style="color:var(--gray)">Garantia:</span><br><strong>'+warrantyLabel+'</strong></div>'+
+      '<div><span style="color:var(--gray)">Entrega:</span><br><strong>'+deliveryLabel+'</strong></div>'+
+    '</div>';
+  
+  if(currentUser){
+    var direccion=currentUser.direccion||'';
+    var street=document.getElementById('checkout-street').value;
+    var number=document.getElementById('checkout-number').value;
+    var floor=document.getElementById('checkout-floor').value;
+    var zip=document.getElementById('checkout-zip').value;
+    var city=document.getElementById('checkout-city').value;
+    var province=document.getElementById('checkout-province').value;
+    var fullAddress=[street,number,floor,city,province].filter(Boolean).join(', ');
+    userContainer.innerHTML=
+      '<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Datos de envio</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">'+
+        '<div><span style="color:var(--gray)">Nombre:</span> <strong>'+(currentUser.name||'')+'</strong></div>'+
+        '<div><span style="color:var(--gray)">Email:</span> <strong>'+(document.getElementById('checkout-email').value||'')+'</strong></div>'+
+        '<div><span style="color:var(--gray)">Telefono:</span> <strong>'+(document.getElementById('checkout-phone').value||'')+'</strong></div>'+
+        '<div><span style="color:var(--gray)">DNI/CUIT:</span> <strong>'+(document.getElementById('checkout-document').value||'')+'</strong></div>'+
+        '<div style="grid-column:1/-1"><span style="color:var(--gray)">Direccion:</span> <strong>'+(fullAddress||'')+'</strong></div>'+
+      '</div>';
+  }else{
+    var email=document.getElementById('checkout-email').value;
+    var phone=document.getElementById('checkout-phone').value;
+    var doc=document.getElementById('checkout-document').value;
+    var street=document.getElementById('checkout-street').value;
+    var number=document.getElementById('checkout-number').value;
+    var floor=document.getElementById('checkout-floor').value;
+    var zip=document.getElementById('checkout-zip').value;
+    var city=document.getElementById('checkout-city').value;
+    var province=document.getElementById('checkout-province').value;
+    var fullAddress=[street,number,floor,city,province].filter(Boolean).join(', ');
+    userContainer.innerHTML=
+      '<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Datos de envio</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">'+
+        '<div><span style="color:var(--gray)">Email:</span> <strong>'+email+'</strong></div>'+
+        '<div><span style="color:var(--gray)">Telefono:</span> <strong>'+(phone||'')+'</strong></div>'+
+        '<div><span style="color:var(--gray)">DNI/CUIT:</span> <strong>'+(doc||'')+'</strong></div>'+
+        '<div style="grid-column:1/-1"><span style="color:var(--gray)">Direccion:</span> <strong>'+(fullAddress||'')+'</strong></div>'+
+      '</div>';
+  }
+  
+  if(subtotalEl)subtotalEl.textContent=fmt(subtotal);
+  if(totalEl)totalEl.textContent=fmt(total);
+  
+  if(warrantyLine){
+    warrantyLine.style.display=checkoutState.warranty>0?'flex':'none';
+    if(warrantyCost)warrantyCost.textContent='+$'+checkoutState.warranty.toLocaleString('es-AR');
+  }
+  if(deliveryLine){
+    deliveryLine.style.display=deliveryCostVal>0?'flex':'none';
+    if(deliveryCost)deliveryCost.textContent='+$'+deliveryCostVal.toLocaleString('es-AR');
+  }
+  
+  modal.style.display='flex';
+  setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
+}
+
+function closeVerification(){
+  var modal=document.getElementById('verificationModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
+  setTimeout(function(){modal.style.display='none';},300);
+}
+
 function closeCheckout(){
   nav('shop');
 }
@@ -275,7 +403,7 @@ function checkout(){
 
 function validateCheckoutForm(){
   var email=document.getElementById('checkout-email');
-  var document=document.getElementById('checkout-document');
+  var docInput=document.getElementById('checkout-document');
   var street=document.getElementById('checkout-street');
   var number=document.getElementById('checkout-number');
   var zip=document.getElementById('checkout-zip');
@@ -291,11 +419,11 @@ function validateCheckoutForm(){
     email.style.borderColor='var(--border)';
   }
 
-  if(!document||!document.value){
+  if(!docInput||!docInput.value){
     errors.push('ingresa DNI o CUIT');
-    document.style.borderColor='var(--red)';
+    docInput.style.borderColor='var(--red)';
   }else{
-    document.style.borderColor='var(--border)';
+    docInput.style.borderColor='var(--border)';
   }
 
   if(!street||!street.value){
@@ -337,100 +465,97 @@ function validateCheckoutForm(){
 }
 
 function submitCheckout(){
-  var errors=validateCheckoutForm();
-  if(errors.length>0){
-    showToast('Por favor completa: '+errors.join(', '));
-    return;
-  }
-
-  var btn=document.getElementById('btn-checkout');
-  if(btn){
-    btn.disabled=true;
-    btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Procesando...';
-    btn.style.opacity='0.7';
-  }
-
-  var items=Cart.map(function(item){
-    var p=getById(PRODUCTS,item.id);
-    if(p){
-      var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
-      return{
-        id:p.id,
-        name:p.name,
-        sub:p.sub,
-        imageUrl:p.imageUrl,
-        price:price,
-        quantity:item.qty
-      };
-    }
-    var a=getById(window.ACCS,item.id);
-    if(a){
-      return{
-        id:a.id,
-        name:a.name,
-        sub:(a.brand||'')+' '+(a.color||''),
-        imageUrl:a.imageUrl,
-        price:a.price,
-        quantity:item.qty
-      };
-    }
-    return null;
-  }).filter(function(i){return i;});
-
-  var subtotal=cartTotal();
-  var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
-
-  var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses':'+24 meses'):'90 dias';
-  var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envio 24-48hs');
-  if(checkoutState.delivery==='andreani')deliveryLabel='Andreani';
-
-  var payload={
-    items:items,
-    email:document.getElementById('checkout-email').value,
-    phone:document.getElementById('checkout-phone').value||'',
-    street:document.getElementById('checkout-street').value,
-    number:document.getElementById('checkout-number').value,
-    floor:document.getElementById('checkout-floor').value||'',
-    zip:document.getElementById('checkout-zip').value,
-    city:document.getElementById('checkout-city').value,
-    province:document.getElementById('checkout-province').value,
-    document:document.getElementById('checkout-document').value,
-    warranty:warrantyLabel,
-    delivery:deliveryLabel,
-    cuotas:checkoutState.cuotas,
-    subtotal:subtotal,
-    warrantyCost:checkoutState.warranty,
-    deliveryCost:typeof checkoutState.delivery==='number'?checkoutState.delivery:0,
-    total:total
-  };
-
-  fetch(API_URL+'/api/checkout',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  })
-  .then(function(response){return response.json();})
-  .then(function(data){
-    console.log('Checkout response:', data);
-    if(data.error){
-      throw new Error(data.error);
-    }
-    if(data.initPoint){
-      Cart=[];
-      saveCart();
-      updCartBadge();
-      window.location.href=data.initPoint;
-    }else{
-      throw new Error('No se recibio link de pago');
-    }
-  })
-  .catch(function(error){
-    console.error('Checkout error:',error);
-    showToast('Error: '+error.message);
+  closeVerification();
+  setTimeout(function(){
+    var btn=document.getElementById('btn-verify-pay');
     if(btn){
-      btn.disabled=false;
-      btn.innerHTML='Pagar con Mercado Pago <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-      btn.style.opacity='1';
+      btn.disabled=true;
+      btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Procesando...';
+      btn.style.opacity='0.7';
     }
-  });
+
+    var items=Cart.map(function(item){
+      var p=getById(PRODUCTS,item.id);
+      if(p){
+        var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
+        return{
+          id:p.id,
+          name:p.name,
+          sub:p.sub,
+          imageUrl:p.imageUrl,
+          price:price,
+          quantity:item.qty
+        };
+      }
+      var a=getById(window.ACCS,item.id);
+      if(a){
+        return{
+          id:a.id,
+          name:a.name,
+          sub:(a.brand||'')+' '+(a.color||''),
+          imageUrl:a.imageUrl,
+          price:a.price,
+          quantity:item.qty
+        };
+      }
+      return null;
+    }).filter(function(i){return i;});
+
+    var subtotal=cartTotal();
+    var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+
+    var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses':'+24 meses'):'90 dias';
+    var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envio 24-48hs');
+    if(checkoutState.delivery==='andreani')deliveryLabel='Andreani';
+
+    var payload={
+      items:items,
+      email:document.getElementById('checkout-email').value,
+      phone:document.getElementById('checkout-phone').value||'',
+      street:document.getElementById('checkout-street').value,
+      number:document.getElementById('checkout-number').value,
+      floor:document.getElementById('checkout-floor').value||'',
+      zip:document.getElementById('checkout-zip').value,
+      city:document.getElementById('checkout-city').value,
+      province:document.getElementById('checkout-province').value,
+      document:document.getElementById('checkout-document').value,
+      warranty:warrantyLabel,
+      delivery:deliveryLabel,
+      cuotas:checkoutState.cuotas,
+      subtotal:subtotal,
+      warrantyCost:checkoutState.warranty,
+      deliveryCost:typeof checkoutState.delivery==='number'?checkoutState.delivery:0,
+      total:total
+    };
+
+    fetch(API_URL+'/api/checkout',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    })
+    .then(function(response){return response.json();})
+    .then(function(data){
+      console.log('Checkout response:', data);
+      if(data.error){
+        throw new Error(data.error);
+      }
+      if(data.initPoint){
+        Cart=[];
+        saveCart();
+        updCartBadge();
+        window.location.href=data.initPoint;
+      }else{
+        throw new Error('No se recibio link de pago');
+      }
+    })
+    .catch(function(error){
+      console.error('Checkout error:',error);
+      showToast('Error: '+error.message);
+      if(btn){
+        btn.disabled=false;
+        btn.innerHTML='Pagar con Mercado Pago <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        btn.style.opacity='1';
+      }
+    });
+  },350);
 }

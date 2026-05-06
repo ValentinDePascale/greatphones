@@ -73,6 +73,8 @@ function nav(id){
     renderCheckoutSummary();
     resetCheckoutSelections();
     prefillCheckoutFields();
+    var verModal=document.getElementById('verificationModal');
+    if(verModal&&verModal.style.display==='flex')closeVerification();
   }
   var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'shop?filter=ofertas',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product'};
   if(urlMap[id]!==undefined){

@@ -208,7 +208,12 @@ function renderGrid(gid,prods){
 function renderHomeRail(){
   var rail=document.getElementById('homeRail');
   if(!rail)return;
-  var sorted=PRODUCTS.slice().sort(function(a,b){return b.sold-a.sold;});
+  var sorted=PRODUCTS.slice().sort(function(a,b){
+    var stockA=a.stock>0?0:1;
+    var stockB=b.stock>0?0:1;
+    if(stockA!==stockB)return stockA-stockB;
+    return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+  });
   var items=sorted.slice(0,8);
   var now=new Date();
   rail.innerHTML=items.map(function(p){
@@ -334,7 +339,12 @@ function renderShopGrid(){
   }else if(currentSort==='bat'){
     prods.sort(function(a,b){return (b.battery||0)-(a.battery||0);});
   }else{
-    prods.sort(function(a,b){return b.sold-a.sold;});
+    prods.sort(function(a,b){
+      var stockA=a.stock>0?0:1;
+      var stockB=b.stock>0?0:1;
+      if(stockA!==stockB)return stockA-stockB;
+      return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+    });
   }
   var count=document.getElementById('shopCount');
   if(count)count.textContent=prods.length+' productos';
@@ -368,6 +378,13 @@ function renderAccGrid(){
     accs.sort(function(a,b){return b.price-a.price;});
   }else if(currentAccSort==='new'){
     accs.sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+  }else{
+    accs.sort(function(a,b){
+      var stockA=a.stock>0?0:1;
+      var stockB=b.stock>0?0:1;
+      if(stockA!==stockB)return stockA-stockB;
+      return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+    });
   }
   grid.innerHTML=accs.map(function(a){
     var now=new Date();
@@ -795,7 +812,12 @@ function startSliderTimer(){
 function renderFeaturedGrid(){
   var grid=document.getElementById('featuredGrid');
   if(!grid)return;
-  var sorted=PRODUCTS.slice().sort(function(a,b){return b.sold-a.sold;});
+  var sorted=PRODUCTS.slice().sort(function(a,b){
+    var stockA=a.stock>0?0:1;
+    var stockB=b.stock>0?0:1;
+    if(stockA!==stockB)return stockA-stockB;
+    return new Date(b.createdAt||0)-new Date(a.createdAt||0);
+  });
   renderGrid('featuredGrid',sorted.slice(0,4));
 }
 
