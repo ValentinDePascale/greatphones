@@ -40,13 +40,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const updateData: any = {}
     if (body.name !== undefined) updateData.name = body.name
     if (body.brand !== undefined) updateData.brand = body.brand
-    if (body.sub !== undefined) updateData.sub = body.sub
+    if (body.sub !== undefined) updateData.sub = body.sub || null
     if (body.price !== undefined) updateData.price = Number(body.price)
     if (body.stock !== undefined) updateData.stock = Number(body.stock)
     if (body.condition !== undefined) updateData.condition = body.condition
     if (body.type !== undefined) updateData.type = body.type
     if (body.color !== undefined) updateData.color = body.color || null
     if (body.screen !== undefined) updateData.screen = body.screen ? Number(body.screen) : null
+    if (body.storage !== undefined) updateData.storage = body.storage || null
+    if (body.ram !== undefined) updateData.ram = body.ram || null
+    if (body.battery !== undefined) updateData.battery = body.battery ? Number(body.battery) : null
+    if (body.processor !== undefined) updateData.processor = body.processor || null
     if (body.discount !== undefined) updateData.discount = Number(body.discount)
     if (body.isOffer !== undefined) updateData.isOffer = Boolean(body.isOffer)
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl || null

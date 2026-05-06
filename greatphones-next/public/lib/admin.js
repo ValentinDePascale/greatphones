@@ -254,7 +254,7 @@ function editProduct(id){
       document.getElementById('prodPrice').value=p.price;
       document.getElementById('prodStock').value=p.stock;
       document.getElementById('prodBrand').value=p.brand;
-      document.getElementById('prodSub').value=p.sub;
+      document.getElementById('prodDescription').value=p.description||p.sub||'';
       document.getElementById('prodCondition').value=p.condition;
       document.getElementById('prodType').value=p.type;
       document.getElementById('prodColor').value=p.color;

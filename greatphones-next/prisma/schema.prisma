@@ -52,7 +52,7 @@ model Product {
   imageUrl    String?
   images      String[]
   brand       String
-  sub         String
+  sub         String?
   description String?
   condition   String
   price       Int

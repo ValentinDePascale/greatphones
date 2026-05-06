@@ -17,11 +17,13 @@ function buildSpecsForProduct(p){
   var specs=[];
   var type=(p.type||'').toLowerCase();
   var cond=p.condition||'';
-  if(type==='celular'){
+  if(type==='celular'||type==='tablet'){
+    if(cond==='Nuevo'){specs.push({ico:'\u2728',label:'Estado',val:'Nuevo',color:'var(--green)'});}
+    else if(cond){specs.push({ico:'\u{1F4CB}',label:'Estado',val:cond,color:'var(--orange)'});}
+    if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F50B}',label:'Bateria',val:batPct+'%',color:batColor});}
+    if(p.color)specs.push({ico:'\u{1F3A8}',label:'Color',val:p.color});
     if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
     if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
-    if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F50B}',label:'Bateria',val:batPct+'%',color:batColor});}
-    if(p.screen)specs.push({ico:'\u{1F4F1}',label:'Pantalla',val:p.screen+'"'});
   }else if(type==='laptop'||type==='desktop'){
     if(p.processor)specs.push({ico:'\u{1F527}',label:'Procesador',val:p.processor});
     else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({ico:'\u{1F527}',label:'Procesador',val:cpuMatch[0]});}
@@ -29,8 +31,6 @@ function buildSpecsForProduct(p){
     if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
     if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
   }
-  if(cond==='Nuevo'){specs.push({ico:'\u2728',label:'Estado',val:'Nuevo',color:'var(--green)'});}
-  else if(cond){specs.push({ico:'\u{1F4CB}',label:'Estado',val:cond+' (Usado)',color:'var(--orange)'});}
   return specs;
 }
 
@@ -66,6 +66,7 @@ function buyNow(){if(currentProd){addToCart(currentProd.id);openCheckout();}}
 function loadProducts(){
   fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(data){
     PRODUCTS=data;
+    if(window.checkPendingDetail)window.checkPendingDetail();
     renderHomeRail();
     renderOfferStrip();
     renderShopGrid();
@@ -443,6 +444,8 @@ function openAccDetail(id){
     else{thumbsContainer.style.display='none';}
   }
   detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
+  var fb=document.getElementById('detFavBtn');
+  if(fb){if(isFavorite(currentAcc.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
 }
 function switchAccMainImg(idx){
   if(!_accImages||!_accImages[idx])return;
@@ -451,7 +454,8 @@ function switchAccMainImg(idx){
   if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';}}
 }
 function openDetail(id){
-  detailBackTarget='shop';
+  var activePage=document.querySelector('.page.act');
+  if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
   currentProd=getById(PRODUCTS,id);if(!currentProd)return;
   var now=new Date();
   var isPromoActive=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
@@ -505,9 +509,15 @@ function renderDetailImages(){
   if(!mainImg)return;
   var isFav=isFavorite(currentProd.id);
   var favBtn='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button>';
-  if(allImages.length===0){mainImg.innerHTML=favBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
-  mainImg.innerHTML=favBtn+'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">';
+  var prevBtn='<button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>';
+  var nextBtn='<button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>';
+  if(allImages.length===0){mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
+  mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">';
   detailCurrentImageIndex=0;
+  var showArrows=allImages.length>1;
+  var prevEl=document.getElementById('detImgPrev');var nextEl=document.getElementById('detImgNext');
+  if(prevEl)prevEl.style.display=showArrows?'flex':'none';
+  if(nextEl)nextEl.style.display=showArrows?'flex':'none';
   if(thumbsContainer){
     if(allImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div onclick="setDetailImage('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+url+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
     else{thumbsContainer.style.display='none';}
@@ -520,8 +530,24 @@ function setDetailImage(index){
   detailCurrentImageIndex=index;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   var isFav=isFavorite(currentProd.id);
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><img src="'+allImages[index]+'" style="width:100%;height:100%;object-fit:contain">';
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button><img src="'+allImages[index]+'" style="width:100%;height:100%;object-fit:contain">';
   if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===index?'var(--orange)':'var(--border)';}}
+}
+function prevDetailImage(){
+  var allImages=[];
+  if(currentProd&&currentProd.imageUrl)allImages.push(currentProd.imageUrl);
+  if(currentProd&&currentProd.images)allImages=allImages.concat(currentProd.images);
+  if(allImages.length<=1)return;
+  detailCurrentImageIndex=(detailCurrentImageIndex-1+allImages.length)%allImages.length;
+  setDetailImage(detailCurrentImageIndex);
+}
+function nextDetailImage(){
+  var allImages=[];
+  if(currentProd&&currentProd.imageUrl)allImages.push(currentProd.imageUrl);
+  if(currentProd&&currentProd.images)allImages=allImages.concat(currentProd.images);
+  if(allImages.length<=1)return;
+  detailCurrentImageIndex=(detailCurrentImageIndex+1)%allImages.length;
+  setDetailImage(detailCurrentImageIndex);
 }
 function selCuota(el,n){
   document.querySelectorAll('.cuota-btn').forEach(function(c){
@@ -896,7 +922,6 @@ function editProduct(id){
   document.getElementById('prodId').value=p.id;
   document.getElementById('prodName').value=p.name||'';
   document.getElementById('prodBrand').value=p.brand||'iPhone';
-  document.getElementById('prodSub').value=p.sub||'';
   document.getElementById('prodDescription').value=p.description||'';
   document.getElementById('prodPrice').value=p.price||'';
   document.getElementById('prodStock').value=p.stock||'';

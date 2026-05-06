@@ -74,6 +74,17 @@ function nav(id){
     resetCheckoutSelections();
     prefillCheckoutFields();
   }
+  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'shop?filter=ofertas',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product'};
+  if(urlMap[id]!==undefined){
+    var path=urlMap[id];
+    if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
+    var currentPath=window.location.pathname.replace(/^\//,'');
+    if(currentPath!==path){
+      var stateData={page:id};
+      if(id==='detail'&&window.currentProd)stateData.productId=window.currentProd.id;
+      try{window.history.pushState(stateData,'',path?'/'+path:'/');}catch(e){}
+    }
+  }
 }
 function navShop(cat){
   nav('shop');
@@ -763,10 +774,38 @@ function checkPasswordStrength2(){
   }
 }
 window.addEventListener('popstate',function(e){
-  if(e.state&&e.state.page==='edit-profile'){
-    nav('edit-profile');
-    loadEditProfile();
-  }else{
-    nav('home');
-  }
+  if(e.state&&e.state.page){
+    if(e.state.page==='edit-profile'){nav('edit-profile');loadEditProfile();}
+    else if(e.state.page==='detail'&&e.state.productId){openDetail(e.state.productId);}
+    else{nav(e.state.page);}
+  }else{nav('home');}
 });
+var pendingDetailId=null;
+function handleInitialRoute(){
+  var path=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
+  if(!path||path==='index.html'){return;}
+  if(path==='shop'){nav('shop');return;}
+  if(path==='favoritos'){nav('favoritos');return;}
+  if(path==='accesorios'){nav('accesorios');return;}
+  if(path==='notebooks'){nav('notebooks');return;}
+  if(path==='mayorista'){nav('mayorista');return;}
+  if(path==='servicio'){nav('servicio');return;}
+  if(path==='garantias'){nav('garantias');return;}
+  if(path==='sell'){nav('sell');return;}
+  if(path==='compare'){nav('compare');return;}
+  if(path==='admin'){nav('admin');return;}
+  if(path==='cuenta'){nav('cuenta');return;}
+  if(path==='checkout'){nav('checkout');return;}
+  if(path==='terminos'){nav('terminos');return;}
+  if(path==='privacidad'){nav('privacidad');return;}
+  if(path.indexOf('detail/')===0){
+    pendingDetailId=path.replace('detail/','');
+    return;
+  }
+}
+function checkPendingDetail(){
+  if(pendingDetailId&&PRODUCTS.length>0){
+    var p=PRODUCTS.find(function(x){return x.id===pendingDetailId;});
+    if(p){openDetail(pendingDetailId);pendingDetailId=null;}
+  }
+}

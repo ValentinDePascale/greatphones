@@ -6,12 +6,12 @@
   <meta name="theme-color" content="#0E0B07">
   <title>Great Phones — Tecnologia premium. Precio justo.</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Manrope:wght@400;700;800&family=Inter:wght@300;400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/globals.css">
-  <link rel="stylesheet" href="styles/components.css">
-  <link rel="stylesheet" href="styles/pages.css">
-  <link rel="stylesheet" href="styles/admin.css">
-  <link rel="stylesheet" href="styles/responsive.css">
-  <link rel="stylesheet" href="styles/cookies.css">
+  <link rel="stylesheet" href="/styles/globals.css">
+  <link rel="stylesheet" href="/styles/components.css">
+  <link rel="stylesheet" href="/styles/pages.css">
+  <link rel="stylesheet" href="/styles/admin.css">
+  <link rel="stylesheet" href="/styles/responsive.css">
+  <link rel="stylesheet" href="/styles/cookies.css">
 </head>
 <body>
 <div id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s">
@@ -44,7 +44,7 @@
 <div class="mainnav">
   <div class="nav">
     <button class="nav-logo" onclick="nav('home')">
-      <img src="icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:36px;height:36px;border-radius:10px;object-fit:cover">
+      <img src="/icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:36px;height:36px;border-radius:10px;object-fit:cover">
       <div><span class="nav-txt">Great Phones</span><span class="nav-sub">Bahia Blanca</span></div>
     </button>
     <div class="nav-search">
@@ -703,8 +703,10 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
         <!-- Column 1: Image Gallery -->
         <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:120px">
-          <div class="det-main-img" id="detImgMain" style="aspect-ratio:1/1;background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+          <div class="det-main-img" id="detImgMain" style="height:720px;background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)">
             <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">♡</button>
+            <button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>
+            <button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>
             <span id="detIco" style="font-size:80px">📱</span>
           </div>
           <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
@@ -2129,9 +2131,9 @@ function toggleDeleteBtn(){
   <img id="lightboxImg" style="max-width:92vw;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)">
 </div>
 
-<script src="lib/constants.js"></script>
-<script src="lib/utils.js"></script>
-<script src="lib/navigation.js"></script>
+<script src="/lib/constants.js"></script>
+<script src="/lib/utils.js"></script>
+<script src="/lib/navigation.js"></script>
 <!-- Cookie Banner -->
 <div id="cookieBanner">
   <div class="cb-container">
@@ -2191,16 +2193,15 @@ function toggleDeleteBtn(){
 <script>
 console.log('[BROWSER] Page loaded');
 </script>
-<script src="lib/favorites.js"></script>
-<script src="lib/cart.js"></script>
-<script src="lib/checkout.js"></script>
-<script src="lib/notifications.js"></script>
-<script src="lib/cookies.js"></script>
-<script src="lib/sell.js"></script>
-<script src="lib/admin.js"></script>
-<script src="lib/render.js"></script>
-<script src="lib/search.js"></script>
-<script>initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);
-(function(){var p=window.location.pathname;if(p==='/edit-profile'){setTimeout(function(){nav('edit-profile');loadEditProfile();},500);}else if(p==='/terminos'){setTimeout(function(){nav('terminos');},500);}else if(p==='/privacidad'){setTimeout(function(){nav('privacidad');},500);}})();</script>
+<script src="/lib/favorites.js"></script>
+<script src="/lib/cart.js"></script>
+<script src="/lib/checkout.js"></script>
+<script src="/lib/notifications.js"></script>
+<script src="/lib/cookies.js"></script>
+<script src="/lib/sell.js"></script>
+<script src="/lib/admin.js"></script>
+<script src="/lib/render.js"></script>
+<script src="/lib/search.js"></script>
+<script>handleInitialRoute();initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
 </body>
 </html>

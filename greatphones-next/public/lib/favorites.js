@@ -92,7 +92,7 @@ function renderFavGrid(){
         var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
         var isFav=isFavorite(item.id);
-        var clickHandlerAcc='openAccDetail("'+item.id+'")';
+        var clickHandlerAcc='openAccDetail(\''+item.id+'\')';
         var favStyleAcc=isFav?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
         return '<div class="pcard" onclick="'+clickHandlerAcc+'">'+
           '<div class="pcard-img">'+imgHtml+'</div>'+
@@ -113,7 +113,7 @@ function renderFavGrid(){
         var imgHtml2=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">\u{1F4F1}</span>';
         var isFav2=isFavorite(item.id);
         var isOutOfStock=item.stock===0;
-        var clickHandler=isOutOfStock?'':'openDetail("'+item.id+'")';
+        var clickHandler=isOutOfStock?'':'openDetail(\''+item.id+'\')';
         var opacityStyle=isOutOfStock?' style="opacity:.6"':'';
         var favStyle2=isFav2?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
         return '<div class="pcard'+(isOutOfStock?' ocard-out':'')+'" onclick="'+clickHandler+'"'+opacityStyle+'>'+
