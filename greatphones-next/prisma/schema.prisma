@@ -60,6 +60,7 @@ model Product {
   battery     Int?
   storage     String?
   ram         String?
+  processor   String?
   stock       Int
   score       Int?
   color       String?

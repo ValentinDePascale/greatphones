@@ -49,7 +49,6 @@ function nav(id){
       document.getElementById('prodId').value='';
       document.getElementById('prodName').value='';
       document.getElementById('prodBrand').value='iPhone';
-      document.getElementById('prodSub').value='';
       document.getElementById('prodDescription').value='';
       document.getElementById('prodPrice').value='';
       document.getElementById('prodStock').value='';
@@ -60,10 +59,8 @@ function nav(id){
       document.getElementById('prodStorage').value='';
       document.getElementById('prodRam').value='';
       document.getElementById('prodBattery').value='';
-      document.getElementById('prodDiscount').value='0';
-      document.getElementById('prodIsOffer').value='false';
-      document.getElementById('prodOfferStart').value='';
-      document.getElementById('prodOfferEnd').value='';
+      document.getElementById('prodProcessor').value='';
+      updateProductFields();
       document.getElementById('prodImageUrl').value='';
       document.getElementById('prodImages').value='';
       document.getElementById('prodImagePreview').innerHTML='📷';

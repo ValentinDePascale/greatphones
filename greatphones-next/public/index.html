@@ -1482,22 +1482,22 @@
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="prodName" placeholder="iPhone 15 Pro"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prodBrand"><option value="iPhone">iPhone</option><option value="Samsung">Samsung</option><option value="MacBook">MacBook</option><option value="iPad">iPad</option><option value="Motorola">Motorola</option><option value="Xiaomi">Xiaomi</option><option value="Otro">Otro</option></select></div>
         </div>
-        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><input class="inp-f" id="prodSub" placeholder="256 GB Titanio Natural"></div>
-        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion detallada</label><textarea class="inp-f" id="prodDescription" placeholder="Descripcion completa del producto..." style="height:80px;resize:none"></textarea></div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="prodDescription" placeholder="Descripcion completa del producto..." style="height:80px;resize:none"></textarea></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="prodPrice" type="number" placeholder="1320000"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="prodStock" type="number" placeholder="3"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="prodPrice" type="text" placeholder="1320000" oninput="formatPriceInput(this)"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="prodStock" type="number" min="0" placeholder="3"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condicion</label><select class="sel-f" id="prodCondition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prodType"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prodType" onchange="updateProductFields()"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="prodColor" placeholder="Titanio Natural"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Pantalla</label><input class="inp-f" id="prodScreen" placeholder="6.1"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Pantalla (")</label><input class="inp-f" id="prodScreen" type="number" step="0.1" min="1" max="40" placeholder="6.1"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><input class="inp-f" id="prodStorage" placeholder="256 GB"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">RAM</label><input class="inp-f" id="prodRam" placeholder="8 GB"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Bateria (%)</label><input class="inp-f" id="prodBattery" type="number" placeholder="91"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><select class="sel-f" id="prodStorage"><option value="">Seleccionar...</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option><option value="2 TB">2 TB</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">RAM</label><select class="sel-f" id="prodRam"><option value="">Seleccionar...</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option><option value="24 GB">24 GB</option><option value="32 GB">32 GB</option><option value="64 GB">64 GB</option></select></div>
+          <div id="prodBatteryField"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Bateria (%)</label><input class="inp-f" id="prodBattery" type="number" min="0" max="100" placeholder="91"></div>
+          <div id="prodProcessorField" style="display:none"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Procesador</label><input class="inp-f" id="prodProcessor" placeholder="M3 Pro"></div>
         </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>

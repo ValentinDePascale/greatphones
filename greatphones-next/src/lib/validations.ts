@@ -31,6 +31,7 @@ export const ProductCreateSchema = z.object({
   screen: z.number().optional(),
   storage: z.string().optional(),
   ram: z.string().optional(),
+  processor: z.string().nullable().optional(),
   imageUrl: z.string().url().nullable().optional().or(z.literal('')),
   images: z.array(z.string()).default([]),
   cost: z.number().int().optional().default(0),

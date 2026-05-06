@@ -23,9 +23,10 @@ function buildSpecsForProduct(p){
     if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F50B}',label:'Bateria',val:batPct+'%',color:batColor});}
     if(p.screen)specs.push({ico:'\u{1F4F1}',label:'Pantalla',val:p.screen+'"'});
   }else if(type==='laptop'||type==='desktop'){
-    if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({ico:'\u{1F527}',label:'Procesador',val:cpuMatch[0]});}
-    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
+    if(p.processor)specs.push({ico:'\u{1F527}',label:'Procesador',val:p.processor});
+    else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({ico:'\u{1F527}',label:'Procesador',val:cpuMatch[0]});}
     if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
+    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
     if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
   }
   if(cond==='Nuevo'){specs.push({ico:'\u2728',label:'Estado',val:'Nuevo',color:'var(--green)'});}
@@ -815,6 +816,22 @@ function adminTab(tab,btn){
   btn.classList.add('act');
   renderAdminContent(tab);
 }
+function formatPriceInput(el){
+  var val=el.value.replace(/[^0-9]/g,'');
+  el.value=val;
+}
+function updateProductFields(){
+  var type=document.getElementById('prodType').value;
+  var batteryField=document.getElementById('prodBatteryField');
+  var processorField=document.getElementById('prodProcessorField');
+  if(type==='laptop'||type==='desktop'){
+    if(batteryField)batteryField.style.display='none';
+    if(processorField)processorField.style.display='block';
+  }else{
+    if(batteryField)batteryField.style.display='block';
+    if(processorField)processorField.style.display='none';
+  }
+}
 function saveProduct(){
   var prodId=document.getElementById('prodId').value;
   var isEdit=!!prodId;
@@ -829,17 +846,18 @@ function saveProduct(){
   var data={
     name:document.getElementById('prodName').value.trim(),
     brand:document.getElementById('prodBrand').value.trim(),
-    sub:document.getElementById('prodSub').value.trim(),
+    sub:document.getElementById('prodDescription').value.trim().substring(0,60)||null,
     description:document.getElementById('prodDescription').value.trim()||null,
-    price:parseInt(document.getElementById('prodPrice').value)||0,
+    price:parseInt(document.getElementById('prodPrice').value.replace(/[^0-9]/g,''))||0,
     stock:parseInt(document.getElementById('prodStock').value)||0,
     condition:document.getElementById('prodCondition').value||'Nuevo',
     type:document.getElementById('prodType').value||'celular',
     color:document.getElementById('prodColor').value.trim(),
     screen:parseFloat(document.getElementById('prodScreen').value)||null,
-    storage:document.getElementById('prodStorage').value.trim()||null,
-    ram:document.getElementById('prodRam').value.trim()||null,
-    battery:parseInt(document.getElementById('prodBattery').value)||null,
+    storage:document.getElementById('prodStorage').value||null,
+    ram:document.getElementById('prodRam').value||null,
+    battery:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?null:(parseInt(document.getElementById('prodBattery').value)||null),
+    processor:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?(document.getElementById('prodProcessor').value.trim()||null):null,
     imageUrl:document.getElementById('prodImageUrl').value.trim()||null,
     images:getAdditionalImages(),
     ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1',
@@ -889,6 +907,8 @@ function editProduct(id){
   document.getElementById('prodStorage').value=p.storage||'';
   document.getElementById('prodRam').value=p.ram||'';
   document.getElementById('prodBattery').value=p.battery||'';
+  document.getElementById('prodProcessor').value=p.processor||'';
+  updateProductFields();
   
   document.getElementById('prodImageUrl').value=p.imageUrl||'';
   if(p.imageUrl){
