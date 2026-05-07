@@ -8,7 +8,15 @@ function showAdmin(){nav('admin');}
 function adminTab(tab,btn){
   window.currentAdminTab=tab;
   document.querySelectorAll('.fchip[id^="adm-"]').forEach(function(c){c.classList.remove('act');});
+  document.querySelectorAll('.atab').forEach(function(c){c.classList.remove('act');});
+  document.querySelectorAll('.admin-sec').forEach(function(s){s.classList.remove('act');});
   if(btn)btn.classList.add('act');
+  var sec=document.getElementById('as-'+tab);
+  if(sec)sec.classList.add('act');
+  if(tab==='chat'){
+    loadAdminConversations();
+    initChatSocket();
+  }
   renderAdminContent(tab);
 }
 

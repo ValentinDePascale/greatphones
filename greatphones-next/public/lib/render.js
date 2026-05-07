@@ -72,6 +72,7 @@ function loadProducts(){
     renderShopGrid();
     renderOfertasGrid();
     renderFeaturedGrid();
+    if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
@@ -83,6 +84,7 @@ function loadAccessories(){
   fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(data){
     window.ACCS=data;
     if(document.getElementById('accGrid'))renderAccGrid();
+    if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
@@ -182,10 +184,11 @@ function renderGrid(gid,prods){
     var isOutOfStock=p.stock===0;
     var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
     var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
+    var discBadge=isPromoActive?'<span style="position:absolute;top:16px;right:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</span>':'';
     var isFav=isFavorite(p.id);
     return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
-      badge+
+      badge+discBadge+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
       imgHtml+
       '</div>'+
@@ -195,7 +198,7 @@ function renderGrid(gid,prods){
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      (isPromoActive?'<div style="display:flex;align-items:center;gap:10px"><span class="pcard-old" style="font-size:14px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:12px;background:var(--red);color:#fff">'+p.discount+'% OFF</span></div>':'')+
+      (isPromoActive?'<span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'')+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
@@ -239,13 +242,14 @@ function renderHomeRail(){
     var imgWrapStyle='position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'');
     var bodyStyle='padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'');
     var favBg=isFav?'background:#fff0ec;color:var(--orange)':'';
+    var discBadge=isPromoActive?'<span style="position:absolute;top:16px;right:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</span>':'';
     var favIcon=isFav?'\u2665':'\u2661';
-    var priceHtml=isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff">-'+p.discount+'%</span></div>':'';
+    var priceHtml=isPromoActive?'<span style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'';
     var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
     var onclick=isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"';
     return '<article class="'+cardClass+'"'+onclick+' style="'+cardStyle+'">'+
       '<div style="'+imgWrapStyle+'">'+
-      badge+
+      badge+discBadge+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+favIcon+'</button>'+
       imgHtml+
       '</div>'+
@@ -278,7 +282,7 @@ function renderOfferStrip(){
     var isFav=favorites.indexOf(p.id)!==-1;
     return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
-      '<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+p.discount+'% OFF</div>'+
+      '<div style="position:absolute;top:16px;left:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</div>'+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
       imgHtml+
       '</div>'+
@@ -288,7 +292,7 @@ function renderOfferStrip(){
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      '<div style="display:flex;align-items:center;gap:10px"><span class="pcard-old" style="font-size:14px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="font-size:11px;font-weight:800;padding:4px 10px;border-radius:12px;background:var(--red);color:#fff">'+p.discount+'% OFF</span></div>'+
+      '<span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>'+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(fp)+'</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       '</div>'+
@@ -861,7 +865,12 @@ function renderMayorista(){
 // =========== ADMIN ===========
 function adminTab(tab,btn){
   document.querySelectorAll('#adm-prods,#adm-stock,#adm-orders,#adm-users').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('.atab').forEach(function(c){c.classList.remove('act');});
+  document.querySelectorAll('.admin-sec').forEach(function(s){s.classList.remove('act');});
   btn.classList.add('act');
+  var sec=document.getElementById('as-'+tab);
+  if(sec)sec.classList.add('act');
+  if(tab==='chat'){loadAdminConversations();initChatSocket();}
   renderAdminContent(tab);
 }
 function formatPriceInput(el){
@@ -1298,6 +1307,30 @@ function renderAdminContent(tab){
     }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
   }else if(tab==='users'){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Usuarios</p><p style="font-size:12px">Proximamente podras gestionar usuarios</p></div>';
+  }else if(tab==='chat'){
+    el.innerHTML='<div style="display:flex;gap:0;height:600px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
+      '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto">'+
+        '<div style="padding:14px;border-bottom:1px solid var(--border)"><h3 style="font-size:15px;font-weight:700">Conversaciones</h3></div>'+
+        '<div id="adminConvList"></div>'+
+      '</div>'+
+      '<div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">'+
+        '<div id="adminChatHeader" style="padding:14px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
+          '<span style="font-size:13px;font-weight:600;color:var(--gray)">Seleccioná una conversación</span>'+
+          '<div style="display:flex;gap:6px">'+
+            '<button id="adminAssignConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer">Asignar</button>'+
+            '<button id="adminCloseConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Cerrar</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:14px"></div>'+
+        '<div id="typingIndicator" style="padding:4px 14px;font-size:11px;color:var(--gray);display:none"></div>'+
+        '<div style="padding:10px 14px;background:#fff;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center">'+
+          '<input id="adminChatInput" type="text" placeholder="Escribí un mensaje..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')sendAdminMessage()">'+
+          '<button onclick="sendAdminMessage()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Enviar</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+    loadAdminConversations();
+    initChatSocket();
   }
 }
 function updateStock(id){

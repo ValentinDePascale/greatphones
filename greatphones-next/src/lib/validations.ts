@@ -202,3 +202,32 @@ export type SigninPayload = z.infer<typeof SigninSchema>
 export type QuoteCreatePayload = z.infer<typeof QuoteCreateSchema>
 
 export type ArrepentimientoPayload = z.infer<typeof ArrepentimientoSchema>
+
+// === CHAT ===
+export const CreateConversationSchema = z.object({
+  type: z.enum(['COMPRA', 'COTIZACION', 'SERVICIO', 'REPARACION', 'GENERIC']),
+  subject: z.string().min(1, 'Asunto requerido').max(200),
+  firstMessage: z.string().max(2000).optional()
+})
+
+export const SendMessageSchema = z.object({
+  text: z.string().min(1, 'Mensaje requerido').max(2000).optional(),
+  imageUrl: z.string().url().optional(),
+  imageCaption: z.string().max(500).optional()
+}).refine(data => data.text || data.imageUrl, {
+  message: 'Se requiere texto o imagen'
+})
+
+export const MarkReadSchema = z.object({
+  conversationId: z.string()
+})
+
+export const AssignConversationSchema = z.object({
+  conversationId: z.string(),
+  adminId: z.string()
+})
+
+export type CreateConversationPayload = z.infer<typeof CreateConversationSchema>
+export type SendMessagePayload = z.infer<typeof SendMessageSchema>
+export type MarkReadPayload = z.infer<typeof MarkReadSchema>
+export type AssignConversationPayload = z.infer<typeof AssignConversationSchema>

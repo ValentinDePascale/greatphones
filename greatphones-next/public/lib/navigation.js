@@ -32,6 +32,7 @@ function nav(id){
   if(id==='ofertas'){renderOfertasGrid();setCN('ofertas');}
   if(id==='accesorios'){renderAccGrid();setCN('accesorios');}
   if(id==='favoritos')renderFavGrid();
+  if(id==='chats'){openUserChat();}
   if(id==='servicio')renderRepairGrid();
   if(id==='notebooks')renderNotebookConfig();
   if(id==='mayorista')renderMayorista();
@@ -76,7 +77,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product'};
+  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -801,6 +802,7 @@ function handleInitialRoute(){
   if(path==='garantias'){nav('garantias');return;}
   if(path==='sell'){nav('sell');return;}
   if(path==='compare'){nav('compare');return;}
+  if(path==='chats'){nav('chats');return;}
   if(path==='admin'){nav('admin');return;}
   if(path==='cuenta'){nav('cuenta');return;}
   if(path==='checkout'){nav('checkout');return;}

@@ -83,6 +83,7 @@
 .atab.act{background:var(--orange);color:#fff}
 .admin-sec{padding:1rem;display:none}
 .admin-sec.act{display:block}
+.admin-sec#as-chat.act{display:flex;padding:0}
 .acard{
   background:#fff;
   border:1px solid var(--border);

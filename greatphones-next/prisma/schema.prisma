@@ -32,11 +32,13 @@ model User {
   repairs         Repair[]
   guarantees      Guarantee[]
   conversations   Conversation[]
+  adminConversations Conversation[] @relation("AdminConversations")
   wallet          Wallet?
   favorites       Favorite[]
   accounts        Account[]
   sessions        Session[]
   arrepentimientos Arrepentimiento[]
+  sentMessages    Message[]
 }
 
 enum Role {
@@ -285,14 +287,18 @@ model Supplier {
 
 // ==================== CONVERSACIONES ====================
 model Conversation {
-  id        String    @id @default(cuid())
+  id        String     @id @default(cuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User       @relation(fields: [userId], references: [id])
 
   type      ConvType
   subject   String?
-  unread    Int       @default(0)
+  status    ConvStatus @default(OPEN)
+  adminId   String?
+  admin     User?      @relation("AdminConversations", fields: [adminId], references: [id])
+  unread    Int        @default(0)
   lastMsgAt DateTime?
+  closedAt  DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -308,6 +314,12 @@ enum ConvType {
   GENERIC
 }
 
+enum ConvStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
 // ==================== MENSAJES ====================
 model Message {
   id             String       @id @default(cuid())
@@ -315,12 +327,21 @@ model Message {
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   from           String
+  fromUserId     String?
+  fromUser       User?        @relation(fields: [fromUserId], references: [id])
   text           String?
   imageUrl       String?
   imageCaption   String?
+  status         MsgStatus    @default(SENT)
 
   readAt         DateTime?
   createdAt      DateTime     @default(now())
+}
+
+enum MsgStatus {
+  SENT
+  DELIVERED
+  READ
 }
 
 // ==================== WALLET ====================

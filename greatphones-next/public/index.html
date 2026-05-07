@@ -71,7 +71,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span class="nbadge hidden" id="cartBadge">0</span>
       </button>
-      <button class="nbtn" onclick="nav('mensajes')" title="Mensajes">
+      <button class="nbtn" onclick="nav('chats')" title="Chat">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
         <span class="nbadge hidden" id="msgBadge">0</span>
       </button>
@@ -136,7 +136,7 @@
           <p class="slide-s">Precio justo, pago en 24hs. Saldo con +5% bonus o transferencia al instante.</p>
           <div class="slide-ctas">
             <button class="btn btn-g btn-lg" onclick="nav('sell')">Cotizar mi equipo</button>
-            <button class="btn btn-ghost" onclick="nav('mensajes')">Hablar con un asesor</button>
+            <button class="btn btn-ghost" onclick="nav('chats')">Hablar con un asesor</button>
           </div>
         </div>
       </div>
@@ -502,7 +502,7 @@
             <li><a onclick="navShop('ofertas')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Ofertas</a></li>
             <li><a onclick="nav('compare')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comparar</a></li>
             <li><a onclick="nav('notebooks')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Notebooks</a></li>
-            <li><a onclick="nav('mensajes')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Mensajes</a></li>
+            <li><a onclick="nav('chats')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Chat</a></li>
           </ul>
         </div>
         
@@ -684,14 +684,16 @@
 </div>
 
 <!-- ============================= PAGE: FAVORITOS ============================= -->
-<div class="page" id="p-favoritos">
-  <div class="shop-hdr"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Mis favoritos</h1><p class="shop-s" id="favCount">0 guardados</p></div>
-  <div id="favGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;padding:1rem;background:var(--cream)"></div>
-  <div id="favEmpty" style="text-align:center;padding:3rem 1rem">
-    <div style="font-size:44px;margin-bottom:.875rem">&#9825;</div>
-    <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;margin-bottom:.4rem">Nada guardado aun</div>
-    <p style="font-size:11px;color:var(--gray);line-height:1.6">Toca el corazon en cualquier producto para guardarlo aca.</p>
-    <button class="btn-o" style="margin-top:1.1rem" onclick="nav('shop')">Ver catalogo</button>
+<div class="page" id="p-favoritos" style="background:var(--cream);min-height:100vh">
+  <div style="max-width:1240px;margin:0 auto">
+    <div class="shop-hdr" style="background:transparent"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Mis favoritos</h1><p class="shop-s" id="favCount">0 guardados</p></div>
+    <div id="favGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;padding:1rem"></div>
+    <div id="favEmpty" style="text-align:center;padding:3rem 1rem">
+      <div style="font-size:44px;margin-bottom:.875rem">&#9825;</div>
+      <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;margin-bottom:.4rem">Nada guardado aun</div>
+      <p style="font-size:11px;color:var(--gray);line-height:1.6">Toca el corazon en cualquier producto para guardarlo aca.</p>
+      <button class="btn-o" style="margin-top:1.1rem" onclick="nav('shop')">Ver catalogo</button>
+    </div>
   </div>
 </div>
 
@@ -916,7 +918,7 @@
                   <div style="font-size:11px;color:var(--gray);line-height:1.7" id="svConfMsg"></div>
                 </div>
                 <div class="track-steps" id="svTrack"></div>
-                <button class="btn btn-o btn-full" style="margin-bottom:6px" onclick="nav('mensajes')">Abrir chat con GP</button>
+                <button class="btn btn-o btn-full" style="margin-bottom:6px" onclick="nav('chats')">Abrir chat con GP</button>
                 <button class="btn btn-g btn-full" onclick="nav('cuenta')">Ver mi cuenta</button>
                 <button class="btn btn-s btn-full" style="margin-top:6px" onclick="svReset()">Nueva tasacion</button>
               </div>
@@ -1162,9 +1164,9 @@
               <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Canal Directo</h3>
               <p style="font-size:13px;color:var(--gray);margin-top:8px;line-height:1.5">¿Necesitas ayuda con una cotización o pedido? Hablá con nosotros.</p>
             </div>
-            <button onclick="nav('mensajes')" style="margin-top:12px;width:100%;background:var(--green);color:#fff;padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--green2)'" onmouseout="this.style.background='var(--green)'">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
-              <span>Abrir mensajes con GP</span>
+            <button onclick="nav('chats')" style="margin-top:12px;width:100%;background:var(--green);color:#fff;padding:14px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:8px;box-shadow:var(--sh);transition:background .2s" onmouseover="this.style.background='var(--green2)'" onmouseout="this.style.background='var(--green)'">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              <span>Abrir chat con GP</span>
             </button>
           </div>
 
@@ -1443,6 +1445,7 @@
         <button class="fchip" id="adm-orders" onclick="adminTab('orders',this)">Pedidos</button>
         <button class="fchip" id="adm-arrep" onclick="adminTab('arrep',this)">Arrepentimientos</button>
         <button class="fchip" id="adm-users" onclick="adminTab('users',this)">Usuarios</button>
+        <button class="fchip" id="adm-chat" onclick="adminTab('chat',this)">Chat</button>
       </div>
       <div id="adminContent">
         <div style="text-align:center;padding:2rem;color:var(--gray)">Selecciona una opcion</div>
@@ -1510,33 +1513,23 @@
   </div>
 </div>
 
-<!-- ============================= PAGE: MENSAJES ============================= -->
-<div class="page" id="p-mensajes">
-  <div class="msg-hdr">
-    <button class="msg-back" onclick="nav('cuenta')">&#8592;</button>
-    <div class="msg-hdr-av">GP</div>
-    <div class="msg-hdr-info"><div class="msg-hdr-name">Mensajes</div><div class="msg-hdr-sub">Conversaciones con Great Phones</div></div>
-  </div>
-  <div style="padding:.875rem 0;background:var(--cream)">
-    <div style="font-size:10px;color:var(--gray);padding:.25rem 1rem .75rem">Tus conversaciones</div>
-    <div id="clientConvList"></div>
-  </div>
-</div>
-
-<!-- ============================= PAGE: CHAT ============================= -->
-<div class="page" id="p-chat">
-  <div class="msg-hdr">
-    <button class="msg-back" onclick="nav('mensajes')">&#8592;</button>
-    <div class="msg-hdr-av" id="chatAv">GP</div>
-    <div class="msg-hdr-info"><div class="msg-hdr-name" id="chatTitle">Great Phones</div><div class="msg-hdr-sub" id="chatSub">Atencion al cliente</div></div>
-    <div class="msg-status-dot"></div>
-  </div>
-  <div class="msg-list" id="chatMsgList"></div>
-  <div class="msg-input-area">
-    <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto">&#128247;</button>
-    <input type="file" id="chatImgIn" accept="image/*" style="display:none">
-    <textarea class="msg-inp" id="chatInp" placeholder="Escribe un mensaje..." rows="1"></textarea>
-    <button class="msg-send" onclick="sendChatMsg()">&#10148;</button>
+<!-- ============================= PAGE: CHATS ============================= -->
+<div class="page" id="p-chats">
+  <div style="max-width:800px;margin:0 auto;height:100vh;display:flex;flex-direction:column;background:#fff">
+    <div class="msg-hdr" style="border-radius:0">
+      <button class="msg-back" onclick="nav('home')">&#8592;</button>
+      <div class="msg-hdr-av">GP</div>
+      <div class="msg-hdr-info"><div class="msg-hdr-name">Great Phones</div><div class="msg-hdr-sub">Atencion al cliente</div></div>
+      <div class="msg-status-dot"></div>
+    </div>
+    <div class="msg-list" id="chatMsgList" style="flex:1"></div>
+    <div id="typingIndicator" style="padding:4px 16px;font-size:12px;color:var(--gray);display:none"></div>
+    <div class="msg-input-area" style="border-radius:0">
+      <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto">&#128247;</button>
+      <input type="file" id="chatImgIn" accept="image/*" style="display:none" onchange="sendChatImg(this)">
+      <input class="msg-inp" id="chatInput" type="text" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMessage()">
+      <button class="msg-send" onclick="sendMessage()">&#10148;</button>
+    </div>
   </div>
 </div>
 
@@ -1670,6 +1663,7 @@
       <button class="atab" onclick="adminTab('prods',this)">Productos</button>
       <button class="atab" onclick="adminTab('ventas',this)">Ventas</button>
       <button class="atab" onclick="adminTab('guar',this)">Garantias</button>
+      <button class="atab" onclick="adminTab('chat',this)" style="position:relative">Chat<span id="adminChatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--orange);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">0</span></button>
     </div>
     <div class="admin-sec act" id="as-dash">
       <div class="stat-grid" id="dashStats"></div>
@@ -1682,6 +1676,31 @@
     </div>
     <div class="admin-sec" id="as-guar">
       <div class="acard"><div class="acard-t">Garantias vigentes</div><div id="guarList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-chat" style="display:flex;gap:0;height:calc(100vh - 200px)">
+      <div style="width:300px;border-right:1px solid var(--border);overflow-y:auto;background:#fff">
+        <div style="padding:16px;border-bottom:1px solid var(--border)"><h3 style="font-size:16px;font-weight:700">Conversaciones</h3></div>
+        <div id="adminConvList"></div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">
+        <div id="adminChatHeader" style="padding:16px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:14px;font-weight:600;color:var(--gray)">Seleccioná una conversación</span>
+          <div style="display:flex;gap:8px">
+            <button id="adminAssignConvBtn" class="btn btn-sm" style="display:none;padding:6px 12px;font-size:11px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer">Asignar</button>
+            <button id="adminCloseConvBtn" class="btn btn-sm" style="display:none;padding:6px 12px;font-size:11px;background:var(--red);color:#fff;border:none;border-radius:8px;cursor:pointer">Cerrar</button>
+          </div>
+        </div>
+        <div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:16px"></div>
+        <div id="typingIndicator" style="padding:4px 16px;font-size:12px;color:var(--gray);display:none"></div>
+        <div style="padding:12px 16px;background:#fff;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center">
+          <label style="cursor:pointer;padding:8px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <input type="file" accept="image/*" style="display:none" onchange="sendChatImg(this)">
+          </label>
+          <input id="adminChatInput" type="text" placeholder="Escribí un mensaje..." style="flex:1;padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:13px;outline:none" onkeydown="if(event.key==='Enter')sendAdminMessage()">
+          <button onclick="sendAdminMessage()" style="padding:10px 16px;background:var(--orange);color:#fff;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600">Enviar</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2254,6 +2273,33 @@ console.log('[BROWSER] Page loaded');
 <script src="/lib/admin.js"></script>
 <script src="/lib/render.js"></script>
 <script src="/lib/search.js"></script>
+<script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+<script src="/lib/chat.js"></script>
 <script>initFavorites();initCart();handleInitialRoute();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
+
+<!-- Chat Widget -->
+<button id="chatWidgetBtn" onclick="openChatWidget()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#FF8F5E);border:none;color:#fff;font-size:24px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,107,44,.4);transition:all .2s;z-index:700" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+</button>
+<script>
+(function(){
+  var btn=document.getElementById('chatWidgetBtn');
+  if(!btn)return;
+  function updateWidget(){
+    if(currentUser&&document.querySelector('.page.act')&&document.querySelector('.page.act').id!=='p-chats'){
+      btn.style.display='flex';
+    }else{
+      btn.style.display='none';
+    }
+  }
+  var origNav=window.nav;
+  window.nav=function(id){origNav(id);setTimeout(updateWidget,100);};
+  updateWidget();
+})();
+function openChatWidget(){
+  if(!currentUser){openLogin();return;}
+  nav('chats');
+}
+</script>
 </body>
 </html>

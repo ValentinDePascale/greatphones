@@ -94,8 +94,10 @@ function renderFavGrid(){
         var isFav=isFavorite(item.id);
         var clickHandlerAcc='openAccDetail(\''+item.id+'\')';
         var favStyleAcc=isFav?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
-        return '<div class="pcard" onclick="'+clickHandlerAcc+'">'+
-          '<div class="pcard-img">'+imgHtml+'</div>'+
+        return '<div class="pcard" onclick="'+clickHandlerAcc+'" style="position:relative">'+
+          '<div class="pcard-img">'+imgHtml+
+          (isPromo?'<span class="pcard-bdg">-'+item.discount+'%</span>':'')+
+          '</div>'+
           '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:2;'+favStyleAcc+'">'+(isFav?'\u2665':'\u2661')+'</button>'+
           '<div class="pcard-body">'+
           '<div class="pcard-name">'+item.name+'</div>'+
@@ -118,9 +120,9 @@ function renderFavGrid(){
         var favStyle2=isFav2?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
         return '<div class="pcard'+(isOutOfStock?' ocard-out':'')+'" onclick="'+clickHandler+'"'+opacityStyle+'>'+
           '<div class="pcard-img">'+imgHtml2+
+          (isPromo2?'<span class="pcard-bdg">-'+item.discount+'%</span>':'')+
           (isOutOfStock?'<div style="position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center"><span style="font-size:14px;font-weight:700;color:#fff;background:var(--red);padding:4px 12px;border-radius:6px">Agotado</span></div>':'')+
           '</div>'+
-          (isPromo2?'<span class="pcard-bdg bdg-disc">-'+item.discount+'%</span>':'')+
           '<button class="pcard-fav '+(isFav2?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:2;'+favStyle2+'">'+(isFav2?'\u2665':'\u2661')+'</button>'+
           '<div class="pcard-body">'+
           '<div class="pcard-name">'+item.name+'</div>'+
