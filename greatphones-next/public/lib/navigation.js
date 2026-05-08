@@ -1,6 +1,6 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
-var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones-api.onrender.com');
+var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
