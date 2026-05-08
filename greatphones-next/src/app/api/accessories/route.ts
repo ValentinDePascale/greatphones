@@ -6,14 +6,16 @@ import {
   formatZodError 
 } from '@/lib/validations'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    headers: corsHeaders,
   })
 }
 
@@ -28,9 +30,9 @@ export async function GET(request: Request) {
     if (id) {
       const accessory = await prisma.accessory.findUnique({ where: { id } })
       if (!accessory) {
-        return NextResponse.json({ error: 'Accesorio no encontrado' }, { status: 404 })
+        return NextResponse.json({ error: 'Accesorio no encontrado' }, { status: 404, headers: corsHeaders })
       }
-      return NextResponse.json(accessory)
+      return NextResponse.json(accessory, { headers: corsHeaders })
     }
     
     const where: any = { isActive: true }
@@ -56,10 +58,10 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     })
     
-    return NextResponse.json(accessories)
+    return NextResponse.json(accessories, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching accessories:', error)
-    return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -97,10 +99,10 @@ export async function POST(request: Request) {
       },
     })
     
-    return NextResponse.json(newAccessory, { status: 201 })
+    return NextResponse.json(newAccessory, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating accessory:', error)
-    return NextResponse.json({ error: 'Failed to create accessory' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create accessory' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -110,7 +112,7 @@ export async function PUT(request: Request) {
     const id = searchParams.get('id')
     
     if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
     
     const body = await request.json()
@@ -120,7 +122,7 @@ export async function PUT(request: Request) {
     const validation = AccessoryUpdateSchema.safeParse(body)
     if (!validation.success) {
       console.error('Zod validation failed:', JSON.stringify(validation.error.issues, null, 2))
-      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
     }
     
     const data: any = {}
@@ -149,12 +151,12 @@ export async function PUT(request: Request) {
       data,
     })
     
-    return NextResponse.json(updatedAccessory)
+    return NextResponse.json(updatedAccessory, { headers: corsHeaders })
   } catch (error: any) {
     console.error('Error updating accessory:', error)
     console.error('Error code:', error?.code)
     console.error('Error meta:', error?.meta)
-    return NextResponse.json({ error: 'Failed to update accessory', details: error?.message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update accessory', details: error?.message }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -164,16 +166,16 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id')
     
     if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
     
     await prisma.accessory.delete({
       where: { id },
     })
     
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error deleting accessory:', error)
-    return NextResponse.json({ error: 'Failed to delete accessory' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete accessory' }, { status: 500, headers: corsHeaders })
   }
 }

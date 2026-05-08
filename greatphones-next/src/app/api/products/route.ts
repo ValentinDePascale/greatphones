@@ -6,14 +6,16 @@ import {
   formatZodError 
 } from '@/lib/validations'
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
+    headers: corsHeaders,
   })
 }
 
@@ -46,10 +48,10 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     })
     
-    return NextResponse.json(products)
+    return NextResponse.json(products, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching products:', error)
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -92,10 +94,10 @@ export async function POST(request: Request) {
       },
     })
     
-    return NextResponse.json(newProduct, { status: 201 })
+    return NextResponse.json(newProduct, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating product:', error)
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create product' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -105,7 +107,7 @@ export async function PUT(request: Request) {
     const id = searchParams.get('id')
     
     if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
     
     const body = await request.json()
@@ -113,7 +115,7 @@ export async function PUT(request: Request) {
     // Validar body (partial para updates)
     const validation = ProductUpdateSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
     }
     
     const updatedProduct = await prisma.product.update({
@@ -143,10 +145,10 @@ export async function PUT(request: Request) {
       },
     })
     
-    return NextResponse.json(updatedProduct)
+    return NextResponse.json(updatedProduct, { headers: corsHeaders })
   } catch (error) {
     console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500, headers: corsHeaders })
   }
 }
 
@@ -156,7 +158,7 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id')
     
     if (!id) {
-      return NextResponse.json({ error: 'ID requerido' }, { status: 400 })
+      return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
     
     await prisma.$transaction([
@@ -165,9 +167,9 @@ export async function DELETE(request: Request) {
       prisma.product.delete({ where: { id } }),
     ])
     
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Failed to delete product', details: (error as Error).message }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to delete product', details: (error as Error).message }, { status: 500, headers: corsHeaders })
   }
 }
