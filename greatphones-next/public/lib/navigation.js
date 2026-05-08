@@ -583,8 +583,9 @@ function loadEditProfile(){
   if(emailEl)emailEl.value=currentUser.email||'';
   if(dniEl)dniEl.value=currentUser.dni||'';
   if(factPhoneEl)factPhoneEl.value=currentUser.phone||'';
-  if(calleEl)calleEl.value=currentUser.calle||'';
-  if(numeroEl)numeroEl.value=currentUser.numero||'';
+  var dirParts=(currentUser.direccion||'').split(' ');
+  if(calleEl)calleEl.value=dirParts.slice(0,-1).join(' ')||'';
+  if(numeroEl)numeroEl.value=dirParts[dirParts.length-1]||'';
   if(pisoEl)pisoEl.value=currentUser.piso||'';
   if(cpEl)cpEl.value=currentUser.cp||'';
   if(ciudadEl)ciudadEl.value=currentUser.ciudad||'';
@@ -625,13 +626,14 @@ function saveEditProfile(){
   var ciudadEl=document.getElementById('editProfileCiudad');
   var provinciaEl=document.getElementById('editProfileProvincia');
   var fullName=(nameEl?nameEl.value:'')+' '+(lastnameEl?lastnameEl.value:'');
-  var direccion=(calleEl?calleEl.value:'')+' '+(numeroEl?numeroEl.value:'')+' '+(pisoEl?pisoEl.value:'').trim();
+  var direccion=(calleEl?calleEl.value:'')+' '+(numeroEl?numeroEl.value:'').trim();
   var payload={
     userId:currentUser.id,
     name:fullName.trim(),
     phone:phoneEl?phoneEl.value:currentUser.phone,
     dni:dniEl?dniEl.value:currentUser.dni,
     direccion:direccion.trim()||undefined,
+    piso:pisoEl?pisoEl.value:currentUser.piso,
     cp:cpEl?cpEl.value:currentUser.cp,
     ciudad:ciudadEl?ciudadEl.value:currentUser.ciudad,
     provincia:provinciaEl?provinciaEl.value:currentUser.provincia

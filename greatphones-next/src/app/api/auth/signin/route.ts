@@ -46,6 +46,12 @@ export async function POST(request: Request) {
           email: user.email,
           name: user.name,
           phone: user.phone,
+          dni: user.dni,
+          direccion: user.direccion,
+          piso: user.piso,
+          cp: user.cp,
+          provincia: user.provincia,
+          ciudad: user.ciudad,
           role: user.role,
         }
       }, {
@@ -76,6 +82,12 @@ export async function POST(request: Request) {
         email: user.email,
         name: user.name,
         phone: user.phone,
+        dni: user.dni,
+        direccion: user.direccion,
+        piso: user.piso,
+        cp: user.cp,
+        provincia: user.provincia,
+        ciudad: user.ciudad,
         role: user.role,
       }
     }, {

@@ -685,10 +685,13 @@
 
 <!-- ============================= PAGE: FAVORITOS ============================= -->
 <div class="page" id="p-favoritos" style="background:var(--cream);min-height:100vh">
-  <div style="max-width:1240px;margin:0 auto">
-    <div class="shop-hdr" style="background:transparent"><h1 class="shop-h" style="font-family:'Playfair Display',Georgia,serif">Mis favoritos</h1><p class="shop-s" id="favCount">0 guardados</p></div>
-    <div id="favGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;padding:1rem"></div>
-    <div id="favEmpty" style="text-align:center;padding:3rem 1rem">
+  <div style="max-width:1240px;margin:0 auto;padding:2rem 1rem 0">
+    <div style="margin-bottom:1.5rem">
+      <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--dk);margin-bottom:4px">Mis Favoritos</h1>
+      <p style="font-size:13px;color:var(--gray)" id="favCount">0 guardados</p>
+    </div>
+    <div id="favGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px"></div>
+    <div id="favEmpty" style="display:none;text-align:center;padding:3rem 1rem">
       <div style="font-size:44px;margin-bottom:.875rem">&#9825;</div>
       <div style="font-family:'Playfair Display',Georgia,serif;font-size:19px;margin-bottom:.4rem">Nada guardado aun</div>
       <p style="font-size:11px;color:var(--gray);line-height:1.6">Toca el corazon en cualquier producto para guardarlo aca.</p>
