@@ -1,5 +1,5 @@
 // =========== RENDER ===========
-var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones.onrender.com');
+var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':'https://greatphones-api.onrender.com');
 var PRODUCTS=[];
 var currentProd=null;
 var currentAcc=null;
