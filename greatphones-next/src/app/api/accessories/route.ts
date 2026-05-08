@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     // Validar body
     const validation = AccessoryCreateSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
     }
     
     console.log('Creating accessory with data:', body)
