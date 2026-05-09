@@ -1098,7 +1098,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
