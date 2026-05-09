@@ -83,7 +83,7 @@ function cartTotal(){
     var a=getById(window.ACCS,item.id);
     if(a){
       var now=new Date();
-      var isPromo=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+      var isPromo=a.isOffer&&a.discount>0;
       var price=isPromo?Math.round(a.price-a.price*a.discount/100):a.price;
       return sum+(price*item.qty);
     }
@@ -110,7 +110,7 @@ function renderCartBody(){
     var p=getById(PRODUCTS,item.id);
     if(p){
       var now=new Date();
-      var isPromo=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+      var isPromo=p.isOffer&&p.discount>0;
       var finalPrice=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>';
       var priceHtml=isPromo?
@@ -138,7 +138,7 @@ function renderCartBody(){
     var a=getById(window.ACCS,item.id);
     if(!a)return '';
     var now2=new Date();
-    var isPromo2=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now2)&&(!a.offerStart||new Date(a.offerStart)<=now2);
+    var isPromo2=a.isOffer&&a.discount>0;
     var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
     var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
     var priceHtml2=isPromo2?

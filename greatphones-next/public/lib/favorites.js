@@ -87,7 +87,7 @@ function renderFavGrid(){
       var isAcc=!isProd||(item.category&&!item.condition);
       if(isAcc){
         var now=new Date();
-        var isPromo=item.isOffer&&(!item.offerEnd||new Date(item.offerEnd)>now)&&(!item.offerStart||new Date(item.offerStart)<=now);
+        var isPromo=item.isOffer&&item.discount>0;
         var finalPrice=isPromo?Math.round(item.price-item.price*item.discount/100):item.price;
         var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
@@ -109,7 +109,7 @@ function renderFavGrid(){
           '</div>';
       }else{
         var now2=new Date();
-        var isPromo2=item.isOffer&&(!item.offerEnd||new Date(item.offerEnd)>now2)&&(!item.offerStart||new Date(item.offerStart)<=now2);
+        var isPromo2=item.isOffer&&item.discount>0;
         var finalPrice2=isPromo2?Math.round(item.price-item.price*item.discount/100):item.price;
         var cuota2=Math.round(finalPrice2/12);
         var imgHtml2=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">\u{1F4F1}</span>';

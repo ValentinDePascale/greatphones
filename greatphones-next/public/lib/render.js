@@ -178,7 +178,7 @@ function renderGrid(gid,prods){
   if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray);font-size:12px">No hay productos.</div>';return;}
   var now=new Date();
   grid.innerHTML=prods.map(function(p){
-    var isPromoActive=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+    var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
     var isOutOfStock=p.stock===0;
@@ -220,7 +220,7 @@ function renderHomeRail(){
   var items=sorted.slice(0,8);
   var now=new Date();
   rail.innerHTML=items.map(function(p){
-    var isPromoActive=p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+    var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var isOutOfStock=p.stock===0;
     var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
@@ -272,7 +272,7 @@ function renderOfferStrip(){
   if(!strip)return;
   var now=new Date();
   var offers=PRODUCTS.filter(function(p){
-    return p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now)&&(!p.offerStart||new Date(p.offerStart)<=now);
+    return p.isOffer&&p.discount>0;
   });
   if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';return;}
   strip.innerHTML=offers.map(function(p){
@@ -357,9 +357,8 @@ function renderShopGrid(){
 function renderOfertasGrid(){
   var grid=document.getElementById('ofertasGrid');
   if(!grid)return;
-  var now=new Date();
-  var offers=PRODUCTS.filter(function(p){return p.isOffer&&(!p.offerEnd||new Date(p.offerEnd)>now);});
-  var accOffers=(window.ACCS||[]).filter(function(a){return a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now);});
+  var offers=PRODUCTS.filter(function(p){return p.isOffer;});
+  var accOffers=(window.ACCS||[]).filter(function(a){return a.isOffer;});
   var allOffers=offers.concat(accOffers);
   renderGrid('ofertasGrid',allOffers);
 }
@@ -392,7 +391,7 @@ function renderAccGrid(){
   }
   grid.innerHTML=accs.map(function(a){
     var now=new Date();
-    var isPromoActive=a.isOffer&&(!a.offerEnd||new Date(a.offerEnd)>now)&&(!a.offerStart||new Date(a.offerStart)<=now);
+    var isPromoActive=a.isOffer&&a.discount>0;
     var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
     var isOutOfStock=a.stock===0;
     var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'📦')+'</span>';
@@ -422,7 +421,7 @@ function openAccDetail(id){
   detailBackTarget='accesorios';
   currentAcc=getById(window.ACCS,id);if(!currentAcc)return;
   var now=new Date();
-  var isPromoActive=currentAcc.isOffer&&(!currentAcc.offerEnd||new Date(currentAcc.offerEnd)>now)&&(!currentAcc.offerStart||new Date(currentAcc.offerStart)<=now);
+  var isPromoActive=currentAcc.isOffer&&currentAcc.discount>0;
   var finalPrice=isPromoActive?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   var cuota12=Math.round(finalPrice/12);
 
@@ -479,7 +478,7 @@ function openDetail(id){
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
   currentProd=getById(PRODUCTS,id);if(!currentProd)return;
   var now=new Date();
-  var isPromoActive=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
+  var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
   var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
   var cuota12=Math.round(finalPrice/12);
 
@@ -604,12 +603,12 @@ function updDetTotal(){
   var total=0;
   if(currentProd){
     var now=new Date();
-    var isPromo=currentProd.isOffer&&(!currentProd.offerEnd||new Date(currentProd.offerEnd)>now)&&(!currentProd.offerStart||new Date(currentProd.offerStart)<=now);
+    var isPromo=currentProd.isOffer&&currentProd.discount>0;
     var base=isPromo?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
     total=base+detWMult+detDExtra;
   }else if(currentAcc){
     var now2=new Date();
-    var isPromo2=currentAcc.isOffer&&(!currentAcc.offerEnd||new Date(currentAcc.offerEnd)>now2)&&(!currentAcc.offerStart||new Date(currentAcc.offerStart)<=now2);
+    var isPromo2=currentAcc.isOffer&&currentAcc.discount>0;
     total=isPromo2?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   }
   var totalEl=document.getElementById('detTotal');
@@ -1225,11 +1224,6 @@ function renderAdminContent(tab){
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
       '</div>'+
       
-      '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Inicio</label><input class="inp-f" id="promoStart" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Fin</label><input class="inp-f" id="promoEnd" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
-      '</div>'+
-      
       '<div style="margin-bottom:1rem">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">'+
           '<h4 style="font-size:18px;font-weight:600">Seleccionar Productos</h4>'+
@@ -1504,8 +1498,6 @@ function selectAllPromo(selectAll){
 }
 function applyPromo(){
   var discount=parseInt(document.getElementById('promoDiscount').value)||0;
-  var start=document.getElementById('promoStart').value;
-  var end=document.getElementById('promoEnd').value;
   if(discount<=0){alert('Ingresa un descuento mayor a 0');return;}
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
   if(checkboxes.length===0){alert('Selecciona al menos un producto');return;}
@@ -1520,7 +1512,7 @@ function applyPromo(){
     promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({discount:discount,isOffer:discount>0,offerStart:start||null,offerEnd:end||null})
+      body:JSON.stringify({discount:discount,isOffer:discount>0})
     }));
   });
   Promise.all(promises).then(function(){
@@ -1543,20 +1535,16 @@ function renderActivePromos(){
   var allOffers=[];
   if(filterType==='todos'||filterType==='productos'){
     PRODUCTS.filter(function(p){return p.isOffer&&p.discount>0;}).forEach(function(p){
-      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,offerStart:p.offerStart,offerEnd:p.offerEnd,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'\uD83D\uDCF1'});
+      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'\uD83D\uDCF1'});
     });
   }
   if(filterType==='todos'||filterType==='accesorios'){
     (window.ACCS||[]).filter(function(a){return a.isOffer&&a.discount>0;}).forEach(function(a){
-      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,offerStart:a.offerStart,offerEnd:a.offerEnd,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'\uD83D\uDCE6'});
+      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'\uD83D\uDCE6'});
     });
   }
   var offers=allOffers.filter(function(p){
-    var endDate=p.offerEnd?new Date(p.offerEnd):null;
-    var isActive=!endDate||endDate>now;
     if(filterBrand&&p.brand!==filterBrand)return false;
-    if(filterStatus==='activa'&&!isActive)return false;
-    if(filterStatus==='programada'&&isActive)return false;
     return true;
   });
   
@@ -1589,10 +1577,6 @@ function renderActivePromos(){
     return;
   }
   tbody.innerHTML+=offers.map(function(p){
-    var endDateVal=p.offerEnd?new Date(p.offerEnd):null;
-    var isActive=!endDateVal||endDateVal>now;
-    var startDate=p.offerStart?new Date(p.offerStart).toLocaleDateString('es-AR'):'—';
-    var endDate=p.offerEnd?new Date(p.offerEnd).toLocaleDateString('es-AR'):'—';
     var chkVal=p.type==='accesorio'?'acc-'+p.id:p.id;
     return'<tr onclick="togglePromoRow(\''+chkVal+'\')" style="border-top:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
       '<td style="padding:12px;width:40px">'+
@@ -1609,8 +1593,7 @@ function renderActivePromos(){
       '<td style="padding:12px"><span style="font-size:10px;font-weight:600;background:var(--cream2);padding:4px 10px;border-radius:20px">'+p.brand+'</span></td>'+
       '<td style="padding:12px"><span style="font-size:14px;font-weight:700;color:var(--orange)">-'+p.discount+'%</span></td>'+
       '<td style="padding:12px">'+
-        '<div style="font-size:11px;font-weight:500">'+startDate+' — '+endDate+'</div>'+
-        '<div style="font-size:10px;font-weight:700;color:'+(isActive?'var(--green)':'var(--gray)')+';display:flex;align-items:center;gap:4px;margin-top:2px"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>'+(isActive?'ACTIVA':'PROGRAMADA')+'</div>'+
+        '<div style="font-size:10px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>ACTIVA</div>'+
       '</td>'+
     '</tr>';
   }).join('');
@@ -1622,7 +1605,7 @@ function removePromo(id){
   fetch(API_URL+endpoint,{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
+    body:JSON.stringify({discount:0,isOffer:false})
   }).then(function(){
     loadProducts();
     loadAccessories();
@@ -1644,7 +1627,7 @@ function deleteSelectedPromos(){
     promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({discount:0,isOffer:false,offerStart:null,offerEnd:null})
+      body:JSON.stringify({discount:0,isOffer:false})
     }));
   });
   Promise.all(promises).then(function(){
