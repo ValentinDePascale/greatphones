@@ -254,6 +254,7 @@ function escapeHtml(text){
 }
 
 // =========== ADMIN CHAT ===========
+var adminActiveConvId=null;
 function loadAdminConversations(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
   fetch(API_URL+'/api/admin/conversations')
@@ -276,7 +277,8 @@ function renderAdminConvList(convs){
     var lastMsg=c.messages&&c.messages[0]?c.messages[0].text||'\u{1F4F7}':''; 
     var time=c.lastMsgAt?timeAgo(new Date(c.lastMsgAt)):'Sin mensajes';
     var unreadBadge=c.unread>0?'<span style="background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+c.unread+'</span>':'';
-    return '<div class="conv-item'+(c.id===userConvId?' act-conv':'')+'" onclick="openAdminConv(\''+c.id+'\')" style="cursor:pointer;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;transition:background .15s" onmouseover="this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.background=\'\'">'+
+    var isActive=c.id===adminActiveConvId;
+    return '<div class="conv-item'+(isActive?' act-conv':'')+'" onclick="openAdminConv(\''+c.id+'\')" style="cursor:pointer;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;transition:background .15s;background:'+(isActive?'rgba(255,107,44,.05)':'')+'" onmouseover="this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.background=\''+(isActive?'rgba(255,107,44,.05)':'')+'\'">'+
       '<div style="width:44px;height:44px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">\u{1F464}</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'+
@@ -291,10 +293,12 @@ function renderAdminConvList(convs){
 }
 
 function openAdminConv(id){
+  adminActiveConvId=id;
   userConvId=id;
   loadMessages(id,true);
   markAsRead(id);
   if(chatSocket)chatSocket.emit('joinConversation',id);
+  renderAdminConvList(window._adminConvs);
   
   var header=document.getElementById('adminChatHeader');
   if(header){
@@ -316,6 +320,7 @@ function closeAdminConv(id){
   .then(function(r){return r.json();})
   .then(function(){
     showToast('Conversaci\u00F3n cerrada');
+    adminActiveConvId=null;
     loadAdminConversations();
   })
   .catch(function(e){console.error('Error closing conversation:',e);});

@@ -1091,6 +1091,7 @@ function renderAdminContent(tab){
   var el=document.getElementById('adminContent');
   if(!el)return;
   window.currentAdminTab=tab;
+  if(tab!=='chats'){window.adminActiveConvId=null;}
   
   if(tab==='acc'&&(!window.ACCS||window.ACCS.length===0)){
     loadAccessories();
