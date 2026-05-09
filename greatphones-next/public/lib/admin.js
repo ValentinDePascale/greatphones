@@ -225,12 +225,50 @@ function renderAccAdditionalImagesList(){
 }
 
 function deleteAccessory(id){
-  if(!confirm('Eliminar accesorio?'))return;
-  fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
-    showToast('Accesorio eliminado');
-    loadAccessories();
-    loadAdminAccessories();
-  }).catch(function(){alert('Error eliminando');});
+  var a=getById(window.ACCS||[],id);
+  var aname=a?a.name:'este accesorio';
+  var modal=document.getElementById('deleteAccessoryModal');
+  if(!modal){
+    var m=document.createElement('div');
+    m.id='deleteAccessoryModal';
+    m.style.cssText='display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease';
+    m.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)" onclick="closeDeleteAccessoryModal()"></div>'+
+      '<div style="position:relative;background:#fff;border-radius:20px;width:min(400px,90%);padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;transform:scale(.95);transition:transform .3s ease">'+
+      '<div style="width:64px;height:64px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">'+
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>'+
+      '</div>'+
+      '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:20px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Eliminar accesorio</h3>'+
+      '<p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem;line-height:1.5">Estas por eliminar <strong style="color:var(--dk)" id="deleteAccessoryName">'+aname+'</strong>. Esta accion no se puede deshacer.</p>'+
+      '<div style="display:flex;gap:10px">'+
+      '<button onclick="closeDeleteAccessoryModal()" style="flex:1;padding:12px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s">Cancelar</button>'+
+      '<button id="btnConfirmDeleteAccessory" style="flex:1;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 12px rgba(239,68,68,.3)">Eliminar</button>'+
+      '</div>'+
+      '</div>';
+    document.body.appendChild(m);
+    modal=m;
+  }
+  document.getElementById('deleteAccessoryName').textContent=aname;
+  document.getElementById('btnConfirmDeleteAccessory').onclick=function(){
+    closeDeleteAccessoryModal();
+    fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
+      showToast('Accesorio eliminado');
+      loadAccessories();
+      loadAdminAccessories();
+    }).catch(function(){showToast('Error eliminando');});
+  };
+  modal.style.display='flex';
+  modal.offsetHeight;
+  setTimeout(function(){
+    modal.style.opacity='1';
+    modal.querySelector('div:nth-child(2)').style.transform='scale(1)';
+  },10);
+}
+function closeDeleteAccessoryModal(){
+  var modal=document.getElementById('deleteAccessoryModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.95)';
+  setTimeout(function(){modal.style.display='none';},300);
 }
 
 function resetAccessoryForm(){
@@ -278,17 +316,53 @@ function editProduct(id){
 }
 
 function deleteProduct(id){
-  if(!confirm('Eliminar producto? Esta accion no se puede deshacer.'))return;
   var p=getById(PRODUCTS,id);
   var pname=p?p.name:'este producto';
-  fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){
-    if(!r.ok)throw new Error('Error '+r.status);
-    return r.json();
-  }).then(function(){
-    showToast('Producto eliminado: '+pname);
-    loadProducts();
-    loadAdminProducts();
-  }).catch(function(e){alert('Error eliminando: '+e.message);});
+  var modal=document.getElementById('deleteProductModal');
+  if(!modal){
+    var m=document.createElement('div');
+    m.id='deleteProductModal';
+    m.style.cssText='display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease';
+    m.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)" onclick="closeDeleteProductModal()"></div>'+
+      '<div style="position:relative;background:#fff;border-radius:20px;width:min(400px,90%);padding:2rem;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;transform:scale(.95);transition:transform .3s ease">'+
+      '<div style="width:64px;height:64px;background:linear-gradient(135deg,#fee2e2,#fecaca);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">'+
+      '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/></svg>'+
+      '</div>'+
+      '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:20px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Eliminar producto</h3>'+
+      '<p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem;line-height:1.5">Estas por eliminar <strong style="color:var(--dk)" id="deleteProductName">'+pname+'</strong>. Esta accion no se puede deshacer.</p>'+
+      '<div style="display:flex;gap:10px">'+
+      '<button onclick="closeDeleteProductModal()" style="flex:1;padding:12px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .15s">Cancelar</button>'+
+      '<button id="btnConfirmDeleteProduct" style="flex:1;padding:12px;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;box-shadow:0 4px 12px rgba(239,68,68,.3)">Eliminar</button>'+
+      '</div>'+
+      '</div>';
+    document.body.appendChild(m);
+    modal=m;
+  }
+  document.getElementById('deleteProductName').textContent=pname;
+  document.getElementById('btnConfirmDeleteProduct').onclick=function(){
+    closeDeleteProductModal();
+    fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){
+      if(!r.ok)throw new Error('Error '+r.status);
+      return r.json();
+    }).then(function(){
+      showToast('Producto eliminado: '+pname);
+      loadProducts();
+      loadAdminProducts();
+    }).catch(function(e){showToast('Error eliminando: '+e.message);});
+  };
+  modal.style.display='flex';
+  modal.offsetHeight;
+  setTimeout(function(){
+    modal.style.opacity='1';
+    modal.querySelector('div:nth-child(2)').style.transform='scale(1)';
+  },10);
+}
+function closeDeleteProductModal(){
+  var modal=document.getElementById('deleteProductModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.95)';
+  setTimeout(function(){modal.style.display='none';},300);
 }
 
 function renderDash(){notAvailable();}
