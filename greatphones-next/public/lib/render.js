@@ -31,6 +31,7 @@ function buildSpecsForProduct(p){
     if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
     if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
   }
+  if(p.stock!==undefined){var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F4E6}',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});}
   return specs;
 }
 
