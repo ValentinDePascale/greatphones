@@ -50,7 +50,6 @@ function openUserChat(){
   if(!currentUser){openLogin();return;}
   initChatSocket();
   getUserConversation();
-  setTimeout(function(){scrollToBottom();},200);
 }
 
 function getUserConversation(){
@@ -232,12 +231,7 @@ function handleTyping(){
 
 function scrollToBottom(){
   var list=document.getElementById('chatMsgList');
-  if(!list)return;
-  setTimeout(function(){
-    list.scrollTop=list.scrollHeight;
-    var lastMsg=list.lastElementChild;
-    if(lastMsg)lastMsg.scrollIntoView({behavior:'smooth',block:'end'});
-  },50);
+  if(list)list.scrollTop=list.scrollHeight;
 }
 
 function formatTime(d){

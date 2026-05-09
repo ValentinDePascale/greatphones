@@ -1517,8 +1517,8 @@
 </div>
 
 <!-- ============================= PAGE: CHATS ============================= -->
-<div class="page" id="p-chats" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%)">
-  <div style="max-width:720px;margin:0 auto;height:100dvh;height:100vh;display:flex;flex-direction:column;position:relative">
+<div class="page" id="p-chats" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);position:fixed;inset:0;z-index:100">
+  <div style="max-width:720px;margin:0 auto;height:100%;display:flex;flex-direction:column">
     <!-- Header -->
     <div style="background:#fff;border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0">
       <button onclick="nav('home')" style="background:none;border:none;cursor:pointer;padding:8px;border-radius:10px;transition:background .15s;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
@@ -1550,7 +1550,7 @@
           &#128247;
         </button>
         <input type="file" id="chatImgIn" accept="image/*" style="display:none" onchange="sendChatImg(this)">
-        <input class="msg-inp" id="chatInput" type="text" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMessage()" onfocus="scrollToBottom()" style="flex:1;background:none;border:none;font-size:14px;color:var(--dk);outline:none;padding:4px">
+        <input class="msg-inp" id="chatInput" type="text" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMessage()" style="flex:1;background:none;border:none;font-size:14px;color:var(--dk);outline:none;padding:4px">
         <button class="msg-send" onclick="sendMessage()" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(255,107,44,.3)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
           &#10148;
         </button>
