@@ -82,7 +82,7 @@ function createDefaultConversation(){
   .then(function(r){return r.json();})
   .then(function(conv){
     userConvId=conv.id;
-    document.getElementById('chatMsgList').innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">\u{1F4AC}</p><p style="font-size:14px;font-family:\'Playfair Display\',serif">Hola! Como podemos ayudarte?</p><p style="font-size:12px;margin-top:.5rem">Escribe tu consulta abajo</p></div>';
+    document.getElementById('chatMsgList').innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--gray)"><div style="width:80px;height:80px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:36px">\u{1F4AC}</div><p style="font-size:16px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.5rem">Hola! Como podemos ayudarte?</p><p style="font-size:13px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
     if(chatSocket)chatSocket.emit('joinConversation',userConvId);
   })
   .catch(function(e){console.error('Error creating conversation:',e);});
@@ -102,7 +102,7 @@ function renderMsgs(msgs){
   var list=document.getElementById('chatMsgList');
   if(!list)return;
   if(!msgs||msgs.length===0){
-    list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">\u{1F4AC}</p><p style="font-size:14px;font-family:\'Playfair Display\',serif">Hola! Como podemos ayudarte?</p><p style="font-size:12px;margin-top:.5rem">Escribe tu consulta abajo</p></div>';
+    list.innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--gray)"><div style="width:80px;height:80px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:36px">\u{1F4AC}</div><p style="font-size:16px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.5rem">Hola! Como podemos ayudarte?</p><p style="font-size:13px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
     return;
   }
   list.innerHTML=msgs.map(function(m){
@@ -110,16 +110,15 @@ function renderMsgs(msgs){
     var time=formatTime(new Date(m.createdAt));
     var content='';
     if(m.imageUrl){
-      content='<img src="'+m.imageUrl+'" style="max-width:250px;border-radius:12px;cursor:pointer" onclick="openLightbox(\''+m.imageUrl+'\')">';
+      content='<img src="'+m.imageUrl+'" class="msg-img" onclick="openLightbox(\''+m.imageUrl+'\')">';
       if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+m.imageCaption+'</p>';
     }else{
-      content='<p style="font-size:14px;line-height:1.5">'+escapeHtml(m.text||'')+'</p>';
+      content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
     }
-    return '<div class="msg-wrap'+(isMine?' mine':'')+'" style="display:flex;'+(isMine?'flex-direction:row-reverse':'')+';gap:8px;margin-bottom:12px">'+
-      (!isMine?'<div style="width:28px;height:28px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">GP</div>':'')+
-      '<div class="bubble'+(isMine?' mine':'')+'" style="max-width:70%;padding:10px 14px;border-radius:16px;'+(isMine?'background:var(--orange);color:#fff;border-bottom-right-radius:4px':'background:#fff;border:1px solid var(--border);border-bottom-left-radius:4px')+'">'+
+    return '<div class="msg-wrap'+(isMine?' mine':'')+'">'+
+      '<div class="msg-bubble">'+
         content+
-        '<div style="font-size:10px;'+(isMine?'color:rgba(255,255,255,.7)':'color:var(--gray)')+';margin-top:4px;text-align:'+(isMine?'right':'left')+'">'+time+'</div>'+
+        '<div class="msg-time">'+time+'</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -132,16 +131,15 @@ function appendMessageToChat(msg){
   var time=formatTime(new Date(msg.createdAt));
   var content='';
   if(msg.imageUrl){
-    content='<img src="'+msg.imageUrl+'" style="max-width:250px;border-radius:12px;cursor:pointer" onclick="openLightbox(\''+msg.imageUrl+'\')">';
+    content='<img src="'+msg.imageUrl+'" class="msg-img" onclick="openLightbox(\''+msg.imageUrl+'\')">';
     if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+msg.imageCaption+'</p>';
   }else{
-    content='<p style="font-size:14px;line-height:1.5">'+escapeHtml(msg.text||'')+'</p>';
+    content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
   }
-  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" style="display:flex;'+(isMine?'flex-direction:row-reverse':'')+';gap:8px;margin-bottom:12px;animation:msgIn .3s ease">'+
-    (!isMine?'<div style="width:28px;height:28px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0">GP</div>':'')+
-    '<div class="bubble'+(isMine?' mine':'')+'" style="max-width:70%;padding:10px 14px;border-radius:16px;'+(isMine?'background:var(--orange);color:#fff;border-bottom-right-radius:4px':'background:#fff;border:1px solid var(--border);border-bottom-left-radius:4px')+'">'+
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble">'+
       content+
-      '<div style="font-size:10px;'+(isMine?'color:rgba(255,255,255,.7)':'color:var(--gray)')+';margin-top:4px;text-align:'+(isMine?'right':'left')+'">'+time+'</div>'+
+      '<div class="msg-time">'+time+'</div>'+
     '</div>'+
   '</div>';
   list.insertAdjacentHTML('beforeend',html);
