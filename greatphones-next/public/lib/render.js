@@ -316,7 +316,7 @@ function renderShopGrid(){
     prods=prods.filter(function(p){return filterState.conditions.indexOf(p.condition)!==-1;});
   }
   if(filterState.storage.length>0){
-    prods=prods.filter(function(p){return filterState.storage.some(function(s){return p.sub&&p.sub.indexOf(s)!==-1;});});
+    prods=prods.filter(function(p){return filterState.storage.some(function(s){return (p.storage&&p.storage.indexOf(s)!==-1)||(p.sub&&p.sub.indexOf(s)!==-1);});});
   }
   if(filterState.ram.length>0){
     prods=prods.filter(function(p){return p.ram&&filterState.ram.indexOf(p.ram)!==-1;});
