@@ -283,7 +283,6 @@ function renderOfferStrip(){
     var isFav=favorites.indexOf(p.id)!==-1;
     return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
-      '<div style="position:absolute;top:16px;left:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</div>'+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
       imgHtml+
       '</div>'+
