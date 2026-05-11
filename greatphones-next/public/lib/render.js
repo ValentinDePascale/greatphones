@@ -199,11 +199,8 @@ function renderGrid(gid,prods){
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      (isPromoActive?'<span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'')+
-      '<div style="display:flex;align-items:center;gap:8px">'+
+      (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span></div>':'')+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      (isPromoActive?'<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span>':'')+
-      '</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
       '</div>'+
@@ -263,11 +260,8 @@ function renderHomeRail(){
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+(p.sub||p.brand||'')+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      priceHtml+
-      '<div style="display:flex;align-items:center;gap:8px">'+
+      (priceHtml?'<div style="display:flex;align-items:center;gap:8px">'+priceHtml+discBadge+'</div>':'')+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      discBadge+
-      '</div>'+
       '</div>'+
       actionHtml+
       '</div>'+
@@ -299,7 +293,7 @@ function renderOfferStrip(){
       '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      '<span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>'+
+      '<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span></div>'+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(fp)+'</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       '</div>'+
