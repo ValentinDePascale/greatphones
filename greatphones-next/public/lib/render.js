@@ -185,11 +185,11 @@ function renderGrid(gid,prods){
     var isOutOfStock=p.stock===0;
     var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
     var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
-    var discBadge=isPromoActive?'<span style="position:absolute;top:16px;right:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</span>':'';
+    var discBadge='';
     var isFav=isFavorite(p.id);
     return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
-      badge+discBadge+
+      badge+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
       imgHtml+
       '</div>'+
@@ -200,7 +200,10 @@ function renderGrid(gid,prods){
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
       (isPromoActive?'<span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'')+
+      '<div style="display:flex;align-items:center;gap:8px">'+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
+      (isPromoActive?'<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span>':'')+
+      '</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
       '</div>'+
@@ -243,14 +246,14 @@ function renderHomeRail(){
     var imgWrapStyle='position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'');
     var bodyStyle='padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'');
     var favBg=isFav?'background:#fff0ec;color:var(--orange)':'';
-    var discBadge=isPromoActive?'<span style="position:absolute;top:16px;right:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)">-'+p.discount+'%</span>':'';
     var favIcon=isFav?'\u2665':'\u2661';
     var priceHtml=isPromoActive?'<span style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'';
+    var discBadge=isPromoActive?'<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span>':'';
     var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
     var onclick=isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"';
     return '<article class="'+cardClass+'"'+onclick+' style="'+cardStyle+'">'+
       '<div style="'+imgWrapStyle+'">'+
-      badge+discBadge+
+      badge+
       '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+favIcon+'</button>'+
       imgHtml+
       '</div>'+
@@ -261,7 +264,10 @@ function renderHomeRail(){
       '</div>'+
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
       priceHtml+
+      '<div style="display:flex;align-items:center;gap:8px">'+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
+      discBadge+
+      '</div>'+
       '</div>'+
       actionHtml+
       '</div>'+
