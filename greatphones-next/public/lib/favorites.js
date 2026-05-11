@@ -53,19 +53,37 @@ function isFavorite(id){
 }
 function toggleFavFromCard(id){
   var idx=favorites.indexOf(id);
-  if(idx===-1){
-    favorites.push(id);
-  }else{
-    favorites.splice(idx,1);
-  }
+  var isNowFav=idx===-1;
+  if(isNowFav){favorites.push(id);}else{favorites.splice(idx,1);}
   saveFavorites();
   updFavBadge();
+  
+  // Immediate UI update for better UX
+  var btns=document.querySelectorAll('.pcard-fav');
+  for(var i=0;i<btns.length;i++){
+    var btn=btns[i];
+    var onclickAttr=btn.getAttribute('onclick');
+    if(onclickAttr&&onclickAttr.indexOf("'"+id+"'")!==-1){
+      if(isNowFav){
+        btn.classList.add('on');
+        btn.innerHTML='\u2665';
+        btn.style.animation='none';
+        btn.offsetHeight;
+        btn.style.animation='favPop 0.3s ease';
+      }else{
+        btn.classList.remove('on');
+        btn.innerHTML='\u2661';
+      }
+      break;
+    }
+  }
+  
   renderHomeRail();
   renderShopGrid();
   renderOfertasGrid();
   renderFeaturedGrid();
   renderAccGrid();
-  if(document.getElementById('p-favoritos').classList.contains('act')){
+  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){
     renderFavGrid();
   }
 }
