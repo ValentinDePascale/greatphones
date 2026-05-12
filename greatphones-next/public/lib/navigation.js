@@ -77,7 +77,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product'};
+  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -108,28 +108,10 @@ function setCN(id){
   if(el)el.classList.add('act');
 }
 function openLogin(){
-  var overlay=document.getElementById('loginOverlay');
-  if(overlay){
-    overlay.style.pointerEvents='auto';
-    overlay.querySelector('div').style.opacity='1';
-    overlay.querySelectorAll('div')[1].style.opacity='1';
-    overlay.querySelectorAll('div')[1].style.transform='translate(-50%,-50%) scale(1)';
-  }
+  nav('login');
 }
 function closeLogin(){
-  var overlay=document.getElementById('loginOverlay');
-  if(overlay){
-    overlay.style.pointerEvents='none';
-    overlay.querySelector('div').style.opacity='0';
-    overlay.querySelectorAll('div')[1].style.opacity='0';
-    overlay.querySelectorAll('div')[1].style.transform='translate(-50%,-50%) scale(.9)';
-  }
-  var signupStep1=document.getElementById('signupStep1');
-  var signupStep2=document.getElementById('signupStep2');
-  if(signupStep1)signupStep1.style.display='block';
-  if(signupStep2)signupStep2.style.display='none';
-  if(signupCodeTimer)clearInterval(signupCodeTimer);
-  signupTempData=null;
+  nav('home');
 }
 function showSignup(){
   closeLogin();
@@ -176,7 +158,7 @@ function showLoginError(msg){
 async function doLogin(){
   var email=document.getElementById('loginEmail').value;
   var password=document.getElementById('loginPassword').value;
-  if(!email||!password){showLoginError('Ingresa email y password');return;}
+  if(!email||!password){showLoginError('Ingresa email y contraseña');return;}
   showLoginError('');
   try{
     var res=await fetch(API_URL+'/api/auth/signin',{
@@ -188,7 +170,6 @@ async function doLogin(){
     if(data.error){
       if(data.needsVerification){
         registerTempData={email:email,password:password};
-        closeLogin();
         nav('register');
         showPageRegisterStep2(email);
         return;
@@ -196,12 +177,12 @@ async function doLogin(){
       showLoginError(data.error);return;
     }
     currentUser=data.user;
-    closeLogin();
     updateUserUI();
     localStorage.setItem('gp_user',JSON.stringify(currentUser));
     loadUserFavorites();
     initCart();
     loadProducts();
+    nav('home');
   }catch(e){showLoginError('Error de conexion');}
 }
 async function doSignup(){
@@ -714,13 +695,15 @@ function executeDeleteAccount(){
     doLogout();
   }).catch(function(){showToast('Error de conexion');});
 }
-function togglePassword(inputId,btnId){
+function togglePassword(inputId,btn){
   var input=document.getElementById(inputId);
   if(!input)return;
   if(input.type==='password'){
     input.type='text';
+    if(btn)btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
   }else{
     input.type='password';
+    if(btn)btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 }
 function checkPasswordStrength(){
@@ -810,6 +793,8 @@ function handleInitialRoute(){
   if(path==='checkout'){nav('checkout');return;}
   if(path==='terminos'){nav('terminos');return;}
   if(path==='privacidad'){nav('privacidad');return;}
+  if(path==='login'){nav('login');return;}
+  if(path==='register'){nav('register');return;}
   if(path.indexOf('detail/')===0){
     pendingDetailId=path.replace('detail/','');
     return;

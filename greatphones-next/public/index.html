@@ -1732,63 +1732,57 @@
   </div>
 </div>
 
-<!-- ===== LOGIN OVERLAY ===== -->
-<div id="loginOverlay" style="position:fixed;inset:0;z-index:900;pointer-events:none">
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);opacity:0;transition:opacity .25s" onclick="closeLogin()"></div>
-  <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);background:#fff;border-radius:24px;width:min(400px,90vw);opacity:0;transition:all .25s;box-shadow:0 25px 50px rgba(0,0,0,.25)">
-    <div style="padding:2rem 1.5rem 1.5rem;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <span style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700" id="loginTitle">Iniciar sesión</span>
-        <button onclick="closeLogin()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">×</button>
+<!-- ===== LOGIN PAGE ===== -->
+<div class="page" id="p-login" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%)">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem">
+    <div style="width:min(440px,100%);background:#fff;border-radius:24px;padding:2.5rem;box-shadow:0 20px 60px rgba(0,0,0,.08);border:1px solid var(--border)">
+      <!-- Header -->
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Bienvenido de vuelta</h1>
+        <p style="font-size:14px;color:var(--gray)">Inicia sesión para acceder a tu cuenta</p>
       </div>
-    </div>
-    <div style="padding:1.5rem">
+      
+      <!-- Form -->
       <div id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-        <input type="password" id="loginPassword" placeholder="Contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
-        <button onclick="doLogin()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Iniciar sesión</button>
-        <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">No tenes cuenta? <button onclick="closeLogin();showSignup()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Registrate</button></p>
-      </div>
-      <div id="signupForm" style="display:none">
-        <!-- Step 1: All data -->
-        <div id="signupStep1">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <input type="text" id="signupName" placeholder="Nombre" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="text" id="signupLastname" placeholder="Apellido" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          </div>
-          <input type="email" id="signupEmail" placeholder="Email" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-          <input type="tel" id="signupPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:12px;box-sizing:border-box">
-          <input type="password" id="signupPassword" placeholder="Contraseña (min 6 caracteres)" oninput="checkPasswordStrength2()" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:6px;box-sizing:border-box">
-        <div id="passwordStrength2" style="font-size:12px;font-weight:600;margin-bottom:4px"></div>
-        <div id="passwordMissing2" style="font-size:11px;margin-bottom:12px;color:var(--red)"></div>
-          <input type="password" id="signupConfirmPassword" placeholder="Confirmar contraseña" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:16px;box-sizing:border-box">
-          <div style="padding:12px;background:rgba(59,130,60,0.1);border-radius:12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start">
-            <span style="font-size:14px">✓</span>
-            <span style="font-size:11px;color:var(--green)">Con tu cuenta podrás comprar con garantía, cotizar tu equipo y acceder a precios exclusivos.</span>
-          </div>
-          <button onclick="initiateSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--green);color:#fff;font-size:14px;font-weight:700;cursor:pointer">Crear cuenta</button>
-          <p style="text-align:center;margin-top:16px;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="showLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
+        <div style="margin-bottom:1rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Email</label>
+          <input type="email" id="loginEmail" placeholder="tu@email.com" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
         </div>
-        <!-- Step 2: Verification code -->
-        <div id="signupStep2" style="display:none">
-          <p style="font-size:13px;color:var(--dk);text-align:center;margin-bottom:4px">Te enviamos un código a <span id="verifyEmailDisplay" style="font-weight:600"></span></p>
-          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="codeTimer" style="font-weight:700">05:00</span></p>
-          <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
-            <input type="text" id="v1" maxlength="1" oninput="moveToNext(this,'v2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700;outline:none">
-            <input type="text" id="v2" maxlength="1" oninput="moveToNext(this,'v3')" onkeydown="moveBack(event,'v1')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
-            <input type="text" id="v3" maxlength="1" oninput="moveToNext(this,'v4')" onkeydown="moveBack(event,'v2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
-            <input type="text" id="v4" maxlength="1" oninput="moveToNext(this,'v5')" onkeydown="moveBack(event,'v3')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
-            <input type="text" id="v5" maxlength="1" oninput="moveToNext(this,'v6')" onkeydown="moveBack(event,'v4')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
-            <input type="text" id="v6" maxlength="1" onkeydown="moveBack(event,'v5')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
-          </div>
-          <button onclick="verifyAndCompleteSignup()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Verificar y crear cuenta</button>
-          <div style="display:flex;gap:8px">
-            <button onclick="resendSignupCode()" style="flex:1;padding:10px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">Reenviar codigo</button>
-            <button onclick="showSignupStep1()" style="flex:1;padding:10px;background:none;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">¿Escribiste mal tu mail?</button>
+        
+        <div style="margin-bottom:1.5rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Contraseña</label>
+          <div style="position:relative">
+            <input type="password" id="loginPassword" placeholder="••••••••" style="width:100%;padding:14px 44px 14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            <button type="button" onclick="togglePassword('loginPassword',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:4px;color:var(--gray);font-size:18px" title="Mostrar/Ocultar contraseña">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
         </div>
+        
+        <div id="loginError" style="display:none;padding:12px;background:rgba(239,68,68,.08);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(239,68,68,.15)"></div>
+        
+        <button onclick="doLogin()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+          Iniciar sesión
+        </button>
+        
+        <div style="display:flex;align-items:center;gap:12px;margin:1.5rem 0">
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+          <span style="font-size:12px;color:var(--gray);font-weight:500">o continuá con</span>
+          <div style="flex:1;height:1px;background:var(--border)"></div>
+        </div>
+        
+        <button onclick="showToast('Google login próximamente')" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='#fff'">
+          <svg width="20" height="20" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+          Google
+        </button>
+        
+        <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--gray)">
+          No tenes cuenta? <button onclick="nav('register')" style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer">Registrate</button>
+        </p>
       </div>
-      <div id="loginError" style="display:none;padding:12px;background:rgba(255,0,0,.1);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:16px;text-align:center"></div>
     </div>
   </div>
 </div>
