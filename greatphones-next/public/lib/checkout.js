@@ -171,6 +171,12 @@ function openCheckout(){
     showToast('El carrito esta vacio');
     return;
   }
+  if(!currentUser){
+    showToast('Inicia sesion para continuar con la compra');
+    closeCart();
+    nav('login');
+    return;
+  }
   closeCart();
   nav('checkout');
 }

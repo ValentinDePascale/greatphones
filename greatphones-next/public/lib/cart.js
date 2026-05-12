@@ -183,6 +183,11 @@ function addToCartFromDetail(){
   }
 }
 function buyNow(){
+  if(!currentUser){
+    showToast('Inicia sesion para continuar con la compra');
+    nav('login');
+    return;
+  }
   if(currentProd){
     addToCart(currentProd.id);
   }else if(currentAcc){

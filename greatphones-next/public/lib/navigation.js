@@ -3,6 +3,7 @@ var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
   if(id==='cuenta'&&!currentUser){openLogin();return;}
+  if(id==='checkout'&&!currentUser){nav('login');return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
   if(id==='chats'&&currentUser&&currentUser.role==='ADMIN'){nav('admin');return;}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
