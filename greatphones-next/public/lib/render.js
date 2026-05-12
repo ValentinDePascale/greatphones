@@ -98,105 +98,162 @@ function loadDashboard(){
     if(!r.ok)throw new Error('Error '+r.status);
     return r.json();
   }).then(function(d){
-    var el=document.getElementById('kpi-revenue');if(el)el.textContent=fmt(d.revenue);
-    var el2=document.getElementById('kpi-revenue-change');if(el2)el2.textContent=(d.revenueChange>=0?'+':'')+d.revenueChange+'%';
-    var el3=document.getElementById('kpi-orders');if(el3)el3.textContent=d.orders;
-    var el4=document.getElementById('kpi-orders-change');if(el4)el4.textContent=(d.ordersChange>=0?'+':'')+d.ordersChange+'%';
-    var el5=document.getElementById('kpi-ticket');if(el5)el5.textContent=fmt(d.avgTicket);
-    var el6=document.getElementById('kpi-ticket-change');if(el6)el6.textContent=(d.ticketChange>=0?'+':'')+d.ticketChange+'%';
-    var el7=document.getElementById('kpi-users');if(el7)el7.textContent=d.newUsers;
-    var el8=document.getElementById('kpi-users-change');if(el8)el8.textContent=(d.usersChange>=0?'+':'')+d.usersChange+'%';
+    window._dashData=d;
+    renderDashStats();
+    renderDashRecentOrders(d);
+    renderDashTopProducts(d);
+    renderDashStockAlerts(d);
+  }).catch(function(e){
+    console.log('Dashboard error:',e);
+  });
+}
+
+function setDashView(view){
+  window.dashView=view;
+  var btnM=document.getElementById('dashTabMensual');
+  var btnA=document.getElementById('dashTabAnual');
+  var sel=document.getElementById('dashMonthSelect');
+  if(!btnM||!btnA||!sel)return;
+  
+  if(view==='mensual'){
+    btnM.style.background='var(--orange)';btnM.style.color='#fff';
+    btnA.style.background='transparent';btnA.style.color='var(--gray)';
+    sel.style.display='';
+  }else{
+    btnA.style.background='var(--orange)';btnA.style.color='#fff';
+    btnM.style.background='transparent';btnM.style.color='var(--gray)';
+    sel.style.display='none';
+  }
+  renderDashStats();
+}
+
+function updateDashMonth(month){
+  window.dashMonth=parseInt(month);
+  renderDashStats();
+}
+
+function renderDashStats(){
+  if(!window._dashData)return;
+  var d=window._dashData;
+  var stats;
+  var isMensual=window.dashView==='mensual';
+  
+  if(isMensual){
+    stats=d.monthlyStats[window.dashMonth];
+    var months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    document.getElementById('kpi-revenue-label').textContent='Ingresos ('+months[window.dashMonth]+')';
+    document.getElementById('kpi-orders-label').textContent='Pedidos ('+months[window.dashMonth]+')';
+    document.getElementById('kpi-ticket-label').textContent='Ticket Promedio ('+months[window.dashMonth]+')';
+    document.getElementById('kpi-users-label').textContent='Nuevos Usuarios ('+months[window.dashMonth]+')';
     
-    // Annual stats
-    if(d.annualStats){
-      var aEl=document.getElementById('kpi-annual-revenue');if(aEl)aEl.textContent=fmt(d.annualStats.revenue);
-      var aEl2=document.getElementById('kpi-annual-orders');if(aEl2)aEl2.textContent=d.annualStats.orders;
-      var aEl3=document.getElementById('kpi-annual-ticket');if(aEl3)aEl3.textContent=fmt(d.annualStats.avgTicket);
-      var aEl4=document.getElementById('kpi-annual-users');if(aEl4)aEl4.textContent=d.annualStats.newUsers;
-    }
+    // Show change indicators for mensual
+    document.getElementById('kpi-revenue-change-container').style.display='';
+    document.getElementById('kpi-orders-change-container').style.display='';
+    document.getElementById('kpi-ticket-change-container').style.display='';
+    document.getElementById('kpi-users-change-container').style.display='';
     
-    // Monthly table
-    var mTbody=document.getElementById('monthlyStatsBody');
-    if(mTbody&&d.monthlyStats){
-      var now=new Date();
-      var isCurrentMonth=function(m){return m.monthIndex===now.getMonth();};
-      mTbody.innerHTML=d.monthlyStats.map(function(m){
-        var isCurrent=isCurrentMonth(m);
-        return '<tr style="border-bottom:1px solid var(--border);'+(isCurrent?'background:rgba(255,107,44,.05)':'')+'">'+
-          '<td style="padding:10px 14px;font-size:13px;font-weight:'+(isCurrent?'700':'500')+';color:'+(isCurrent?'var(--orange)':'var(--dk)')+'">'+m.month+'</td>'+
-          '<td style="padding:10px 14px;font-size:13px;font-weight:600">'+fmt(m.revenue)+'</td>'+
-          '<td style="padding:10px 14px;font-size:13px">'+m.orders+'</td>'+
-          '<td style="padding:10px 14px;font-size:13px">'+fmt(m.avgTicket)+'</td>'+
-          '<td style="padding:10px 14px;font-size:13px">'+m.newUsers+'</td>'+
+    // Calculate changes vs previous month
+    var prevMonth=window.dashMonth>0?window.dashMonth-1:11;
+    var prevStats=d.monthlyStats[prevMonth];
+    var revChange=prevStats.revenue>0?Math.round(((stats.revenue-prevStats.revenue)/prevStats.revenue)*100):0;
+    var ordChange=prevStats.orders>0?Math.round(((stats.orders-prevStats.orders)/prevStats.orders)*100):0;
+    var tickChange=prevStats.avgTicket>0?Math.round(((stats.avgTicket-prevStats.avgTicket)/prevStats.avgTicket)*100):0;
+    var usrChange=prevStats.newUsers>0?Math.round(((stats.newUsers-prevStats.newUsers)/prevStats.newUsers)*100):0;
+    
+    document.getElementById('kpi-revenue-change').textContent=(revChange>=0?'+':'')+revChange+'% vs mes ant.';
+    document.getElementById('kpi-orders-change').textContent=(ordChange>=0?'+':'')+ordChange+'% vs mes ant.';
+    document.getElementById('kpi-ticket-change').textContent=(tickChange>=0?'+':'')+tickChange+'% vs mes ant.';
+    document.getElementById('kpi-users-change').textContent=(usrChange>=0?'+':'')+usrChange+'% vs mes ant.';
+  }else{
+    stats=d.annualStats;
+    var year=new Date().getFullYear();
+    document.getElementById('kpi-revenue-label').textContent='Ingresos Totales ('+year+')';
+    document.getElementById('kpi-orders-label').textContent='Pedidos Totales ('+year+')';
+    document.getElementById('kpi-ticket-label').textContent='Ticket Promedio ('+year+')';
+    document.getElementById('kpi-users-label').textContent='Nuevos Usuarios ('+year+')';
+    
+    // Hide change indicators for anual
+    document.getElementById('kpi-revenue-change-container').style.display='none';
+    document.getElementById('kpi-orders-change-container').style.display='none';
+    document.getElementById('kpi-ticket-change-container').style.display='none';
+    document.getElementById('kpi-users-change-container').style.display='none';
+  }
+  
+  // Update values
+  document.getElementById('kpi-revenue').textContent=fmt(stats.revenue);
+  document.getElementById('kpi-orders').textContent=stats.orders;
+  document.getElementById('kpi-ticket').textContent=fmt(stats.avgTicket);
+  document.getElementById('kpi-users').textContent=stats.newUsers;
+}
+
+function renderDashRecentOrders(d){
+  var statusColors={PENDING:'var(--orange)',PROCESSING:'var(--blue)',SHIPPED:'#8b5cf6',DELIVERED:'var(--green)',CANCELLED:'var(--red)'};
+  var statusLabels={PENDING:'Pendiente',PROCESSING:'Procesando',SHIPPED:'Enviado',DELIVERED:'Entregado',CANCELLED:'Cancelado'};
+  var ordersTbody=document.getElementById('dashboard-recent-orders');
+  if(ordersTbody){
+    if(!d.recentOrders.length){
+      ordersTbody.innerHTML='<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--gray)">No hay pedidos</td></tr>';
+    }else{
+      ordersTbody.innerHTML=d.recentOrders.map(function(o){
+        var sc=statusColors[o.status]||'var(--gray)';
+        var sl=statusLabels[o.status]||o.status;
+        return'<tr style="border-bottom:1px solid var(--border)">'+
+          '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+o.id+'</td>'+
+          '<td style="padding:10px 14px;font-size:12px">'+o.client+'</td>'+
+          '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+fmt(o.total)+'</td>'+
+          '<td style="padding:10px 14px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:'+sc+';color:#fff">'+sl+'</span></td>'+
         '</tr>';
       }).join('');
     }
-    
-    var statusColors={PENDING:'var(--orange)',PROCESSING:'var(--blue)',SHIPPED:'#8b5cf6',DELIVERED:'var(--green)',CANCELLED:'var(--red)'};
-    var statusLabels={PENDING:'Pendiente',PROCESSING:'Procesando',SHIPPED:'Enviado',DELIVERED:'Entregado',CANCELLED:'Cancelado'};
-    var ordersTbody=document.getElementById('dashboard-recent-orders');
-    if(ordersTbody){
-      if(!d.recentOrders.length){
-        ordersTbody.innerHTML='<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--gray)">No hay pedidos</td></tr>';
-      }else{
-        ordersTbody.innerHTML=d.recentOrders.map(function(o){
-          var sc=statusColors[o.status]||'var(--gray)';
-          var sl=statusLabels[o.status]||o.status;
-          return'<tr style="border-bottom:1px solid var(--border)">'+
-            '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+o.id+'</td>'+
-            '<td style="padding:10px 14px;font-size:12px">'+o.client+'</td>'+
-            '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+fmt(o.total)+'</td>'+
-            '<td style="padding:10px 14px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:'+sc+';color:#fff">'+sl+'</span></td>'+
-          '</tr>';
-        }).join('');
-      }
+  }
+}
+
+function renderDashTopProducts(d){
+  var topUl=document.getElementById('dashboard-top-products');
+  if(topUl){
+    if(!d.topProducts.length){
+      topUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--gray)">Sin datos</li>';
+    }else{
+      topUl.innerHTML=d.topProducts.map(function(p,i){
+        var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
+        return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'var(--cream2)\'" onmouseout="this.style.background=\'transparent\'">'+
+          '<div style="width:44px;height:44px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<h4 style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</h4>'+
+            '<p style="font-size:11px;color:var(--gray)">'+(p.sub||p.brand||'')+'</p>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:14px;font-weight:700">'+p.sold+'</div>'+
+            '<div style="font-size:10px;color:var(--gray)">uds.</div>'+
+          '</div>'+
+        '</li>';
+      }).join('');
     }
-    var topUl=document.getElementById('dashboard-top-products');
-    if(topUl){
-      if(!d.topProducts.length){
-        topUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--gray)">Sin datos</li>';
-      }else{
-        topUl.innerHTML=d.topProducts.map(function(p,i){
-          var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
-          return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'var(--cream2)\'" onmouseout="this.style.background=\'transparent\'">'+
-            '<div style="width:44px;height:44px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
-            '<div style="flex:1;min-width:0">'+
-              '<h4 style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</h4>'+
-              '<p style="font-size:11px;color:var(--gray)">'+(p.sub||p.brand||'')+'</p>'+
-            '</div>'+
-            '<div style="text-align:right">'+
-              '<div style="font-size:14px;font-weight:700">'+p.sold+'</div>'+
-              '<div style="font-size:10px;color:var(--gray)">uds.</div>'+
-            '</div>'+
-          '</li>';
-        }).join('');
-      }
+  }
+}
+
+function renderDashStockAlerts(d){
+  var stockUl=document.getElementById('dashboard-stock-alerts');
+  if(stockUl){
+    if(!d.lowStock.length){
+      stockUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--green)">Todo el stock OK \u2705</li>';
+    }else{
+      stockUl.innerHTML=d.lowStock.map(function(p){
+        var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
+        return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'rgba(239,68,68,.05)\'" onmouseout="this.style.background=\'transparent\'">'+
+          '<div style="width:40px;height:40px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<h4 style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</h4>'+
+            '<p style="font-size:11px;color:var(--gray)">'+(p.brand||'')+' <span style="color:var(--orange)">['+p.type+']</span></p>'+
+          '</div>'+
+          '<div style="text-align:right">'+
+            '<div style="font-size:16px;font-weight:800;color:'+((p.stock===0)?'var(--red)':'var(--orange)')+'">'+p.stock+'</div>'+
+            '<div style="font-size:10px;color:var(--gray)">stock</div>'+
+          '</div>'+
+        '</li>';
+      }).join('');
     }
-    var stockUl=document.getElementById('dashboard-stock-alerts');
-    if(stockUl){
-      if(!d.lowStock.length){
-        stockUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--green)">Todo el stock OK \u2705</li>';
-      }else{
-        stockUl.innerHTML=d.lowStock.map(function(p){
-          var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
-          return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'rgba(239,68,68,.05)\'" onmouseout="this.style.background=\'transparent\'">'+
-            '<div style="width:40px;height:40px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
-            '<div style="flex:1;min-width:0">'+
-              '<h4 style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</h4>'+
-              '<p style="font-size:11px;color:var(--gray)">'+(p.brand||'')+' <span style="color:var(--orange)">['+p.type+']</span></p>'+
-            '</div>'+
-            '<div style="text-align:right">'+
-              '<div style="font-size:16px;font-weight:800;color:'+((p.stock===0)?'var(--red)':'var(--orange)')+'">'+p.stock+'</div>'+
-              '<div style="font-size:10px;color:var(--gray)">stock</div>'+
-            '</div>'+
-          '</li>';
-        }).join('');
-      }
-    }
-  }).catch(function(e){
-    console.log('Dashboard error:',e);
-    var el=document.getElementById('kpi-revenue');if(el)el.textContent='Error';
-  });
+  }
 }
 
 function renderGrid(gid,prods){
@@ -1127,89 +1184,54 @@ function renderAdminContent(tab){
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
+    var months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var monthOptions=months.map(function(m,i){return'<option value="'+i+'"'+(i===new Date().getMonth()?' selected':'')+'>'+m+'</option>';}).join('');
+    
     el.innerHTML='<div id="dashboard-view">'+
-      '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:12px">'+
+      '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">'+
         '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard</h1>'+
+        '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px">'+
+          '<button id="dashTabMensual" onclick="setDashView(\'mensual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--orange);color:#fff">Mensual</button>'+
+          '<button id="dashTabAnual" onclick="setDashView(\'anual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--gray)">Anual</button>'+
+          '<select id="dashMonthSelect" onchange="updateDashMonth(this.value)" style="padding:8px 12px;border:none;border-left:1px solid var(--border);border-radius:0 8px 8px 0;font-size:13px;font-weight:600;color:var(--dk);background:transparent;outline:none;cursor:pointer">'+monthOptions+'</select>'+
+        '</div>'+
       '</header>'+
       
-      '<!-- Monthly KPIs -->'+
-      '<div style="margin-bottom:2rem">'+
-        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Este Mes</h2>'+
-        '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">'+
-          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ingresos</h3>'+
-              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCB5</div>'+
-            '</div>'+
-            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
-            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-revenue-change">+0%</span> vs mes anterior</div>'+
+      '<!-- KPI Cards -->'+
+      '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem">'+
+        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-revenue-label">Ingresos</h3>'+
+            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCB5</div>'+
           '</div>'+
-          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Pedidos</h3>'+
-              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDED2</div>'+
-            '</div>'+
-            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
-            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-orders-change">+0%</span> vs mes anterior</div>'+
-          '</div>'+
-          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ticket Promedio</h3>'+
-              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCCB</div>'+
-            '</div>'+
-            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
-            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-ticket-change">+0%</span> vs mes anterior</div>'+
-          '</div>'+
-          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Nuevos Usuarios</h3>'+
-              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDC64</div>'+
-            '</div>'+
-            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
-            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-users-change">+0%</span> vs mes anterior</div>'+
-          '</div>'+
-        '</section>'+
-      '</div>'+
-      
-      '<!-- Annual Summary -->'+
-      '<div style="margin-bottom:2rem">'+
-        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Resumen Anual <span id="currentYear" style="font-size:14px;color:var(--gray);font-weight:400"></span></h2>'+
-        '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">'+
-          '<div style="background:linear-gradient(135deg,var(--dk) 0%,#333 100%);border-radius:12px;padding:20px;color:#fff">'+
-            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ingresos Totales</h3>'+
-            '<div style="font-size:28px;font-weight:800" id="kpi-annual-revenue">$0</div>'+
-          '</div>'+
-          '<div style="background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);border-radius:12px;padding:20px;color:#fff">'+
-            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pedidos Totales</h3>'+
-            '<div style="font-size:28px;font-weight:800" id="kpi-annual-orders">0</div>'+
-          '</div>'+
-          '<div style="background:linear-gradient(135deg,var(--blue) 0%,#2563eb 100%);border-radius:12px;padding:20px;color:#fff">'+
-            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ticket Promedio</h3>'+
-            '<div style="font-size:28px;font-weight:800" id="kpi-annual-ticket">$0</div>'+
-          '</div>'+
-          '<div style="background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%);border-radius:12px;padding:20px;color:#fff">'+
-            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Nuevos Usuarios</h3>'+
-            '<div style="font-size:28px;font-weight:800" id="kpi-annual-users">0</div>'+
-          '</div>'+
-        '</section>'+
-      '</div>'+
-      
-      '<!-- Monthly Breakdown Table -->'+
-      '<div style="margin-bottom:2rem">'+
-        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Desglose Mensual</h2>'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
-          '<table style="width:100%;border-collapse:collapse">'+
-            '<thead><tr style="border-bottom:2px solid var(--border);background:var(--cream2)">'+
-              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Mes</th>'+
-              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Ingresos</th>'+
-              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Pedidos</th>'+
-              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Ticket Prom.</th>'+
-              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Usuarios</th>'+
-            '</tr></thead>'+
-            '<tbody id="monthlyStatsBody"></tbody>'+
-          '</table>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
+          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-revenue-change-container"><span id="kpi-revenue-change">--</span></div>'+
         '</div>'+
-      '</div>'+
+        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-orders-label">Pedidos</h3>'+
+            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDED2</div>'+
+          '</div>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
+          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-orders-change-container"><span id="kpi-orders-change">--</span></div>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-ticket-label">Ticket Promedio</h3>'+
+            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCCB</div>'+
+          '</div>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
+          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-ticket-change-container"><span id="kpi-ticket-change">--</span></div>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-users-label">Nuevos Usuarios</h3>'+
+            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDC64</div>'+
+          '</div>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
+          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-users-change-container"><span id="kpi-users-change">--</span></div>'+
+        '</div>'+
+      '</section>'+
       
       '<!-- Recent Orders & Top Products -->'+
       '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
@@ -1239,7 +1261,10 @@ function renderAdminContent(tab){
         '</div>'+
       '</section>'+
     '</div>';
-    document.getElementById('currentYear').textContent='('+new Date().getFullYear()+')';
+    
+    // Init state
+    window.dashView='mensual';
+    window.dashMonth=new Date().getMonth();
     loadDashboard();
     return;
   }
