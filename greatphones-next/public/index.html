@@ -1764,6 +1764,14 @@
         
         <div id="loginError" style="display:none;padding:12px;background:rgba(239,68,68,.08);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(239,68,68,.15)"></div>
         
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--dk)">
+            <input type="checkbox" id="loginRemember" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer">
+            Recordame
+          </label>
+          <button onclick="showToast('Recuperar contraseña próximamente')" style="background:none;border:none;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer">Olvidaste tu contraseña?</button>
+        </div>
+        
         <button onclick="doLogin()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
           Iniciar sesión
         </button>

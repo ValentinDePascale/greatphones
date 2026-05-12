@@ -23,6 +23,20 @@ function nav(id){
   }
   if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');}
   if(id==='register'){closeLogin();}
+  if(id==='login'){
+    var saved=localStorage.getItem('gp_remember');
+    if(saved){
+      try{
+        var creds=JSON.parse(saved);
+        var emailEl=document.getElementById('loginEmail');
+        var passEl=document.getElementById('loginPassword');
+        var remEl=document.getElementById('loginRemember');
+        if(emailEl)emailEl.value=creds.email||'';
+        if(passEl)passEl.value=creds.password||'';
+        if(remEl)remEl.checked=true;
+      }catch(e){}
+    }
+  }
   if(id==='shop'){
     window.shopFilter='todos';
     renderShopGrid();
@@ -160,6 +174,7 @@ function showLoginError(msg){
 async function doLogin(){
   var email=document.getElementById('loginEmail').value;
   var password=document.getElementById('loginPassword').value;
+  var remember=document.getElementById('loginRemember');
   if(!email||!password){showLoginError('Ingresa email y contraseña');return;}
   showLoginError('');
   try{
@@ -181,6 +196,11 @@ async function doLogin(){
     currentUser=data.user;
     updateUserUI();
     localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    if(remember&&remember.checked){
+      localStorage.setItem('gp_remember',JSON.stringify({email:email,password:password}));
+    }else{
+      localStorage.removeItem('gp_remember');
+    }
     loadUserFavorites();
     initCart();
     loadProducts();
@@ -193,6 +213,7 @@ async function doSignup(){
 function doLogout(){
   currentUser=null;
   localStorage.removeItem('gp_user');
+  localStorage.removeItem('gp_remember');
   document.querySelector('button[onclick="nav(\'cuenta\')"]').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
   if(adminLink)adminLink.remove();
