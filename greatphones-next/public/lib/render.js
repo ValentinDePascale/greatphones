@@ -106,6 +106,32 @@ function loadDashboard(){
     var el6=document.getElementById('kpi-ticket-change');if(el6)el6.textContent=(d.ticketChange>=0?'+':'')+d.ticketChange+'%';
     var el7=document.getElementById('kpi-users');if(el7)el7.textContent=d.newUsers;
     var el8=document.getElementById('kpi-users-change');if(el8)el8.textContent=(d.usersChange>=0?'+':'')+d.usersChange+'%';
+    
+    // Annual stats
+    if(d.annualStats){
+      var aEl=document.getElementById('kpi-annual-revenue');if(aEl)aEl.textContent=fmt(d.annualStats.revenue);
+      var aEl2=document.getElementById('kpi-annual-orders');if(aEl2)aEl2.textContent=d.annualStats.orders;
+      var aEl3=document.getElementById('kpi-annual-ticket');if(aEl3)aEl3.textContent=fmt(d.annualStats.avgTicket);
+      var aEl4=document.getElementById('kpi-annual-users');if(aEl4)aEl4.textContent=d.annualStats.newUsers;
+    }
+    
+    // Monthly table
+    var mTbody=document.getElementById('monthlyStatsBody');
+    if(mTbody&&d.monthlyStats){
+      var now=new Date();
+      var isCurrentMonth=function(m){return m.monthIndex===now.getMonth();};
+      mTbody.innerHTML=d.monthlyStats.map(function(m){
+        var isCurrent=isCurrentMonth(m);
+        return '<tr style="border-bottom:1px solid var(--border);'+(isCurrent?'background:rgba(255,107,44,.05)':'')+'">'+
+          '<td style="padding:10px 14px;font-size:13px;font-weight:'+(isCurrent?'700':'500')+';color:'+(isCurrent?'var(--orange)':'var(--dk)')+'">'+m.month+'</td>'+
+          '<td style="padding:10px 14px;font-size:13px;font-weight:600">'+fmt(m.revenue)+'</td>'+
+          '<td style="padding:10px 14px;font-size:13px">'+m.orders+'</td>'+
+          '<td style="padding:10px 14px;font-size:13px">'+fmt(m.avgTicket)+'</td>'+
+          '<td style="padding:10px 14px;font-size:13px">'+m.newUsers+'</td>'+
+        '</tr>';
+      }).join('');
+    }
+    
     var statusColors={PENDING:'var(--orange)',PROCESSING:'var(--blue)',SHIPPED:'#8b5cf6',DELIVERED:'var(--green)',CANCELLED:'var(--red)'};
     var statusLabels={PENDING:'Pendiente',PROCESSING:'Procesando',SHIPPED:'Enviado',DELIVERED:'Entregado',CANCELLED:'Cancelado'};
     var ordersTbody=document.getElementById('dashboard-recent-orders');
@@ -1103,42 +1129,89 @@ function renderAdminContent(tab){
   if(tab==='dashboard'){
     el.innerHTML='<div id="dashboard-view">'+
       '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;flex-wrap:wrap;gap:12px">'+
-        '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Resumen General</h1>'+
+        '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard</h1>'+
       '</header>'+
-      '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem">'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ingresos Totales</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCB5</div>'+
+      
+      '<!-- Monthly KPIs -->'+
+      '<div style="margin-bottom:2rem">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Este Mes</h2>'+
+        '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">'+
+          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ingresos</h3>'+
+              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCB5</div>'+
+            '</div>'+
+            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
+            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-revenue-change">+0%</span> vs mes anterior</div>'+
           '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-revenue-change">+0%</span> vs mes anterior</div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Pedidos Totales</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDED2</div>'+
+          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Pedidos</h3>'+
+              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDED2</div>'+
+            '</div>'+
+            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
+            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-orders-change">+0%</span> vs mes anterior</div>'+
           '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-orders-change">+0%</span> vs mes anterior</div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ticket Promedio</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCCB</div>'+
+          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Ticket Promedio</h3>'+
+              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCCB</div>'+
+            '</div>'+
+            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
+            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-ticket-change">+0%</span> vs mes anterior</div>'+
           '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-ticket-change">+0%</span> vs mes anterior</div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Nuevos Usuarios</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDC64</div>'+
+          '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+            '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+              '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Nuevos Usuarios</h3>'+
+              '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDC64</div>'+
+            '</div>'+
+            '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
+            '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-users-change">+0%</span> vs mes anterior</div>'+
           '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px"><span id="kpi-users-change">+0%</span> vs mes anterior</div>'+
+        '</section>'+
+      '</div>'+
+      
+      '<!-- Annual Summary -->'+
+      '<div style="margin-bottom:2rem">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Resumen Anual <span id="currentYear" style="font-size:14px;color:var(--gray);font-weight:400"></span></h2>'+
+        '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px">'+
+          '<div style="background:linear-gradient(135deg,var(--dk) 0%,#333 100%);border-radius:12px;padding:20px;color:#fff">'+
+            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ingresos Totales</h3>'+
+            '<div style="font-size:28px;font-weight:800" id="kpi-annual-revenue">$0</div>'+
+          '</div>'+
+          '<div style="background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);border-radius:12px;padding:20px;color:#fff">'+
+            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Pedidos Totales</h3>'+
+            '<div style="font-size:28px;font-weight:800" id="kpi-annual-orders">0</div>'+
+          '</div>'+
+          '<div style="background:linear-gradient(135deg,var(--blue) 0%,#2563eb 100%);border-radius:12px;padding:20px;color:#fff">'+
+            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Ticket Promedio</h3>'+
+            '<div style="font-size:28px;font-weight:800" id="kpi-annual-ticket">$0</div>'+
+          '</div>'+
+          '<div style="background:linear-gradient(135deg,#7c3aed 0%,#6d28d9 100%);border-radius:12px;padding:20px;color:#fff">'+
+            '<h3 style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Nuevos Usuarios</h3>'+
+            '<div style="font-size:28px;font-weight:800" id="kpi-annual-users">0</div>'+
+          '</div>'+
+        '</section>'+
+      '</div>'+
+      
+      '<!-- Monthly Breakdown Table -->'+
+      '<div style="margin-bottom:2rem">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:1rem;color:var(--dk)">Desglose Mensual</h2>'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
+          '<table style="width:100%;border-collapse:collapse">'+
+            '<thead><tr style="border-bottom:2px solid var(--border);background:var(--cream2)">'+
+              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Mes</th>'+
+              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Ingresos</th>'+
+              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Pedidos</th>'+
+              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Ticket Prom.</th>'+
+              '<th style="padding:12px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--dk);text-transform:uppercase">Usuarios</th>'+
+            '</tr></thead>'+
+            '<tbody id="monthlyStatsBody"></tbody>'+
+          '</table>'+
         '</div>'+
-      '</section>'+
+      '</div>'+
+      
+      '<!-- Recent Orders & Top Products -->'+
       '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
           '<div style="padding:16px;border-bottom:1px solid var(--border);background:var(--cream2);display:flex;justify-content:space-between;align-items:center">'+
@@ -1166,6 +1239,7 @@ function renderAdminContent(tab){
         '</div>'+
       '</section>'+
     '</div>';
+    document.getElementById('currentYear').textContent='('+new Date().getFullYear()+')';
     loadDashboard();
     return;
   }

@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
 export async function GET() {
   try {
     const now = new Date()
-    const currentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const currentYear = now.getFullYear()
+    const currentMonth = new Date(currentYear, now.getMonth(), 1)
+    const lastMonth = new Date(currentYear, now.getMonth() - 1, 1)
+    const nextMonth = new Date(currentYear, now.getMonth() + 1, 1)
+    const startOfYear = new Date(currentYear, 0, 1)
 
     // KPIs - Current month
     const currentOrders = await prisma.order.findMany({
@@ -35,6 +39,43 @@ export async function GET() {
     const lastNewUsers = await prisma.user.count({
       where: { createdAt: { gte: lastMonth, lt: currentMonth } },
     })
+
+    // Monthly stats for current year
+    const monthlyStats = await Promise.all(
+      MONTHS.map(async (_, i) => {
+        const monthStart = new Date(currentYear, i, 1)
+        const monthEnd = new Date(currentYear, i + 1, 1)
+        
+        const [orders, users] = await Promise.all([
+          prisma.order.findMany({
+            where: { createdAt: { gte: monthStart, lt: monthEnd } },
+            select: { total: true },
+          }),
+          prisma.user.count({
+            where: { createdAt: { gte: monthStart, lt: monthEnd } },
+          }),
+        ])
+        
+        const revenue = orders.reduce((sum, o) => sum + o.total, 0)
+        const orderCount = orders.length
+        const avg = orderCount > 0 ? Math.round(revenue / orderCount) : 0
+        
+        return {
+          month: MONTHS[i],
+          monthIndex: i,
+          revenue,
+          orders: orderCount,
+          avgTicket: avg,
+          newUsers: users,
+        }
+      })
+    )
+
+    // Annual totals
+    const annualRevenue = monthlyStats.reduce((sum, m) => sum + m.revenue, 0)
+    const annualOrders = monthlyStats.reduce((sum, m) => sum + m.orders, 0)
+    const annualAvgTicket = annualOrders > 0 ? Math.round(annualRevenue / annualOrders) : 0
+    const annualUsers = monthlyStats.reduce((sum, m) => sum + m.newUsers, 0)
 
     // Recent orders
     const recentOrders = await prisma.order.findMany({
@@ -112,6 +153,13 @@ export async function GET() {
       ticketChange,
       newUsers,
       usersChange,
+      monthlyStats,
+      annualStats: {
+        revenue: annualRevenue,
+        orders: annualOrders,
+        avgTicket: annualAvgTicket,
+        newUsers: annualUsers,
+      },
       recentOrders: recentOrders.map((o) => ({
         id: o.code,
         client: o.clientName || o.clientEmail || 'N/A',
