@@ -4,6 +4,7 @@ var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://loca
 function nav(id){
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
+  if(id==='chats'&&currentUser&&currentUser.role==='ADMIN'){nav('admin');return;}
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
   var el=document.getElementById('p-'+id);
   if(el)el.classList.add('act');
@@ -206,6 +207,11 @@ function updateUserUI(){
   var btn=document.querySelector('button[onclick="nav(\'cuenta\')"]');
   if(btn&&currentUser){
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>'+(currentUser.name||currentUser.email)+'</span>';
+  }
+  var chatBtn=document.getElementById('chatNavBtn');
+  if(chatBtn){
+    if(currentUser&&currentUser.role==='ADMIN'){chatBtn.style.display='none';}
+    else{chatBtn.style.display='';}
   }
   if(currentUser&&currentUser.role==='ADMIN'){
     var topbar=document.querySelector('.tb-right');
