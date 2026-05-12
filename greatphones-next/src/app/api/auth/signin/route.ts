@@ -16,9 +16,49 @@ export async function OPTIONS() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { email, password } = body
+    const { email, password, _googleSession } = body
 
-    if (!email || !password) {
+    if (!email) {
+      return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+    }
+
+    // Google session - user already authenticated via OAuth
+    if (_googleSession) {
+      let user = await prisma.user.findUnique({
+        where: { email }
+      })
+      
+      if (!user) {
+        user = await prisma.user.create({
+          data: {
+            email,
+            name: email.split('@')[0],
+            role: 'CLIENT',
+            verified: true,
+          }
+        })
+      }
+      
+      return NextResponse.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          phone: user.phone,
+          dni: user.dni,
+          direccion: user.direccion,
+          piso: user.piso,
+          cp: user.cp,
+          provincia: user.provincia,
+          ciudad: user.ciudad,
+          role: user.role,
+        }
+      }, {
+        headers: { 'Access-Control-Allow-Origin': '*' }
+      })
+    }
+
+    if (!password) {
       return NextResponse.json({ error: 'Email y password requeridos' }, { status: 400 })
     }
 

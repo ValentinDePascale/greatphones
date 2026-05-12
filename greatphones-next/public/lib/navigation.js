@@ -279,7 +279,40 @@ document.addEventListener('click',function(e){
   if(saved){
     try{currentUser=JSON.parse(saved);updateUserUI();loadUserFavorites();initCart();}catch(e){}
   }
+  checkGoogleSession();
 })();
+
+function checkGoogleSession(){
+  fetch('/api/auth/session').then(function(r){return r.json();}).then(function(session){
+    if(session&&session.user&&session.user.email){
+      var email=session.user.email;
+      var name=session.user.name||email;
+      var id=session.user.id;
+      fetch(API_URL+'/api/auth/signin',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({email:email,_googleSession:true})
+      }).then(function(r){return r.json();}).then(function(data){
+        if(data.user){
+          currentUser=data.user;
+          localStorage.setItem('gp_user',JSON.stringify(currentUser));
+          updateUserUI();
+          loadUserFavorites();
+          initCart();
+          loadProducts();
+          if(window.location.pathname==='/login')nav('home');
+        }
+      }).catch(function(){
+        currentUser={id:id,email:email,name:name,role:'CLIENT'};
+        localStorage.setItem('gp_user',JSON.stringify(currentUser));
+        updateUserUI();
+        loadUserFavorites();
+        initCart();
+        if(window.location.pathname==='/login')nav('home');
+      });
+    }
+  }).catch(function(){});
+}
 function notAvailable(){
   console.log('Funcionalidad no disponible - requiere conexion al backend');
 }
