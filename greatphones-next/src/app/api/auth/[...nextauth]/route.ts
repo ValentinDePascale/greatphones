@@ -5,7 +5,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
@@ -54,9 +54,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { email: user.email! },
         })
         if (existingUser) {
-          if (!existingUser.password) {
-            return true
-          }
           return true
         }
         return true
@@ -67,4 +64,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
 })
 
-export const { GET, POST } = handlers
+export { handler as GET, handler as POST }
