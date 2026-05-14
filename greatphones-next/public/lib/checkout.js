@@ -1,5 +1,5 @@
 // =========== CHECKOUT ===========
-var checkoutState={cuotas:1,warranty:0,delivery:0};
+var checkoutState={cuotas:1,warranty:0,delivery:0,shippingCalculated:false};
 
 function selCheckoutCuota(btn,cuotas){
   checkoutState.cuotas=cuotas;
@@ -62,12 +62,19 @@ function calcAndreaniShipping(){
     if(data.error)throw new Error(data.error);
     var cost=data.cost||0;
     checkoutState.delivery=cost;
+    checkoutState.shippingCalculated=true;
     if(priceEl)priceEl.textContent='+$'+cost.toLocaleString('es-AR');
     if(btn){
       btn.innerHTML='✓ Actualizado';
       btn.style.background='rgba(45,90,39,.1)';
       btn.style.borderColor='var(--green)';
       btn.style.color='var(--green)';
+    }
+    var provSelect=document.getElementById('checkout-province');
+    if(provSelect){
+      provSelect.disabled=true;
+      provSelect.style.opacity='0.6';
+      provSelect.style.cursor='not-allowed';
     }
     updateCheckoutTotal();
   })
@@ -118,10 +125,24 @@ function updateCheckoutTotal(){
       cuotasBox.style.display='none';
     }
   }
+  var btn=document.getElementById('btn-checkout');
+  if(btn){
+    if(Cart.length===0){
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+      btn.style.cursor='not-allowed';
+      btn.style.pointerEvents='none';
+    }else{
+      btn.disabled=false;
+      btn.style.opacity='1';
+      btn.style.cursor='pointer';
+      btn.style.pointerEvents='auto';
+    }
+  }
 }
 
 function resetCheckoutSelections(){
-  checkoutState={cuotas:1,warranty:0,delivery:0};
+  checkoutState={cuotas:1,warranty:0,delivery:0,shippingCalculated:false};
   document.querySelectorAll('#checkout-cuotas .cuota-btn').forEach(function(b,i){
     if(i===0){b.style.background='var(--green)';b.style.color='#fff';b.style.border='2px solid var(--green)';}
     else{b.style.background='var(--cream2)';b.style.color='var(--dk)';b.style.border='2px solid var(--border)';}
@@ -132,6 +153,12 @@ function resetCheckoutSelections(){
   document.querySelectorAll('#checkout-delivery .delivery-btn').forEach(function(b,i){
     b.style.border=i===0?'2px solid var(--green)':'2px solid var(--border)';
   });
+  var provSelect=document.getElementById('checkout-province');
+  if(provSelect){
+    provSelect.disabled=false;
+    provSelect.style.opacity='1';
+    provSelect.style.cursor='pointer';
+  }
   updateCheckoutTotal();
 }
 
@@ -297,6 +324,16 @@ function openVerification(){
     if(deliveryCost)deliveryCost.textContent='+$'+deliveryCostVal.toLocaleString('es-AR');
   }
   
+  var paymentSection=document.getElementById('verifyPaymentSection');
+  if(paymentSection)paymentSection.style.display='none';
+  var btnVerifyPay=document.getElementById('btn-verify-pay');
+  if(btnVerifyPay){
+    btnVerifyPay.style.display='flex';
+    btnVerifyPay.disabled=false;
+    btnVerifyPay.style.opacity='1';
+    btnVerifyPay.innerHTML='Selección de método <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+  }
+  
   modal.style.display='flex';
   setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
 }
@@ -307,6 +344,52 @@ function closeVerification(){
   modal.style.opacity='0';
   modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
   setTimeout(function(){modal.style.display='none';},300);
+}
+
+function showPaymentMethods(){
+  var summarySection=document.getElementById('verifyItems');
+  var optionsSection=document.getElementById('verifyOptions');
+  var userSection=document.getElementById('verifyUser');
+  var paymentSection=document.getElementById('verifyPaymentSection');
+  var btnVerifyPay=document.getElementById('btn-verify-pay');
+  
+  if(summarySection)summarySection.style.display='none';
+  if(optionsSection)optionsSection.style.display='none';
+  if(userSection)userSection.style.display='none';
+  if(btnVerifyPay)btnVerifyPay.style.display='none';
+  if(paymentSection)paymentSection.style.display='block';
+}
+
+function backToVerifySummary(){
+  var summarySection=document.getElementById('verifyItems');
+  var optionsSection=document.getElementById('verifyOptions');
+  var userSection=document.getElementById('verifyUser');
+  var paymentSection=document.getElementById('verifyPaymentSection');
+  var btnVerifyPay=document.getElementById('btn-verify-pay');
+  
+  if(summarySection)summarySection.style.display='block';
+  if(optionsSection)optionsSection.style.display='block';
+  if(userSection)userSection.style.display='block';
+  if(btnVerifyPay)btnVerifyPay.style.display='flex';
+  if(paymentSection)paymentSection.style.display='none';
+}
+
+function selectPaymentMethod(method){
+  var cards=document.querySelectorAll('.payment-method-card');
+  cards.forEach(function(card){
+    card.style.borderColor='var(--border)';
+    card.style.background='none';
+  });
+  event.currentTarget.style.borderColor='var(--orange)';
+  event.currentTarget.style.background='rgba(255,107,44,.05)';
+  
+  if(method==='mercadopago'){
+    showToast('Redirigiendo a Mercado Pago...');
+    setTimeout(function(){submitCheckout('mercadopago');},500);
+  }else if(method==='tarjeta'){
+    showToast('Procesando pago con tarjeta...');
+    setTimeout(function(){submitCheckout('tarjeta');},500);
+  }
 }
 
 function closeCheckout(){
@@ -320,6 +403,8 @@ function renderCheckoutSummary(){
 
   if(!itemsContainer)return;
 
+  console.log('[Checkout] renderCheckoutSummary called. Cart:', Cart.length, 'items. PRODUCTS:', PRODUCTS.length, 'ACCS:', (window.ACCS||[]).length);
+
   if(Cart.length===0){
     itemsContainer.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">🛒</p><p style="font-family:\'Playfair Display\',serif;font-size:18px;margin-bottom:.5rem">No hay productos en el carrito</p><button class="btn btn-o" onclick="nav(\'shop\')">Volver al catalogo</button></div>';
     if(subtotalEl)subtotalEl.textContent='$0';
@@ -327,14 +412,26 @@ function renderCheckoutSummary(){
     return;
   }
 
+  // Don't filter items if products or accessories haven't loaded yet
+  var productsLoaded=PRODUCTS.length>0;
+  var accsLoaded=window.ACCS&&window.ACCS.length>0;
+  if(!productsLoaded||!accsLoaded){
+    console.log('[Checkout] Early render - productsLoaded:', productsLoaded, 'accsLoaded:', accsLoaded, '- skipping filter');
+    renderCheckoutItems(Cart);
+    updateCheckoutTotal();
+    return;
+  }
+
   var validItems=Cart.filter(function(item){
     var p=getById(PRODUCTS,item.id);
     var a=getById(window.ACCS,item.id);
+    if(!p&&!a) console.log('[Checkout] Item not found:', item.id);
     return p||a;
   });
 
   if(validItems.length<Cart.length){
     var removed=Cart.length-validItems.length;
+    console.log('[Checkout] Removing', removed, 'items. Cart before:', Cart.length, 'after:', validItems.length);
     Cart=validItems;
     saveCart();
     updCartBadge();
@@ -348,9 +445,18 @@ function renderCheckoutSummary(){
     return;
   }
 
+  renderCheckoutItems(Cart);
+}
+
+function renderCheckoutItems(items){
+  var itemsContainer=document.getElementById('checkout-items');
+  var subtotalEl=document.getElementById('checkout-subtotal');
+  var totalEl=document.getElementById('checkout-total');
+  if(!itemsContainer)return;
+
   var subtotal=cartTotal();
 
-  itemsContainer.innerHTML=Cart.map(function(item){
+  itemsContainer.innerHTML=items.map(function(item){
     var p=getById(PRODUCTS,item.id);
     if(p){
       var now=new Date();
@@ -470,7 +576,7 @@ function validateCheckoutForm(){
   return errors;
 }
 
-function submitCheckout(){
+function submitCheckout(paymentMethod){
   closeVerification();
   setTimeout(function(){
     var btn=document.getElementById('btn-verify-pay');
@@ -531,7 +637,8 @@ function submitCheckout(){
       subtotal:subtotal,
       warrantyCost:checkoutState.warranty,
       deliveryCost:typeof checkoutState.delivery==='number'?checkoutState.delivery:0,
-      total:total
+      total:total,
+      paymentMethod:paymentMethod||'mercadopago'
     };
 
     fetch(API_URL+'/api/checkout',{
@@ -559,7 +666,7 @@ function submitCheckout(){
       showToast('Error: '+error.message);
       if(btn){
         btn.disabled=false;
-        btn.innerHTML='Pagar con Mercado Pago <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
+        btn.innerHTML='Selección de método <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
         btn.style.opacity='1';
       }
     });

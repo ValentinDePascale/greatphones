@@ -22,7 +22,20 @@ function nav(id){
     window.scrollTo({top:0,behavior:'smooth'});
   }
   if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');}
-  if(id==='register'){closeLogin();}
+  if(id==='register'){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
+    document.getElementById('p-register').classList.add('act');
+    window.scrollTo({top:0,behavior:'smooth'});
+    document.getElementById('registerFormStep1').style.display='block';
+    document.getElementById('pageVerifyStep').style.display='none';
+    if(registerCodeTimer)clearInterval(registerCodeTimer);
+    registerTempData=null;
+    var signupStep1=document.getElementById('signupStep1');
+    var signupStep2=document.getElementById('signupStep2');
+    if(signupStep1)signupStep1.style.display='block';
+    if(signupStep2)signupStep2.style.display='none';
+    return;
+  }
   if(id==='login'){
     var saved=localStorage.getItem('gp_remember');
     if(saved){
@@ -48,7 +61,10 @@ function nav(id){
   if(id==='ofertas'){renderOfertasGrid();setCN('ofertas');}
   if(id==='accesorios'){renderAccGrid();setCN('accesorios');}
   if(id==='favoritos')renderFavGrid();
-  if(id==='chats'){openUserChat();}
+  if(id==='chats'){
+    if(!chatPanelOpen)toggleChatPanel();
+    return;
+  }
   if(id==='servicio')renderRepairGrid();
   if(id==='notebooks')renderNotebookConfig();
   if(id==='mayorista')renderMayorista();
@@ -277,7 +293,7 @@ document.addEventListener('click',function(e){
 (function(){
   var saved=localStorage.getItem('gp_user');
   if(saved){
-    try{currentUser=JSON.parse(saved);updateUserUI();loadUserFavorites();initCart();}catch(e){}
+    try{currentUser=JSON.parse(saved);updateUserUI();loadUserFavorites();}catch(e){}
   }
   checkGoogleSession();
 })();
@@ -301,6 +317,11 @@ function checkGoogleSession(){
           initCart();
           loadProducts();
           if(window.location.pathname==='/login')nav('home');
+          if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
+            renderCheckoutSummary();
+            resetCheckoutSelections();
+            prefillCheckoutFields();
+          }
         }
       }).catch(function(){
         currentUser={id:id,email:email,name:name,role:'CLIENT'};
@@ -309,6 +330,11 @@ function checkGoogleSession(){
         loadUserFavorites();
         initCart();
         if(window.location.pathname==='/login')nav('home');
+        if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
+          renderCheckoutSummary();
+          resetCheckoutSelections();
+          prefillCheckoutFields();
+        }
       });
     }
   }).catch(function(){});

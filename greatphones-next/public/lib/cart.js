@@ -1,5 +1,6 @@
 // =========== CART ===========
 var Cart=[];
+var cartMigrated=false;
 function getCartKey(){
   return currentUser?'gp_cart_'+currentUser.id:'gp_cart';
 }
@@ -7,6 +8,26 @@ function initCart(){
   try{
     var stored=localStorage.getItem(getCartKey());
     if(stored)Cart=JSON.parse(stored);
+    else Cart=[];
+    // Migrate anonymous cart to user cart if user just logged in
+    if(currentUser&&!cartMigrated){
+      cartMigrated=true;
+      var anonCart=localStorage.getItem('gp_cart');
+      if(anonCart){
+        try{
+          var anonItems=JSON.parse(anonCart);
+          if(anonItems&&anonItems.length>0){
+            anonItems.forEach(function(item){
+              var exists=Cart.find(function(c){return c.id===item.id;});
+              if(exists){exists.qty+=item.qty;}
+              else{Cart.push(item);}
+            });
+            saveCart();
+            localStorage.removeItem('gp_cart');
+          }
+        }catch(e){}
+      }
+    }
   }catch(e){Cart=[];}
   updCartBadge();
 }

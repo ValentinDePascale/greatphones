@@ -6,7 +6,7 @@ var currentAcc=null;
 var detWMult=0,detDExtra=0,selCuotas=1;
 
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
-function getById(arr,id){for(var i=0;i<arr.length;i++)if(arr[i].id===id)return arr[i];return null;}
+function getById(arr,id){for(var i=0;i<arr.length;i++){if(arr[i].id==id)return arr[i];if(String(arr[i].id)===String(id))return arr[i];}return null;}
 
 var detailBackTarget='shop';
 var _accImages=[];
@@ -74,6 +74,7 @@ function loadProducts(){
     renderOfertasGrid();
     renderFeaturedGrid();
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
@@ -86,6 +87,7 @@ function loadAccessories(){
     window.ACCS=data;
     if(document.getElementById('accGrid'))renderAccGrid();
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
@@ -1352,7 +1354,23 @@ function renderAdminContent(tab){
     renderPromoProducts();
     renderActivePromos();
   }else if(tab==='orders'){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Pedidos</p><p style="font-size:12px">Proximamente podras ver y gestionar pedidos</p></div>';
+    var content=document.getElementById('adminContent');
+    if(content){
+      content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
+        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="loadPendingOrders()">Pedidos en Espera</button>'+
+        '<button class="ord-btn" id="btnAcceptedOrders" onclick="loadAcceptedOrders()">Pedidos Aceptados</button>'+
+        '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
+      '</div>'+
+      '<div style="margin-bottom:1rem">'+
+        '<input type="text" id="orderDniFilter" placeholder="Buscar por DNI..." oninput="filterOrdersByDni()" style="width:100%;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '</div>'+
+      '<div class="adm-list" id="orderList"></div>';
+      if(typeof loadPendingOrders==='function'){
+        loadPendingOrders();
+      }else{
+        document.getElementById('orderList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando pedidos...</div>';
+      }
+    }
   }else if(tab==='acc'){
     var accs=window.ACCS||[];
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Accesorios ('+accs.length+')</h3><button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;nav(\'admin-acc\')">+ Agregar accesorio</button></div>'+

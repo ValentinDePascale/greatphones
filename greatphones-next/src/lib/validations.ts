@@ -107,7 +107,7 @@ export const OrderCreateSchema = z.object({
 })
 
 export const OrderQuerySchema = z.object({
-  status: z.enum(['pending', 'paid', 'shipped', 'delivered', 'cancelled']).optional(),
+  status: z.string().optional(),
   userId: z.string().optional(),
 })
 

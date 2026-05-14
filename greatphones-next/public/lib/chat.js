@@ -18,13 +18,17 @@ function initChatSocket(){
       if(msg.conversationId===userConvId){
         appendMessageToChat(msg);
         scrollToBottom();
+        appendPanelMessage(msg);
+        scrollPanelBottom();
       }
     });
     chatSocket.on('userTyping',function(data){
       showTypingIndicator(data.userName);
+      showPanelTyping(data.userName);
     });
     chatSocket.on('userStoppedTyping',function(){
       hideTypingIndicator();
+      hidePanelTyping();
     });
     chatSocket.on('disconnect',function(){
       console.log('[Chat] Disconnected');
@@ -38,7 +42,7 @@ function initChatSocket(){
 function startChatPolling(){
   if(chatPollInterval)clearInterval(chatPollInterval);
   chatPollInterval=setInterval(function(){
-    if(userConvId)loadMessages(userConvId,false);
+    if(userConvId)loadPanelMessages(userConvId,false);
   },3000);
 }
 
@@ -58,7 +62,7 @@ function getUserConversation(){
     .then(function(convs){
       if(convs&&convs.length>0){
         userConvId=convs[0].id;
-        loadMessages(userConvId,true);
+        loadPanelMessages(userConvId,true);
         markAsRead(userConvId);
         if(chatSocket)chatSocket.emit('joinConversation',userConvId);
       }else{
@@ -82,7 +86,10 @@ function createDefaultConversation(){
   .then(function(r){return r.json();})
   .then(function(conv){
     userConvId=conv.id;
-    document.getElementById('chatMsgList').innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--gray)"><div style="width:80px;height:80px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:36px">\u{1F4AC}</div><p style="font-size:16px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.5rem">Hola! Como podemos ayudarte?</p><p style="font-size:13px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
+    var list=document.getElementById('panelMsgList');
+    if(list){
+      list.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--gray)"><div style="width:64px;height:64px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px">\u{1F4AC}</div><p style="font-size:14px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.4rem">Hola! Como podemos ayudarte?</p><p style="font-size:12px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
+    }
     if(chatSocket)chatSocket.emit('joinConversation',userConvId);
   })
   .catch(function(e){console.error('Error creating conversation:',e);});
@@ -102,7 +109,7 @@ function renderMsgs(msgs){
   var list=document.getElementById('chatMsgList');
   if(!list)return;
   if(!msgs||msgs.length===0){
-    list.innerHTML='<div style="text-align:center;padding:3rem 1rem;color:var(--gray)"><div style="width:80px;height:80px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;font-size:36px">\u{1F4AC}</div><p style="font-size:16px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.5rem">Hola! Como podemos ayudarte?</p><p style="font-size:13px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
+    list.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--gray)"><div style="width:64px;height:64px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px">\u{1F4AC}</div><p style="font-size:14px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.4rem">Hola! Como podemos ayudarte?</p><p style="font-size:12px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
     return;
   }
   list.innerHTML=msgs.map(function(m){
@@ -344,4 +351,142 @@ function sendAdminMessage(){
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
   })
   .catch(function(e){console.error('Error sending admin message:',e);});
+}
+
+// =========== PANEL CHAT ===========
+function sendPanelMessage(){
+  var input=document.getElementById('panelChatInput');
+  if(!input||!input.value.trim()||!userConvId)return;
+  var text=input.value.trim();
+  input.value='';
+  hidePanelTyping();
+  if(chatSocket)chatSocket.emit('stopTyping',{conversationId:userConvId});
+
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:currentUser.id,text:text})
+  })
+  .then(function(r){return r.json();})
+  .then(function(msg){
+    appendPanelMessage(msg);
+    scrollPanelBottom();
+    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+  })
+  .catch(function(e){console.error('Error sending panel message:',e);});
+}
+
+function sendPanelImg(input){
+  var file=input.files[0];
+  if(!file||!userConvId)return;
+  var formData=new FormData();
+  formData.append('file',file);
+  formData.append('upload_preset','greatphones');
+
+  fetch('https://api.cloudinary.com/v1_1/dck24mtpw/image/upload',{
+    method:'POST',
+    body:formData
+  })
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.secure_url){
+      fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({userId:currentUser.id,imageUrl:data.secure_url,imageCaption:file.name})
+      })
+      .then(function(r){return r.json();})
+      .then(function(msg){
+        appendPanelMessage(msg);
+        scrollPanelBottom();
+        if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+      });
+    }
+  })
+  .catch(function(e){console.error('Error uploading panel image:',e);});
+  input.value='';
+}
+
+function appendPanelMessage(msg){
+  var list=document.getElementById('panelMsgList');
+  if(!list)return;
+  var isMine=currentUser&&msg.from===currentUser.id;
+  var time=formatTime(new Date(msg.createdAt));
+  var content='';
+  if(msg.imageUrl){
+    content='<img src="'+msg.imageUrl+'" class="msg-img" onclick="openLightbox(\''+msg.imageUrl+'\')">';
+    if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+msg.imageCaption+'</p>';
+  }else{
+    content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
+  }
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble">'+
+      content+
+      '<div class="msg-time">'+time+'</div>'+
+    '</div>'+
+  '</div>';
+  list.insertAdjacentHTML('beforeend',html);
+}
+
+function scrollPanelBottom(){
+  var list=document.getElementById('panelMsgList');
+  if(list)list.scrollTop=list.scrollHeight;
+}
+
+function showPanelTyping(userName){
+  var el=document.getElementById('panelTyping');
+  if(el){
+    el.innerHTML='<span style="font-size:12px;color:var(--gray);font-style:italic">'+(userName||'Great Phones')+' est\u00E1 escribiendo...</span>';
+    el.style.display='block';
+  }
+}
+
+function hidePanelTyping(){
+  var el=document.getElementById('panelTyping');
+  if(el)el.style.display='none';
+}
+
+function handlePanelTyping(){
+  if(!userConvId||!currentUser)return;
+  if(chatSocket)chatSocket.emit('typing',{conversationId:userConvId,userName:currentUser.name});
+  if(typingTimeout)clearTimeout(typingTimeout);
+  typingTimeout=setTimeout(function(){
+    if(chatSocket)chatSocket.emit('stopTyping',{conversationId:userConvId});
+  },3000);
+}
+
+function loadPanelMessages(convId,scrollBottom){
+  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50')
+    .then(function(r){return r.json();})
+    .then(function(msgs){
+      renderPanelMsgs(msgs);
+      if(scrollBottom)setTimeout(scrollPanelBottom,100);
+    })
+    .catch(function(e){console.error('Error loading panel messages:',e);});
+}
+
+function renderPanelMsgs(msgs){
+  var list=document.getElementById('panelMsgList');
+  if(!list)return;
+  if(!msgs||msgs.length===0){
+    list.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--gray)"><div style="width:64px;height:64px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px">\u{1F4AC}</div><p style="font-size:14px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.4rem">Hola! Como podemos ayudarte?</p><p style="font-size:12px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
+    return;
+  }
+  list.innerHTML=msgs.map(function(m){
+    var isMine=currentUser&&m.from===currentUser.id;
+    var time=formatTime(new Date(m.createdAt));
+    var content='';
+    if(m.imageUrl){
+      content='<img src="'+m.imageUrl+'" class="msg-img" onclick="openLightbox(\''+m.imageUrl+'\')">';
+      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+m.imageCaption+'</p>';
+    }else{
+      content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
+    }
+    return '<div class="msg-wrap'+(isMine?' mine':'')+'">'+
+      '<div class="msg-bubble">'+
+        content+
+        '<div class="msg-time">'+time+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
 }
