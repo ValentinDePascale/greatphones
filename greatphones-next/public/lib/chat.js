@@ -3,6 +3,7 @@ var chatSocket=null;
 var userConvId=null;
 var typingTimeout=null;
 var chatPollInterval=null;
+var notifPollInterval=null;
 
 function initChatSocket(){
   if(!currentUser||!window.ChatSocket)return;
@@ -20,6 +21,9 @@ function initChatSocket(){
         scrollToBottom();
         appendPanelMessage(msg);
         scrollPanelBottom();
+      }else{
+        if(typeof showToast==='function')showToast('Tienes un nuevo mensaje del administrador');
+        updateMsgBadge();
       }
     });
     chatSocket.on('userTyping',function(data){
@@ -37,6 +41,7 @@ function initChatSocket(){
     console.log('[Chat] Socket not available, using polling');
     startChatPolling();
   }
+  startNotifPolling();
 }
 
 function startChatPolling(){
@@ -206,10 +211,11 @@ function sendChatImg(input){
 }
 
 function markAsRead(convId){
+  if(!currentUser)return;
   fetch(API_URL+'/api/conversations/'+convId+'/read',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({})
+    body:JSON.stringify({readerId:currentUser.id})
   }).catch(function(e){});
   if(chatSocket)chatSocket.emit('markRead',{conversationId:convId});
 }
@@ -283,7 +289,8 @@ function renderAdminConvList(convs){
   list.innerHTML=convs.map(function(c){
     var lastMsg=c.messages&&c.messages[0]?c.messages[0].text||'\u{1F4F7}':''; 
     var time=c.lastMsgAt?timeAgo(new Date(c.lastMsgAt)):'Sin mensajes';
-    var unreadBadge=c.unread>0?'<span style="background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+c.unread+'</span>':'';
+    var unreadCount=c.unreadByAdmin||0;
+    var unreadBadge=unreadCount>0?'<span style="background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+unreadCount+'</span>':'';
     var isActive=c.id===adminActiveConvId;
     return '<div class="conv-item'+(isActive?' act-conv':'')+'" onclick="openAdminConv(\''+c.id+'\')" style="cursor:pointer;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;transition:background .15s;background:'+(isActive?'rgba(255,107,44,.05)':'')+'" onmouseover="this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.background=\''+(isActive?'rgba(255,107,44,.05)':'')+'\'">'+
       '<div style="width:44px;height:44px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">\u{1F464}</div>'+
@@ -489,4 +496,37 @@ function renderPanelMsgs(msgs){
       '</div>'+
     '</div>';
   }).join('');
+}
+
+function startNotifPolling(){
+  if(notifPollInterval)clearInterval(notifPollInterval);
+  notifPollInterval=setInterval(function(){
+    updateMsgBadge();
+  },10000);
+}
+
+function stopNotifPolling(){
+  if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
+}
+
+function updateMsgBadge(){
+  if(!currentUser)return;
+  fetch(API_URL+'/api/conversations?userId='+currentUser.id+'&status=OPEN')
+    .then(function(r){return r.json();})
+    .then(function(convs){
+      var totalUnread=0;
+      convs.forEach(function(c){
+        totalUnread+=(c.unreadByUser||0);
+      });
+      var badge=document.getElementById('msgBadge');
+      if(badge){
+        if(totalUnread>0){
+          badge.textContent=totalUnread>99?'99+':totalUnread;
+          badge.style.display='flex';
+        }else{
+          badge.style.display='none';
+        }
+      }
+    })
+    .catch(function(e){});
 }

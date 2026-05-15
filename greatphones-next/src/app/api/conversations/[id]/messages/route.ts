@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SendMessageSchema, formatZodError } from '@/lib/validations'
+import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -64,14 +65,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
     }
 
-    // Verify conversation exists
+    // Get conversation with user and admin details
     const conversation = await prisma.conversation.findUnique({
-      where: { id }
+      where: { id },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true }
+        },
+        admin: {
+          select: { id: true, name: true, email: true }
+        }
+      }
     })
 
     if (!conversation) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
+
+    // Determine if sender is admin or user
+    const isAdminSender = conversation.adminId === userId || userId === 'admin'
+    const isUserSender = conversation.userId === userId
 
     const message = await prisma.message.create({
       data: {
@@ -89,14 +102,81 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     })
 
-    // Update conversation lastMsgAt and unread count
+    // Update conversation with direction-aware unread counters
+    const updateData: any = {
+      lastMsgAt: new Date(),
+      unread: { increment: 1 }
+    }
+
+    if (isUserSender) {
+      // User sent message -> increment admin unread
+      updateData.unreadByAdmin = { increment: 1 }
+    } else if (isAdminSender) {
+      // Admin sent message -> increment user unread
+      updateData.unreadByUser = { increment: 1 }
+    }
+
     await prisma.conversation.update({
       where: { id },
-      data: {
-        lastMsgAt: new Date(),
-        unread: { increment: 1 }
-      }
+      data: updateData
     })
+
+    // Create notification for the recipient
+    if (isUserSender && conversation.admin) {
+      // Notify admin about new message from user
+      await prisma.notification.create({
+        data: {
+          userId: conversation.admin.id,
+          type: 'MESSAGE',
+          title: 'Nuevo mensaje',
+          text: `${conversation.user.name || 'Un usuario'} te ha enviado un mensaje`,
+          conversationId: id,
+          messageId: message.id
+        }
+      })
+
+      // Send email to admin
+      try {
+        const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
+        await sendNewMessageToAdminEmail({
+          adminEmail,
+          userName: conversation.user.name || 'Usuario',
+          messageText: text || '(imagen)',
+          conversationId: id,
+          conversationType: conversation.type
+        })
+      } catch (emailError) {
+        console.error('[Messages] Error sending email to admin:', emailError)
+      }
+
+    } else if (isAdminSender) {
+      // Notify user about admin reply
+      await prisma.notification.create({
+        data: {
+          userId: conversation.userId,
+          type: 'MESSAGE',
+          title: 'Nuevo mensaje del administrador',
+          text: 'Tienes un nuevo mensaje del administrador',
+          conversationId: id,
+          messageId: message.id
+        }
+      })
+
+      // Send email to user
+      try {
+        if (conversation.user.email) {
+          await sendAdminReplyEmail({
+            userEmail: conversation.user.email,
+            userName: conversation.user.name || 'Usuario',
+            adminName: 'Great Phones',
+            messageText: text || '(imagen)',
+            conversationId: id
+          })
+        }
+      } catch (emailError) {
+        console.error('[Messages] Error sending email to user:', emailError)
+      }
+    }
 
     return NextResponse.json(message, { status: 201 })
   } catch (error) {

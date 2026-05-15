@@ -303,6 +303,8 @@ model Conversation {
   adminId   String?
   admin     User?      @relation("AdminConversations", fields: [adminId], references: [id])
   unread    Int        @default(0)
+  unreadByUser  Int    @default(0)
+  unreadByAdmin Int    @default(0)
   lastMsgAt DateTime?
   closedAt  DateTime?
 
@@ -310,6 +312,7 @@ model Conversation {
   updatedAt DateTime @updatedAt
 
   messages Message[]
+  notifications Notification[]
 }
 
 enum ConvType {
@@ -342,6 +345,8 @@ model Message {
 
   readAt         DateTime?
   createdAt      DateTime     @default(now())
+
+  notifications  Notification[]
 }
 
 enum MsgStatus {
@@ -387,6 +392,11 @@ model Notification {
   text      String
   read      Boolean  @default(false)
 
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+  messageId      String?
+  message        Message?      @relation(fields: [messageId], references: [id])
+
   createdAt DateTime @default(now())
 }
 
@@ -395,6 +405,7 @@ enum NotifType {
   LOYALTY
   ORDER
   PROMO
+  MESSAGE
 }
 
 // ==================== ACCESORIOS ====================

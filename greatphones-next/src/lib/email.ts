@@ -266,3 +266,85 @@ export async function sendOrderConfirmationEmail(data: {
 
   return { success: true };
 }
+
+export async function sendNewMessageToAdminEmail(data: {
+  adminEmail: string;
+  userName: string;
+  messageText: string;
+  conversationId: string;
+  conversationType: string;
+}) {
+  const typeLabels: Record<string, string> = {
+    COMPRA: 'Compra',
+    COTIZACION: 'Cotizacion',
+    SERVICIO: 'Servicio',
+    REPARACION: 'Reparacion',
+    GENERIC: 'Consulta'
+  }
+
+  await sendEmail({
+    to: data.adminEmail,
+    subject: `Nuevo mensaje de ${data.userName} - Great Phones Chat`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">Nuevo mensaje en el chat</h2>
+        <p>Hola equipo de Great Phones,</p>
+        <p>Tienes un nuevo mensaje de <strong>${data.userName}</strong> en el chat de soporte.</p>
+        
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
+          <strong>Tipo:</strong> ${typeLabels[data.conversationType] || data.conversationType}<br>
+          <strong>Mensaje:</strong> ${data.messageText.substring(0, 200)}${data.messageText.length > 200 ? '...' : ''}
+        </div>
+
+        <p style="margin-top: 20px;">
+          Responde desde el panel de administracion para mantener la conversacion actualizada.
+        </p>
+
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}
+
+export async function sendAdminReplyEmail(data: {
+  userEmail: string;
+  userName: string;
+  adminName: string;
+  messageText: string;
+  conversationId: string;
+}) {
+  await sendEmail({
+    to: data.userEmail,
+    subject: `Tienes un nuevo mensaje del administrador - Great Phones`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">Nuevo mensaje del administrador</h2>
+        <p>Hola ${data.userName},</p>
+        <p>Tienes un nuevo mensaje del administrador en tu conversacion de soporte.</p>
+        
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
+          <strong>Mensaje:</strong> ${data.messageText.substring(0, 200)}${data.messageText.length > 200 ? '...' : ''}
+        </div>
+
+        <p style="margin-top: 20px;">
+          Inicia sesion en Great Phones y abre el chat para ver la conversacion completa y responder.
+        </p>
+
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}

@@ -15,6 +15,9 @@ export async function OPTIONS() {
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
+    const body = await request.json().catch(() => ({}))
+    const readerId = body.readerId
+
     // Mark all unread messages as read
     await prisma.message.updateMany({
       where: {
@@ -27,10 +30,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     })
 
-    // Reset unread count
+    // Determine which counter to reset based on who is reading
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      select: { userId: true, adminId: true }
+    })
+
+    const updateData: any = { unread: 0 }
+
+    if (conversation) {
+      if (readerId === conversation.userId) {
+        // User is reading -> reset unreadByUser
+        updateData.unreadByUser = 0
+      } else if (readerId === conversation.adminId || readerId === 'admin') {
+        // Admin is reading -> reset unreadByAdmin
+        updateData.unreadByAdmin = 0
+      } else {
+        // Fallback: reset both
+        updateData.unreadByUser = 0
+        updateData.unreadByAdmin = 0
+      }
+    }
+
     await prisma.conversation.update({
       where: { id },
-      data: { unread: 0 }
+      data: updateData
     })
 
     return NextResponse.json({ success: true })
