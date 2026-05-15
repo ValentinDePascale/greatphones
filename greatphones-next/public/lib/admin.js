@@ -186,19 +186,26 @@ function renderOrdersList(ords){
       deliveryLabel='Envio en Bahia Blanca';
     }
     var statusColor=o.status==='PENDING'?'var(--orange)':o.status==='PROCESSING'?'#3b82f6':o.status==='SHIPPED'?'#8b5cf6':o.status==='DELIVERED'?'var(--green)':'var(--red)';
+    var arrepBadge='';
+    if(o.arrepStatus==='ARREP_OK'){
+      arrepBadge='<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:#dcfce7;color:#059669;font-weight:600">ArrepentimientoOk</span>';
+    }else if(o.arrepStatus==='ARREP_RECHAZADO'){
+      arrepBadge='<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:#fef2f2;color:#dc2626;font-weight:600">Arrepentimiento Rechazado</span>';
+    }
     return'<div class="adm-item" onclick="openOrderDetail(\''+o.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'rgba(255,107,44,.03)\'" onmouseout="this.style.background=\'\'">'+
-      '<div class="adm-item-info" style="flex:1">'+
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'+
-          '<span style="font-size:14px;font-weight:700;color:var(--dk)">'+o.code+'</span>'+
+      '<div class="adm-item-info">'+
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">'+
+          '<span class="adm-item-name">'+o.code+'</span>'+
           '<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600">'+o.status+'</span>'+
+          (arrepBadge?arrepBadge:'')+
         '</div>'+
-        '<div style="font-size:12px;color:var(--gray);margin-bottom:2px">'+userName+' · '+userEmail+'</div>'+
-        (o.clientDni?'<div style="font-size:11px;color:var(--gray);margin-bottom:2px">DNI: '+o.clientDni+'</div>':'')+
-        '<div style="font-size:11px;color:var(--gray);margin-bottom:2px">'+itemsCount+' producto(s): '+itemsSummary.substring(0,60)+(itemsSummary.length>60?'...':'')+'</div>'+
-        '<div style="font-size:11px;color:var(--gray)">'+deliveryLabel+' · '+dateStr+' '+timeStr+'</div>'+
+        '<div class="adm-item-sub">'+userName+' · '+userEmail+'</div>'+
+        (o.clientDni?'<div class="adm-item-sub">DNI: '+o.clientDni+'</div>':'')+
+        '<div class="adm-item-sub">'+itemsCount+' producto(s): '+itemsSummary.substring(0,60)+(itemsSummary.length>60?'...':'')+'</div>'+
+        '<div class="adm-item-sub">'+deliveryLabel+' · '+dateStr+' '+timeStr+'</div>'+
       '</div>'+
       '<div style="text-align:right">'+
-        '<div style="font-size:16px;font-weight:700;color:var(--orange);font-family:\'Playfair Display\',serif">$'+o.total.toLocaleString('es-AR')+'</div>'+
+        '<div class="adm-item-price">$'+o.total.toLocaleString('es-AR')+'</div>'+
         '<div style="font-size:11px;color:var(--gray);margin-top:2px">Click para ver detalle</div>'+
       '</div>'+
     '</div>';
@@ -318,6 +325,21 @@ function showOrderModal(order){
             '<div style="font-size:12px;color:var(--gray);margin-top:4px">'+warrantyLabel+'</div>'+
           '</div>'+
         '</div>'+
+        (order.arrepStatus==='ARREP_OK'?'<div style="margin-top:1rem;padding:12px;background:#f0fdf4;border-radius:10px;border-left:4px solid var(--green)">'+
+          '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:4px">Arrepentimiento aceptado</div>'+
+          '<div style="font-size:11px;color:#6b7280">Devolucion procesada segun Ley 24.240. Reembolso total incluido.</div>'+
+        '</div>':'')+
+        (order.arrepStatus==='ARREP_RECHAZADO'?'<div style="margin-top:1rem;padding:12px;background:#fef2f2;border-radius:10px;border-left:4px solid var(--red)">'+
+          '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px">Arrepentimiento rechazado</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:4px">'+
+            ((order.arrepReason||'').split(';').filter(Boolean).map(function(r){
+              var clean=r.trim();
+              if(clean.indexOf('Comentario:')!==-1)return'';
+              return'<span style="display:inline-block;padding:3px 8px;background:#fef2f2;color:#dc2626;border-radius:5px;font-size:10px;font-weight:500">'+clean+'</span>';
+            }).join(''))+
+          '</div>'+
+          (((order.arrepReason||'').split(';').filter(Boolean).find(function(r){return r.indexOf('Comentario:')!==-1})||'').split('Comentario:')[1]?'<div style="font-size:11px;color:var(--gray);margin-top:6px;padding-top:6px;border-top:1px solid #fecaca"><strong>Comentario:</strong> '+((order.arrepReason||'').split(';').filter(Boolean).find(function(r){return r.indexOf('Comentario:')!==-1})||'').split('Comentario:')[1].trim()+'</div>':'')+
+        '</div>':'')+
         actionBtn+
       '</div>'+
     '</div>';
@@ -385,6 +407,248 @@ function updateOrderStatus(orderId,status){
       loadOrderHistory();
     }
   }).catch(function(){showToast('Error actualizando estado');});
+}
+
+// =========== ARREPENTIMIENTOS ===========
+window._allArreps=[];
+
+function setArrepBtnActive(activeId){
+  ['arrepBtnPendientes','arrepBtnAceptados','arrepBtnRechazados'].forEach(function(id){
+    var btn=document.getElementById(id);
+    if(!btn)return;
+    if(id===activeId){
+      btn.classList.add('ord-btn-act');
+      btn.classList.remove('ord-btn');
+    }else{
+      btn.classList.add('ord-btn');
+      btn.classList.remove('ord-btn-act');
+    }
+  });
+}
+
+function loadArrepPendientes(){
+  setArrepBtnActive('arrepBtnPendientes');
+  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+    window._allArreps=list;
+    var pendientes=list.filter(function(a){return a.estado==='PENDIENTE';});
+    renderArrepList(pendientes,'pendientes');
+  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+}
+
+function loadArrepAceptados(){
+  setArrepBtnActive('arrepBtnAceptados');
+  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+    window._allArreps=list;
+    var aceptados=list.filter(function(a){return a.estado==='APROBADO';});
+    renderArrepList(aceptados,'aceptados');
+  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+}
+
+function loadArrepRechazados(){
+  setArrepBtnActive('arrepBtnRechazados');
+  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+    window._allArreps=list;
+    var rechazados=list.filter(function(a){return a.estado==='RECHAZADO';});
+    renderArrepList(rechazados,'rechazados');
+  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+}
+
+function renderArrepList(list,tab){
+  var el=document.getElementById('arrepList');
+  if(!el)return;
+  
+  if(!list||list.length===0){
+    var msgs={
+      pendientes:{icon:'📋',title:'No hay arrepentimientos pendientes',sub:'Las solicitudes apareceran aqui cuando los clientes las envien'},
+      aceptados:{icon:'✅',title:'No hay arrepentimientos aceptados',sub:'Los arrepentimientos aceptados apareceran aqui'},
+      rechazados:{icon:'❌',title:'No hay arrepentimientos rechazados',sub:'Los arrepentimientos rechazados apareceran aqui'}
+    };
+    var m=msgs[tab]||{icon:'📋',title:'No hay datos',sub:''};
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">'+m.icon+'</p><p style="font-size:16px;font-weight:600;margin-bottom:.5rem">'+m.title+'</p><p style="font-size:13px">'+m.sub+'</p></div>';
+    return;
+  }
+  
+  el.innerHTML=list.map(function(a){
+    var dateStr=new Date(a.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
+    var addr='';
+    if(a.orderShipping){
+      var parts=[a.orderShipping.street,a.orderShipping.number,a.orderShipping.city,a.orderShipping.province].filter(Boolean);
+      addr=parts.join(', ');
+    }
+    
+    var html='<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:10px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+        '<div>'+
+          '<div style="font-size:14px;font-weight:700">'+a.email+'</div>'+
+          '<div style="font-size:12px;color:var(--gray)">DNI: '+(a.orderDni||'-')+' · Tel: '+(a.telefono||a.orderPhone||'-')+'</div>'+
+        '</div>'+
+        '<span style="padding:4px 12px;border-radius:12px;background:var(--orange);color:#fff;font-size:11px;font-weight:600">'+a.estado+'</span>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
+          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Orden</div>'+
+          '<div style="font-size:13px;font-weight:600">'+(a.orderCode||a.orderId)+'</div>'+
+          '<div style="font-size:13px;color:var(--orange);font-weight:700">$'+(a.orderTotal||0).toLocaleString('es-AR')+'</div>'+
+        '</div>'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
+          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Direccion de devolucion</div>'+
+          '<div style="font-size:12px">'+(addr||'Retiro en tienda')+'</div>'+
+        '</div>'+
+      '</div>'+
+      (a.motivo?'<div style="font-size:12px;margin-bottom:10px;padding:10px;background:var(--cream2);border-radius:8px"><strong>Motivo:</strong> '+a.motivo+'</div>':'')+
+      '<div style="font-size:11px;color:var(--gray);margin-bottom:10px">Solicitado: '+dateStr+'</div>';
+    
+    if(tab==='pendientes'){
+      html+='<div style="display:flex;gap:8px">'+
+        '<button class="ord-btn ord-btn-act" onclick="acceptArrep(\''+a.id+'\')" style="flex:1">Aceptar arrepentimiento</button>'+
+        '<button class="ord-btn" onclick="rejectArrep(\''+a.id+'\')" style="flex:1;border-color:var(--red);color:var(--red)">Rechazar</button>'+
+      '</div>';
+    }else if(tab==='aceptados'){
+      html+='<div style="padding:10px;background:#f0fdf4;border-radius:8px;border-left:4px solid var(--green)">'+
+        '<div style="font-size:12px;font-weight:600;color:#059669">Arrepentimiento aceptado - Devolucion procesada</div>'+
+        '<div style="font-size:11px;color:var(--gray);margin-top:4px">Reembolso total segun Ley 24.240</div>'+
+      '</div>';
+    }else if(tab==='rechazados'){
+      var reasonsText=a.reason||'';
+      var reasonsParts=reasonsText.split(';').filter(Boolean);
+      var comment='';
+      var lastPart=reasonsParts[reasonsParts.length-1];
+      if(lastPart&&lastPart.indexOf('Comentario:')!==-1){
+        comment=lastPart.split('Comentario:')[1].trim();
+        reasonsParts.pop();
+      }
+      var reasonsHtml=reasonsParts.map(function(r){
+        return'<span style="display:inline-block;padding:4px 10px;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;font-weight:500;margin:2px">'+r.trim()+'</span>';
+      }).join('');
+      html+='<div style="padding:10px;background:#fef2f2;border-radius:8px;border-left:4px solid var(--red)">'+
+        '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:8px">Arrepentimiento rechazado</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+reasonsHtml+'</div>'+
+        (comment?'<div style="font-size:11px;color:var(--gray);padding-top:6px;border-top:1px solid #fecaca"><strong>Comentario:</strong> '+comment+'</div>':'')+
+      '</div>';
+    }
+    
+    html+='</div>';
+    return html;
+  }).join('');
+}
+
+function acceptArrep(id){
+  if(!confirm('¿Confirmas que aceptas este arrepentimiento?\n\nSe cancelara la orden y se notificara al cliente con instrucciones de devolucion.\nReembolso total segun Ley 24.240.')){
+    return;
+  }
+  
+  fetch(API_URL+'/api/arrepentimiento?id='+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({estado:'APROBADO'})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.success){
+      showToast('Arrepentimiento aceptado');
+      loadArrepPendientes();
+    }else{
+      showToast('Error: '+data.message);
+    }
+  }).catch(function(){showToast('Error de conexion');});
+}
+
+function rejectArrep(id){
+  var existing=document.getElementById('rejectArrepModal');
+  if(existing)existing.remove();
+  
+  var modal=document.createElement('div');
+  modal.id='rejectArrepModal';
+  modal.style.cssText='display:flex;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
+  modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeRejectArrepModal()"></div>'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(500px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
+      '<div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border)">'+
+        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--red)">Rechazar arrepentimiento</h3>'+
+        '<p style="font-size:12px;color:var(--gray);margin-top:4px">Selecciona los motivos del rechazo</p>'+
+      '</div>'+
+      '<div style="padding:1.5rem 2rem">'+
+        '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem">'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Plazo de 10 dias habiles vencido" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Plazo de 10 dias habiles vencido</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Producto danado por el consumidor" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Producto danado por el consumidor</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Producto sin empaque original" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Producto sin empaque original</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Producto usado o con senales de uso" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Producto usado o con senales de uso</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Producto personalizado o perecedero" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Producto personalizado o perecedero</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="arrep-reason-cb" value="Falta documentacion o comprobante de compra" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px">Falta documentacion o comprobante de compra</span>'+
+          '</label>'+
+        '</div>'+
+        '<div style="margin-bottom:1rem">'+
+          '<label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">Comentario adicional (opcional)</label>'+
+          '<textarea id="arrepRejectComment" rows="3" placeholder="Agrega detalles adicionales sobre el rechazo..." style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box;outline:none;font-family:inherit"></textarea>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px">'+
+          '<button onclick="closeRejectArrepModal()" style="flex:1;padding:12px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>'+
+          '<button onclick="confirmRejectArrep(\''+id+'\')" style="flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Rechazar</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  
+  document.body.appendChild(modal);
+  modal.offsetHeight;
+  setTimeout(function(){
+    modal.style.opacity='1';
+    modal.querySelector('div:nth-child(2)').style.transform='scale(1)';
+  },10);
+}
+
+function closeRejectArrepModal(){
+  var modal=document.getElementById('rejectArrepModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
+  setTimeout(function(){modal.remove();},300);
+}
+
+function confirmRejectArrep(id){
+  var cbs=document.querySelectorAll('.arrep-reason-cb:checked');
+  var reasons=[];
+  cbs.forEach(function(cb){reasons.push(cb.value);});
+  
+  var commentEl=document.getElementById('arrepRejectComment');
+  var comment=commentEl?commentEl.value.trim():'';
+  
+  if(reasons.length===0&&comment===''){
+    alert('Selecciona al menos un motivo o agrega un comentario');
+    return;
+  }
+  
+  var reasonText=reasons.join('; ');
+  if(comment){
+    reasonText=reasonText?(reasonText+' | Comentario: '+comment):comment;
+  }
+  
+  fetch(API_URL+'/api/arrepentimiento?id='+id,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({estado:'RECHAZADO',rejectReason:reasonText})
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.success){
+      showToast('Arrepentimiento rechazado');
+      closeRejectArrepModal();
+      loadArrepPendientes();
+    }else{
+      showToast('Error: '+data.message);
+    }
+  }).catch(function(){showToast('Error de conexion');});
 }
 
 // =========== ACCESSORY FUNCTIONS ===========

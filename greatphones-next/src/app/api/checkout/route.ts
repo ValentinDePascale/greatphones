@@ -14,6 +14,21 @@ function generateOrderCode() {
   return `${prefix}-${timestamp}-${random}`;
 }
 
+async function findOrCreateUser(email: string, phone?: string, document?: string) {
+  let user = await prisma.user.findFirst({ where: { email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email,
+        name: email.split('@')[0],
+        phone: phone || null,
+        dni: document || null,
+      }
+    });
+  }
+  return user;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -44,27 +59,58 @@ export async function POST(request: NextRequest) {
       total 
     } = body;
 
-    let userId = 'anonymous';
-    
-    const preferenceData = {
-      items: items.map((item: any) => ({
-        title: item.name,
-        unit_price: item.price,
-        quantity: item.quantity,
+    // Find or create user from email
+    const user = await findOrCreateUser(email, phone, document);
+    const userId = user.id;
+
+    const orderCode = generateOrderCode();
+
+    // Build MP preference items with proper descriptions
+    const mpItems = items.map((item: any) => ({
+      title: item.name,
+      unit_price: item.price,
+      quantity: item.quantity,
+      currency_id: 'ARS',
+      picture_url: item.imageUrl || undefined,
+      description: `${item.brand || ''} ${item.sub || ''}`.trim() || item.name
+    }));
+
+    // Add warranty as separate item if applicable
+    if (warrantyCost && warrantyCost > 0) {
+      mpItems.push({
+        title: 'Garantia extendida 90 dias',
+        unit_price: warrantyCost,
+        quantity: 1,
         currency_id: 'ARS',
-        picture_url: item.imageUrl || undefined,
-        description: item.sub || item.name
-      })),
+      });
+    }
+
+    // Add shipping as separate item if applicable
+    if (deliveryCost && deliveryCost > 0) {
+      mpItems.push({
+        title: `Envio - ${delivery || 'Estándar'}`,
+        unit_price: deliveryCost,
+        quantity: 1,
+        currency_id: 'ARS',
+      });
+    }
+
+    // Determine identification type for Argentina
+    const cleanDoc = document.replace(/[^0-9]/g, '');
+    const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
+
+    const preferenceData = {
+      items: mpItems,
       payer: {
         email: email,
-        name: document.length > 8 ? 'Usuario' : 'Usuario',
-        surname: document.length > 8 ? 'Empresa' : 'Final',
+        name: user.name || 'Cliente',
+        surname: '',
         phone: {
           number: phone || '0000000000'
         },
         identification: {
-          type: document.length > 8 ? 'CNPJ' : 'DNI',
-          number: document.replace(/[^0-9]/g, '')
+          type: idType,
+          number: cleanDoc
         },
         address: {
           street_name: street,
@@ -76,12 +122,12 @@ export async function POST(request: NextRequest) {
         }
       },
       back_urls: {
-        success: `${process.env.NEXTAUTH_URL}/success`,
-        failure: `${process.env.NEXTAUTH_URL}/failure`,
-        pending: `${process.env.NEXTAUTH_URL}/pending`
+        success: `${process.env.NEXTAUTH_URL}/success?order=${orderCode}`,
+        failure: `${process.env.NEXTAUTH_URL}/failure?order=${orderCode}`,
+        pending: `${process.env.NEXTAUTH_URL}/pending?order=${orderCode}`
       },
       notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
-      external_reference: '',
+      external_reference: orderCode,
       auto_return: 'approved' as const,
       payment_types: {
         excluded_types: []
@@ -94,7 +140,7 @@ export async function POST(request: NextRequest) {
     if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
     const initPoint = mpResponse.init_point;
 
-    const orderCode = generateOrderCode();
+    // Create order with proper userId and mpPreferenceId
     const order = await prisma.order.create({
       data: {
         code: orderCode,
@@ -119,7 +165,6 @@ export async function POST(request: NextRequest) {
         items: {
           create: items.map((item: any) => ({
             productId: item.id,
-            productName: item.name,
             quantity: item.quantity,
             price: item.price
           }))

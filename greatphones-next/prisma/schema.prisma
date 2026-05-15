@@ -121,6 +121,12 @@ model Order {
   mpPaymentId    String?
   mpStatus       String?
 
+  // Arrepentimiento
+  arrepStatus    String?     // ARREP_OK, ARREP_RECHAZADO
+  arrepReason    String?     // Motivo del rechazo
+  refundProcessed Boolean    @default(false)
+  refundDate     DateTime?
+
   items           OrderItem[]
   arrepentimientos Arrepentimiento[]
 }

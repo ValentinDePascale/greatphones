@@ -43,6 +43,29 @@
   white-space:nowrap
 }
 .ord-btn-act:hover{background:#e55a1a;border-color:#e55a1a;color:#fff}
+.adm-item-info{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  padding:8px 0
+}
+.adm-item-name{
+  font-size:14px;
+  font-weight:700;
+  color:var(--dk);
+  line-height:1.3
+}
+.adm-item-sub{
+  font-size:12px;
+  color:var(--gray);
+  line-height:1.4
+}
+.adm-item-price{
+  font-size:16px;
+  font-weight:700;
+  color:var(--orange);
+  font-family:'Playfair Display',serif
+}
 .filter-expand-btn{
   display:flex;
   align-items:center;

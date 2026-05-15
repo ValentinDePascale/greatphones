@@ -1,12 +1,14 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
+const transporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    })
+  : null;
 
 export async function sendEmail({
   to,
@@ -17,6 +19,10 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
+  if (!transporter) {
+    console.warn('[EMAIL] Transporter not configured. Skipping email send.');
+    return { success: false, error: 'Email not configured' };
+  }
   try {
     await transporter.sendMail({
       from: `"Great Phones" <${process.env.EMAIL_USER}>`,
@@ -104,6 +110,155 @@ export async function sendArrepentimientoEmail(data: {
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
           Zelarrayan 179, Bahía Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}
+
+export async function sendArrepAcceptEmail(data: {
+  orderCode: string;
+  email: string;
+  total: number;
+  shippingAddress: string;
+}) {
+  await sendEmail({
+    to: data.email,
+    subject: `Arrepentimiento aceptado - Instrucciones de devolucion - Orden ${data.orderCode}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #059669;">Arrepentimiento aceptado</h2>
+        <p>Hola,</p>
+        <p>Tu solicitud de arrepentimiento para la orden <strong>${data.orderCode}</strong> ha sido <strong>aceptada</strong>.</p>
+        <p style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669;">
+          <strong>Reembolso total:</strong> $${data.total.toLocaleString('es-AR')}<br>
+          <small>Segun Ley 24.240 y Resolucion 424/2020</small>
+        </p>
+        <h3 style="margin-top: 24px;">Instrucciones para la devolucion:</h3>
+        <ol style="line-height: 1.8;">
+          <li>El producto debe estar en las mismas condiciones en que fue recibido, con su empaque original.</li>
+          <li>Coordina la devolucion respondiendo a este email o visitando nuestro local en <strong>Zelarrayan 179, Bahia Blanca</strong>.</li>
+          <li>El costo de envio de la devolucion corre por nuestra cuenta.</li>
+          <li>Una vez recibido y verificado el producto, el reembolso se procesara en un maximo de <strong>10 dias habiles</strong>.</li>
+        </ol>
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}
+
+export async function sendArrepRejectEmail(data: {
+  orderCode: string;
+  email: string;
+  reason: string;
+}) {
+  await sendEmail({
+    to: data.email,
+    subject: `Arrepentimiento rechazado - Orden ${data.orderCode}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #dc2626;">Solicitud de arrepentimiento rechazada</h2>
+        <p>Hola,</p>
+        <p>Te informamos que tu solicitud de arrepentimiento para la orden <strong>${data.orderCode}</strong> ha sido <strong>rechazada</strong>.</p>
+        <p style="background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;">
+          <strong>Motivo:</strong> ${data.reason}
+        </p>
+        <p style="margin-top: 20px;">
+          Si consideras que esta decision es incorrecta, podes comunicarte con nosotros para revisar tu caso.
+          Tenes derecho a reclamar ante la <strong>Defensa del Consumidor</strong> si consideras que se vulneran tus derechos.
+        </p>
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}
+
+export async function sendOrderConfirmationEmail(data: {
+  orderCode: string;
+  email: string;
+  phone: string;
+  total: number;
+  items: { name: string; quantity: number; price: number }[];
+  shippingAddress: string;
+  paymentMethod: string;
+  installments: number;
+}) {
+  const itemsHtml = data.items.map(item => `
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toLocaleString('es-AR')}</td>
+    </tr>
+  `).join('');
+
+  const installmentsText = data.installments > 1 
+    ? `${data.installments} cuotas de $${Math.round(data.total / data.installments).toLocaleString('es-AR')}`
+    : 'Pago en 1 cuota';
+
+  await sendEmail({
+    to: data.email,
+    subject: `Confirmacion de compra - Orden ${data.orderCode} - Great Phones`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #059669;">Compra confirmada</h2>
+        <p>Hola,</p>
+        <p>Tu pago ha sido procesado correctamente. A continuacion los detalles de tu compra:</p>
+        
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
+          <strong>Orden:</strong> ${data.orderCode}<br>
+          <strong>Total pagado:</strong> $${data.total.toLocaleString('es-AR')}<br>
+          <strong>Metodo de pago:</strong> ${data.paymentMethod}<br>
+          <strong>Cuotas:</strong> ${installmentsText}
+        </div>
+
+        <h3 style="margin-top: 24px;">Productos:</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background: #f5f5f5;">
+              <th style="padding: 10px; text-align: left;">Producto</th>
+              <th style="padding: 10px; text-align: center;">Cant.</th>
+              <th style="padding: 10px; text-align: right;">Precio</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
+
+        <h3 style="margin-top: 24px;">Direccion de envio:</h3>
+        <p style="background: #f5f5f5; padding: 12px; border-radius: 8px;">${data.shippingAddress || 'Retiro en tienda'}</p>
+
+        <h3 style="margin-top: 24px;">Proximos pasos:</h3>
+        <ol style="line-height: 1.8;">
+          <li>Estamos preparando tu pedido</li>
+          <li>Te contactaremos cuando este listo para envio o retiro</li>
+          <li>Tu compra tiene garantia de 90 dias segun Ley 24.240</li>
+        </ol>
+
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
         </p>
       </div>
     `
