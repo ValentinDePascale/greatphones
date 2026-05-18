@@ -1,4 +1,3 @@
-// =========== FAVORITES ===========
 var favorites=[];
 function getFavKey(){
   return currentUser?'gp_fav_'+currentUser.id:'gp_favorites';
@@ -14,11 +13,44 @@ function saveFavorites(){
   try{localStorage.setItem(getFavKey(),JSON.stringify(favorites));}catch(e){}
 }
 function loadUserFavorites(){
-  try{
-    var stored=localStorage.getItem(getFavKey());
-    favorites=stored?JSON.parse(stored):[];
-  }catch(e){favorites=[];}
-  updFavBadge();
+  if(currentUser){
+    fetch(API_URL+'/api/favorites?userId='+currentUser.id)
+      .then(function(r){return r.json();})
+      .then(function(data){
+        if(Array.isArray(data)){
+          favorites=data.map(function(p){return p.id;});
+          saveFavorites();
+          updFavBadge();
+          renderHomeRail();renderShopGrid();renderOfertasGrid();renderFeaturedGrid();renderAccGrid();
+        }
+      })
+      .catch(function(){
+        var stored=localStorage.getItem(getFavKey());
+        favorites=stored?JSON.parse(stored):[];
+        updFavBadge();
+      });
+  }else{
+    try{
+      var stored=localStorage.getItem(getFavKey());
+      favorites=stored?JSON.parse(stored):[];
+    }catch(e){favorites=[];}
+    updFavBadge();
+  }
+}
+function syncFavToAPI(productId,isFav){
+  if(!currentUser)return;
+  var method=isFav?'POST':'DELETE';
+  fetch(API_URL+'/api/favorites',{
+    method:method,
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:currentUser.id,productId:productId})
+  }).catch(function(){
+    var idx=favorites.indexOf(productId);
+    if(isFav&&idx===-1)favorites.push(productId);
+    else if(!isFav&&idx!==-1)favorites.splice(idx,1);
+    saveFavorites();
+    updFavBadge();
+  });
 }
 function updFavBadge(){
   var n=favorites.length;
@@ -30,7 +62,8 @@ function toggleDetFav(){
   if(!targetId)return;
   var idx=favorites.indexOf(targetId);
   var fb=document.getElementById('detFavBtn');
-  if(idx===-1){
+  var isNowFav=idx===-1;
+  if(isNowFav){
     favorites.push(targetId);
     if(fb){fb.innerHTML='\u2665';fb.style.color='var(--red)';fb.classList.add('saved');fb.style.animation='none';fb.offsetHeight;fb.style.animation='favPop 0.3s ease';}
   }else{
@@ -39,14 +72,9 @@ function toggleDetFav(){
   }
   saveFavorites();
   updFavBadge();
-  renderHomeRail();
-  renderShopGrid();
-  renderOfertasGrid();
-  renderFeaturedGrid();
-  renderAccGrid();
-  if(document.getElementById('p-favoritos').classList.contains('act')){
-    renderFavGrid();
-  }
+  syncFavToAPI(targetId,isNowFav);
+  renderHomeRail();renderShopGrid();renderOfertasGrid();renderFeaturedGrid();renderAccGrid();
+  if(document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
 }
 function isFavorite(id){
   return favorites.indexOf(id)!==-1;
@@ -55,37 +83,20 @@ function toggleFavFromCard(id){
   var idx=favorites.indexOf(id);
   var isNowFav=idx===-1;
   if(isNowFav){favorites.push(id);}else{favorites.splice(idx,1);}
-  saveFavorites();
-  updFavBadge();
-  
-  // Immediate UI update for better UX
+  saveFavorites();updFavBadge();
+  syncFavToAPI(id,isNowFav);
   var btns=document.querySelectorAll('.pcard-fav');
   for(var i=0;i<btns.length;i++){
     var btn=btns[i];
     var onclickAttr=btn.getAttribute('onclick');
     if(onclickAttr&&onclickAttr.indexOf("'"+id+"'")!==-1){
-      if(isNowFav){
-        btn.classList.add('on');
-        btn.innerHTML='\u2665';
-        btn.style.animation='none';
-        btn.offsetHeight;
-        btn.style.animation='favPop 0.3s ease';
-      }else{
-        btn.classList.remove('on');
-        btn.innerHTML='\u2661';
-      }
+      if(isNowFav){btn.classList.add('on');btn.innerHTML='\u2665';btn.style.animation='none';btn.offsetHeight;btn.style.animation='favPop 0.3s ease';}
+      else{btn.classList.remove('on');btn.innerHTML='\u2661';}
       break;
     }
   }
-  
-  renderHomeRail();
-  renderShopGrid();
-  renderOfertasGrid();
-  renderFeaturedGrid();
-  renderAccGrid();
-  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){
-    renderFavGrid();
-  }
+  renderHomeRail();renderShopGrid();renderOfertasGrid();renderFeaturedGrid();renderAccGrid();
+  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
 }
 function renderFavGrid(){
   var grid=document.getElementById('favGrid'),empty=document.getElementById('favEmpty'),cnt=document.getElementById('favCount');
@@ -104,15 +115,13 @@ function renderFavGrid(){
       var isProd=!!item.price&&item.brand;
       var isAcc=!isProd||(item.category&&!item.condition);
       if(isAcc){
-        var now=new Date();
         var isPromo=item.isOffer&&item.discount>0;
         var finalPrice=isPromo?Math.round(item.price-item.price*item.discount/100):item.price;
         var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
         var isFav=isFavorite(item.id);
-        var clickHandlerAcc='openAccDetail(\''+item.id+'\')';
         var favStyleAcc=isFav?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
-        return '<div class="pcard" onclick="'+clickHandlerAcc+'" style="position:relative">'+
+        return '<div class="pcard" onclick="openAccDetail(\''+item.id+'\')" style="position:relative">'+
           '<div class="pcard-img" style="position:relative">'+imgHtml+
           (isPromo?'<span style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;z-index:3;line-height:1">-'+item.discount+'%</span>':'')+
           '</div>'+
@@ -126,7 +135,6 @@ function renderFavGrid(){
           '<button class="pcard-add" onclick="event.stopPropagation();addToCartAcc(\''+item.id+'\')" style="margin-top:auto">+ Agregar al carrito</button>'+
           '</div>';
       }else{
-        var now2=new Date();
         var isPromo2=item.isOffer&&item.discount>0;
         var finalPrice2=isPromo2?Math.round(item.price-item.price*item.discount/100):item.price;
         var cuota2=Math.round(finalPrice2/12);
