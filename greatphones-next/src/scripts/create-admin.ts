@@ -3,7 +3,8 @@ import { prisma } from '../lib/prisma'
 import bcrypt from 'bcryptjs'
 
 async function main() {
-  const hashedPassword = await bcrypt.hash('1234', 10)
+  const password = 'admin123'
+  const hashedPassword = await bcrypt.hash(password, 10)
   
   const admin = await prisma.user.upsert({
     where: { email: 'admin@greatphones.com' },
@@ -11,6 +12,7 @@ async function main() {
       password: hashedPassword,
       role: 'ADMIN',
       name: 'Administrador',
+      verified: true
     },
     create: {
       email: 'admin@greatphones.com',
@@ -25,7 +27,10 @@ async function main() {
     },
   })
   
-  console.log('Admin created:', admin.email, '- Role:', admin.role)
+  console.log('Admin actualizado:', admin.email)
+  console.log('Password:', password)
+  console.log('Verificado:', admin.verified)
+  console.log('Role:', admin.role)
   await prisma.$disconnect()
 }
 

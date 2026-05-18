@@ -109,7 +109,32 @@ export async function sendArrepentimientoEmail(data: {
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
-          Zelarrayan 179, Bahía Blanca
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
+
+  return { success: true };
+}
+
+export async function sendPasswordResetEmail(data: { email: string; code: string }) {
+  await sendEmail({
+    to: data.email,
+    subject: 'Recuperar contraseña - Great Phones',
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">Recuperar contraseña</h2>
+        <p>Hola,</p>
+        <p>Recibimos una solicitud para restablecer tu contraseña. Tu codigo de verificacion es:</p>
+        <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
+          ${data.code}
+        </div>
+        <p style="color: #666; font-size: 14px;">Este codigo expira en 15 minutos.</p>
+        <p style="color: #666; font-size: 14px;">Si no solicitaste este cambio, ignora este email.</p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
         </p>
       </div>
     `

@@ -41,7 +41,7 @@ function initChatSocket(){
     console.log('[Chat] Socket not available, using polling');
     startChatPolling();
   }
-  startNotifPolling();
+  startChatNotifPolling();
 }
 
 function startChatPolling(){
@@ -270,9 +270,12 @@ function escapeHtml(text){
 var adminActiveConvId=null;
 function loadAdminConversations(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
-  fetch(API_URL+'/api/admin/conversations')
+  fetch(API_URL+'/api/admin/conversations',{
+    headers:{'X-User-Id':currentUser.id}
+  })
     .then(function(r){return r.json();})
     .then(function(data){
+      if(!Array.isArray(data)){console.error('Invalid admin conversations response:',data);return;}
       window._adminConvs=data;
       renderAdminConvList(data);
     })
@@ -328,7 +331,7 @@ function openAdminConv(id){
 function closeAdminConv(id){
   fetch(API_URL+'/api/admin/conversations',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
     body:JSON.stringify({conversationId:id,action:'close'})
   })
   .then(function(r){return r.json();})
@@ -498,14 +501,14 @@ function renderPanelMsgs(msgs){
   }).join('');
 }
 
-function startNotifPolling(){
+function startChatNotifPolling(){
   if(notifPollInterval)clearInterval(notifPollInterval);
   notifPollInterval=setInterval(function(){
     updateMsgBadge();
   },10000);
 }
 
-function stopNotifPolling(){
+function stopChatNotifPolling(){
   if(notifPollInterval){clearInterval(notifPollInterval);notifPollInterval=null;}
 }
 

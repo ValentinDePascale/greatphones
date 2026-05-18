@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import nodemailer from 'nodemailer'
+import { rateLimit } from '@/lib/rate-limit'
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -18,7 +19,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -31,21 +32,23 @@ export async function POST(request: Request) {
     const { action, email, code } = body
 
     if (action === 'send') {
-      console.log('[VERIFY] action=send, email:', email)
-      
       if (!email) {
         return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
       }
 
+      const limit = rateLimit(`verify:${email}`, 5, 60 * 60 * 1000)
+      if (!limit.allowed) {
+        const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
+        return NextResponse.json({ error: `Demasiados codigos. Espera ${mins} minutos` }, { status: 429 })
+      }
+
       const user = await prisma.user.findUnique({ where: { email } })
       if (user) {
-        return NextResponse.json({ error: 'El email ya está registrado' }, { status: 400 })
+        return NextResponse.json({ error: 'El email ya esta registrado' }, { status: 400 })
       }
 
       const verifyCode = generateCode()
       const expires = new Date(Date.now() + 10 * 60 * 1000)
-
-      console.log('[VERIFY] Generated code:', verifyCode)
 
       try {
         await prisma.emailVerification.create({
@@ -55,30 +58,28 @@ export async function POST(request: Request) {
         console.log('[VERIFY] DB create error (ignoring):', dbErr)
       }
 
-      console.log('[VERIFY] About to send email via Gmail...')
-      
       try {
         await transporter.sendMail({
           from: 'Great Phones <greatphones2024@gmail.com>',
           to: email,
-          subject: 'Código de verificación - Great Phones',
+          subject: 'Codigo de verificacion - Great Phones',
           html: `
             <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto;">
               <h2 style="color: #ff6b2c;">Great Phones</h2>
-              <p>Tu código de verificación es:</p>
+              <p>Tu codigo de verificacion es:</p>
               <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
                 ${verifyCode}
               </div>
-              <p style="color: #666; font-size: 14px;">Este código expira en 10 minutos.</p>
+              <p style="color: #666; font-size: 14px;">Este codigo expira en 10 minutos.</p>
             </div>
           `,
         })
-        console.log('[VERIFY] Email sent successfully')
       } catch (emailErr) {
         console.error('[VERIFY] Gmail error:', emailErr)
+        return NextResponse.json({ error: 'No se pudo enviar el codigo de verificacion' }, { status: 500 })
       }
 
-      return NextResponse.json({ message: 'Código enviado', code: verifyCode, debug: true })
+      return NextResponse.json({ message: 'Codigo enviado' })
     }
 
     if (action === 'verify') {

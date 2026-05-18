@@ -109,7 +109,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register'};
+  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -226,6 +226,46 @@ async function doLogin(){
 async function doSignup(){
   initiateSignup();
 }
+async function sendForgotCode(){
+  var email=document.getElementById('forgotEmail').value.trim();
+  var errEl=document.getElementById('forgotError');
+  var sucEl=document.getElementById('forgotSuccess');
+  errEl.style.display='none';sucEl.style.display='none';
+  if(!email){errEl.textContent='Ingresa tu email';errEl.style.display='block';return;}
+  try{
+    var res=await fetch(API_URL+'/api/auth/forgot-password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email})
+    });
+    var data=await res.json();
+    if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
+    sucEl.textContent='Codigo enviado. Revisa tu email.';sucEl.style.display='block';
+    document.getElementById('resetEmail').value=email;
+    setTimeout(function(){nav('reset-password');},1500);
+  }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
+}
+async function doResetPassword(){
+  var email=document.getElementById('resetEmail').value.trim();
+  var code=document.getElementById('resetCode').value.trim();
+  var newPassword=document.getElementById('resetNewPassword').value;
+  var errEl=document.getElementById('resetError');
+  var sucEl=document.getElementById('resetSuccess');
+  errEl.style.display='none';sucEl.style.display='none';
+  if(!code||!newPassword){errEl.textContent='Completa todos los campos';errEl.style.display='block';return;}
+  if(newPassword.length<6){errEl.textContent='La contraseña debe tener al menos 6 caracteres';errEl.style.display='block';return;}
+  try{
+    var res=await fetch(API_URL+'/api/auth/reset-password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,code:code,newPassword:newPassword})
+    });
+    var data=await res.json();
+    if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
+    sucEl.textContent='Contraseña actualizada! Redirigiendo...';sucEl.style.display='block';
+    setTimeout(function(){nav('login');},2000);
+  }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
+}
 function doLogout(){
   currentUser=null;
   localStorage.removeItem('gp_user');
@@ -286,9 +326,19 @@ function updateUserUI(){
       if(li)li.style.display='none';
     }
   }
+  if(currentUser){
+    if(typeof updateNotifBadge==='function')updateNotifBadge();
+    if(typeof startNotifPolling==='function')startNotifPolling();
+    if(typeof updateMsgBadge==='function')updateMsgBadge();
+    if(typeof startChatNotifPolling==='function')startChatNotifPolling();
+  }else{
+    if(typeof stopNotifPolling==='function')stopNotifPolling();
+    if(typeof stopChatNotifPolling==='function')stopChatNotifPolling();
+  }
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('.nav-search'))document.getElementById('searchDD').classList.remove('open');
+  if(!e.target.closest('.notif-wrap'))closeNotifPanel();
 });
 (function(){
   var saved=localStorage.getItem('gp_user');
@@ -634,7 +684,6 @@ function loadEditProfile(){
   if(!currentUser)return;
   var nameEl=document.getElementById('editProfileName');
   var lastnameEl=document.getElementById('editProfileLastname');
-  var phoneEl=document.getElementById('editProfilePhone');
   var emailEl=document.getElementById('editProfileEmail');
   var dniEl=document.getElementById('editProfileDni');
   var factPhoneEl=document.getElementById('editProfileFactPhone');
@@ -647,7 +696,6 @@ function loadEditProfile(){
   var avatarEl=document.getElementById('editProfileAvatar');
   if(nameEl)nameEl.value=(currentUser.name||'').split(' ')[0]||'';
   if(lastnameEl)lastnameEl.value=(currentUser.name||'').split(' ').slice(1).join(' ')||'';
-  if(phoneEl)phoneEl.value=currentUser.phone||'';
   if(emailEl)emailEl.value=currentUser.email||'';
   if(dniEl)dniEl.value=currentUser.dni||'';
   if(factPhoneEl)factPhoneEl.value=currentUser.phone||'';
@@ -684,9 +732,8 @@ function saveEditProfile(){
   if(!currentUser)return;
   var nameEl=document.getElementById('editProfileName');
   var lastnameEl=document.getElementById('editProfileLastname');
-  var phoneEl=document.getElementById('editProfilePhone');
-  var dniEl=document.getElementById('editProfileDni');
   var factPhoneEl=document.getElementById('editProfileFactPhone');
+  var dniEl=document.getElementById('editProfileDni');
   var calleEl=document.getElementById('editProfileCalle');
   var numeroEl=document.getElementById('editProfileNumero');
   var pisoEl=document.getElementById('editProfilePiso');
@@ -698,7 +745,7 @@ function saveEditProfile(){
   var payload={
     userId:currentUser.id,
     name:fullName.trim(),
-    phone:phoneEl?phoneEl.value:currentUser.phone,
+    phone:factPhoneEl?factPhoneEl.value:currentUser.phone,
     dni:dniEl?dniEl.value:currentUser.dni,
     direccion:direccion.trim()||undefined,
     piso:pisoEl?pisoEl.value:currentUser.piso,
@@ -852,6 +899,55 @@ function checkPasswordStrength2(){
     if(!/[0-9]/.test(val))missingText.push('un numero');
     missing.textContent=missingText.length?'Falta: '+missingText.join(', '):'';
   }
+}
+async function loadOrderTracking(){
+  var code=document.getElementById('trackCode').value.trim();
+  var email=document.getElementById('trackEmail').value.trim();
+  var errEl=document.getElementById('trackError');
+  var resultEl=document.getElementById('trackResult');
+  errEl.style.display='none';resultEl.style.display='none';
+  if(!code||!email){errEl.textContent='Completa codigo y email';errEl.style.display='block';return;}
+  try{
+    var res=await fetch(API_URL+'/api/orders/track?code='+encodeURIComponent(code)+'&email='+encodeURIComponent(email));
+    var data=await res.json();
+    if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
+    document.getElementById('trackOrderCode').textContent='Orden '+data.code;
+    document.getElementById('trackOrderDate').textContent=new Date(data.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
+    var statusEl=document.getElementById('trackOrderStatus');
+    statusEl.textContent=data.statusLabel;
+    var statusColors={PENDING:'background:#fef3c7;color:#92400e',PROCESSING:'background:#dbeafe;color:#1e40af',SHIPPED:'background:#d1fae5;color:#065f46',DELIVERED:'background:#d1fae5;color:#065f46',CANCELLED:'background:#fee2e2;color:#991b1b'};
+    statusEl.style.cssText='padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;'+(statusColors[data.status]||'');
+    var steps=[{key:'PENDING',label:'Pedido recibido'},{key:'PROCESSING',label:'Preparando'},{key:'SHIPPED',label:'En camino'},{key:'DELIVERED',label:'Entregado'}];
+    var timeline=document.getElementById('trackTimeline');
+    timeline.innerHTML=steps.map(function(s,i){
+      var done=i<=data.currentStep&&data.status!=='CANCELLED';
+      var active=i===data.currentStep&&data.status!=='CANCELLED';
+      var cancelled=data.status==='CANCELLED'&&i===0;
+      var color=cancelled?'var(--red)':done?'var(--green)':active?'var(--orange)':'var(--border)';
+      var dotBg=cancelled?'rgba(192,57,43,.1)':done?'rgba(5,150,105,.1)':active?'rgba(255,107,44,.1)':'var(--cream2)';
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0">'+
+        '<div style="width:32px;height:32px;border-radius:50%;background:'+dotBg+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+
+        '<div style="width:12px;height:12px;border-radius:50%;background:'+color+'"></div></div>'+
+        '<div><div style="font-size:13px;font-weight:600;color:'+color+'">'+s.label+'</div></div>'+
+        (i<steps.length-1?'<div style="flex:1;height:2px;background:'+color+';opacity:0.3;margin-left:16px"></div>':'')+
+        '</div>';
+    }).join('');
+    if(data.status==='CANCELLED'){
+      timeline.innerHTML='<div style="display:flex;align-items:center;gap:12px;padding:8px 0">'+
+        '<div style="width:32px;height:32px;border-radius:50%;background:rgba(192,57,43,.1);display:flex;align-items:center;justify-content:center"><div style="width:12px;height:12px;border-radius:50%;background:var(--red)"></div></div>'+
+        '<div><div style="font-size:13px;font-weight:600;color:var(--red)">Pedido cancelado</div></div></div>';
+    }
+    var itemsEl=document.getElementById('trackItems');
+    itemsEl.innerHTML=data.items.map(function(item){
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0">'+
+        '<div style="width:48px;height:48px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+(item.ico||'📦')+'</div>'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--dk)">'+item.name+'</div><div style="font-size:12px;color:var(--gray)">x'+item.quantity+'</div></div>'+
+        '<div style="font-size:13px;font-weight:600;color:var(--dk)">$'+item.price.toLocaleString('es-AR')+'</div></div>';
+    }).join('');
+    document.getElementById('trackShipping').textContent=data.shippingAddress||'Retiro en tienda';
+    document.getElementById('trackTotal').textContent='$'+data.total.toLocaleString('es-AR');
+    resultEl.style.display='block';
+  }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }
 window.addEventListener('popstate',function(e){
   if(e.state&&e.state.page){

@@ -64,6 +64,7 @@ model Product {
   ram         String?
   processor   String?
   stock       Int
+  reserved    Int       @default(0)
   score       Int?
   color       String?
   screen      Float?
@@ -479,7 +480,17 @@ model EmailVerification {
   @@unique([email, code])
 }
 
-// ==================== ARREPENTIMIENTO (Ley 24.240 - Resolución 424/2020) ====================
+// ==================== RESET PASSWORD ====================
+model PasswordReset {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expires   DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// ==================== ARREPENTIMIENTO (Ley 24.240 - Resolucion 424/2020) ====================
 model Arrepentimiento {
   id          String            @id @default(cuid())
   orderId     String

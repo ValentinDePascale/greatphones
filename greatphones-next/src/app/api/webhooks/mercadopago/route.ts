@@ -2,13 +2,52 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
 });
 
+function verifyWebhookSignature(request: NextRequest): boolean {
+  const signature = request.headers.get('x-signature') || '';
+  const requestId = request.headers.get('x-request-id') || '';
+  const dataId = request.headers.get('data-id') || '';
+
+  if (!process.env.MP_WEBHOOK_SECRET) {
+    return true;
+  }
+
+  if (!signature) {
+    return false;
+  }
+
+  const params = new URLSearchParams(request.url.split('?')[1] || '');
+  const topic = params.get('topic') || params.get('type') || '';
+  const id = params.get('id') || params.get('data.id') || '';
+
+  const parts = [
+    `id:${id || dataId}`,
+    `topic:${topic}`,
+    `request-id:${requestId}`,
+    `wmid:${process.env.MP_WEBHOOK_SECRET}`,
+  ];
+
+  const stringToSign = parts.join('\n');
+  const expectedSignature = crypto
+    .createHmac('sha256', process.env.MP_WEBHOOK_SECRET || '')
+    .update(stringToSign)
+    .digest('hex');
+
+  return signature === expectedSignature;
+}
+
 export async function POST(request: NextRequest) {
   try {
+    if (!verifyWebhookSignature(request)) {
+      console.error('[MP Webhook] Invalid signature');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { type, data, action } = body;
 
@@ -75,18 +114,33 @@ export async function POST(request: NextRequest) {
           break;
       }
 
-      // Deduct stock if payment approved
+      // Deduct stock if payment approved (release reservation)
       if (status === 'approved') {
         for (const item of order.items) {
           if (item.productId) {
             await prisma.product.update({
               where: { id: item.productId },
               data: {
-                stock: { decrement: item.quantity },
+                reserved: { decrement: item.quantity },
                 sold: { increment: item.quantity }
               }
             }).catch(err => {
-              console.error('[MP Webhook] Error deducting stock for product:', item.productId, err);
+              console.error('[MP Webhook] Error updating product:', item.productId, err);
+            });
+          }
+        }
+      } else if (status === 'rejected' || status === 'cancelled') {
+        // Release reserved stock on payment failure
+        for (const item of order.items) {
+          if (item.productId) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { increment: item.quantity },
+                reserved: { decrement: item.quantity }
+              }
+            }).catch(err => {
+              console.error('[MP Webhook] Error releasing stock for product:', item.productId, err);
             });
           }
         }

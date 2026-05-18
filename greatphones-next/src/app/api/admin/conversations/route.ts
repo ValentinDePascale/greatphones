@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+async function requireAdmin(request: Request) {
+  const userId = request.headers.get('x-user-id')
+  if (!userId) return { error: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
+  if (!user || user.role !== 'ADMIN') return { error: NextResponse.json({ error: 'Acceso denegado' }, { status: 403 }) }
+  return { userId }
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -13,6 +21,8 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: Request) {
+  const auth = await requireAdmin(request)
+  if (auth.error) return auth.error
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
@@ -40,7 +50,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(conversations, {
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
   } catch (error) {
     console.error('Error fetching admin conversations:', error)
@@ -49,6 +59,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const auth = await requireAdmin(request)
+  if (auth.error) return auth.error
   try {
     const body = await request.json()
     const { conversationId, adminId, action } = body

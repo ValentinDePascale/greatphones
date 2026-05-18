@@ -7,7 +7,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -40,7 +40,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const messages = await prisma.message.findMany(query)
 
     return NextResponse.json(messages.reverse(), {
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
   } catch (error) {
     console.error('Error fetching messages:', error)
@@ -83,8 +83,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // Determine if sender is admin or user
-    const isAdminSender = conversation.adminId === userId || userId === 'admin'
-    const isUserSender = conversation.userId === userId
+    const senderUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    });
+    const isAdminSender = senderUser?.role === 'ADMIN' || userId === 'admin';
+    const isUserSender = conversation.userId === userId;
 
     const message = await prisma.message.create({
       data: {
@@ -122,33 +126,50 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     })
 
     // Create notification for the recipient
-    if (isUserSender && conversation.admin) {
-      // Notify admin about new message from user
-      await prisma.notification.create({
-        data: {
-          userId: conversation.admin.id,
-          type: 'MESSAGE',
-          title: 'Nuevo mensaje',
-          text: `${conversation.user.name || 'Un usuario'} te ha enviado un mensaje`,
-          conversationId: id,
-          messageId: message.id
+    if (isUserSender) {
+      // Find or use existing admin for this conversation
+      let targetAdmin = conversation.admin;
+      if (!targetAdmin) {
+        // Auto-assign first available admin
+        const autoAdmin = await prisma.user.findFirst({
+          where: { role: 'ADMIN' },
+          select: { id: true, name: true, email: true }
+        });
+        if (autoAdmin) {
+          targetAdmin = autoAdmin;
+          await prisma.conversation.update({
+            where: { id },
+            data: { adminId: autoAdmin.id }
+          });
         }
-      })
-
-      // Send email to admin
-      try {
-        const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
-        await sendNewMessageToAdminEmail({
-          adminEmail,
-          userName: conversation.user.name || 'Usuario',
-          messageText: text || '(imagen)',
-          conversationId: id,
-          conversationType: conversation.type
-        })
-      } catch (emailError) {
-        console.error('[Messages] Error sending email to admin:', emailError)
       }
 
+      if (targetAdmin) {
+        // Notify admin about new message from user
+        await prisma.notification.create({
+          data: {
+            userId: targetAdmin.id,
+            type: 'MESSAGE',
+            title: 'Nuevo mensaje',
+            text: `${conversation.user.name || 'Un usuario'} te ha enviado un mensaje`,
+            conversationId: id,
+            messageId: message.id
+          }
+        });
+
+        // Send email to admin
+        try {
+          await sendNewMessageToAdminEmail({
+            adminEmail: targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar',
+            userName: conversation.user.name || 'Usuario',
+            messageText: text || '(imagen)',
+            conversationId: id,
+            conversationType: conversation.type
+          });
+        } catch (emailError) {
+          console.error('[Messages] Error sending email to admin:', emailError);
+        }
+      }
     } else if (isAdminSender) {
       // Notify user about admin reply
       await prisma.notification.create({

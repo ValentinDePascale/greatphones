@@ -5,7 +5,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -32,7 +32,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ message: 'Cuenta eliminada' }, { 
       status: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
 
   } catch (error) {

@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -20,6 +21,14 @@ export async function POST(request: Request) {
 
     if (!email) {
       return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+    }
+
+    if (!_googleSession) {
+      const limit = rateLimit(`signin:${email}`, 5, 15 * 60 * 1000)
+      if (!limit.allowed) {
+        const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
+        return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
+      }
     }
 
     // Google session - user already authenticated via OAuth
@@ -54,49 +63,12 @@ export async function POST(request: Request) {
           role: user.role,
         }
       }, {
-        headers: { 'Access-Control-Allow-Origin': '*' }
+        headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
       })
     }
 
     if (!password) {
       return NextResponse.json({ error: 'Email y password requeridos' }, { status: 400 })
-    }
-
-    // Hardcoded admin for quick access
-    if (email === 'admin@greatphones.com' && password === '123456') {
-      let user = await prisma.user.findUnique({
-        where: { email: 'admin@greatphones.com' }
-      })
-      
-      if (!user) {
-        const hashedPassword = await bcrypt.hash('123456', 10)
-        user = await prisma.user.create({
-          data: {
-            email: 'admin@greatphones.com',
-            name: 'Administrador',
-            password: hashedPassword,
-            role: 'ADMIN',
-          }
-        })
-      }
-      
-      return NextResponse.json({
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          phone: user.phone,
-          dni: user.dni,
-          direccion: user.direccion,
-          piso: user.piso,
-          cp: user.cp,
-          provincia: user.provincia,
-          ciudad: user.ciudad,
-          role: user.role,
-        }
-      }, {
-        headers: { 'Access-Control-Allow-Origin': '*' }
-      })
     }
 
     const user = await prisma.user.findUnique({
@@ -131,7 +103,7 @@ export async function POST(request: Request) {
         role: user.role,
       }
     }, {
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
 
   } catch (error) {

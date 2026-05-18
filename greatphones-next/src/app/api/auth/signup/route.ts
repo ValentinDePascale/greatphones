@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { SignupSchema, formatZodError } from '@/lib/validations'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function GET() {
   return NextResponse.json({ 
@@ -15,7 +16,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -23,12 +24,9 @@ export async function OPTIONS() {
 }
 
 export async function POST(request: Request) {
-  console.log('[SIGNUP] Request received')
-  
   try {
     const body = await request.json()
     
-    // Validar body con Zod
     const validation = SignupSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
@@ -36,21 +34,19 @@ export async function POST(request: Request) {
     
     const { email, name, phone, dni, provincia, ciudad, password, verified } = body
 
-    console.log('[SIGNUP] Checking if user exists:', email)
-    const existing = await prisma.user.findUnique({
-      where: { email }
-    })
-    console.log('[SIGNUP] Existing:', existing)
+    const limit = rateLimit(`signup:${email}`, 3, 60 * 60 * 1000)
+    if (!limit.allowed) {
+      const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
+      return NextResponse.json({ error: `Demasiados registros. Espera ${mins} minutos` }, { status: 429 })
+    }
 
+    const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return NextResponse.json({ error: 'El email ya esta registrado' }, { status: 400 })
     }
 
-    console.log('[SIGNUP] Hashing password...')
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    console.log('[SIGNUP] Creating user...')
-    console.log('[SIGNUP] Data:', { email, name, phone, dni, provincia, ciudad })
     const user = await prisma.user.create({
       data: {
         email,
@@ -64,21 +60,17 @@ export async function POST(request: Request) {
         verified: verified || false,
       }
     })
-    console.log('[SIGNUP] User created:', user.id)
 
     return NextResponse.json({ 
       message: 'Usuario creado',
       user: { id: user.id, email: user.email, name: user.name }
     }, { 
       status: 201,
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
 
   } catch (error) {
-    console.error('=== SIGNUP ERROR ===')
-    console.error(error)
-    console.error('==================')
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    return NextResponse.json({ error: 'Error al crear usuario: ' + errorMessage }, { status: 500 })
+    console.error('Signup error:', error)
+    return NextResponse.json({ error: 'Error al crear usuario' }, { status: 500 })
   }
 }

@@ -65,6 +65,16 @@ export async function POST(request: NextRequest) {
 
     const orderCode = generateOrderCode();
 
+    for (const item of items) {
+      const product = await prisma.product.findUnique({ where: { id: item.id } });
+      if (!product) {
+        return NextResponse.json({ error: `Producto no encontrado: ${item.name}` }, { status: 400 });
+      }
+      if (product.stock < item.quantity) {
+        return NextResponse.json({ error: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` }, { status: 400 });
+      }
+    }
+
     // Build MP preference items with proper descriptions
     const mpItems = items.map((item: any) => ({
       title: item.name,
@@ -140,36 +150,52 @@ export async function POST(request: NextRequest) {
     if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
     const initPoint = mpResponse.init_point;
 
-    // Create order with proper userId and mpPreferenceId
-    const order = await prisma.order.create({
-      data: {
-        code: orderCode,
-        userId: userId,
-        status: 'PENDING',
-        warranty: warranty || '90 dias',
-        cuotas: cuotas || 1,
-        subtotal: subtotal,
-        total: total,
-        warrantyCost: warrantyCost || 0,
-        deliveryCost: deliveryCost || 0,
-        clientEmail: email,
-        clientPhone: phone,
-        clientDni: document,
-        shippingStreet: street,
-        shippingNumber: number,
-        shippingFloor: floor,
-        shippingZip: zip,
-        shippingCity: city,
-        shippingProvince: province,
-        mpPreferenceId: preferenceId,
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.id,
-            quantity: item.quantity,
-            price: item.price
-          }))
+    // Create order with proper userId and mpPreferenceId, and deduct stock atomically
+    const order = await prisma.$transaction(async (tx) => {
+      // Reserve stock atomically
+      for (const item of items) {
+        const updated = await tx.product.update({
+          where: { id: item.id },
+          data: {
+            stock: { decrement: item.quantity },
+            reserved: { increment: item.quantity }
+          }
+        });
+        if (updated.stock < 0) {
+          throw new Error(`Stock insuficiente para ${item.name}`);
         }
       }
+
+      return tx.order.create({
+        data: {
+          code: orderCode,
+          userId: userId,
+          status: 'PENDING',
+          warranty: warranty || '90 dias',
+          cuotas: cuotas || 1,
+          subtotal: subtotal,
+          total: total,
+          warrantyCost: warrantyCost || 0,
+          deliveryCost: deliveryCost || 0,
+          clientEmail: email,
+          clientPhone: phone,
+          clientDni: document,
+          shippingStreet: street,
+          shippingNumber: number,
+          shippingFloor: floor,
+          shippingZip: zip,
+          shippingCity: city,
+          shippingProvince: province,
+          mpPreferenceId: preferenceId,
+          items: {
+            create: items.map((item: any) => ({
+              productId: item.id,
+              quantity: item.quantity,
+              price: item.price
+            }))
+          }
+        }
+      });
     });
 
     return NextResponse.json({

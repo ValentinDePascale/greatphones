@@ -503,6 +503,7 @@
             <li><a onclick="nav('compare')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comparar</a></li>
             <li><a onclick="nav('notebooks')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Notebooks</a></li>
             <li><a onclick="nav('chats')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Chat</a></li>
+            <li><a onclick="nav('track-order')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Seguir mi pedido</a></li>
           </ul>
         </div>
         
@@ -1254,11 +1255,6 @@
             </div>
             
             <div>
-              <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Teléfono</label>
-              <input type="tel" id="editProfilePhone" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
-            </div>
-            
-            <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Email</label>
               <input type="email" id="editProfileEmail" disabled style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
               <p style="font-size:11px;color:var(--gray);margin-top:4px">Tu email se usa para seguridad y notificaciones de la cuenta</p>
@@ -1769,7 +1765,7 @@
             <input type="checkbox" id="loginRemember" style="width:16px;height:16px;accent-color:var(--orange);cursor:pointer">
             Recordame
           </label>
-          <button onclick="showToast('Recuperar contraseña próximamente')" style="background:none;border:none;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer">Olvidaste tu contraseña?</button>
+          <button onclick="nav('forgot-password')" style="background:none;border:none;color:var(--orange);font-size:13px;font-weight:600;cursor:pointer">Olvidaste tu contraseña?</button>
         </div>
         
         <button onclick="doLogin()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
@@ -1790,6 +1786,124 @@
         <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--gray)">
           No tenes cuenta? <button onclick="nav('register')" style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer">Registrate</button>
         </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORGOT PASSWORD ===== -->
+<div class="page" id="p-forgot-password" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%)">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem">
+    <div style="width:min(440px,100%);background:#fff;border-radius:24px;padding:2.5rem;box-shadow:0 20px 60px rgba(0,0,0,.08);border:1px solid var(--border)">
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Recuperar contraseña</h1>
+        <p style="font-size:14px;color:var(--gray)">Ingresa tu email y te enviaremos un codigo</p>
+      </div>
+      <div>
+        <div style="margin-bottom:1.5rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Email</label>
+          <input type="email" id="forgotEmail" placeholder="tu@email.com" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div id="forgotError" style="display:none;padding:12px;background:rgba(239,68,68,.08);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(239,68,68,.15)"></div>
+        <div id="forgotSuccess" style="display:none;padding:12px;background:rgba(5,150,105,.08);border-radius:12px;color:#059669;font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(5,150,105,.15)"></div>
+        <button onclick="sendForgotCode()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+          Enviar codigo
+        </button>
+        <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--gray)">
+          <button onclick="nav('login')" style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer">Volver al login</button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RESET PASSWORD ===== -->
+<div class="page" id="p-reset-password" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%)">
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem">
+    <div style="width:min(440px,100%);background:#fff;border-radius:24px;padding:2.5rem;box-shadow:0 20px 60px rgba(0,0,0,.08);border:1px solid var(--border)">
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        </div>
+        <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Nueva contraseña</h1>
+        <p style="font-size:14px;color:var(--gray)">Ingresa el codigo y tu nueva contraseña</p>
+      </div>
+      <div>
+        <div style="margin-bottom:1rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Email</label>
+          <input type="email" id="resetEmail" disabled style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;background:var(--cream2);color:var(--gray);cursor:not-allowed">
+        </div>
+        <div style="margin-bottom:1rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Codigo de verificacion</label>
+          <input type="text" id="resetCode" placeholder="123456" maxlength="6" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;text-align:center;letter-spacing:8px;font-weight:700;font-size:20px;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <label style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:6px;display:block">Nueva contraseña</label>
+          <input type="password" id="resetNewPassword" placeholder="••••••••" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div id="resetError" style="display:none;padding:12px;background:rgba(239,68,68,.08);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(239,68,68,.15)"></div>
+        <div id="resetSuccess" style="display:none;padding:12px;background:rgba(5,150,105,.08);border-radius:12px;color:#059669;font-size:13px;margin-bottom:1rem;text-align:center;border:1px solid rgba(5,150,105,.15)"></div>
+        <button onclick="doResetPassword()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+          Cambiar contraseña
+        </button>
+        <p style="text-align:center;margin-top:1.5rem;font-size:14px;color:var(--gray)">
+          <button onclick="nav('login')" style="background:none;border:none;color:var(--orange);font-size:14px;font-weight:600;cursor:pointer">Volver al login</button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDER TRACKING ===== -->
+<div class="page" id="p-track-order" style="background:var(--cream);padding:2rem 1rem;min-height:100vh">
+  <div style="max-width:700px;margin:0 auto">
+    <button onclick="nav('home')" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gray);font-size:14px;margin-bottom:1.5rem">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver al inicio
+    </button>
+    <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Seguir mi pedido</h1>
+    <p style="font-size:15px;color:var(--gray);margin-bottom:2rem">Ingresa tu codigo de orden y email para ver el estado</p>
+    <div id="trackForm" style="background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Codigo de orden</label>
+          <input type="text" id="trackCode" placeholder="GP-XXXXX" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Email</label>
+          <input type="email" id="trackEmail" placeholder="tu@email.com" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--dk);box-sizing:border-box">
+        </div>
+      </div>
+      <div id="trackError" style="display:none;padding:12px;background:rgba(239,68,68,.08);border-radius:12px;color:var(--red);font-size:13px;margin-bottom:1rem;text-align:center"></div>
+      <button onclick="loadOrderTracking()" style="width:100%;padding:14px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+        Buscar pedido
+      </button>
+    </div>
+    <div id="trackResult" style="display:none;margin-top:2rem">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:18px;padding:1.5rem;box-shadow:var(--sh)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+          <div>
+            <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:var(--dk)" id="trackOrderCode"></h2>
+            <p style="font-size:13px;color:var(--gray)" id="trackOrderDate"></p>
+          </div>
+          <span id="trackOrderStatus" style="padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600"></span>
+        </div>
+        <div id="trackTimeline" style="margin-bottom:1.5rem"></div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem">
+          <h3 style="font-size:14px;font-weight:600;color:var(--dk);margin-bottom:.75rem">Productos</h3>
+          <div id="trackItems"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem">
+          <h3 style="font-size:14px;font-weight:600;color:var(--dk);margin-bottom:.5rem">Direccion de envio</h3>
+          <p style="font-size:13px;color:var(--gray)" id="trackShipping"></p>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:14px;font-weight:600;color:var(--dk)">Total</span>
+          <span style="font-size:20px;font-weight:700;color:var(--orange)" id="trackTotal"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -2336,6 +2450,16 @@ console.log('[BROWSER] Page loaded');
 <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
 <script src="/lib/chat.js"></script>
 <script>initFavorites();initCart();handleInitialRoute();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
+<script>
+(function(){
+  if(currentUser){
+    if(typeof updateNotifBadge==='function')updateNotifBadge();
+    if(typeof startNotifPolling==='function')startNotifPolling();
+    if(typeof updateMsgBadge==='function')updateMsgBadge();
+    if(typeof startChatNotifPolling==='function')startChatNotifPolling();
+  }
+})();
+</script>
 
 <!-- Chat Side Panel -->
 <div id="chatPanel" style="position:fixed;top:calc(94px + 12px);right:12px;bottom:12px;width:380px;background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:0 8px 32px rgba(0,0,0,.12);display:flex;flex-direction:column;z-index:600;transform:translateX(calc(100% + 24px));transition:transform .3s cubic-bezier(.4,0,.2,1)">

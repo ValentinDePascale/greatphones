@@ -5,7 +5,7 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'PUT, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -42,7 +42,7 @@ export async function PUT(request: Request) {
       user: { id: user.id, email: user.email, name: user.name, phone: user.phone, dni: user.dni, direccion: user.direccion, piso: user.piso, cp: user.cp, provincia: user.provincia, ciudad: user.ciudad, avatar: user.avatar }
     }, { 
       status: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
 
   } catch (error) {

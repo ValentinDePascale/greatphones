@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
-
-console.log('Cloudinary config:', {
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET ? 'set' : 'missing'
-})
+import { rateLimit } from '@/lib/rate-limit'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -13,11 +8,14 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
@@ -26,11 +24,26 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const limit = rateLimit(`upload:${ip}`, 10, 60 * 60 * 1000)
+    if (!limit.allowed) {
+      const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
+      return NextResponse.json({ error: `Demasiados uploads. Espera ${mins} minutos` }, { status: 429 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     
     if (!file) {
       return NextResponse.json({ error: 'No se recibio archivo' }, { status: 400 })
+    }
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: 'Tipo de archivo no permitido. Solo JPG, PNG, GIF o WebP' }, { status: 400 })
+    }
+
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: 'El archivo es muy grande. Maximo 5MB' }, { status: 400 })
     }
 
     const bytes = await file.arrayBuffer()
@@ -51,7 +64,7 @@ export async function POST(request: Request) {
       url: (uploadResult as any).secure_url,
       publicId: (uploadResult as any).public_id,
     }, {
-      headers: { 'Access-Control-Allow-Origin': '*' }
+      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
 
   } catch (error) {

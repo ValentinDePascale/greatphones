@@ -96,7 +96,10 @@ function loadAccessories(){
 }
 
 function loadDashboard(){
-  fetch(API_URL+'/api/admin/dashboard').then(function(r){
+  if(!currentUser||currentUser.role!=='ADMIN')return;
+  fetch(API_URL+'/api/admin/dashboard',{
+    headers:{'X-User-Id':currentUser.id}
+  }).then(function(r){
     if(!r.ok)throw new Error('Error '+r.status);
     return r.json();
   }).then(function(d){
