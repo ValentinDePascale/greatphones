@@ -93,10 +93,6 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <span class="nbadge hidden" id="cartBadge">0</span>
       </button>
-      <button class="nbtn" id="chatNavBtn" onclick="nav('chats')" title="Chat">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-        <span class="nbadge hidden" id="msgBadge">0</span>
-      </button>
       <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
@@ -202,9 +198,7 @@
     <div class="ctr">
       <div class="flex items-center justify-between mb-element-gap">
         <h2 class="sec-title">Categorías</h2>
-        <a class="text-secondary font-semibold hover:underline flex items-center gap-1" href="#" onclick="nav('shop')">
-                      Ver todo <span class="material-symbols-outlined text-sm">arrow_forward</span>
-        </a>
+        <button class="sec-more" onclick="nav('shop')">Ver todo <span class="material-symbols-outlined text-sm" style="font-size:14px;vertical-align:middle">arrow_forward</span></button>
       </div>
       <div class="cat-scroll">
         <div class="cat-flex">
