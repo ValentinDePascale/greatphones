@@ -9,7 +9,7 @@
   --dk:#1A1208;
   --dk2:#231A10;
   --dk3:#2E2116;
-  --gray:#8A8078;
+  --gray:#6B6259;
   --gray2:#B8B0A8;
   --red:#C0392B;
   --white:#FFFFFF;
@@ -44,3 +44,5 @@ button,input,select,textarea{font-family:inherit}
 .fav-btn{transition:all .2s ease}
 .fav-btn.anim{animation:favPopAnim .4s cubic-bezier(.175,.885,.32,1.275)}
 .fav-btn:hover{transform:scale(1.1)}
+*:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:4px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}

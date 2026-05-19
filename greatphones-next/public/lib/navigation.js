@@ -989,3 +989,15 @@ function checkPendingDetail(){
     if(p){openDetail(pendingDetailId);pendingDetailId=null;}
   }
 }
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){
+    var cart=document.getElementById('cartPanel');
+    if(cart&&cart.style.display==='block'){closeCart();return;}
+    var searchDrop=document.getElementById('searchDropdown');
+    if(searchDrop&&searchDrop.style.display!=='none'&&searchDrop.style.display!==''){searchDrop.style.display='none';return;}
+    var modal=document.querySelector('.modal-overlay[style*="display: flex"]');
+    if(modal){modal.style.display='none';return;}
+    var notifPanel=document.getElementById('notifPanel');
+    if(notifPanel&&notifPanel.style.display==='block'){notifPanel.style.display='none';return;}
+  }
+});

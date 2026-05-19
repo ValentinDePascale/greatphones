@@ -36,6 +36,7 @@
   <link rel="stylesheet" href="/styles/cookies.css">
 </head>
 <body>
+<a href="#main-content" style="position:absolute;top:-100%;left:0;background:var(--orange);color:#fff;padding:12px 24px;z-index:99999;font-weight:700;text-decoration:none;border-radius:0 0 8px 0" onfocus="this.style.top='0'" onblur="this.style.top='-100%'">Saltar al contenido</a>
 <div id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s">
   <div style="font-family:'Playfair Display',serif;font-size:24px;color:#FF6B2C">Great Phones</div>
   <div style="width:24px;height:24px;border:3px solid #e5e5e5;border-top-color:#FF6B2C;border-radius:50%;animation:spin 1s linear infinite"></div>
@@ -76,24 +77,24 @@
     </div>
     <div class="nav-acts">
       <div class="notif-wrap">
-        <button class="nbtn" onclick="toggleNotif(event)" title="Notificaciones">
+        <button class="nbtn" onclick="toggleNotif(event)" title="Notificaciones" aria-label="Notificaciones">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <span class="nbadge hidden" id="notifBadge">0</span>
+          <span class="nbadge hidden" id="notifBadge" aria-live="polite">0</span>
         </button>
         <div class="notif-panel" id="notifPanel">
           <div class="notif-hdr"><span class="notif-title">Notificaciones</span><button class="notif-clr" onclick="clearNotifs()">Marcar leidas</button></div>
           <div id="notifList"></div>
         </div>
       </div>
-      <button class="nbtn" onclick="nav('favoritos')" title="Favoritos">
+        <button class="nbtn" onclick="nav('favoritos')" title="Favoritos" aria-label="Favoritos">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>
-        <span class="nbadge hidden" id="favBadge">0</span>
+        <span class="nbadge hidden" id="favBadge" aria-live="polite">0</span>
       </button>
-      <button class="nbtn nbtn-cart" onclick="openCart()" title="Carrito">
+      <button class="nbtn nbtn-cart" onclick="openCart()" title="Carrito" aria-label="Carrito de compras">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <span class="nbadge hidden" id="cartBadge">0</span>
+        <span class="nbadge hidden" id="cartBadge" aria-live="polite">0</span>
       </button>
-      <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta">
+      <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta" aria-label="Mi Cuenta">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
       <button class="nbtn nbtn-sell" onclick="nav('sell')">
@@ -121,7 +122,7 @@
 </div>
 
 <!-- ============================= PAGE: HOME ============================= -->
-<div class="page act" id="p-home">
+<div class="page act" id="p-home" role="main" aria-label="Contenido principal">
 
   <!-- SLIDER -->
   <div class="slider" id="heroSlider">
@@ -2236,7 +2237,7 @@
 </div>
 
 <!-- ===== CART OVERLAY ===== -->
-<div id="cartOverlay" style="position:fixed;inset:0;z-index:800;pointer-events:none">
+<div id="cartOverlay" role="dialog" aria-label="Carrito de compras" style="position:fixed;inset:0;z-index:800;pointer-events:none">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;transition:opacity .3s" onclick="closeCart()"></div>
   <div style="position:absolute;right:0;top:0;bottom:0;width:min(440px,100vw);background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 48px rgba(0,0,0,.18)">
     <div class="cart-hdr" style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--orange),#FF8F5E)">
@@ -2244,7 +2245,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         <div class="cart-title" style="font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;color:#fff">Tu carrito</div>
       </div>
-      <button class="cart-close" onclick="closeCart()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">�</button>
+      <button class="cart-close" onclick="closeCart()" aria-label="Cerrar carrito" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">�</button>
     </div>
     <div class="cart-body" id="cartBody" style="flex:1;overflow-y:auto"></div>
   </div>
