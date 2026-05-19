@@ -1,6 +1,8 @@
 // =========== CART ===========
 var Cart=[];
 var cartMigrated=false;
+var _lastRemovedItem=null;
+var _undoTimeout=null;
 function getCartKey(){
   return currentUser?'gp_cart_'+currentUser.id:'gp_cart';
 }
@@ -9,7 +11,6 @@ function initCart(){
     var stored=localStorage.getItem(getCartKey());
     if(stored)Cart=JSON.parse(stored);
     else Cart=[];
-    // Migrate anonymous cart to user cart if user just logged in
     if(currentUser&&!cartMigrated){
       cartMigrated=true;
       var anonCart=localStorage.getItem('gp_cart');
@@ -30,6 +31,20 @@ function initCart(){
     }
   }catch(e){Cart=[];}
   updCartBadge();
+  window.addEventListener('storage',function(e){
+    if(e.key===getCartKey()){
+      try{
+        var newCart=e.newValue?JSON.parse(e.newValue):[];
+        if(JSON.stringify(newCart)!==JSON.stringify(Cart)){
+          Cart=newCart;
+          updCartBadge();
+          if(document.getElementById('cartPanel')&&document.getElementById('cartPanel').style.display==='block'){
+            renderCartBody();
+          }
+        }
+      }catch(ex){}
+    }
+  });
 }
 function saveCart(){
   try{localStorage.setItem(getCartKey(),JSON.stringify(Cart));}catch(e){}
@@ -56,7 +71,13 @@ function addToCart(id){
   var p=getById(PRODUCTS,id);
   var a=getById(window.ACCS,id);
   if(!p&&!a)return;
+  var stock=p?p.stock:(a?a.stock:0);
   var existing=Cart.find(function(item){return item.id===id;});
+  var currentQty=existing?existing.qty:0;
+  if(currentQty>=stock){
+    showToast('Solo hay '+stock+' disponibles');
+    return;
+  }
   if(existing){
     existing.qty++;
   }else{
@@ -71,24 +92,77 @@ function addProdCart(id){
   addToCart(id);
 }
 function removeFromCart(id){
-  Cart=Cart.filter(function(item){return item.id!==id;});
+  var item=Cart.find(function(i){return i.id===id;});
+  if(!item)return;
+  _lastRemovedItem={id:id,item:JSON.parse(JSON.stringify(item)),index:Cart.indexOf(item)};
+  Cart=Cart.filter(function(i){return i.id!==id;});
   saveCart();
   updCartBadge();
   renderCartBody();
   if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
     renderCheckoutSummary();
   }
+  showToast('Producto eliminado');
+  showUndoRemove();
+}
+function showUndoRemove(){
+  if(_undoTimeout)clearTimeout(_undoTimeout);
+  var toast=document.querySelector('.toast-container');
+  if(!toast){
+    toast=document.createElement('div');
+    toast.className='toast-container';
+    toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center';
+    document.body.appendChild(toast);
+  }
+  var undoEl=document.createElement('div');
+  undoEl.style.cssText='background:var(--dk);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:fadeIn .2s ease';
+  undoEl.innerHTML='<span>Producto eliminado</span><button onclick="undoRemove()" style="background:var(--orange);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">Deshacer</button>';
+  toast.appendChild(undoEl);
+  _undoTimeout=setTimeout(function(){
+    if(undoEl.parentNode)undoEl.parentNode.removeChild(undoEl);
+    _lastRemovedItem=null;
+  },5000);
+}
+function undoRemove(){
+  if(!_lastRemovedItem)return;
+  if(_undoTimeout)clearTimeout(_undoTimeout);
+  var toast=document.querySelector('.toast-container');
+  if(toast)toast.innerHTML='';
+  Cart.splice(_lastRemovedItem.index,0,_lastRemovedItem.item);
+  saveCart();
+  updCartBadge();
+  renderCartBody();
+  if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
+    renderCheckoutSummary();
+  }
+  showToast('Producto restaurado');
+  _lastRemovedItem=null;
 }
 function updateCartQty(id,delta){
   var item=Cart.find(function(item){return item.id===id;});
   if(!item)return;
+  var p=getById(PRODUCTS,id);
+  var a=getById(window.ACCS,id);
+  var stock=p?p.stock:(a?a.stock:0);
   item.qty+=delta;
   if(item.qty<=0){
     removeFromCart(id);
+  }else if(item.qty>stock){
+    item.qty=stock;
+    showToast('Solo hay '+stock+' disponibles');
+    saveCart();
+    renderCartBody();
+    updCartBadge();
   }else{
     saveCart();
     renderCartBody();
     updCartBadge();
+    var qtySpan=document.querySelector('.cart-qty-'+id);
+    if(qtySpan){
+      qtySpan.style.transition='transform .15s ease';
+      qtySpan.style.transform='scale(1.3)';
+      setTimeout(function(){qtySpan.style.transform='scale(1)';},150);
+    }
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
       renderCheckoutSummary();
     }
@@ -153,16 +227,19 @@ function renderCartBody(){
         '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(p.price*item.qty)+'</div>'+
         '<div style="font-size:10px;color:var(--red);font-weight:600">-'+p.discount+'%</div>':
         '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
+      var stockWarning=p.stock<=5&&p.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+p.stock+' disp.</div>':'';
+      var maxReached=item.qty>=p.stock?'opacity:.5;cursor:not-allowed;':'';
       return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
         '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
           '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+p.sub+'</div>'+
           '<div style="display:flex;align-items:center;gap:8px">'+
-            '<button onclick="updateCartQty(\''+p.id+'\',-1)" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:14px;cursor:pointer">-</button>'+
-            '<span style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
-            '<button onclick="updateCartQty(\''+p.id+'\',1)" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:14px;cursor:pointer">+</button>'+
+            '<button onclick="updateCartQty(\''+p.id+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
+            '<span class="cart-qty-'+p.id+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
+            '<button onclick="updateCartQty(\''+p.id+'\',1)" style="'+maxReached+'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
           '</div>'+
+          stockWarning+
         '</div>'+
         '<div style="text-align:right">'+
           priceHtml+
@@ -181,16 +258,19 @@ function renderCartBody(){
       '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(a.price*item.qty)+'</div>'+
       '<div style="font-size:10px;color:var(--red);font-weight:600">-'+a.discount+'%</div>':
       '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>';
+    var stockWarning2=a.stock<=5&&a.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+a.stock+' disp.</div>':'';
+    var maxReached2=item.qty>=a.stock?'opacity:.5;cursor:not-allowed;':'';
     return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
       '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
         '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(a.brand||'')+' '+(a.color||'')+'</div>'+
         '<div style="display:flex;align-items:center;gap:8px">'+
-          '<button onclick="updateCartQty(\''+a.id+'\',-1)" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:14px;cursor:pointer">-</button>'+
-          '<span style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
-          '<button onclick="updateCartQty(\''+a.id+'\',1)" style="width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:14px;cursor:pointer">+</button>'+
+          '<button onclick="updateCartQty(\''+a.id+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
+          '<span class="cart-qty-'+a.id+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
+          '<button onclick="updateCartQty(\''+a.id+'\',1)" style="'+maxReached2+'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
         '</div>'+
+        stockWarning2+
       '</div>'+
       '<div style="text-align:right">'+
         priceHtml2+

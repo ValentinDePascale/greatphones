@@ -206,6 +206,7 @@ function openCheckout(){
   }
   closeCart();
   nav('checkout');
+  setTimeout(function(){updateCheckoutStep(1);},100);
 }
 
 function openVerification(){
@@ -214,6 +215,7 @@ function openVerification(){
     showToast('Por favor completa: '+errors.join(', '));
     return;
   }
+  updateCheckoutStep(2);
   
   var modal=document.getElementById('verificationModal');
   if(!modal)return;
@@ -347,6 +349,7 @@ function closeVerification(){
 }
 
 function showPaymentMethods(){
+  updateCheckoutStep(3);
   var summarySection=document.getElementById('verifyItems');
   var optionsSection=document.getElementById('verifyOptions');
   var userSection=document.getElementById('verifyUser');
@@ -372,6 +375,35 @@ function backToVerifySummary(){
   if(userSection)userSection.style.display='block';
   if(btnVerifyPay)btnVerifyPay.style.display='flex';
   if(paymentSection)paymentSection.style.display='none';
+}
+
+function updateCheckoutStep(step){
+  var steps=document.querySelectorAll('.checkout-step');
+  if(!steps.length)return;
+  steps.forEach(function(s,i){
+    var num=i+1;
+    var circle=s.querySelector('div');
+    var label=s.querySelector('span');
+    if(num<step){
+      circle.style.background='var(--green)';
+      circle.style.color='#fff';
+      circle.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>';
+      label.style.color='var(--green)';
+      label.style.fontWeight='600';
+    }else if(num===step){
+      circle.style.background='var(--orange)';
+      circle.style.color='#fff';
+      circle.textContent=num;
+      label.style.color='var(--dk)';
+      label.style.fontWeight='600';
+    }else{
+      circle.style.background='var(--cream2)';
+      circle.style.color='var(--gray)';
+      circle.textContent=num;
+      label.style.color='var(--gray)';
+      label.style.fontWeight='500';
+    }
+  });
 }
 
 function selectPaymentMethod(method){
@@ -652,6 +684,7 @@ function submitCheckout(paymentMethod){
       if(data.error){
         throw new Error(data.error);
       }
+      updateCheckoutStep(4);
       if(data.initPoint){
         Cart=[];
         saveCart();
