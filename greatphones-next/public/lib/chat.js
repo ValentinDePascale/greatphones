@@ -4,19 +4,48 @@ var userConvId=null;
 var typingTimeout=null;
 var chatPollInterval=null;
 var notifPollInterval=null;
+var socketConnected=false;
 
 function initChatSocket(){
-  if(!currentUser||!window.ChatSocket)return;
+  if(!currentUser||!window.ChatSocket){
+    console.log('[Chat] Socket client not available, using polling');
+    startChatPolling();
+    return;
+  }
   try{
     var socketUrl=window.location.hostname==='localhost'?'http://localhost:3001':window.location.origin;
+    console.log('[Chat] Connecting to:', socketUrl);
     chatSocket=window.ChatSocket(socketUrl,{
-      auth:{userId:currentUser.id}
+      auth:{userId:currentUser.id},
+      reconnection:true,
+      reconnectionAttempts:5,
+      reconnectionDelay:1000,
+      timeout:10000
     });
     chatSocket.on('connect',function(){
-      console.log('[Chat] Connected');
+      socketConnected=true;
+      console.log('[Chat] Connected to socket server');
       if(userConvId)chatSocket.emit('joinConversation',userConvId);
+      stopChatPolling();
+    });
+    chatSocket.on('connect_error',function(err){
+      socketConnected=false;
+      console.error('[Chat] Connection error:', err.message);
+      startChatPolling();
+    });
+    chatSocket.on('disconnect',function(reason){
+      socketConnected=false;
+      console.log('[Chat] Disconnected:', reason);
+      startChatPolling();
+    });
+    chatSocket.on('reconnect',function(attempt){
+      socketConnected=true;
+      console.log('[Chat] Reconnected after', attempt, 'attempts');
+      if(userConvId)chatSocket.emit('joinConversation',userConvId);
+      stopChatPolling();
     });
     chatSocket.on('newMessage',function(msg){
+      console.log('[Chat] Received newMessage:', msg);
       if(msg.conversationId===userConvId){
         appendMessageToChat(msg);
         scrollToBottom();
@@ -35,11 +64,8 @@ function initChatSocket(){
       hideTypingIndicator();
       hidePanelTyping();
     });
-    chatSocket.on('disconnect',function(){
-      console.log('[Chat] Disconnected');
-    });
   }catch(e){
-    console.log('[Chat] Socket not available, using polling');
+    console.error('[Chat] Socket init error:', e);
     startChatPolling();
   }
   startChatNotifPolling();
