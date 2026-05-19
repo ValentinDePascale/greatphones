@@ -56,8 +56,6 @@ export default function NotFound() {
             boxShadow: '0 4px 12px rgba(255,107,44,.3)',
             transition: 'transform .15s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-1px)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
         >
           Volver al inicio
         </Link>
