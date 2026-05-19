@@ -270,10 +270,10 @@ function renderGrid(gid,prods){
       '<p style="font-family:\'Playfair Display\',serif;font-size:18px;font-weight:700;color:var(--dk);margin-bottom:.5rem">No encontramos resultados</p>'+
       '<p style="font-size:13px;color:var(--gray);margin-bottom:1rem">Intenta con otro termino de busqueda o explora nuestras categorias.</p>'+
       '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1rem">'+
-        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'iPhone\')">iPhone</button>'+
-        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'Samsung\')">Samsung</button>'+
-        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="nav(\'accesorios\')">Accesorios</button>'+
-        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'ofertas\')">Ofertas</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;color:var(--dk);border-color:var(--border)" onclick="navShop(\'iPhone\')">iPhone</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;color:var(--dk);border-color:var(--border)" onclick="navShop(\'Samsung\')">Samsung</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;color:var(--dk);border-color:var(--border)" onclick="nav(\'accesorios\')">Accesorios</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px;color:var(--dk);border-color:var(--border)" onclick="navShop(\'ofertas\')">Ofertas</button>'+
       '</div>'+
       '<button class="btn btn-o" style="font-size:13px;padding:10px 24px" onclick="nav(\'shop\')">Ver todo el catalogo</button>'+
       '</div>';
@@ -558,7 +558,16 @@ function openAccDetail(id){
   if(currentAcc.images&&currentAcc.images.length)_accImages=_accImages.concat(currentAcc.images);
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   if(mainImg){var ico=currentAcc.ico||'\u{1F4E6}';
-    if(_accImages.length){mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><img src="'+_accImages[0]+'" style="width:100%;height:100%;object-fit:contain">';}
+    if(_accImages.length){
+      var accImgUrl=_accImages[0];
+      mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
+        '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
+          '<img src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+          '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
+          '</div>'+
+        '</div>';
+    }
     else{mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><span style="font-size:80px">'+ico+'</span>';}
   }
   if(thumbsContainer){
@@ -572,7 +581,14 @@ function openAccDetail(id){
 function switchAccMainImg(idx){
   if(!_accImages||!_accImages[idx])return;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><img src="'+_accImages[idx]+'" style="width:100%;height:100%;object-fit:contain">';
+  var accImgUrl=_accImages[idx];
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
+    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
+      '<img src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
+      '</div>'+
+    '</div>';
   if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';}}
 }
 function openDetail(id){
@@ -634,7 +650,14 @@ function renderDetailImages(){
   var prevBtn='<button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>';
   var nextBtn='<button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>';
   if(allImages.length===0){mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
-  mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<img src="'+allImages[0]+'" style="width:100%;height:100%;object-fit:contain">';
+  var imgUrl=allImages[0];
+  mainImg.innerHTML=favBtn+prevBtn+nextBtn+
+    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
+      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
+      '</div>'+
+    '</div>';
   detailCurrentImageIndex=0;
   var showArrows=allImages.length>1;
   var prevEl=document.getElementById('detImgPrev');var nextEl=document.getElementById('detImgNext');
@@ -652,7 +675,14 @@ function setDetailImage(index){
   detailCurrentImageIndex=index;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   var isFav=isFavorite(currentProd.id);
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button><img src="'+allImages[index]+'" style="width:100%;height:100%;object-fit:contain">';
+  var imgUrl=allImages[index];
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>'+
+    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
+      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
+      '</div>'+
+    '</div>';
   if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===index?'var(--orange)':'var(--border)';}}
 }
 function prevDetailImage(){

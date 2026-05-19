@@ -3,7 +3,7 @@ function handleSearch(q){
   var dd=document.getElementById('searchDD');
   if(!q.trim()){dd.classList.remove('open');dd.innerHTML='';return;}
   var ql=q.toLowerCase();
-  var mProd=PRODUCTS.filter(function(p){return p.name.toLowerCase().indexOf(ql)!==-1||p.brand.toLowerCase().indexOf(ql)!==-1||p.sub.toLowerCase().indexOf(ql)!==-1;});
+  var mProd=PRODUCTS.filter(function(p){return p.name.toLowerCase().indexOf(ql)!==-1||p.brand.toLowerCase().indexOf(ql)!==-1||(p.sub||'').toLowerCase().indexOf(ql)!==-1;});
   var mAcc=(window.ACCS||[]).filter(function(a){return a.name.toLowerCase().indexOf(ql)!==-1||(a.brand||'').toLowerCase().indexOf(ql)!==-1||(a.category||'').toLowerCase().indexOf(ql)!==-1;});
   var m=mProd.concat(mAcc).slice(0,5);
   if(!m.length){
@@ -25,7 +25,7 @@ function doSearch(){
   if(!q)return;
   document.getElementById('searchDD').classList.remove('open');
   var ql=q.toLowerCase();
-  var mProd=PRODUCTS.filter(function(p){return p.name.toLowerCase().indexOf(ql)!==-1||p.brand.toLowerCase().indexOf(ql)!==-1||p.sub.toLowerCase().indexOf(ql)!==-1;});
+  var mProd=PRODUCTS.filter(function(p){return p.name.toLowerCase().indexOf(ql)!==-1||p.brand.toLowerCase().indexOf(ql)!==-1||(p.sub||'').toLowerCase().indexOf(ql)!==-1;});
   var mAcc=(window.ACCS||[]).filter(function(a){return a.name.toLowerCase().indexOf(ql)!==-1||(a.brand||'').toLowerCase().indexOf(ql)!==-1||(a.category||'').toLowerCase().indexOf(ql)!==-1||(a.description||'').toLowerCase().indexOf(ql)!==-1;});
   var allResults=mProd.concat(mAcc);
   renderGrid('shopGrid',allResults);

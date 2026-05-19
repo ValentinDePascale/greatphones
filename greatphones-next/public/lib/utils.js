@@ -4,6 +4,17 @@ function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollH
 function promptLocation(){var v=prompt('A que ciudad enviamos?',document.getElementById('locVal').textContent);if(v&&v.trim())document.getElementById('locVal').textContent=v.trim();}
 function toggleFaq(btn){var card=btn.closest('.faq-item')||btn.closest('.faq-card');if(card)card.classList.toggle('open');}
 function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').style.display='flex';}
+function handleImageZoom(e,container){
+  var rect=container.getBoundingClientRect();
+  var x=((e.clientX-rect.left)/rect.width)*100;
+  var y=((e.clientY-rect.top)/rect.height)*100;
+  var img=container.querySelector('img');
+  if(img){img.style.transformOrigin=x+'% '+y+'%';img.style.transform='scale(1.8)';}
+}
+function resetImageZoom(container){
+  var img=container.querySelector('img');
+  if(img){img.style.transform='scale(1)';}
+}
 function showGiftCard(){notAvailable();}
 function buyGiftCard(monto){notAvailable();}
 
