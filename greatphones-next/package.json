@@ -7,7 +7,7 @@
     "dev:next": "next dev",
     "dev:chat": "node socket-server/index.js",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.js",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest"

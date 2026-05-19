@@ -8,7 +8,8 @@ var notifPollInterval=null;
 function initChatSocket(){
   if(!currentUser||!window.ChatSocket)return;
   try{
-    chatSocket=window.ChatSocket('http://localhost:3001',{
+    var socketUrl=window.location.hostname==='localhost'?'http://localhost:3001':window.location.origin;
+    chatSocket=window.ChatSocket(socketUrl,{
       auth:{userId:currentUser.id}
     });
     chatSocket.on('connect',function(){
