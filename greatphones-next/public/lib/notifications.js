@@ -106,6 +106,19 @@ function clearNotifs(){
   }).catch(function(){});
 }
 
+function deleteAllNotifs(){
+  if(!currentUser)return;
+  if(!confirm('¿Eliminar todas las notificaciones?'))return;
+  fetch(API_URL+'/api/notifications/clear-all',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:currentUser.id})
+  }).then(function(){
+    renderNotifPanel();
+    updateNotifBadge();
+  }).catch(function(){});
+}
+
 function updateNotifBadge(){
   if(!currentUser)return;
   fetch(API_URL+'/api/notifications?userId='+currentUser.id+'&unread=true&limit=1')

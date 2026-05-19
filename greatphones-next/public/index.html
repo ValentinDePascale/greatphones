@@ -82,7 +82,7 @@
           <span class="nbadge hidden" id="notifBadge" aria-live="polite">0</span>
         </button>
         <div class="notif-panel" id="notifPanel">
-          <div class="notif-hdr"><span class="notif-title">Notificaciones</span><button class="notif-clr" onclick="clearNotifs()">Marcar leidas</button></div>
+          <div class="notif-hdr"><span class="notif-title">Notificaciones</span><div style="display:flex;gap:8px"><button class="notif-clr" onclick="clearNotifs()" title="Marcar todas como leidas">Marcar leidas</button><button class="notif-clr-del" onclick="deleteAllNotifs()" title="Eliminar todas">Limpiar</button></div></div>
           <div id="notifList"></div>
         </div>
       </div>

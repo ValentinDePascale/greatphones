@@ -1041,7 +1041,8 @@
 .notif-panel.open{display:block}
 .notif-hdr{background:var(--dk);padding:.875rem 1rem;display:flex;align-items:center;justify-content:space-between}
 .notif-title{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--cream)}
-.notif-clr{font-size:10px;color:var(--orange);cursor:pointer;background:none;border:none}
+.notif-clr{font-size:11px;color:var(--orange);cursor:pointer;background:none;border:none;font-weight:600;padding:4px 8px;border-radius:6px;transition:background .15s}.notif-clr:hover{background:rgba(255,107,44,.15)}
+.notif-clr-del{font-size:11px;color:var(--red);cursor:pointer;background:none;border:none;font-weight:600;padding:4px 8px;border-radius:6px;transition:background .15s}.notif-clr-del:hover{background:rgba(192,57,43,.15)}
 .notif-item{
   display:flex;
   gap:10px;
