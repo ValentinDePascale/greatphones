@@ -105,7 +105,21 @@ function renderFavGrid(){
   var allFavs=favProducts.concat(favAccs);
   if(allFavs.length===0){
     grid.style.display='none';empty.style.display='block';
-    empty.innerHTML='<div style="text-align:center;padding:3rem 1rem"><div style="font-size:44px;margin-bottom:.875rem">&#9825;</div><div style="font-family:\'Playfair Display\',Georgia,serif;font-size:19px;margin-bottom:.4rem">Sin favoritos</div><p style="font-size:11px;color:var(--gray);line-height:1.6">Agrega productos a favoritos haciendo click en el corazón.</p></div>';
+    var trending=PRODUCTS.filter(function(p){return p.stock>0&&p.sold>0;}).sort(function(a,b){return b.sold-a.sold;}).slice(0,4);
+    var trendHtml=trending.map(function(p){
+      var fp=p.isOffer&&p.discount>0?Math.round(p.price-p.price*p.discount/100):p.price;
+      return '<div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--cream2);border-radius:12px;cursor:pointer" onclick="openDetail(\''+p.id+'\')">'+
+        '<div style="width:44px;height:44px;background:#fff;border-radius:8px;overflow:hidden;flex-shrink:0">'+(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:20px">'+(p.ico||'📱')+'</span>')+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div><div style="font-size:11px;color:var(--orange);font-weight:700">'+fmt(fp)+'</div></div>'+
+        '</div>';
+    }).join('');
+    empty.innerHTML='<div style="text-align:center;padding:3rem 1rem">'+
+      '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="margin-bottom:1rem;opacity:.3"><path d="M32 56S8 40 8 24a12 12 0 0120-8.5A12 12 0 0148 24c0 16-16 32-16 32z" stroke="currentColor" stroke-width="2"/></svg>'+
+      '<p style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Aun no tenes favoritos</p>'+
+      '<p style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:1.5rem">Toca el corazon ♡ en cualquier producto para guardarlo aqui y encontrarlo facilmente despues.</p>'+
+      '<button class="btn btn-o" style="margin-bottom:1.5rem" onclick="nav(\'shop\')">Explorar catalogo</button>'+
+      (trending.length?'<div style="text-align:left;margin-top:1rem"><p style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">Productos que te pueden interesar</p><div style="display:grid;gap:8px">'+trendHtml+'</div></div>':'')+
+      '</div>';
     if(cnt)cnt.textContent='0 guardados';
   }else{
     grid.style.display='grid';empty.style.display='none';

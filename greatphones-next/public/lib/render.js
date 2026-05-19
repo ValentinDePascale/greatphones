@@ -264,7 +264,21 @@ function renderDashStockAlerts(d){
 function renderGrid(gid,prods){
   var grid=document.getElementById(gid);
   if(!grid)return;
-  if(!prods.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray);font-size:12px">No hay productos.</div>';return;}
+  if(!prods.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem 1rem">'+
+      '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" style="margin-bottom:1rem;opacity:.3"><circle cx="28" cy="28" r="16" stroke="currentColor" stroke-width="2"/><path d="M40 40l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M22 28h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'+
+      '<p style="font-family:\'Playfair Display\',serif;font-size:18px;font-weight:700;color:var(--dk);margin-bottom:.5rem">No encontramos resultados</p>'+
+      '<p style="font-size:13px;color:var(--gray);margin-bottom:1rem">Intenta con otro termino de busqueda o explora nuestras categorias.</p>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:1rem">'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'iPhone\')">iPhone</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'Samsung\')">Samsung</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="nav(\'accesorios\')">Accesorios</button>'+
+        '<button class="btn btn-ghost" style="font-size:12px;padding:8px 16px" onclick="navShop(\'ofertas\')">Ofertas</button>'+
+      '</div>'+
+      '<button class="btn btn-o" style="font-size:13px;padding:10px 24px" onclick="nav(\'shop\')">Ver todo el catalogo</button>'+
+      '</div>';
+    return;
+  }
   var now=new Date();
   grid.innerHTML=prods.map(function(p){
     var isPromoActive=p.isOffer&&p.discount>0;

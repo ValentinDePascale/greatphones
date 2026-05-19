@@ -124,7 +124,21 @@ function renderCartBody(){
   var body=document.getElementById('cartBody');
   if(!body)return;
   if(Cart.length===0){
-    body.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">🛒</p><p style="font-family:\'Playfair Display\',serif;font-size:18px;margin-bottom:.5rem">Carrito vacio</p><p style="font-size:12px">Agrega productos paraverlos aqui</p><button class="btn btn-o" style="margin-top:1rem" onclick="closeCart();nav(\'shop\')">Ver catalogo</button></div>';
+    var popular=PRODUCTS.filter(function(p){return p.stock>0;}).slice(0,4);
+    var popHtml=popular.map(function(p){
+      var fp=p.isOffer&&p.discount>0?Math.round(p.price-p.price*p.discount/100):p.price;
+      return '<div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--cream2);border-radius:12px;cursor:pointer" onclick="closeCart();openDetail(\''+p.id+'\')">'+
+        '<div style="width:44px;height:44px;background:#fff;border-radius:8px;overflow:hidden;flex-shrink:0">'+(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:20px">'+(p.ico||'📱')+'</span>')+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div><div style="font-size:11px;color:var(--orange);font-weight:700">'+fmt(fp)+'</div></div>'+
+        '</div>';
+    }).join('');
+    body.innerHTML='<div style="text-align:center;padding:2rem 1.5rem;color:var(--gray)">'+
+      '<svg width="80" height="80" viewBox="0 0 80 80" fill="none" style="margin-bottom:1rem;opacity:.4"><rect x="12" y="20" width="56" height="44" rx="8" stroke="currentColor" stroke-width="2"/><path d="M24 20V16a16 16 0 0132 0v4" stroke="currentColor" stroke-width="2"/><circle cx="32" cy="42" r="4" fill="currentColor" opacity=".3"/><circle cx="48" cy="42" r="4" fill="currentColor" opacity=".3"/></svg>'+
+      '<p style="font-family:\'Playfair Display\',serif;font-size:20px;font-weight:700;color:var(--dk);margin-bottom:.5rem">Tu carrito esta vacio</p>'+
+      '<p style="font-size:13px;line-height:1.6;margin-bottom:1.5rem">Explora nuestro catalogo y encuentra lo que necesitas.<br>Envio gratis a Bahia Blanca en compras mayores a $50.000.</p>'+
+      '<button class="btn btn-o" style="margin-bottom:1.5rem" onclick="closeCart();nav(\'shop\')">Ver catalogo</button>'+
+      (popular.length?'<div style="text-align:left;margin-top:1rem"><p style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">Productos populares</p><div style="display:grid;gap:8px">'+popHtml+'</div></div>':'')+
+      '</div>';
     return;
   }
   body.innerHTML=Cart.map(function(item){
