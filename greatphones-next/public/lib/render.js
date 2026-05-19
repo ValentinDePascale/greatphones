@@ -64,9 +64,50 @@ function addToCartAcc(id){
 function addToCartFromDetail(){if(currentProd)addToCart(currentProd.id);}
 function buyNow(){if(currentProd){addToCart(currentProd.id);openCheckout();}}
 
+var _loadingBarEl=null;
+function showLoadingBar(){
+  if(!_loadingBarEl){
+    _loadingBarEl=document.createElement('div');
+    _loadingBarEl.id='loadingBar';
+    _loadingBarEl.style.width='0%';
+    document.body.appendChild(_loadingBarEl);
+  }
+  _loadingBarEl.style.width='0%';
+  _loadingBarEl.style.display='block';
+  requestAnimationFrame(function(){_loadingBarEl.style.width='60%';});
+}
+function hideLoadingBar(){
+  if(_loadingBarEl){
+    _loadingBarEl.style.width='100%';
+    setTimeout(function(){_loadingBarEl.style.display='none';_loadingBarEl.style.width='0%';},300);
+  }
+}
+
+function renderSkeletonGrid(gid,count){
+  var grid=document.getElementById(gid);
+  if(!grid)return;
+  var html='';
+  for(var i=0;i<count;i++){
+    html+='<div class="skeleton skeleton-card" style="aspect-ratio:auto">'+
+      '<div class="skeleton skeleton-img"></div>'+
+      '<div class="skeleton skeleton-line" style="width:80%"></div>'+
+      '<div class="skeleton skeleton-line-sm"></div>'+
+      '<div class="skeleton skeleton-line" style="width:50%"></div>'+
+      '<div class="skeleton skeleton-btn"></div>'+
+      '</div>';
+  }
+  grid.innerHTML=html;
+}
+
 function loadProducts(){
+  renderSkeletonGrid('homeRail',4);
+  renderSkeletonGrid('shopGrid',8);
+  renderSkeletonGrid('ofertasGrid',4);
+  renderSkeletonGrid('featuredGrid',4);
+  showLoadingBar();
   fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(data){
     PRODUCTS=data;
+    hideLoadingBar();
     if(window.checkPendingDetail)window.checkPendingDetail();
     renderHomeRail();
     renderOfferStrip();
@@ -79,10 +120,11 @@ function loadProducts(){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
     }
-  }).catch(function(){console.log('Error loading products');});
+  }).catch(function(){hideLoadingBar();console.log('Error loading products');});
 }
 
 function loadAccessories(){
+  renderSkeletonGrid('accGrid',8);
   fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(data){
     window.ACCS=data;
     if(document.getElementById('accGrid'))renderAccGrid();
@@ -285,7 +327,7 @@ function renderGrid(gid,prods){
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
     var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
     var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
     var discBadge='';
     var isFav=isFavorite(p.id);
@@ -326,7 +368,7 @@ function renderHomeRail(){
     var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
     var badge;
     if(isOutOfStock){
       badge='<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>';
@@ -381,7 +423,7 @@ function renderOfferStrip(){
   strip.innerHTML=offers.map(function(p){
     var fp=Math.round(p.price*(1-p.discount/100));
     var cuota=Math.round(fp/12);
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s">':'<span style="font-size:72px">'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px">'+p.ico+'</span>';
     var isFav=favorites.indexOf(p.id)!==-1;
     return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
@@ -496,7 +538,7 @@ function renderAccGrid(){
     var isPromoActive=a.isOffer&&a.discount>0;
     var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
     var isOutOfStock=a.stock===0;
-    var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'">':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'📦')+'</span>';
+    var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(a.ico||'\u{1F4E6}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'\u{1F4E6}')+'</span>';
     var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(isPromoActive?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+a.discount+'% OFF</div>':(a.category?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+a.category+'</div>':''));
     var isFav=isFavorite(a.id);
     return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openAccDetail(\''+a.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
