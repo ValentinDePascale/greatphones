@@ -12,6 +12,9 @@ export async function GET(request: Request) {
     const status = searchParams.get('status') || undefined
     const userId = searchParams.get('userId') || undefined
     const admin = searchParams.get('admin')
+    const search = searchParams.get('search')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
     
     const where: any = {}
     
@@ -36,6 +39,17 @@ export async function GET(request: Request) {
       where.userId = userId
     }
     
+    if (search && admin === 'true') {
+      where.OR = [
+        { clientDni: { contains: search, mode: 'insensitive' } },
+        { clientEmail: { contains: search, mode: 'insensitive' } },
+        { clientName: { contains: search, mode: 'insensitive' } },
+        { code: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    
+    const total = await prisma.order.count({ where })
+    
     // Admin view: include user and product details
     if (admin === 'true') {
       const orders = await prisma.order.findMany({
@@ -56,6 +70,8 @@ export async function GET(request: Request) {
           }
         },
         orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
       })
       
       // Transform to include product details in items
@@ -70,7 +86,13 @@ export async function GET(request: Request) {
         }))
       }))
       
-      return NextResponse.json(transformed)
+      return NextResponse.json({
+        data: transformed,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      })
     }
     
     const orders = await prisma.order.findMany({
@@ -83,9 +105,17 @@ export async function GET(request: Request) {
         }
       },
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
     
-    return NextResponse.json(orders)
+    return NextResponse.json({
+      data: orders,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    })
   } catch (error) {
     console.error('Error fetching orders:', error)
     return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })

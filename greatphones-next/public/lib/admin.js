@@ -31,10 +31,16 @@ function renderAdminContent(tab){
     return;
   }
   if(tab==='prods'){
-    content.innerHTML='<div class="adm-list-header"><button class="btn btn-o" onclick="nav(\'admin-product\')">+ Nuevo Producto</button></div><div class="adm-list" id="prodList"></div>';
+    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
+      '<input type="text" id="prodSearchInput" placeholder="Buscar por nombre, marca..." oninput="loadAdminProducts(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '<button class="btn btn-o" onclick="nav(\'admin-product\')">+ Nuevo Producto</button>'+
+    '</div><div class="adm-list" id="prodList"></div><div id="prodPagination"></div>';
     loadAdminProducts();
   }else if(tab==='acc'){
-    content.innerHTML='<div class="adm-list-header"><button class="btn btn-o" onclick="nav(\'admin-acc\')">+ Nuevo Accesorio</button></div><div class="adm-list" id="accList"></div>';
+    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
+      '<input type="text" id="accSearchInput" placeholder="Buscar por nombre, categoria..." oninput="loadAdminAccessories(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '<button class="btn btn-o" onclick="nav(\'admin-acc\')">+ Nuevo Accesorio</button>'+
+    '</div><div class="adm-list" id="accList"></div><div id="accPagination"></div>';
     loadAdminAccessories();
   }else if(tab==='orders'){
     content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
@@ -42,33 +48,41 @@ function renderAdminContent(tab){
       '<button class="ord-btn" id="btnAcceptedOrders" onclick="loadAcceptedOrders()">Pedidos Aceptados</button>'+
       '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
     '</div>'+
-    '<div style="margin-bottom:1rem">'+
-      '<input type="text" id="orderDniFilter" placeholder="Buscar por DNI..." oninput="filterOrdersByDni()" style="width:100%;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+    '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
+      '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre..." oninput="searchOrders(this.value)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
     '</div>'+
-    '<div class="adm-list" id="orderList"></div>';
+    '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
     loadPendingOrders();
   }else{
     content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">SecciÃ³n en desarrollo</div>';
   }
 }
 
-function loadAdminProducts(){
+function loadAdminProducts(search,page){
   var list=document.getElementById('prodList');
   if(!list)return;
-  fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(prods){
+  var url=API_URL+'/api/products?page='+(page||1)+'&limit=20';
+  if(search)url+='&search='+encodeURIComponent(search);
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var prods=res.data||res;
     list.innerHTML=prods.map(function(p){
       return'<div class="adm-item"><div class="adm-item-img">'+(p.imageUrl?'<img src="'+p.imageUrl+'">':'<span>📱</span>')+'</div><div class="adm-item-info"><div class="adm-item-name">'+p.name+'</div><div class="adm-item-sub">'+p.brand+' '+p.sub+'</div><div class="adm-item-price">$'+p.price.toLocaleString('es-AR')+'</div></div><div class="adm-item-actions"><button onclick="editProduct(\''+p.id+'\')">✏️</button><button onclick="deleteProduct(\''+p.id+'\')">🗑️</button></div></div>';
     }).join('');
+    renderPagination('prodList',res.page,res.totalPages,function(p){loadAdminProducts(search,p);});
   }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando productos</div>';});
 }
 
-function loadAdminAccessories(){
+function loadAdminAccessories(search,page){
   var list=document.getElementById('accList');
   if(!list)return;
-  fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(accs){
+  var url=API_URL+'/api/accessories?page='+(page||1)+'&limit=20';
+  if(search)url+='&search='+encodeURIComponent(search);
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var accs=res.data||res;
     list.innerHTML=accs.map(function(a){
       return'<div class="adm-item"><div class="adm-item-img">'+(a.imageUrl?'<img src="'+a.imageUrl+'">':'<span>📦</span>')+'</div><div class="adm-item-info"><div class="adm-item-name">'+a.name+'</div><div class="adm-item-sub">'+a.category+'</div><div class="adm-item-price">$'+a.price.toLocaleString('es-AR')+'</div></div><div class="adm-item-actions"><button onclick="editAccessory(\''+a.id+'\')">✏️</button><button onclick="deleteAccessory(\''+a.id+'\')">🗑️</button></div></div>';
     }).join('');
+    renderPagination('accList',res.page,res.totalPages,function(p){loadAdminAccessories(search,p);});
   }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando accesorios</div>';});
 }
 
@@ -90,64 +104,103 @@ function setActiveOrderBtn(activeId){
   });
 }
 
-function loadPendingOrders(){
+function loadPendingOrders(page){
   var list=document.getElementById('orderList');
   if(!list)return;
   setActiveOrderBtn('btnPendingOrders');
   window._currentOrderTab='pending';
   
-  fetch(API_URL+'/api/orders?admin=true&status=PENDING').then(function(r){return r.json();}).then(function(ords){
+  var url=API_URL+'/api/orders?admin=true&status=PENDING&page='+(page||1)+'&limit=20';
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
     window._currentOrders=ords;
+    window._currentOrderPage=res.page||1;
+    window._currentOrderTotalPages=res.totalPages||1;
     renderOrdersList(ords);
+    renderPagination('orderList',res.page,res.totalPages,function(p){loadPendingOrders(p);});
   }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando pedidos</div>';});
 }
 
-function loadAcceptedOrders(){
+function loadAcceptedOrders(page){
   var list=document.getElementById('orderList');
   if(!list)return;
   setActiveOrderBtn('btnAcceptedOrders');
   window._currentOrderTab='accepted';
   
-  fetch(API_URL+'/api/orders?admin=true&status=PROCESSING,SHIPPED').then(function(r){return r.json();}).then(function(ords){
+  var url=API_URL+'/api/orders?admin=true&status=PROCESSING,SHIPPED&page='+(page||1)+'&limit=20';
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
     window._currentOrders=ords;
+    window._currentOrderPage=res.page||1;
+    window._currentOrderTotalPages=res.totalPages||1;
     renderOrdersList(ords);
+    renderPagination('orderList',res.page,res.totalPages,function(p){loadAcceptedOrders(p);});
   }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando pedidos aceptados</div>';});
 }
 
-function loadOrderHistory(){
+function loadOrderHistory(page){
   var list=document.getElementById('orderList');
   if(!list)return;
   setActiveOrderBtn('btnHistoryOrders');
   window._currentOrderTab='history';
   
-  fetch(API_URL+'/api/orders?admin=true&status=DELIVERED,CANCELLED').then(function(r){return r.json();}).then(function(ords){
+  var url=API_URL+'/api/orders?admin=true&status=DELIVERED,CANCELLED&page='+(page||1)+'&limit=20';
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
     window._currentOrders=ords;
+    window._currentOrderPage=res.page||1;
+    window._currentOrderTotalPages=res.totalPages||1;
     renderOrdersList(ords);
+    renderPagination('orderList',res.page,res.totalPages,function(p){loadOrderHistory(p);});
   }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando historial</div>';});
 }
 
-function filterOrdersByDni(){
-  var input=document.getElementById('orderDniFilter');
-  if(!input)return;
-  var dni=input.value.trim();
+function searchOrders(query){
   var list=document.getElementById('orderList');
   if(!list)return;
-  
-  if(!dni){
-    renderOrdersList(window._currentOrders);
+  if(!query||!query.trim()){
+    if(window._currentOrderTab==='pending')loadPendingOrders();
+    else if(window._currentOrderTab==='accepted')loadAcceptedOrders();
+    else loadOrderHistory();
     return;
   }
-  
-  var filtered=window._currentOrders.filter(function(o){
-    return o.clientDni&&o.clientDni.indexOf(dni)!==-1;
-  });
-  
-  if(filtered.length===0){
-    list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:14px;font-weight:600;margin-bottom:.5rem">No se encontraron pedidos con DNI "'+dni+'"</p></div>';
-    return;
+  var url=API_URL+'/api/orders?admin=true&search='+encodeURIComponent(query.trim())+'&page=1&limit=20';
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
+    window._currentOrders=ords;
+    window._currentOrderPage=res.page||1;
+    window._currentOrderTotalPages=res.totalPages||1;
+    renderOrdersList(ords);
+    renderPagination('orderList',res.page,res.totalPages,function(p){
+      fetch(API_URL+'/api/orders?admin=true&search='+encodeURIComponent(query.trim())+'&page='+p+'&limit=20')
+        .then(function(r2){return r2.json();}).then(function(res2){
+          window._currentOrders=res2.data||res2;
+          renderOrdersList(res2.data||res2);
+          renderPagination('orderList',res2.page,res2.totalPages,function(p2){searchOrders(query);});
+        });
+    });
+  }).catch(function(){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error buscando pedidos</div>';});
+}
+
+function renderPagination(containerId,currentPage,totalPages,onPageChange){
+  var containerIdMap={prodList:'prodPagination',accList:'accPagination',orderList:'orderPagination'};
+  var container=document.getElementById(containerIdMap[containerId]||'');
+  if(!container||totalPages<=1){if(container)container.innerHTML='';return;}
+  var html='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem">';
+  html+='<button onclick="('+onPageChange.toString()+')('+Math.max(1,currentPage-1)+')"'+(currentPage===1?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">←</button>';
+  var start=Math.max(1,currentPage-2);
+  var end=Math.min(totalPages,currentPage+2);
+  if(start>1)html+='<button onclick="('+onPageChange.toString()+')(1)" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">1</button>';
+  if(start>2)html+='<span style="padding:6px;color:var(--gray)">...</span>';
+  for(var i=start;i<=end;i++){
+    if(i===currentPage)html+='<span style="padding:6px 12px;border-radius:6px;background:var(--orange);color:#fff;font-size:13px;font-weight:600">'+i+'</span>';
+    else html+='<button onclick="('+onPageChange.toString()+')('+i+')" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+i+'</button>';
   }
-  
-  renderOrdersList(filtered);
+  if(end<totalPages-1)html+='<span style="padding:6px;color:var(--gray)">...</span>';
+  if(end<totalPages)html+='<button onclick="('+onPageChange.toString()+')('+totalPages+')" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+totalPages+'</button>';
+  html+='<button onclick="('+onPageChange.toString()+')('+Math.min(totalPages,currentPage+1)+')"'+(currentPage===totalPages?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">→</button>';
+  html+='</div>';
+  container.innerHTML=html;
 }
 
 function renderOrdersList(ords){

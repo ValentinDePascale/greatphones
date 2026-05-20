@@ -24,6 +24,8 @@ export async function GET(request: Request) {
   const brand = searchParams.get('brand')
   const offer = searchParams.get('offer')
   const search = searchParams.get('search')
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '20')
    
   try {
     const where: any = {}
@@ -40,15 +42,25 @@ export async function GET(request: Request) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { brand: { contains: search, mode: 'insensitive' } },
+        { sub: { contains: search, mode: 'insensitive' } },
       ]
     }
     
+    const total = await prisma.product.count({ where })
     const products = await prisma.product.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
     
-    return NextResponse.json(products, { headers: corsHeaders })
+    return NextResponse.json({
+      data: products,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500, headers: corsHeaders })

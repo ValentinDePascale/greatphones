@@ -25,6 +25,8 @@ export async function GET(request: Request) {
   const category = searchParams.get('category')
   const brand = searchParams.get('brand')
   const search = searchParams.get('search')
+  const page = parseInt(searchParams.get('page') || '1')
+  const limit = parseInt(searchParams.get('limit') || '20')
    
   try {
     if (id) {
@@ -50,15 +52,25 @@ export async function GET(request: Request) {
         { name: { contains: search, mode: 'insensitive' } },
         { brand: { contains: search, mode: 'insensitive' } },
         { category: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
       ]
     }
     
+    const total = await prisma.accessory.count({ where })
     const accessories = await prisma.accessory.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
     })
     
-    return NextResponse.json(accessories, { headers: corsHeaders })
+    return NextResponse.json({
+      data: accessories,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching accessories:', error)
     return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500, headers: corsHeaders })
