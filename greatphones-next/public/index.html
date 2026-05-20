@@ -1927,10 +1927,10 @@
 </div>
 
 <!-- ===== CHECKOUT VIEW ===== -->
-<div class="page" id="p-checkout">
+<div class="page" id="p-checkout" data-testid="checkout-page">
 <div style="min-height:100vh;background:var(--cream);padding:2rem var(--pad)">
   <div style="max-width:1280px;margin:0 auto">
-    <button onclick="openCart()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gray);font-size:14px;margin-bottom:1rem">
+    <button onclick="openCart()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gray);font-size:14px;margin-bottom:1rem" data-testid="back-to-cart">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       Volver al carrito
     </button>
@@ -1969,11 +1969,11 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Email</label>
-              <input id="checkout-email" type="email" placeholder="nombre@ejemplo.com" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-email" type="email" placeholder="nombre@ejemplo.com" required data-testid="checkout-email" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Teléfono</label>
-              <input id="checkout-phone" type="tel" placeholder="11 2345 6789" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-phone" type="tel" placeholder="11 2345 6789" data-testid="checkout-phone" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
           </div>
         </section>
@@ -1990,7 +1990,7 @@
             <!-- Cuotas -->
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Plan de cuotas</div>
-              <div id="checkout-cuotas" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+              <div id="checkout-cuotas" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" data-testid="checkout-cuotas">
                 <button class="cuota-btn" data-cuota="1" onclick="selCheckoutCuota(this,1)" style="padding:12px 8px;border-radius:10px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">1</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Sin Int.</span></button>
                 <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)" style="padding:12px 8px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">3</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Cuotas</span></button>
                 <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)" style="padding:12px 8px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:16px;font-weight:700;display:block">6</span><span style="font-size:9px;text-transform:uppercase;letter-spacing:.3px">Cuotas</span></button>
@@ -2000,7 +2000,7 @@
             <!-- Garantia -->
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Garantia extendida</div>
-              <div id="checkout-warranty" style="display:flex;flex-direction:column;gap:8px">
+              <div id="checkout-warranty" style="display:flex;flex-direction:column;gap:8px" data-testid="checkout-warranty">
                 <div class="warranty-btn" data-w="0" onclick="selCheckoutWarranty(this,0)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
                   <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">90 dias</span><span style="color:var(--green);font-weight:700;font-size:13px">GRATIS</span></div>
                 </div>
@@ -2015,7 +2015,7 @@
             <!-- Entrega -->
             <div>
               <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:10px">Entrega</div>
-              <div id="checkout-delivery" style="display:flex;flex-direction:column;gap:8px">
+              <div id="checkout-delivery" style="display:flex;flex-direction:column;gap:8px" data-testid="checkout-delivery">
                 <div class="delivery-btn" data-d="0" onclick="selCheckoutDelivery(this,0)" style="padding:12px 14px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
                   <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">Retiro en Tienda</span><span style="color:var(--green);font-weight:700;font-size:13px">GRATIS</span></div>
                   <div style="font-size:11px;color:var(--gray);margin-top:2px">Zelarrayan 179, Bahia Blanca</div>
@@ -2048,31 +2048,31 @@
           <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Calle</label>
-              <input id="checkout-street" type="text" placeholder="Av. del Libertador" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-street" type="text" placeholder="Av. del Libertador" required data-testid="checkout-street" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Número</label>
-              <input id="checkout-number" type="text" placeholder="1234" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-number" type="text" placeholder="1234" required data-testid="checkout-number" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Piso / Depto (opcional)</label>
-              <input id="checkout-floor" type="text" placeholder="4° B" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-floor" type="text" placeholder="4° B" data-testid="checkout-floor" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Código Postal</label>
-              <input id="checkout-zip" type="text" placeholder="1425" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-zip" type="text" placeholder="1425" required data-testid="checkout-zip" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad</label>
-              <input id="checkout-city" type="text" placeholder="CABA" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <input id="checkout-city" type="text" placeholder="CABA" required data-testid="checkout-city" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Provincia</label>
-              <select id="checkout-province" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:#fff;appearance:none;cursor:pointer" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+              <select id="checkout-province" required data-testid="checkout-province" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:#fff;appearance:none;cursor:pointer" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                 <option value="">Seleccionar...</option>
                 <option value="Buenos Aires">Buenos Aires</option>
                 <option value="CABA">Capital Federal</option>
@@ -2111,7 +2111,7 @@
           </div>
           <div>
             <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI o CUIT</label>
-            <input id="checkout-document" type="text" placeholder="20-34567890-9" required style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            <input id="checkout-document" type="text" placeholder="20-34567890-9" required data-testid="checkout-document" style="width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:13px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
             <p style="font-size:11px;color:var(--gray);margin-top:6px;margin-left:4px">Para consumidor final o factura A.</p>
           </div>
         </section>
@@ -2122,12 +2122,12 @@
         <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--sh)">
           <h3 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin-bottom:1.25rem">Resumen de compra</h3>
           
-          <div id="checkout-items" style="margin-bottom:1.25rem;max-height:300px;overflow-y:auto"></div>
+          <div id="checkout-items" style="margin-bottom:1.25rem;max-height:300px;overflow-y:auto" data-testid="checkout-items"></div>
 
           <div style="border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem">
             <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--gray);margin-bottom:8px">
               <span>Subtotal</span>
-              <span id="checkout-subtotal">$0</span>
+              <span id="checkout-subtotal" data-testid="checkout-subtotal">$0</span>
             </div>
             <div id="checkout-warranty-line" style="display:none;justify-content:space-between;font-size:14px;color:var(--gray);margin-bottom:8px">
               <span>Garantia</span>
@@ -2146,10 +2146,10 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem">
             <span style="font-size:18px;font-weight:700">Total</span>
-            <span id="checkout-total" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
+            <span id="checkout-total" data-testid="checkout-total" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
           </div>
 
-          <button id="btn-checkout" onclick="openVerification()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)">
+          <button id="btn-checkout" onclick="openVerification()" data-testid="btn-continue-checkout" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)">
             Continuar con la compra
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
           </button>
@@ -2191,7 +2191,7 @@
 </div>
 
 <!-- ===== VERIFICATION MODAL ===== -->
-<div id="verificationModal" style="display:none;position:fixed;inset:0;z-index:850;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
+<div id="verificationModal" data-testid="verification-modal" style="display:none;position:fixed;inset:0;z-index:850;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeVerification()"></div>
   <div style="position:relative;background:#fff;border-radius:24px;width:min(650px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">
     <button onclick="closeVerification()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;z-index:10" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">×</button>
@@ -2220,7 +2220,7 @@
         <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700">Método de pago</h3>
       </div>
       <div style="display:flex;flex-direction:column;gap:12px">
-        <div onclick="selectPaymentMethod('mercadopago')" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+        <div onclick="selectPaymentMethod('mercadopago')" data-testid="payment-mp" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
           <div style="width:48px;height:48px;border-radius:12px;background:#009EE3;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
           </div>
@@ -2230,7 +2230,7 @@
           </div>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </div>
-        <div onclick="selectPaymentMethod('tarjeta')" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+        <div onclick="selectPaymentMethod('tarjeta')" data-testid="payment-tarjeta" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
           <div style="width:48px;height:48px;border-radius:12px;background:var(--dk);display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
@@ -2257,7 +2257,7 @@
         <span style="font-size:16px;font-weight:700">Total a pagar</span>
         <span id="verifyTotal" style="font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
       </div>
-      <button id="btn-verify-pay" onclick="showPaymentMethods()" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3);margin-top:1.25rem">
+      <button id="btn-verify-pay" onclick="showPaymentMethods()" data-testid="btn-verify-pay" style="width:100%;padding:16px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3);margin-top:1.25rem">
         Selección de método
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
@@ -2270,7 +2270,7 @@
 </div>
 
 <!-- ===== CART OVERLAY ===== -->
-<div id="cartOverlay" role="dialog" aria-label="Carrito de compras" style="position:fixed;inset:0;z-index:800;pointer-events:none">
+<div id="cartOverlay" data-testid="cart-overlay" role="dialog" aria-label="Carrito de compras" style="position:fixed;inset:0;z-index:800;pointer-events:none">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;transition:opacity .3s" onclick="closeCart()"></div>
   <div style="position:absolute;right:0;top:0;bottom:0;width:min(440px,100vw);background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 48px rgba(0,0,0,.18)">
     <div class="cart-hdr" style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--orange),#FF8F5E)">

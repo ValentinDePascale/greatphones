@@ -229,7 +229,7 @@ function renderCartBody(){
         '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
       var stockWarning=p.stock<=5&&p.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+p.stock+' disp.</div>':'';
       var maxReached=item.qty>=p.stock?'opacity:.5;cursor:not-allowed;':'';
-      return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
+      return'<div data-testid="cart-item-'+p.id+'" style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
         '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
@@ -260,7 +260,7 @@ function renderCartBody(){
       '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>';
     var stockWarning2=a.stock<=5&&a.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+a.stock+' disp.</div>':'';
     var maxReached2=item.qty>=a.stock?'opacity:.5;cursor:not-allowed;':'';
-    return'<div style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
+    return'<div data-testid="cart-item-'+a.id+'" style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
       '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
@@ -283,7 +283,7 @@ function renderCartBody(){
       '<span style="font-size:14px;color:var(--gray)">Total ('+cartItemCount()+' productos)</span>'+
       '<span style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',serif">'+fmt(cartTotal())+'</span>'+
     '</div>'+
-    '<button onclick="checkout()" style="width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Finalizar compra</button>'+
+    '<button onclick="checkout()" data-testid="btn-cart-checkout" style="width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Finalizar compra</button>'+
     '<button onclick="closeCart()" style="width:100%;margin-top:8px;padding:12px;background:none;color:var(--gray);border:1px solid var(--border);border-radius:12px;font-size:13px;cursor:pointer">Seguir comprando</button>'+
   '</div>';
 }
