@@ -105,8 +105,8 @@ function loadProducts(){
   renderSkeletonGrid('ofertasGrid',4);
   renderSkeletonGrid('featuredGrid',4);
   showLoadingBar();
-  fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(data){
-    PRODUCTS=data;
+  fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(res){
+    PRODUCTS=res.data||res;
     hideLoadingBar();
     if(window.checkPendingDetail)window.checkPendingDetail();
     renderHomeRail();
@@ -125,8 +125,8 @@ function loadProducts(){
 
 function loadAccessories(){
   renderSkeletonGrid('accGrid',8);
-  fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(data){
-    window.ACCS=data;
+  fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(res){
+    window.ACCS=res.data||res;
     if(document.getElementById('accGrid'))renderAccGrid();
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}

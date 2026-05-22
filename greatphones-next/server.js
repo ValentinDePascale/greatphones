@@ -26,6 +26,8 @@ app.prepare().then(() => {
     pingInterval: 25000
   });
 
+  globalThis.io = io;
+
   io.use((socket, next) => {
     const userId = socket.handshake.auth.userId;
     if (!userId) return next(new Error('Authentication required'));

@@ -154,7 +154,7 @@ function renderMsgs(msgs){
     }else{
       content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
     }
-    return '<div class="msg-wrap'+(isMine?' mine':'')+'">'+
+    return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
       '<div class="msg-bubble">'+
         content+
         '<div class="msg-time">'+time+'</div>'+
@@ -166,6 +166,10 @@ function renderMsgs(msgs){
 function appendMessageToChat(msg){
   var list=document.getElementById('chatMsgList');
   if(!list)return;
+  if(msg.id){
+    var existing=list.querySelector('[data-msg-id="'+msg.id+'"]');
+    if(existing)return;
+  }
   var isMine=currentUser&&msg.from===currentUser.id;
   var time=formatTime(new Date(msg.createdAt));
   var content='';
@@ -175,7 +179,7 @@ function appendMessageToChat(msg){
   }else{
     content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
   }
-  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .3s ease">'+
     '<div class="msg-bubble">'+
       content+
       '<div class="msg-time">'+time+'</div>'+
@@ -447,6 +451,10 @@ function sendPanelImg(input){
 function appendPanelMessage(msg){
   var list=document.getElementById('panelMsgList');
   if(!list)return;
+  if(msg.id){
+    var existing=list.querySelector('[data-msg-id="'+msg.id+'"]');
+    if(existing)return;
+  }
   var isMine=currentUser&&msg.from===currentUser.id;
   var time=formatTime(new Date(msg.createdAt));
   var content='';
@@ -456,7 +464,7 @@ function appendPanelMessage(msg){
   }else{
     content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
   }
-  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .3s ease">'+
     '<div class="msg-bubble">'+
       content+
       '<div class="msg-time">'+time+'</div>'+
@@ -519,7 +527,7 @@ function renderPanelMsgs(msgs){
     }else{
       content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
     }
-    return '<div class="msg-wrap'+(isMine?' mine':'')+'">'+
+    return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
       '<div class="msg-bubble">'+
         content+
         '<div class="msg-time">'+time+'</div>'+

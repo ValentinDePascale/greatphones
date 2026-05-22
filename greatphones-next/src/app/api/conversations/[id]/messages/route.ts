@@ -157,14 +157,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           }
         });
 
-        // Send email to admin
+        // Send email to admin (non-blocking)
         try {
-          await sendNewMessageToAdminEmail({
+          sendNewMessageToAdminEmail({
             adminEmail: targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar',
             userName: conversation.user.name || 'Usuario',
             messageText: text || '(imagen)',
             conversationId: id,
             conversationType: conversation.type
+          }).catch((emailError: Error) => {
+            console.error('[Messages] Error sending email to admin:', emailError);
           });
         } catch (emailError) {
           console.error('[Messages] Error sending email to admin:', emailError);
@@ -183,20 +185,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         }
       })
 
-      // Send email to user
+      // Send email to user (non-blocking)
       try {
         if (conversation.user.email) {
-          await sendAdminReplyEmail({
+          sendAdminReplyEmail({
             userEmail: conversation.user.email,
             userName: conversation.user.name || 'Usuario',
             adminName: 'Great Phones',
             messageText: text || '(imagen)',
             conversationId: id
-          })
+          }).catch((emailError: Error) => {
+            console.error('[Messages] Error sending email to user:', emailError);
+          });
         }
       } catch (emailError) {
-        console.error('[Messages] Error sending email to user:', emailError)
+        console.error('[Messages] Error sending email to user:', emailError);
       }
+    }
+
+    // Emit socket event for real-time delivery (production: integrated server)
+    const io = (globalThis as any).io;
+    if (io) {
+      io.to(id).emit('newMessage', { ...message, conversationId: id, fromUserId: userId });
     }
 
     return NextResponse.json(message, { status: 201 })
