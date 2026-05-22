@@ -347,6 +347,7 @@ function openAdminConv(id){
   markAsRead(id);
   if(chatSocket)chatSocket.emit('joinConversation',id);
   renderAdminConvList(window._adminConvs);
+  renderQuickReplies();
   
   var header=document.getElementById('adminChatHeader');
   if(header){
@@ -356,6 +357,35 @@ function openAdminConv(id){
       '<div style="display:flex;gap:6px">'+
         '<button onclick="closeAdminConv(\''+id+'\')" style="padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Cerrar</button>'+
       '</div>';
+  }
+}
+
+var cannedReplies=[
+  {label:'Pedido confirmado',text:'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.'},
+  {label:'Enviado',text:'Tu pedido fue enviado! Te compartiremos el numero de tracking para que puedas seguirlo.'},
+  {label:'Garantia',text:'Tu compra tiene garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos.'},
+  {label:'Retiro en tienda',text:'Tu pedido esta listo para retiro en nuestro local: Zelarrayan 179, Bahia Blanca. Horario: Lun a Vie 10-19hs.'},
+  {label:'Demora',text:'Estamos teniendo una leve demora en tu pedido. Te agradecemos la paciencia y te avisaremos apenas este listo.'},
+  {label:'Gracias',text:'Gracias por tu compra! Si tenes alguna consulta no dudes en escribirnos. Estamos para ayudarte.'},
+];
+
+function renderQuickReplies(){
+  var container=document.getElementById('quickReplies');
+  if(!container)return;
+  container.style.display='flex';
+  container.innerHTML='<span style="font-size:10px;color:var(--gray);width:100%;margin-bottom:2px">Respuestas rapidas:</span>'+
+    cannedReplies.map(function(r,i){
+      return '<button onclick="useQuickReply('+i+')" style="padding:4px 10px;font-size:11px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--cream2)\'">'+r.label+'</button>';
+    }).join('');
+}
+
+function useQuickReply(index){
+  var reply=cannedReplies[index];
+  if(!reply)return;
+  var input=document.getElementById('adminChatInput');
+  if(input){
+    input.value=reply.text;
+    input.focus();
   }
 }
 

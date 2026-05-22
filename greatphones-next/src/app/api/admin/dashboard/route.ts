@@ -148,6 +148,28 @@ export async function GET(request: Request) {
       },
     })
 
+    // Order statuses distribution
+    const orderStatuses = await Promise.all(
+      ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(async (status) => {
+        const count = await prisma.order.count({ where: { status: status as any } })
+        return { status, count }
+      })
+    )
+
+    // Sales by brand
+    const ordersWithItems = await prisma.orderItem.findMany({
+      include: { product: { select: { brand: true } } },
+    })
+    const brandMap: Record<string, number> = {}
+    ordersWithItems.forEach((item) => {
+      const brand = item.product?.brand || 'Otros'
+      brandMap[brand] = (brandMap[brand] || 0) + item.quantity
+    })
+    const brandSales = Object.entries(brandMap)
+      .map(([brand, count]) => ({ brand, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+
     // Calculate percentages
     const revenueChange = lastRevenue > 0 ? Math.round(((currentRevenue - lastRevenue) / lastRevenue) * 100) : 0
     const ordersChange = lastOrderCount > 0 ? Math.round(((currentOrderCount - lastOrderCount) / lastOrderCount) * 100) : 0
@@ -208,6 +230,8 @@ export async function GET(request: Request) {
       ]
         .sort((a, b) => a.stock - b.stock)
         .slice(0, 5),
+      orderStatuses: orderStatuses.filter(s => s.count > 0),
+      brandSales,
     })
   } catch (error) {
     console.error('Dashboard error:', error)

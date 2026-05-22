@@ -5,6 +5,7 @@ import {
   OrderQuerySchema,
   formatZodError 
 } from '@/lib/validations'
+import { sendOrderStatusEmail } from '@/lib/email'
 
 export async function GET(request: Request) {
   try {
@@ -211,7 +212,7 @@ export async function PUT(request: Request) {
     }
     
     const body = await request.json()
-    const { status } = body
+    const { status, trackingNumber } = body
     
     if (!status) {
       return NextResponse.json({ error: 'Status is required' }, { status: 400 })
@@ -222,9 +223,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 })
     }
     
-    const order = await prisma.order.update({
+    const order = await prisma.order.findUnique({
       where: { id },
-      data: { status: status.toUpperCase() },
       include: {
         user: {
           select: {
@@ -242,9 +242,53 @@ export async function PUT(request: Request) {
       }
     })
     
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
+    
+    const oldStatus = order.status
+    const updateData: any = { status: status.toUpperCase() }
+    
+    if (status.toUpperCase() === 'SHIPPED' && trackingNumber) {
+      updateData.trackingNumber = trackingNumber
+      updateData.shippedAt = new Date()
+    }
+    
+    const updatedOrder = await prisma.order.update({
+      where: { id },
+      data: updateData,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+          }
+        },
+        items: {
+          include: {
+            product: true
+          }
+        }
+      }
+    })
+    
+    // Send email notification if status changed
+    if (oldStatus !== status.toUpperCase()) {
+      sendOrderStatusEmail({
+        email: order.clientEmail || order.user?.email || '',
+        userName: order.user?.name || 'Cliente',
+        orderCode: order.code,
+        oldStatus,
+        newStatus: status.toUpperCase(),
+        trackingNumber: trackingNumber || updatedOrder.trackingNumber || undefined,
+      }).catch((err) => console.error('[Orders] Error sending status email:', err))
+    }
+    
     const transformed = {
-      ...order,
-      items: order.items.map(item => ({
+      ...updatedOrder,
+      items: updatedOrder.items.map(item => ({
         ...item,
         productName: item.product?.name || 'Producto eliminado',
         productImage: item.product?.imageUrl || null,

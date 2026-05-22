@@ -127,6 +127,10 @@ model Order {
   arrepReason    String?     // Motivo del rechazo
   refundProcessed Boolean    @default(false)
   refundDate     DateTime?
+  
+  // Tracking
+  trackingNumber String?
+  shippedAt      DateTime?
 
   items           OrderItem[]
   arrepentimientos Arrepentimiento[]

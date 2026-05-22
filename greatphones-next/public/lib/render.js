@@ -139,6 +139,7 @@ function loadAccessories(){
 
 function loadDashboard(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
+  if(window._dashRefreshInterval)clearInterval(window._dashRefreshInterval);
   fetch(API_URL+'/api/admin/dashboard',{
     headers:{'X-User-Id':currentUser.id}
   }).then(function(r){
@@ -150,9 +151,21 @@ function loadDashboard(){
     renderDashRecentOrders(d);
     renderDashTopProducts(d);
     renderDashStockAlerts(d);
+    setTimeout(renderDashCharts,100);
   }).catch(function(e){
     console.log('Dashboard error:',e);
   });
+  window._dashRefreshInterval=setInterval(function(){
+    fetch(API_URL+'/api/admin/dashboard',{
+      headers:{'X-User-Id':currentUser.id}
+    }).then(function(r){return r.json();}).then(function(d){
+      window._dashData=d;
+      renderDashStats();
+      renderDashRecentOrders(d);
+      renderDashTopProducts(d);
+      renderDashStockAlerts(d);
+    }).catch(function(){});
+  },60000);
 }
 
 function setDashView(view){
@@ -300,6 +313,98 @@ function renderDashStockAlerts(d){
         '</li>';
       }).join('');
     }
+  }
+}
+
+function renderDashCharts(){
+  if(!window._dashData||!window.Chart)return;
+  var d=window._dashData;
+  
+  // Revenue chart
+  var revenueCanvas=document.getElementById('revenueChart');
+  if(revenueCanvas&&window._revenueChart)window._revenueChart.destroy();
+  if(revenueCanvas){
+    var months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    var revenueData=d.monthlyStats?d.monthlyStats.map(function(s){return s.revenue;}):[];
+    window._revenueChart=new window.Chart(revenueCanvas,{
+      type:'bar',
+      data:{
+        labels:months,
+        datasets:[{
+          label:'Ingresos',
+          data:revenueData,
+          backgroundColor:'rgba(255,107,44,0.7)',
+          borderColor:'rgba(255,107,44,1)',
+          borderWidth:1,
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{display:false}},
+        scales:{
+          y:{beginAtZero:true,ticks:{callback:function(v){return'$'+(v/1000)+'k';}},grid:{color:'rgba(0,0,0,0.05)'}},
+          x:{grid:{display:false}}
+        }
+      }
+    });
+  }
+  
+  // Status chart
+  var statusCanvas=document.getElementById('statusChart');
+  if(statusCanvas&&window._statusChart)window._statusChart.destroy();
+  if(statusCanvas&&d.orderStatuses){
+    var statusLabels={'PENDING':'Pendiente','PROCESSING':'En proceso','SHIPPED':'Enviado','DELIVERED':'Entregado','CANCELLED':'Cancelado'};
+    var statusColors={'PENDING':'#f59e0b','PROCESSING':'#3b82f6','SHIPPED':'#8b5cf6','DELIVERED':'#22c55e','CANCELLED':'#ef4444'};
+    var statusData=d.orderStatuses||[];
+    window._statusChart=new window.Chart(statusCanvas,{
+      type:'doughnut',
+      data:{
+        labels:statusData.map(function(s){return statusLabels[s.status]||s.status;}),
+        datasets:[{
+          data:statusData.map(function(s){return s.count;}),
+          backgroundColor:statusData.map(function(s){return statusColors[s.status]||'#94a3b8';}),
+          borderWidth:0,
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{position:'bottom',labels:{padding:12,usePointStyle:true,pointStyle:'circle',font:{size:11}}}
+        }
+      }
+    });
+  }
+  
+  // Brand chart
+  var brandCanvas=document.getElementById('brandChart');
+  if(brandCanvas&&window._brandChart)window._brandChart.destroy();
+  if(brandCanvas&&d.brandSales){
+    var brandColors={'Apple':'#555','Samsung':'#1428a0','Motorola':'#0068ff','Xiaomi':'#ff6900','iPad':'#888','MacBook':'#666'};
+    window._brandChart=new window.Chart(brandCanvas,{
+      type:'bar',
+      data:{
+        labels:d.brandSales.map(function(b){return b.brand;}),
+        datasets:[{
+          label:'Ventas',
+          data:d.brandSales.map(function(b){return b.count;}),
+          backgroundColor:d.brandSales.map(function(b){return brandColors[b.brand]||'#94a3b8';}),
+          borderRadius:6,
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        indexAxis:'y',
+        plugins:{legend:{display:false}},
+        scales:{
+          x:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.05)'}},
+          y:{grid:{display:false}}
+        }
+      }
+    });
   }
 }
 
@@ -1325,7 +1430,7 @@ function renderAdminContent(tab){
       '</section>'+
       
       '<!-- Recent Orders & Top Products -->'+
-      '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'+
+      '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem">'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
           '<div style="padding:16px;border-bottom:1px solid var(--border);background:var(--cream2);display:flex;justify-content:space-between;align-items:center">'+
             '<h2 style="font-size:16px;font-weight:700">Ultimos Pedidos</h2>'+
@@ -1339,6 +1444,22 @@ function renderAdminContent(tab){
             '</tr></thead>'+
             '<tbody id="dashboard-recent-orders"></tbody>'+
           '</table>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ingresos Mensuales</h2>'+
+          '<canvas id="revenueChart" height="280"></canvas>'+
+        '</div>'+
+      '</section>'+
+      
+      '<!-- Charts Row -->'+
+      '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Pedidos por Estado</h2>'+
+          '<canvas id="statusChart" height="260"></canvas>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ventas por Marca</h2>'+
+          '<canvas id="brandChart" height="260"></canvas>'+
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:16px">'+
           '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border)">'+

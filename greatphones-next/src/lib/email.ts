@@ -373,3 +373,60 @@ export async function sendAdminReplyEmail(data: {
 
   return { success: true };
 }
+
+export async function sendOrderStatusEmail(data: {
+  email: string;
+  userName: string;
+  orderCode: string;
+  oldStatus: string;
+  newStatus: string;
+  trackingNumber?: string;
+}) {
+  const statusLabels: Record<string, string> = {
+    PENDING: 'Pendiente',
+    PROCESSING: 'En proceso',
+    SHIPPED: 'Enviado',
+    DELIVERED: 'Entregado',
+    CANCELLED: 'Cancelado',
+  }
+
+  const newStatusLabel = statusLabels[data.newStatus] || data.newStatus
+
+  let trackingHtml = ''
+  if (data.trackingNumber && data.newStatus === 'SHIPPED') {
+    trackingHtml = `
+      <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
+        <strong>Numero de tracking:</strong> ${data.trackingNumber}<br>
+        <small>Podes seguir tu envio con este codigo</small>
+      </div>
+    `
+  }
+
+  await sendEmail({
+    to: data.email,
+    subject: `Tu pedido ${data.orderCode} cambio de estado - Great Phones`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">Actualizacion de tu pedido</h2>
+        <p>Hola ${data.userName},</p>
+        <p>El estado de tu pedido <strong>${data.orderCode}</strong> ha sido actualizado:</p>
+        
+        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <strong>Nuevo estado:</strong> ${newStatusLabel}
+        </div>
+
+        ${trackingHtml}
+
+        <p style="margin-top: 20px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  })
+
+  return { success: true }
+}

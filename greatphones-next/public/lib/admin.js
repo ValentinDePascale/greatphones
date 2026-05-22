@@ -49,7 +49,7 @@ function renderAdminContent(tab){
       '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
     '</div>'+
     '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-      '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre..." oninput="searchOrders(this.value)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="searchOrders(this.value)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
     '</div>'+
     '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
     loadPendingOrders();
@@ -329,7 +329,12 @@ function showOrderModal(order){
   var actionBtn='';
   if(order.status==='PENDING'){
     actionBtn='<button onclick="acceptOrder(\''+order.id+'\')" style="width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:1rem">Aceptar pedido</button>';
-  }else if(order.status==='PROCESSING'||order.status==='SHIPPED'){
+  }else if(order.status==='PROCESSING'){
+    actionBtn='<div style="margin-top:1rem">'+
+      '<button onclick="shipOrder(\''+order.id+'\')" style="width:100%;padding:14px;background:#8b5cf6;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px">Marcar como enviado</button>'+
+      '<button onclick="finalizeOrder(\''+order.id+'\')" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Finalizar pedido</button>'+
+    '</div>';
+  }else if(order.status==='SHIPPED'){
     actionBtn='<button onclick="finalizeOrder(\''+order.id+'\')" style="width:100%;padding:14px;background:var(--green);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;margin-top:1rem">Finalizar pedido</button>';
   }
   
@@ -358,6 +363,8 @@ function showOrderModal(order){
             '<div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Envio</div>'+
             '<div style="font-size:14px;font-weight:600">'+deliveryLabel+'</div>'+
             (deliveryAddress?'<div style="font-size:12px;color:var(--gray);margin-top:4px">'+deliveryAddress+'</div>':'')+
+            (order.trackingNumber?'<div style="font-size:12px;color:#8b5cf6;margin-top:6px;font-weight:600">Tracking: '+order.trackingNumber+'</div>':'')+
+            (order.shippedAt?'<div style="font-size:11px;color:var(--gray);margin-top:2px">Enviado el '+new Date(order.shippedAt).toLocaleDateString('es-AR')+'</div>':'')+
           '</div>'+
         '</div>'+
         '<div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Productos</div>'+
@@ -443,6 +450,66 @@ function finalizeOrder(orderId){
     closeOrderDetail();
     loadAcceptedOrders();
   }).catch(function(){showToast('Error finalizando pedido');});
+}
+
+function shipOrder(orderId){
+  var existing=document.getElementById('shipOrderModal');
+  if(existing)existing.remove();
+  
+  var modal=document.createElement('div');
+  modal.id='shipOrderModal';
+  modal.style.cssText='display:flex;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
+  modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeShipOrderModal()"></div>'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(450px,95%);box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
+      '<div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border)">'+
+        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:#8b5cf6">Marcar como enviado</h3>'+
+        '<p style="font-size:12px;color:var(--gray);margin-top:4px">Ingresa el numero de tracking del envio</p>'+
+      '</div>'+
+      '<div style="padding:1.5rem 2rem">'+
+        '<label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">Numero de tracking</label>'+
+        '<input type="text" id="shipTrackingInput" placeholder="Ej: AR123456789AR" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;outline:none" onfocus="this.style.borderColor=\'#8b5cf6\'">'+
+        '<div style="display:flex;gap:10px;margin-top:1.25rem">'+
+          '<button onclick="closeShipOrderModal()" style="flex:1;padding:12px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer">Cancelar</button>'+
+          '<button onclick="confirmShipOrder(\''+orderId+'\')" style="flex:1;padding:12px;background:#8b5cf6;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">Enviar</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  
+  document.body.appendChild(modal);
+  modal.offsetHeight;
+  setTimeout(function(){
+    modal.style.opacity='1';
+    modal.querySelector('div:nth-child(2)').style.transform='scale(1)';
+    var input=document.getElementById('shipTrackingInput');
+    if(input)input.focus();
+  },10);
+}
+
+function closeShipOrderModal(){
+  var modal=document.getElementById('shipOrderModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
+  setTimeout(function(){modal.remove();},300);
+}
+
+function confirmShipOrder(orderId){
+  var tracking=document.getElementById('shipTrackingInput').value.trim();
+  if(!tracking){
+    alert('Ingresa un numero de tracking');
+    return;
+  }
+  
+  fetch(API_URL+'/api/orders?id='+orderId,{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status:'SHIPPED',trackingNumber:tracking})
+  }).then(function(r){return r.json();}).then(function(){
+    showToast('Pedido marcado como enviado');
+    closeShipOrderModal();
+    closeOrderDetail();
+    loadAcceptedOrders();
+  }).catch(function(){showToast('Error marcando como enviado');});
 }
 
 function updateOrderStatus(orderId,status){
