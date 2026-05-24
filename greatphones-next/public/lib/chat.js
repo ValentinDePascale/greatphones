@@ -346,8 +346,8 @@ function openAdminConv(id){
   loadMessages(id,true);
   markAsRead(id);
   if(chatSocket)chatSocket.emit('joinConversation',id);
-  renderAdminConvList(window._adminConvs);
   renderQuickReplies();
+  loadAdminConversations();
   
   var header=document.getElementById('adminChatHeader');
   if(header){

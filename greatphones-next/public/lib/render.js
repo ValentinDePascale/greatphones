@@ -1447,7 +1447,7 @@ function renderAdminContent(tab){
         '</div>'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
           '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ingresos Mensuales</h2>'+
-          '<canvas id="revenueChart" height="280"></canvas>'+
+          '<div style="position:relative;height:280px"><canvas id="revenueChart"></canvas></div>'+
         '</div>'+
       '</section>'+
       
@@ -1455,11 +1455,11 @@ function renderAdminContent(tab){
       '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
           '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Pedidos por Estado</h2>'+
-          '<canvas id="statusChart" height="260"></canvas>'+
+          '<div style="position:relative;height:260px"><canvas id="statusChart"></canvas></div>'+
         '</div>'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
           '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ventas por Marca</h2>'+
-          '<canvas id="brandChart" height="260"></canvas>'+
+          '<div style="position:relative;height:260px"><canvas id="brandChart"></canvas></div>'+
         '</div>'+
         '<div style="display:flex;flex-direction:column;gap:16px">'+
           '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border)">'+
