@@ -213,15 +213,24 @@ function sendMessage(){
 
 function checkAndShowAutoReply(){
   if(window._autoReplyShown)return;
-  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit=5')
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit=3')
     .then(function(r){return r.json();})
     .then(function(msgs){
-      if(msgs&&msgs.length<=2&&!window._autoReplyShown){
-        window._autoReplyShown=true;
-        setTimeout(showAutoReply,500);
+      if(!window._autoReplyShown&&msgs&&msgs.length>=1){
+        var hasAdminMsg=false;
+        for(var i=0;i<msgs.length;i++){
+          if(msgs[i].from!=='system'&&msgs[i].from!==currentUser.id){
+            hasAdminMsg=true;
+            break;
+          }
+        }
+        if(!hasAdminMsg){
+          window._autoReplyShown=true;
+          setTimeout(showAutoReply,300);
+        }
       }
     })
-    .catch(function(){});
+    .catch(function(e){console.error('[AutoReply] Error checking messages:',e);});
 }
 
 var faqOptions=[
@@ -344,6 +353,7 @@ function sendChatImg(input){
         appendMessageToChat(msg);
         scrollToBottom();
         if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+        checkAndShowAutoReply();
       });
     }
   })
@@ -574,6 +584,7 @@ function sendPanelMessage(){
     appendPanelMessage(msg);
     scrollPanelBottom();
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+    checkAndShowAutoReply();
   })
   .catch(function(e){console.error('Error sending panel message:',e);});
 }
@@ -602,6 +613,7 @@ function sendPanelImg(input){
         appendPanelMessage(msg);
         scrollPanelBottom();
         if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+        checkAndShowAutoReply();
       });
     }
   })
