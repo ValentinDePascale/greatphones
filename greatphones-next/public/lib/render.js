@@ -1575,10 +1575,10 @@ function renderAdminContent(tab){
         '<button class="ord-btn" id="btnAcceptedOrders" onclick="loadAcceptedOrders()">Pedidos Aceptados</button>'+
         '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
       '</div>'+
-      '<div style="margin-bottom:1rem">'+
-        '<input type="text" id="orderDniFilter" placeholder="Buscar por DNI..." oninput="filterOrdersByDni()" style="width:100%;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
+        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="searchOrders(this.value)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '</div>'+
-      '<div class="adm-list" id="orderList"></div>';
+      '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
       if(typeof loadPendingOrders==='function'){
         loadPendingOrders();
       }else{

@@ -278,11 +278,12 @@ function renderOrdersList(ords){
 }
 
 function openOrderDetail(orderId){
-  fetch(API_URL+'/api/orders?admin=true').then(function(r){return r.json();}).then(function(ords){
+  fetch(API_URL+'/api/orders?admin=true&page=1&limit=100').then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
     var order=ords.find(function(o){return o.id===orderId;});
     if(!order){showToast('Pedido no encontrado');return;}
     showOrderModal(order);
-  }).catch(function(){showToast('Error cargando pedido');});
+  }).catch(function(e){showToast('Error cargando pedido: '+e.message);});
 }
 
 function showOrderModal(order){
