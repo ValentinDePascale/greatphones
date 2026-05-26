@@ -104,6 +104,20 @@ export async function POST(request: Request) {
       return NextResponse.json(conversation)
     }
 
+    if (action === 'delete') {
+      // Delete all messages first
+      await prisma.message.deleteMany({
+        where: { conversationId }
+      })
+
+      // Delete the conversation
+      await prisma.conversation.delete({
+        where: { id: conversationId }
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: 'Acción no válida' }, { status: 400 })
   } catch (error) {
     console.error('Error updating conversation:', error)

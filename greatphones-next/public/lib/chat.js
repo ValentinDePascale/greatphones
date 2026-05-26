@@ -575,7 +575,7 @@ function openAdminConv(id){
     var userName=conv&&conv.user?conv.user.name:'Cliente';
     header.innerHTML='<span style="font-size:14px;font-weight:600">'+userName+'</span>'+
       '<div style="display:flex;gap:6px">'+
-        '<button onclick="closeAdminConv(\''+id+'\')" style="padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Cerrar</button>'+
+        '<button onclick="deleteAdminConv(\''+id+'\')" style="padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Borrar conversaci\u00F3n</button>'+
       '</div>';
   }
 }
@@ -607,6 +607,31 @@ function useQuickReply(index){
     input.value=reply.text;
     input.focus();
   }
+}
+
+function deleteAdminConv(id){
+  if(!confirm('\u00BFEstas seguro de que queres eliminar esta conversaci\u00F3n? Esta acci\u00F3n no se puede deshacer.')){
+    return;
+  }
+  fetch(API_URL+'/api/admin/conversations',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+    body:JSON.stringify({conversationId:id,action:'delete'})
+  })
+  .then(function(r){return r.json();})
+  .then(function(){
+    showToast('Conversaci\u00F3n eliminada');
+    adminActiveConvId=null;
+    userConvId=null;
+    loadAdminConversations();
+    var header=document.getElementById('adminChatHeader');
+    if(header){
+      header.innerHTML='<span style="font-size:14px;font-weight:600;color:var(--gray)">Seleccion\u00E1 una conversaci\u00F3n</span>';
+    }
+    var list=document.getElementById('chatMsgList');
+    if(list)list.innerHTML='';
+  })
+  .catch(function(e){console.error('Error deleting conversation:',e);showToast('Error eliminando conversaci\u00F3n');});
 }
 
 function closeAdminConv(id){
