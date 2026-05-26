@@ -151,7 +151,7 @@ function loadDashboard(){
     renderDashRecentOrders(d);
     renderDashTopProducts(d);
     renderDashStockAlerts(d);
-    setTimeout(renderDashCharts,100);
+    renderDashCharts();
   }).catch(function(e){
     console.log('Dashboard error:',e);
   });
@@ -164,8 +164,9 @@ function loadDashboard(){
       renderDashRecentOrders(d);
       renderDashTopProducts(d);
       renderDashStockAlerts(d);
+      renderDashCharts();
     }).catch(function(){});
-  },60000);
+  },300000);
 }
 
 function setDashView(view){
@@ -1087,7 +1088,11 @@ function sliderNext(){goSlide(sliderIdx+1);}
 function sliderPrev(){goSlide(sliderIdx-1);}
 function startSliderTimer(){
   if(sliderTimer)clearInterval(sliderTimer);
-  sliderTimer=setInterval(function(){goSlide(sliderIdx+1);},4500);
+  sliderTimer=setInterval(function(){
+    var track=document.getElementById('sliderTrack');
+    if(track)goSlide(sliderIdx+1);
+    else{clearInterval(sliderTimer);sliderTimer=null;}
+  },4500);
 }
 
 // =========== FEATURED GRID ===========
@@ -1104,7 +1109,9 @@ function renderFeaturedGrid(){
 }
 
 // =========== TIMER ===========
+var _timerInterval=null;
 function startTimer(){
+  if(_timerInterval)clearInterval(_timerInterval);
   var end=new Date();
   end.setHours(23,59,59,0);
   function tick(){
@@ -1115,9 +1122,10 @@ function startTimer(){
     var s=diff%60;
     var el=document.getElementById('timerEl');
     if(el)el.textContent=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    else{clearInterval(_timerInterval);_timerInterval=null;}
   }
   tick();
-  setInterval(tick,1000);
+  _timerInterval=setInterval(tick,1000);
 }
 
 // =========== NOTEBOOK CONFIG ===========

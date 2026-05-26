@@ -7,7 +7,7 @@ var notifPollInterval=null;
 var socketConnected=false;
 
 function initChatSocket(){
-  if(!currentUser||!window.ChatSocket){
+  if(!currentUser||!window.io){
     console.log('[Chat] Socket client not available, using polling');
     startChatPolling();
     return;
@@ -15,7 +15,7 @@ function initChatSocket(){
   try{
     var socketUrl=window.location.hostname==='localhost'?'http://localhost:3001':window.location.origin;
     console.log('[Chat] Connecting to:', socketUrl);
-    chatSocket=window.ChatSocket(socketUrl,{
+    chatSocket=window.io(socketUrl,{
       auth:{userId:currentUser.id},
       reconnection:true,
       reconnectionAttempts:5,
@@ -71,15 +71,20 @@ function initChatSocket(){
   startChatNotifPolling();
 }
 
+var chatPollDelay=3000;
+var chatPollMaxDelay=30000;
+
 function startChatPolling(){
   if(chatPollInterval)clearInterval(chatPollInterval);
   chatPollInterval=setInterval(function(){
     if(userConvId)loadPanelMessages(userConvId,false);
-  },3000);
+    chatPollDelay=Math.min(chatPollDelay*1.5,chatPollMaxDelay);
+  },chatPollDelay);
 }
 
 function stopChatPolling(){
   if(chatPollInterval){clearInterval(chatPollInterval);chatPollInterval=null;}
+  chatPollDelay=3000;
 }
 
 function openUserChat(){

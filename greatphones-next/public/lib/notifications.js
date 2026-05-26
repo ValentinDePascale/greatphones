@@ -121,10 +121,10 @@ function deleteAllNotifs(){
 
 function updateNotifBadge(){
   if(!currentUser)return;
-  fetch(API_URL+'/api/notifications?userId='+currentUser.id+'&unread=true&limit=1')
+  fetch(API_URL+'/api/notifications?userId='+currentUser.id+'&unread=true&countOnly=true')
     .then(function(r){return r.json();})
-    .then(function(notifs){
-      _notifUnreadCount=notifs?notifs.length:0;
+    .then(function(data){
+      _notifUnreadCount=data.count||0;
       var badge=document.getElementById('notifBadge');
       if(badge){
         if(_notifUnreadCount>0){
@@ -142,7 +142,7 @@ function startNotifPolling(){
   if(_notifPollInterval)clearInterval(_notifPollInterval);
   _notifPollInterval=setInterval(function(){
     if(currentUser)updateNotifBadge();
-  },15000);
+  },30000);
 }
 
 function stopNotifPolling(){

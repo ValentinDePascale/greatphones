@@ -27,6 +27,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const adminId = searchParams.get('adminId')
+    const limit = parseInt(searchParams.get('limit') || '50')
 
     const where: any = {}
     if (status) where.status = status
@@ -46,7 +47,8 @@ export async function GET(request: Request) {
           take: 1
         }
       },
-      orderBy: { lastMsgAt: 'desc' }
+      orderBy: { lastMsgAt: 'desc' },
+      take: Math.min(limit, 100),
     })
 
     return NextResponse.json(conversations, {

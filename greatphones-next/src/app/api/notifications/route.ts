@@ -19,6 +19,7 @@ export async function GET(request: Request) {
     const unreadOnly = searchParams.get('unread') === 'true'
     const type = searchParams.get('type')
     const limit = parseInt(searchParams.get('limit') || '50')
+    const countOnly = searchParams.get('countOnly') === 'true'
 
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
@@ -32,6 +33,11 @@ export async function GET(request: Request) {
 
     if (type) {
       where.type = type
+    }
+
+    if (countOnly) {
+      const count = await prisma.notification.count({ where })
+      return NextResponse.json({ count })
     }
 
     const notifications = await prisma.notification.findMany({
