@@ -60,6 +60,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const { text, imageUrl, imageCaption } = validation.data
     const userId = body.userId
+    const isAutoReply = body.isAutoReply === true
 
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
@@ -125,9 +126,53 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       data: updateData
     })
 
-    // Create notification for the recipient
-    if (isUserSender) {
-      // Find or use existing admin for this conversation
+    // Create notification for the recipient (skip for auto-replies)
+    if (isAutoReply) {
+      // Auto-reply: only notify admin, don't send email
+      let targetAdmin = conversation.admin;
+      if (!targetAdmin) {
+        const autoAdmin = await prisma.user.findFirst({
+          where: { role: 'ADMIN' },
+          select: { id: true, name: true, email: true }
+        });
+        if (autoAdmin) {
+          targetAdmin = autoAdmin;
+          await prisma.conversation.update({
+            where: { id },
+            data: { adminId: autoAdmin.id }
+          });
+        }
+      }
+
+      if (targetAdmin) {
+        await prisma.notification.create({
+          data: {
+            userId: targetAdmin.id,
+            type: 'MESSAGE',
+            title: 'Usuario solicito asesor',
+            text: `${conversation.user.name || 'Un usuario'} solicito hablar con un asesor`,
+            conversationId: id,
+            messageId: message.id
+          }
+        });
+
+        // Send email to admin (non-blocking)
+        try {
+          sendNewMessageToAdminEmail({
+            adminEmail: targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar',
+            userName: conversation.user.name || 'Usuario',
+            messageText: text || '(solicito hablar con un asesor)',
+            conversationId: id,
+            conversationType: conversation.type
+          }).catch((emailError: Error) => {
+            console.error('[Messages] Error sending email to admin:', emailError);
+          });
+        } catch (emailError) {
+          console.error('[Messages] Error sending email to admin:', emailError);
+        }
+      }
+    } else if (isUserSender) {
+      // Normal user message: notify admin
       let targetAdmin = conversation.admin;
       if (!targetAdmin) {
         // Auto-assign first available admin

@@ -1718,7 +1718,10 @@
     </div>
     <div class="admin-sec" id="as-chat" style="display:flex;gap:0;height:calc(100vh - 200px)">
       <div style="width:300px;border-right:1px solid var(--border);overflow-y:auto;background:#fff">
-        <div style="padding:16px;border-bottom:1px solid var(--border)"><h3 style="font-size:16px;font-weight:700">Conversaciones</h3></div>
+        <div style="padding:16px;border-bottom:1px solid var(--border)">
+          <h3 style="font-size:16px;font-weight:700;margin-bottom:10px">Conversaciones</h3>
+          <input type="text" id="adminConvSearch" placeholder="Buscar por nombre o email..." oninput="searchAdminConvs(this.value)" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none">
+        </div>
         <div id="adminConvList"></div>
       </div>
       <div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">

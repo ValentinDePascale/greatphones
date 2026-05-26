@@ -206,8 +206,118 @@ function sendMessage(){
     appendMessageToChat(msg);
     scrollToBottom();
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+    checkAndShowAutoReply();
   })
   .catch(function(e){console.error('Error sending message:',e);});
+}
+
+function checkAndShowAutoReply(){
+  if(window._autoReplyShown)return;
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit=5')
+    .then(function(r){return r.json();})
+    .then(function(msgs){
+      if(msgs&&msgs.length<=2&&!window._autoReplyShown){
+        window._autoReplyShown=true;
+        setTimeout(showAutoReply,500);
+      }
+    })
+    .catch(function(){});
+}
+
+var faqOptions=[
+  {id:'horarios',label:'Horarios de atencion',answer:'Nuestro horario de atencion es de Lunes a Viernes de 10:00 a 19:00hs y Sabados de 10:00 a 14:00hs. Estamos en Zelarrayan 179, Bahia Blanca.'},
+  {id:'garantia',label:'Garantia de productos',answer:'Todos nuestros productos tienen garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos y lo resolvemos.'},
+  {id:'envios',label:'Informacion sobre envios',answer:'Realizamos envios a todo el pais. El tiempo de entrega es de 3 a 7 dias habiles. Tambien podes retirar en nuestro local en Zelarrayan 179, Bahia Blanca.'},
+  {id:'pagos',label:'Medios de pago',answer:'Aceptamos Mercado Pago, tarjetas de credito/debito y efectivo. Podes pagar en hasta 12 cuotas sin interes.'},
+  {id:'devoluciones',label:'Devoluciones y arrepentimientos',answer:'Tenes 10 dias habiles desde la recepcion para ejercer tu derecho de arrepentimiento segun Ley 24.240. El reembolso se procesa en 10 dias habiles.'},
+];
+
+function showAutoReply(){
+  var list=document.getElementById('chatMsgList');
+  if(!list)return;
+  
+  var faqButtonsHtml=faqOptions.map(function(faq){
+    return '<button onclick="handleFaqClick(\''+faq.id+'\')" style="display:block;width:100%;padding:10px 14px;margin-bottom:6px;background:#fff;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;text-align:left;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'#fff\'">'+faq.label+'</button>';
+  }).join('');
+  
+  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border);max-width:100%">'+
+      '<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--dk)">Hola! Gracias por ponerte en contacto con <span style="color:var(--orange)">Great Phones</span> 🎉</p>'+
+      '<p style="margin:0 0 12px;font-size:12px;color:var(--gray)">Selecciona una opcion o escribinos tu consulta:</p>'+
+      '<div id="faqButtons">'+faqButtonsHtml+'</div>'+
+      '<button onclick="requestAdvisor()" style="width:100%;padding:10px 14px;margin-top:8px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s" onmouseover="this.style.background=\'#e55a1a\'" onmouseout="this.style.background=\'var(--orange)\'">📞 Hablar con un Asesor</button>'+
+      '<div class="msg-time">'+formatTime(new Date())+'</div>'+
+    '</div>'+
+  '</div>';
+  
+  list.insertAdjacentHTML('beforeend',html);
+  scrollToBottom();
+}
+
+function handleFaqClick(faqId){
+  var faq=faqOptions.find(function(f){return f.id===faqId;});
+  if(!faq)return;
+  
+  var list=document.getElementById('chatMsgList');
+  if(!list)return;
+  
+  var html='<div class="msg-wrap mine" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble">'+
+      '<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
+      '<p style="margin:0">'+faq.answer+'</p>'+
+      '<div class="msg-time">'+formatTime(new Date())+'</div>'+
+    '</div>'+
+  '</div>';
+  
+  list.insertAdjacentHTML('beforeend',html);
+  scrollToBottom();
+  
+  var faqContainer=document.getElementById('faqButtons');
+  if(faqContainer){
+    var btns=faqContainer.querySelectorAll('button');
+    btns.forEach(function(btn){
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+      btn.style.cursor='not-allowed';
+    });
+  }
+}
+
+function requestAdvisor(){
+  var list=document.getElementById('chatMsgList');
+  if(!list)return;
+  
+  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble" style="background:#f0fdf4;border:1.5px solid #22c55e;max-width:100%">'+
+      '<p style="margin:0;font-size:13px;color:#059669;font-weight:600">✅ Entendido!</p>'+
+      '<p style="margin:8px 0 0;font-size:12px;color:#166534">En unos momentos alguien del personal se pondra en contacto contigo. Gracias por tu paciencia.</p>'+
+      '<div class="msg-time">'+formatTime(new Date())+'</div>'+
+    '</div>'+
+  '</div>';
+  
+  list.insertAdjacentHTML('beforeend',html);
+  scrollToBottom();
+  
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:'system',text:'El usuario solicito hablar con un asesor.',isAutoReply:true})
+  })
+  .then(function(r){return r.json();})
+  .then(function(msg){
+    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
+  })
+  .catch(function(){});
+  
+  var faqContainer=document.getElementById('faqButtons');
+  if(faqContainer){
+    var btns=faqContainer.querySelectorAll('button');
+    btns.forEach(function(btn){
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+      btn.style.cursor='not-allowed';
+    });
+  }
 }
 
 function sendChatImg(input){
@@ -299,6 +409,7 @@ function escapeHtml(text){
 
 // =========== ADMIN CHAT ===========
 var adminActiveConvId=null;
+var _adminConvSearchQuery='';
 function loadAdminConversations(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
   fetch(API_URL+'/api/admin/conversations',{
@@ -308,9 +419,29 @@ function loadAdminConversations(){
     .then(function(data){
       if(!Array.isArray(data)){console.error('Invalid admin conversations response:',data);return;}
       window._adminConvs=data;
-      renderAdminConvList(data);
+      filterAndRenderAdminConvs(data);
     })
     .catch(function(e){console.error('Error loading admin conversations:',e);});
+}
+
+function filterAndRenderAdminConvs(convs){
+  if(!convs)return;
+  var filtered=convs;
+  if(_adminConvSearchQuery&&_adminConvSearchQuery.trim()){
+    var q=_adminConvSearchQuery.trim().toLowerCase();
+    filtered=convs.filter(function(c){
+      var userName=(c.user&&c.user.name)?c.user.name.toLowerCase():'';
+      var userEmail=(c.user&&c.user.email)?c.user.email.toLowerCase():'';
+      var lastMsg=(c.messages&&c.messages[0])?(c.messages[0].text||'').toLowerCase():'';
+      return userName.indexOf(q)!==-1||userEmail.indexOf(q)!==-1||lastMsg.indexOf(q)!==-1;
+    });
+  }
+  renderAdminConvList(filtered);
+}
+
+function searchAdminConvs(query){
+  _adminConvSearchQuery=query;
+  filterAndRenderAdminConvs(window._adminConvs||[]);
 }
 
 function renderAdminConvList(convs){
