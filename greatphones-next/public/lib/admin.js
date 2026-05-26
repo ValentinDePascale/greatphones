@@ -1024,6 +1024,33 @@ function editProduct(id){
   });
 }
 
+function duplicateProduct(id){
+  var p=getById(PRODUCTS,id);
+  if(!p){showToast('Producto no encontrado');return;}
+  var dupName=p.name+' (copia)';
+  fetch(API_URL+'/api/products',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      name:dupName,
+      price:p.price,
+      stock:p.stock,
+      brand:p.brand,
+      description:p.description||p.sub||'',
+      condition:p.condition,
+      type:p.type,
+      color:p.color,
+      imageUrl:p.imageUrl,
+      images:p.images||[],
+      isOffer:p.isOffer||false,
+      discount:p.discount||0,
+    })
+  }).then(function(r){return r.json();}).then(function(newP){
+    showToast('Producto duplicado: '+dupName);
+    loadProducts();
+  }).catch(function(){showToast('Error duplicando producto');});
+}
+
 function deleteProduct(id){
   var p=getById(PRODUCTS,id);
   var pname=p?p.name:'este producto';

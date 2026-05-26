@@ -1496,10 +1496,11 @@ function renderAdminContent(tab){
                '<span style="font-size:10px;color:'+(lowStock?'var(--red)':'var(--gray)')+'">'+(lowStock?'⚠ '+p.stock:p.stock+' en stock')+'</span>'+
              '</div>'+
              (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
-             '<div style="display:flex;gap:6px;margin-top:auto;padding-top:8px">'+
-               '<button class="btn btn-g btn-sm" style="flex:1" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
-               '<button class="btn btn-o btn-sm" style="flex:1" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
-             '</div>'+
+              '<div style="display:flex;gap:6px;margin-top:auto;padding-top:8px">'+
+                '<button class="btn btn-g btn-sm" style="flex:1" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
+                '<button class="btn btn-o btn-sm" style="flex:1" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
+                '<button class="btn btn-o btn-sm" style="flex:1" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
+              '</div>'+
            '</div>'+
         '</div>';
       }).join('')+
@@ -1512,12 +1513,15 @@ function renderAdminContent(tab){
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:12px">'+
       '<h3 style="font-size:16px">Gestion de Stock</h3>'+
       '<div style="display:flex;gap:12px;align-items:center">'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="stockFilterType" onchange="renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="stockFilterBrand" onchange="renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="stockFilterType" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="stockFilterBrand" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
         '<div style="display:flex;gap:8px;align-items:flex-end"><button onclick="undoAllStock()" class="btn btn-g btn-sm">Deshacer</button><button onclick="saveAllStock()" class="btn btn-o btn-sm">Guardar</button></div>'+
       '</div>'+
     '</div>'+
-    '<div style="display:grid;gap:8px" id="stockList"></div>';
+    '<div style="display:grid;gap:8px" id="stockList"></div>'+
+    '<div id="stockPagination"></div>';
+    window._stockPage=1;
+    window._stockLimit=20;
     renderStockList();
   }else if(tab==='promos'){
     var brands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
@@ -1716,7 +1720,13 @@ function renderStockList(){
       items.push({id:a.id,name:a.name,sub:a.category||'',stock:a.stock,type:'accesorio',ico:a.ico||'📦',brand:a.brand});
     });
   }
-  list.innerHTML=items.map(function(item){
+  var page=window._stockPage||1;
+  var limit=window._stockLimit||20;
+  var totalPages=Math.ceil(items.length/limit);
+  var start=(page-1)*limit;
+  var end=start+limit;
+  var pageItems=items.slice(start,end);
+  list.innerHTML=pageItems.map(function(item){
     var lowStock=item.stock<=2;
     var medStock=item.stock>2&&item.stock<=5;
     var statusText=lowStock?'⚠ Stock critico':medStock?'⚠ Stock bajo':'';
@@ -1735,6 +1745,25 @@ function renderStockList(){
       '<div style="font-size:11px;font-weight:600;color:'+(lowStock?'var(--red)':medStock?'var(--orange)':'transparent')+'">'+statusText+'</div>'+
     '</div>';
   }).join('');
+  var pagContainer=document.getElementById('stockPagination');
+  if(pagContainer){
+    if(totalPages<=1){pagContainer.innerHTML='';return;}
+    var html='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem">';
+    html+='<button onclick="window._stockPage=Math.max(1,window._stockPage-1);renderStockList();"'+(page===1?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">←</button>';
+    var s=Math.max(1,page-2);
+    var e=Math.min(totalPages,page+2);
+    if(s>1)html+='<button onclick="window._stockPage=1;renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">1</button>';
+    if(s>2)html+='<span style="padding:6px;color:var(--gray)">...</span>';
+    for(var i=s;i<=e;i++){
+      if(i===page)html+='<span style="padding:6px 12px;border-radius:6px;background:var(--orange);color:#fff;font-size:13px;font-weight:600">'+i+'</span>';
+      else html+='<button onclick="window._stockPage='+i+';renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+i+'</button>';
+    }
+    if(e<totalPages-1)html+='<span style="padding:6px;color:var(--gray)">...</span>';
+    if(e<totalPages)html+='<button onclick="window._stockPage='+totalPages+';renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+totalPages+'</button>';
+    html+='<button onclick="window._stockPage=Math.min('+totalPages+',window._stockPage+1);renderStockList();"'+(page===totalPages?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">→</button>';
+    html+='</div>';
+    pagContainer.innerHTML=html;
+  }
 }
 function renderPromoProducts(){
   var brand=document.getElementById('promoBrand').value;
