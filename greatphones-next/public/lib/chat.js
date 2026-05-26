@@ -46,12 +46,15 @@ function initChatSocket(){
     });
     chatSocket.on('newMessage',function(msg){
       console.log('[Chat] Received newMessage:', msg);
+      console.log('[Chat] userConvId:', userConvId, 'msg.conversationId:', msg.conversationId);
       if(msg.conversationId===userConvId){
+        console.log('[Chat] Appending message to chat');
         appendMessageToChat(msg);
         scrollToBottom();
         appendPanelMessage(msg);
         scrollPanelBottom();
       }else{
+        console.log('[Chat] Message for different conversation, updating badge');
         if(typeof showToast==='function')showToast('Tienes un nuevo mensaje del administrador');
         updateMsgBadge();
       }
@@ -218,20 +221,27 @@ function sendMessage(){
 
 function checkAndShowAutoReply(){
   if(window._autoReplyShown)return;
-  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit=3')
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit=10')
     .then(function(r){return r.json();})
     .then(function(msgs){
       if(!window._autoReplyShown&&msgs&&msgs.length>=1){
+        var userMsgCount=0;
         var hasAdminMsg=false;
         for(var i=0;i<msgs.length;i++){
-          if(msgs[i].from!=='system'&&msgs[i].from!==currentUser.id){
+          if(msgs[i].from===currentUser.id){
+            userMsgCount++;
+          }else if(msgs[i].from!=='system'){
             hasAdminMsg=true;
             break;
           }
         }
-        if(!hasAdminMsg){
+        console.log('[AutoReply] userMsgCount:',userMsgCount,'hasAdminMsg:',hasAdminMsg);
+        if(!hasAdminMsg&&userMsgCount<=2){
+          console.log('[AutoReply] Showing auto reply');
           window._autoReplyShown=true;
           setTimeout(showAutoReply,300);
+        }else{
+          console.log('[AutoReply] Not showing - hasAdminMsg:',hasAdminMsg,'userMsgCount:',userMsgCount);
         }
       }
     })
@@ -247,8 +257,9 @@ var faqOptions=[
 ];
 
 function showAutoReply(){
+  console.log('[AutoReply] Rendering to chatMsgList');
   var list=document.getElementById('chatMsgList');
-  if(!list)return;
+  if(!list){console.log('[AutoReply] chatMsgList not found');return;}
   
   var faqButtonsHtml=faqOptions.map(function(faq){
     return '<button onclick="handleFaqClick(\''+faq.id+'\')" style="display:block;width:100%;padding:10px 14px;margin-bottom:6px;background:#fff;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;text-align:left;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'#fff\'">'+faq.label+'</button>';
@@ -256,16 +267,39 @@ function showAutoReply(){
   
   var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
     '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border);max-width:100%">'+
-      '<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--dk)">Hola! Gracias por ponerte en contacto con <span style="color:var(--orange)">Great Phones</span> 🎉</p>'+
+      '<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--dk)">Hola! Gracias por ponerte en contacto con <span style="color:var(--orange)">Great Phones</span></p>'+
       '<p style="margin:0 0 12px;font-size:12px;color:var(--gray)">Selecciona una opcion o escribinos tu consulta:</p>'+
       '<div id="faqButtons">'+faqButtonsHtml+'</div>'+
-      '<button onclick="requestAdvisor()" style="width:100%;padding:10px 14px;margin-top:8px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s" onmouseover="this.style.background=\'#e55a1a\'" onmouseout="this.style.background=\'var(--orange)\'">📞 Hablar con un Asesor</button>'+
+      '<button onclick="requestAdvisor()" style="width:100%;padding:10px 14px;margin-top:8px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s" onmouseover="this.style.background=\'#e55a1a\'" onmouseout="this.style.background=\'var(--orange)\'">Hablar con un Asesor</button>'+
       '<div class="msg-time">'+formatTime(new Date())+'</div>'+
     '</div>'+
   '</div>';
   
   list.insertAdjacentHTML('beforeend',html);
   scrollToBottom();
+  showPanelAutoReply();
+}
+
+function showPanelAutoReply(){
+  console.log('[AutoReply] Rendering to panelMsgList');
+  var list=document.getElementById('panelMsgList');
+  if(!list){console.log('[AutoReply] panelMsgList not found');return;}
+  
+  var faqButtonsHtml=faqOptions.map(function(faq){
+    return '<button onclick="handleFaqClick(\''+faq.id+'\')" style="display:block;width:100%;padding:8px 12px;margin-bottom:4px;background:#fff;border:1.5px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--dk);cursor:pointer;text-align:left;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'#fff\'">'+faq.label+'</button>';
+  }).join('');
+  
+  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border);max-width:100%">'+
+      '<p style="margin:0 0 6px;font-size:12px;font-weight:600;color:var(--dk)">Hola! Gracias por contactarnos</p>'+
+      '<p style="margin:0 0 8px;font-size:11px;color:var(--gray)">Selecciona una opcion:</p>'+
+      '<div id="panelFaqButtons">'+faqButtonsHtml+'</div>'+
+      '<button onclick="requestAdvisor()" style="width:100%;padding:8px 12px;margin-top:6px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">Hablar con un Asesor</button>'+
+    '</div>'+
+  '</div>';
+  
+  list.insertAdjacentHTML('beforeend',html);
+  scrollPanelBottom();
 }
 
 function handleFaqClick(faqId){
@@ -273,18 +307,29 @@ function handleFaqClick(faqId){
   if(!faq)return;
   
   var list=document.getElementById('chatMsgList');
-  if(!list)return;
+  if(list){
+    var html='<div class="msg-wrap mine" style="animation:msgIn .3s ease">'+
+      '<div class="msg-bubble">'+
+        '<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
+        '<p style="margin:0">'+faq.answer+'</p>'+
+        '<div class="msg-time">'+formatTime(new Date())+'</div>'+
+      '</div>'+
+    '</div>';
+    list.insertAdjacentHTML('beforeend',html);
+    scrollToBottom();
+  }
   
-  var html='<div class="msg-wrap mine" style="animation:msgIn .3s ease">'+
-    '<div class="msg-bubble">'+
-      '<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
-      '<p style="margin:0">'+faq.answer+'</p>'+
-      '<div class="msg-time">'+formatTime(new Date())+'</div>'+
-    '</div>'+
-  '</div>';
-  
-  list.insertAdjacentHTML('beforeend',html);
-  scrollToBottom();
+  var panelList=document.getElementById('panelMsgList');
+  if(panelList){
+    var panelHtml='<div class="msg-wrap mine" style="animation:msgIn .3s ease">'+
+      '<div class="msg-bubble">'+
+        '<p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
+        '<p style="margin:0;font-size:12px">'+faq.answer+'</p>'+
+      '</div>'+
+    '</div>';
+    panelList.insertAdjacentHTML('beforeend',panelHtml);
+    scrollPanelBottom();
+  }
   
   var faqContainer=document.getElementById('faqButtons');
   if(faqContainer){
@@ -295,22 +340,42 @@ function handleFaqClick(faqId){
       btn.style.cursor='not-allowed';
     });
   }
+  var panelFaqContainer=document.getElementById('panelFaqButtons');
+  if(panelFaqContainer){
+    var pBtns=panelFaqContainer.parentElement.querySelectorAll('button');
+    pBtns.forEach(function(btn){
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+      btn.style.cursor='not-allowed';
+    });
+  }
 }
 
 function requestAdvisor(){
   var list=document.getElementById('chatMsgList');
-  if(!list)return;
+  if(list){
+    var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+      '<div class="msg-bubble" style="background:#f0fdf4;border:1.5px solid #22c55e;max-width:100%">'+
+        '<p style="margin:0;font-size:13px;color:#059669;font-weight:600">Entendido!</p>'+
+        '<p style="margin:8px 0 0;font-size:12px;color:#166534">En unos momentos alguien del personal se pondra en contacto contigo.</p>'+
+        '<div class="msg-time">'+formatTime(new Date())+'</div>'+
+      '</div>'+
+    '</div>';
+    list.insertAdjacentHTML('beforeend',html);
+    scrollToBottom();
+  }
   
-  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
-    '<div class="msg-bubble" style="background:#f0fdf4;border:1.5px solid #22c55e;max-width:100%">'+
-      '<p style="margin:0;font-size:13px;color:#059669;font-weight:600">✅ Entendido!</p>'+
-      '<p style="margin:8px 0 0;font-size:12px;color:#166534">En unos momentos alguien del personal se pondra en contacto contigo. Gracias por tu paciencia.</p>'+
-      '<div class="msg-time">'+formatTime(new Date())+'</div>'+
-    '</div>'+
-  '</div>';
-  
-  list.insertAdjacentHTML('beforeend',html);
-  scrollToBottom();
+  var panelList=document.getElementById('panelMsgList');
+  if(panelList){
+    var panelHtml='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+      '<div class="msg-bubble" style="background:#f0fdf4;border:1.5px solid #22c55e;max-width:100%">'+
+        '<p style="margin:0;font-size:12px;color:#059669;font-weight:600">Entendido!</p>'+
+        '<p style="margin:6px 0 0;font-size:11px;color:#166534">Alguien se pondra en contacto contigo pronto.</p>'+
+      '</div>'+
+    '</div>';
+    panelList.insertAdjacentHTML('beforeend',panelHtml);
+    scrollPanelBottom();
+  }
   
   fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
     method:'POST',
@@ -327,6 +392,15 @@ function requestAdvisor(){
   if(faqContainer){
     var btns=faqContainer.querySelectorAll('button');
     btns.forEach(function(btn){
+      btn.disabled=true;
+      btn.style.opacity='0.5';
+      btn.style.cursor='not-allowed';
+    });
+  }
+  var panelFaqContainer=document.getElementById('panelFaqButtons');
+  if(panelFaqContainer){
+    var pBtns=panelFaqContainer.parentElement.querySelectorAll('button');
+    pBtns.forEach(function(btn){
       btn.disabled=true;
       btn.style.opacity='0.5';
       btn.style.cursor='not-allowed';
