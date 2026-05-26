@@ -1494,16 +1494,16 @@ function renderAdminContent(tab){
              '<div style="display:flex;justify-content:space-between;align-items:center">'+
                '<span style="font-weight:700;color:var(--orange);font-size:13px">'+fmt(p.price)+'</span>'+
                '<span style="font-size:10px;color:'+(lowStock?'var(--red)':'var(--gray)')+'">'+(lowStock?'⚠ '+p.stock:p.stock+' en stock')+'</span>'+
-             '</div>'+
-             (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
-              '<div style="display:flex;gap:6px;margin-top:auto;padding-top:8px">'+
-                '<button class="btn btn-g btn-sm" style="flex:1" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
-                '<button class="btn btn-o btn-sm" style="flex:1" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
-                '<button class="btn btn-o btn-sm" style="flex:1" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
               '</div>'+
-           '</div>'+
-        '</div>';
-      }).join('')+
+              (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
+               '<div style="display:flex;gap:4px;margin-top:auto;padding-top:8px;flex-wrap:wrap">'+
+                 '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
+                 '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
+                 '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
+               '</div>'+
+            '</div>'+
+         '</div>';
+       }).join('')+
       '</div>';
   }else if(tab==='stock'){
     var allBrands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
@@ -1576,7 +1576,7 @@ function renderAdminContent(tab){
         '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
       '</div>'+
       '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="searchOrders(this.value)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="searchOrders(this.value)" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '</div>'+
       '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
       if(typeof loadPendingOrders==='function'){
