@@ -9,6 +9,7 @@ const handle = app.getRequestHandler();
 
 const onlineUsers = new Map();
 const typingUsers = new Map();
+const typingTimeouts = new Map();
 
 app.prepare().then(() => {
   const server = createServer((req, res) => {
@@ -54,17 +55,29 @@ app.prepare().then(() => {
       const convTyping = typingUsers.get(conversationId);
       convTyping.set(socket.userId, userName);
       socket.to(conversationId).emit('userTyping', { userId: socket.userId, userName: userName || 'Alguien' });
-      setTimeout(() => {
+
+      const timeoutKey = `${conversationId}:${socket.userId}`;
+      if (typingTimeouts.has(timeoutKey)) clearTimeout(typingTimeouts.get(timeoutKey));
+
+      const timeoutId = setTimeout(() => {
+        typingTimeouts.delete(timeoutKey);
         if (convTyping.has(socket.userId)) {
           convTyping.delete(socket.userId);
           if (convTyping.size === 0) typingUsers.delete(conversationId);
           socket.to(conversationId).emit('userStoppedTyping', { userId: socket.userId });
         }
       }, 3000);
+
+      typingTimeouts.set(timeoutKey, timeoutId);
     });
 
     socket.on('stopTyping', (data) => {
       const { conversationId } = data;
+      const timeoutKey = `${conversationId}:${socket.userId}`;
+      if (typingTimeouts.has(timeoutKey)) {
+        clearTimeout(typingTimeouts.get(timeoutKey));
+        typingTimeouts.delete(timeoutKey);
+      }
       if (typingUsers.has(conversationId)) {
         const convTyping = typingUsers.get(conversationId);
         convTyping.delete(socket.userId);
@@ -85,6 +98,11 @@ app.prepare().then(() => {
       console.log(`[Socket] User disconnected: ${socket.userId}`);
       onlineUsers.delete(socket.userId);
       typingUsers.forEach((convTyping, convId) => {
+        const timeoutKey = `${convId}:${socket.userId}`;
+        if (typingTimeouts.has(timeoutKey)) {
+          clearTimeout(typingTimeouts.get(timeoutKey));
+          typingTimeouts.delete(timeoutKey);
+        }
         convTyping.delete(socket.userId);
         if (convTyping.size === 0) typingUsers.delete(convId);
       });

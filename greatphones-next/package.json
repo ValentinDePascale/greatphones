@@ -7,7 +7,7 @@
     "dev:next": "next dev",
     "dev:chat": "node socket-server/index.js",
     "build": "next build",
-    "start": "node server.js",
+    "start": "NODE_OPTIONS=\"--max-old-space-size=1024\" node server.js",
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",

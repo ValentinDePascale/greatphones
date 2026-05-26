@@ -9,7 +9,22 @@ function cleanup() {
   }
 }
 
-setInterval(cleanup, CLEANUP_INTERVAL)
+let cleanupInterval: ReturnType<typeof setInterval> | null = null
+
+export function startCleanup() {
+  if (cleanupInterval) return
+  cleanupInterval = setInterval(cleanup, CLEANUP_INTERVAL)
+  cleanupInterval.unref()
+}
+
+export function stopCleanup() {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval)
+    cleanupInterval = null
+  }
+}
+
+startCleanup()
 
 export function rateLimit(key: string, max: number, windowMs: number): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now()
