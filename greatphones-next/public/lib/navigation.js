@@ -2,6 +2,8 @@
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
+  var _hidden=['sell','servicio','notebooks','mayorista','compare'];
+  if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='checkout'&&!currentUser){nav('login');return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
@@ -109,7 +111,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',notebooks:'notebooks',mayorista:'mayorista',servicio:'servicio',garantias:'garantias',sell:'sell',compare:'compare',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
+  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -964,12 +966,7 @@ function handleInitialRoute(){
   if(path==='ofertas'){nav('ofertas');return;}
   if(path==='favoritos'){nav('favoritos');return;}
   if(path==='accesorios'){nav('accesorios');return;}
-  if(path==='notebooks'){nav('notebooks');return;}
-  if(path==='mayorista'){nav('mayorista');return;}
-  if(path==='servicio'){nav('servicio');return;}
   if(path==='garantias'){nav('garantias');return;}
-  if(path==='sell'){nav('sell');return;}
-  if(path==='compare'){nav('compare');return;}
   if(path==='chats'){nav('chats');return;}
   if(path==='admin'){nav('admin');return;}
   if(path==='cuenta'){nav('cuenta');return;}

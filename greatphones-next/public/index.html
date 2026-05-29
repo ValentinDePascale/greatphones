@@ -53,10 +53,10 @@
     </button>
     <div class="tb-sep"></div>
     <div class="tb-links">
-      <button class="tb-lnk" onclick="nav('sell')">Vende tu equipo</button>
-      <button class="tb-lnk" onclick="nav('servicio')">Servicio tecnico</button>
-      <button class="tb-lnk" onclick="nav('mayorista')">Mayoristas</button>
-      <button class="tb-lnk" onclick="nav('compare')">Comparar modelos</button>
+      <button class="tb-lnk" style="display:none" onclick="nav('sell')">Vende tu equipo</button>
+      <button class="tb-lnk" style="display:none" onclick="nav('servicio')">Servicio tecnico</button>
+      <button class="tb-lnk" style="display:none" onclick="nav('mayorista')">Mayoristas</button>
+      <button class="tb-lnk" style="display:none" onclick="nav('compare')">Comparar modelos</button>
     </div>
     <div class="tb-right">
     </div>
@@ -97,7 +97,7 @@
       <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta" aria-label="Mi Cuenta">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
-      <button class="nbtn nbtn-sell" onclick="nav('sell')">
+      <button class="nbtn nbtn-sell" style="display:none" onclick="nav('sell')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Vender</span>
       </button>
@@ -110,13 +110,13 @@
   <div class="catnav-inner" style="max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;height:48px;align-items:center;overflow-x:auto;scrollbar-width:none">
     <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
     <button class="cni" id="cn-shop" onclick="navShop('todos');setCN('shop')">Catálogo</button>
-    <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
-    <button class="cni" id="cn-servicio" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
+    <button class="cni" id="cn-sell" style="display:none" onclick="nav('sell');setCN('sell')">Vender</button>
+    <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
     <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
-    <button class="cni" id="cn-notebooks" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
-    <button class="cni" id="cn-mayorista" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
+    <button class="cni" id="cn-notebooks" style="display:none" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
+    <button class="cni" id="cn-mayorista" style="display:none" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
     <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantías</button>
-    <button class="cni" id="cn-compare" onclick="nav('compare');setCN('compare')">Comparar</button>
+    <button class="cni" id="cn-compare" style="display:none" onclick="nav('compare');setCN('compare')">Comparar</button>
     <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')" style="color:var(--orange)">Ofertas</button>
   </div>
 </div>
@@ -227,7 +227,7 @@
             </div>
             <span class="cat-label">Samsung</span>
           </button>
-          <button class="cat-card cat-card-notebooks" onclick="nav('notebooks')">
+          <button class="cat-card cat-card-notebooks" style="display:none" onclick="nav('notebooks')">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="computer">computer</span>
             </div>
@@ -319,7 +319,7 @@
       </div>
       <div class="srv-grid">
         <!-- Vende tu equipo -->
-        <div class="srv-card" onclick="nav('sell')">
+        <div class="srv-card" style="display:none" onclick="nav('sell')">
           <div class="srv-card-glow" style="--glow:rgba(255,107,44,.08)"></div>
           <div class="srv-card-border" style="--bdr:rgba(255,107,44,.2)"></div>
           <div class="srv-card-inner">
@@ -335,7 +335,7 @@
           </div>
         </div>
         <!-- Servicio tecnico -->
-        <div class="srv-card" onclick="nav('servicio')">
+        <div class="srv-card" style="display:none" onclick="nav('servicio')">
           <div class="srv-card-glow" style="--glow:rgba(45,90,39,.1)"></div>
           <div class="srv-card-border" style="--bdr:rgba(45,90,39,.2)"></div>
           <div class="srv-card-inner">
@@ -367,7 +367,7 @@
           </div>
         </div>
         <!-- Comparar modelos -->
-        <div class="srv-card" onclick="nav('compare')">
+        <div class="srv-card" style="display:none" onclick="nav('compare')">
           <div class="srv-card-glow" style="--glow:rgba(59,130,246,.08)"></div>
           <div class="srv-card-border" style="--bdr:rgba(59,130,246,.2)"></div>
           <div class="srv-card-inner">
@@ -504,8 +504,8 @@
           <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Explorar</h4>
           <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
             <li><a onclick="navShop('todos')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comprar</a></li>
-            <li><a onclick="nav('sell')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Vender</a></li>
-            <li><a onclick="nav('servicio')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Servicio técnico</a></li>
+            <li style="display:none"><a onclick="nav('sell')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Vender</a></li>
+            <li style="display:none"><a onclick="nav('servicio')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Servicio técnico</a></li>
             <li><a onclick="nav('garantias')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Garantías</a></li>
             <li><a onclick="nav('accesorios')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Accesorios</a></li>
           </ul>
@@ -515,10 +515,10 @@
         <div>
           <h4 style="font-size:12px;font-weight:700;color:#fff;margin-bottom:1rem;text-transform:uppercase;letter-spacing:1px">Más</h4>
           <ul style="list-style:none;padding:0;margin:0;line-height:2.2">
-            <li><a onclick="nav('mayorista')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Mayorista</a></li>
+            <li style="display:none"><a onclick="nav('mayorista')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Mayorista</a></li>
             <li><a onclick="navShop('ofertas')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Ofertas</a></li>
-            <li><a onclick="nav('compare')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comparar</a></li>
-            <li><a onclick="nav('notebooks')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Notebooks</a></li>
+            <li style="display:none"><a onclick="nav('compare')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Comparar</a></li>
+            <li style="display:none"><a onclick="nav('notebooks')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Notebooks</a></li>
             <li><a onclick="nav('chats')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Chat</a></li>
             <li><a onclick="nav('track-order')" style="font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='rgba(255,255,255,.5)'">Seguir mi pedido</a></li>
           </ul>
