@@ -434,35 +434,43 @@ function closeOrderDetail(){
 }
 
 function acceptOrder(orderId){
-  if(!confirm('¿Confirmas que aceptas este pedido?')){
-    return;
-  }
-  
-  fetch(API_URL+'/api/orders?id='+orderId,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status:'PROCESSING'})
-  }).then(function(r){return r.json();}).then(function(){
-    showToast('Pedido aceptado');
-    closeOrderDetail();
-    loadPendingOrders();
-  }).catch(function(){showToast('Error aceptando pedido');});
+  showConfirm(
+    'Aceptar pedido',
+    '¿Confirmas que aceptas este pedido?',
+    { confirmText: 'Aceptar', confirmClass: 'primary' }
+  ).then(function(confirmed){
+    if(!confirmed) return;
+    
+    fetch(API_URL+'/api/orders?id='+orderId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:'PROCESSING'})
+    }).then(function(r){return r.json();}).then(function(){
+      showSuccessToast('Pedido aceptado', 'El pedido ha sido procesado correctamente');
+      closeOrderDetail();
+      loadPendingOrders();
+    }).catch(function(){showErrorToast('Error', 'No se pudo aceptar el pedido');});
+  });
 }
 
 function finalizeOrder(orderId){
-  if(!confirm('¿Confirmas que el cliente recibio los productos? Esta accion marcara el pedido como finalizado.')){
-    return;
-  }
-  
-  fetch(API_URL+'/api/orders?id='+orderId,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({status:'DELIVERED'})
-  }).then(function(r){return r.json();}).then(function(){
-    showToast('Pedido finalizado correctamente');
-    closeOrderDetail();
-    loadAcceptedOrders();
-  }).catch(function(){showToast('Error finalizando pedido');});
+  showConfirm(
+    'Finalizar pedido',
+    '¿Confirmas que el cliente recibió los productos? Esta acción marcará el pedido como finalizado.',
+    { confirmText: 'Finalizar', confirmClass: 'primary' }
+  ).then(function(confirmed){
+    if(!confirmed) return;
+    
+    fetch(API_URL+'/api/orders?id='+orderId,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({status:'DELIVERED'})
+    }).then(function(r){return r.json();}).then(function(){
+      showSuccessToast('Pedido finalizado', 'El pedido ha sido marcado como entregado');
+      closeOrderDetail();
+      loadAcceptedOrders();
+    }).catch(function(){showErrorToast('Error', 'No se pudo finalizar el pedido');});
+  });
 }
 
 function shipOrder(orderId){
@@ -509,7 +517,7 @@ function closeShipOrderModal(){
 function confirmShipOrder(orderId){
   var tracking=document.getElementById('shipTrackingInput').value.trim();
   if(!tracking){
-    alert('Ingresa un numero de tracking');
+    showAlert('Tracking requerido', 'Ingresa un número de tracking para continuar', 'warning');
     return;
   }
   
@@ -518,11 +526,11 @@ function confirmShipOrder(orderId){
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({status:'SHIPPED',trackingNumber:tracking})
   }).then(function(r){return r.json();}).then(function(){
-    showToast('Pedido marcado como enviado');
+    showSuccessToast('Pedido enviado', 'El pedido ha sido marcado como enviado');
     closeShipOrderModal();
     closeOrderDetail();
     loadAcceptedOrders();
-  }).catch(function(){showToast('Error marcando como enviado');});
+  }).catch(function(){showErrorToast('Error', 'No se pudo marcar el pedido como enviado');});
 }
 
 function updateOrderStatus(orderId,status){
@@ -666,22 +674,26 @@ function renderArrepList(list,tab){
 }
 
 function acceptArrep(id){
-  if(!confirm('¿Confirmas que aceptas este arrepentimiento?\n\nSe cancelara la orden y se notificara al cliente con instrucciones de devolucion.\nReembolso total segun Ley 24.240.')){
-    return;
-  }
-  
-  fetch(API_URL+'/api/arrepentimiento?id='+id,{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({estado:'APROBADO'})
-  }).then(function(r){return r.json();}).then(function(data){
-    if(data.success){
-      showToast('Arrepentimiento aceptado');
-      loadArrepPendientes();
-    }else{
-      showToast('Error: '+data.message);
-    }
-  }).catch(function(){showToast('Error de conexion');});
+  showConfirm(
+    'Aceptar arrepentimiento',
+    'Se cancelará la orden y se notificará al cliente con instrucciones de devolución. Reembolso total según Ley 24.240.',
+    { confirmText: 'Aceptar', confirmClass: 'primary' }
+  ).then(function(confirmed){
+    if(!confirmed) return;
+    
+    fetch(API_URL+'/api/arrepentimiento?id='+id,{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({estado:'APROBADO'})
+    }).then(function(r){return r.json();}).then(function(data){
+      if(data.success){
+        showSuccessToast('Arrepentimiento aceptado', 'El cliente será notificado');
+        loadArrepPendientes();
+      }else{
+        showErrorToast('Error', data.message || 'No se pudo aceptar el arrepentimiento');
+      }
+    }).catch(function(){showErrorToast('Error de conexión', 'No se pudo procesar la solicitud');});
+  });
 }
 
 function rejectArrep(id){
@@ -760,7 +772,7 @@ function confirmRejectArrep(id){
   var comment=commentEl?commentEl.value.trim():'';
   
   if(reasons.length===0&&comment===''){
-    alert('Selecciona al menos un motivo o agrega un comentario');
+    showAlert('Motivo requerido', 'Selecciona al menos un motivo o agrega un comentario', 'warning');
     return;
   }
   
@@ -775,13 +787,13 @@ function confirmRejectArrep(id){
     body:JSON.stringify({estado:'RECHAZADO',rejectReason:reasonText})
   }).then(function(r){return r.json();}).then(function(data){
     if(data.success){
-      showToast('Arrepentimiento rechazado');
+      showSuccessToast('Arrepentimiento rechazado', 'El cliente será notificado');
       closeRejectArrepModal();
       loadArrepPendientes();
     }else{
-      showToast('Error: '+data.message);
+      showErrorToast('Error', data.message || 'No se pudo rechazar el arrepentimiento');
     }
-  }).catch(function(){showToast('Error de conexion');});
+  }).catch(function(){showErrorToast('Error de conexión', 'No se pudo procesar la solicitud');});
 }
 
 // =========== ACCESSORY FUNCTIONS ===========
@@ -852,7 +864,7 @@ function saveAccessory(){
   data.compatibleModels=document.getElementById('accCompatibleModels').value||null;
   
   if(!data.name||!data.price){
-    alert('Nombre y precio son requeridos');
+    showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
     return;
   }
   
@@ -868,12 +880,12 @@ function saveAccessory(){
     return r.json();
   }).then(function(result){
     if(result.error||result.success===false)throw new Error(result.message||'Error de validación');
-    showToast(id?'Accesorio actualizado':'Accesorio creado');
+    showSuccessToast(id?'Accesorio actualizado':'Accesorio creado', 'Los cambios han sido guardados');
     resetAccessoryForm();
     loadAccessories();
     nav('admin');
     renderAdminContent('acc');
-  }).catch(function(e){alert('Error: '+e.message);});
+  }).catch(function(e){showErrorToast('Error', e.message || 'No se pudo guardar el accesorio');});
 }
 
 function editAccessory(id){

@@ -574,3 +574,193 @@
   align-items:flex-end;
   flex-shrink:0
 }
+
+/* ========== MODAL SYSTEM ========== */
+.admin-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(4px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+  opacity:0;
+  visibility:hidden;
+  transition:opacity .2s ease,visibility .2s ease
+}
+.admin-modal-overlay.active{
+  opacity:1;
+  visibility:visible
+}
+.admin-modal{
+  background:var(--admin-surface);
+  border:1px solid var(--admin-border);
+  border-radius:16px;
+  padding:24px;
+  max-width:420px;
+  width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.3);
+  transform:scale(.9) translateY(20px);
+  transition:transform .25s cubic-bezier(.4,0,.2,1)
+}
+.admin-modal-overlay.active .admin-modal{
+  transform:scale(1) translateY(0)
+}
+.admin-modal-icon{
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0 auto 16px;
+  font-size:28px
+}
+.admin-modal-icon.info{background:rgba(99,102,241,.15);color:#818cf8}
+.admin-modal-icon.success{background:rgba(34,197,94,.15);color:#4ade80}
+.admin-modal-icon.warning{background:rgba(251,191,36,.15);color:#fbbf24}
+.admin-modal-icon.error{background:rgba(239,68,68,.15);color:#f87171}
+.admin-modal-icon.confirm{background:rgba(99,102,241,.15);color:#818cf8}
+.admin-modal-title{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:20px;
+  font-weight:700;
+  color:var(--admin-text);
+  text-align:center;
+  margin-bottom:8px
+}
+.admin-modal-message{
+  font-size:14px;
+  color:var(--admin-text-muted);
+  text-align:center;
+  line-height:1.5;
+  margin-bottom:24px
+}
+.admin-modal-actions{
+  display:flex;
+  gap:12px;
+  justify-content:center
+}
+.admin-modal-btn{
+  padding:10px 24px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .15s ease;
+  border:1px solid var(--admin-border);
+  background:var(--admin-surface-hover);
+  color:var(--admin-text);
+  min-width:100px
+}
+.admin-modal-btn:hover{
+  background:var(--admin-border);
+  transform:translateY(-1px)
+}
+.admin-modal-btn-primary{
+  background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);
+  border-color:var(--orange);
+  color:#fff
+}
+.admin-modal-btn-primary:hover{
+  background:linear-gradient(135deg,var(--orange2) 0%,var(--orange) 100%);
+  border-color:var(--orange2)
+}
+.admin-modal-btn-danger{
+  background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);
+  border-color:#ef4444;
+  color:#fff
+}
+.admin-modal-btn-danger:hover{
+  background:linear-gradient(135deg,#f87171 0%,#ef4444 100%);
+  border-color:#f87171
+}
+
+/* ========== TOAST SYSTEM ========== */
+.admin-toast-container{
+  position:fixed;
+  top:20px;
+  right:20px;
+  z-index:10000;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  pointer-events:none
+}
+.admin-toast{
+  background:var(--admin-surface);
+  border:1px solid var(--admin-border);
+  border-radius:12px;
+  padding:16px 20px;
+  min-width:320px;
+  max-width:420px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  pointer-events:auto;
+  transform:translateX(400px);
+  opacity:0;
+  transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s ease
+}
+.admin-toast.show{
+  transform:translateX(0);
+  opacity:1
+}
+.admin-toast-icon{
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0
+}
+.admin-toast-icon.info{background:rgba(99,102,241,.15);color:#818cf8}
+.admin-toast-icon.success{background:rgba(34,197,94,.15);color:#4ade80}
+.admin-toast-icon.warning{background:rgba(251,191,36,.15);color:#fbbf24}
+.admin-toast-icon.error{background:rgba(239,68,68,.15);color:#f87171}
+.admin-toast-content{
+  flex:1;
+  min-width:0
+}
+.admin-toast-title{
+  font-size:14px;
+  font-weight:600;
+  color:var(--admin-text);
+  margin-bottom:4px
+}
+.admin-toast-message{
+  font-size:13px;
+  color:var(--admin-text-muted);
+  line-height:1.4
+}
+.admin-toast-close{
+  background:none;
+  border:none;
+  color:var(--admin-text-muted);
+  cursor:pointer;
+  padding:4px;
+  font-size:18px;
+  line-height:1;
+  opacity:.6;
+  transition:opacity .15s ease
+}
+.admin-toast-close:hover{
+  opacity:1
+}
+.admin-toast-progress{
+  position:absolute;
+  bottom:0;
+  left:0;
+  height:3px;
+  background:linear-gradient(90deg,var(--orange) 0%,#e55a1a 100%);
+  border-radius:0 0 12px 12px;
+  animation:toastProgress 4s linear forwards
+}
+@keyframes toastProgress{
+  from{width:100%}
+  to{width:0}
+}
