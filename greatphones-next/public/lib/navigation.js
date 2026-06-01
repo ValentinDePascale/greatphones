@@ -12,6 +12,7 @@ function nav(id){
   var el=document.getElementById('p-'+id);
   if(el)el.classList.add('act');
   window.scrollTo({top:0,behavior:'smooth'});
+  if(id==='admin'&&typeof loadAdminTheme==='function'){loadAdminTheme();}
   if(id==='cuenta'||id==='checkout'||id==='admin'||id==='terminos'||id==='privacidad'||id==='edit-profile'){
     document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
   }

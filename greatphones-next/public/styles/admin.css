@@ -1,4 +1,4 @@
-/* ADMIN - DARK THEME VARIABLES */
+/* ADMIN - DARK THEME VARIABLES (default) */
 .admin-layout{
   --admin-bg:#0f1117;
   --admin-surface:#1a1d27;
@@ -11,7 +11,21 @@
   --admin-accent-hover:#818cf8;
   display:flex;
   min-height:100vh;
-  background:var(--admin-bg)
+  background:var(--admin-bg);
+  transition:background .3s ease
+}
+
+/* ADMIN - LIGHT THEME VARIABLES */
+.admin-layout.admin-theme-light{
+  --admin-bg:#f9f6f1;
+  --admin-surface:#ffffff;
+  --admin-surface-hover:#f0ebe3;
+  --admin-border:rgba(0,0,0,.09);
+  --admin-text:#1a1208;
+  --admin-text-muted:#6b6259;
+  --admin-input-bg:#f0ebe3;
+  --admin-accent:#6366f1;
+  --admin-accent-hover:#818cf8
 }
 .admin-sidebar{
   width:240px;

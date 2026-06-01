@@ -1184,6 +1184,37 @@ function adminTab(tab,btn){
   // Render content
   renderAdminContent(tab);
 }
+
+function toggleAdminTheme(){
+  var layout=document.querySelector('.admin-layout');
+  if(!layout)return;
+  
+  var isLight=layout.classList.contains('admin-theme-light');
+  
+  if(isLight){
+    layout.classList.remove('admin-theme-light');
+    localStorage.setItem('adminTheme','dark');
+    document.getElementById('themeIcon').textContent='dark_mode';
+    document.getElementById('themeLabel').textContent='Tema claro';
+  }else{
+    layout.classList.add('admin-theme-light');
+    localStorage.setItem('adminTheme','light');
+    document.getElementById('themeIcon').textContent='light_mode';
+    document.getElementById('themeLabel').textContent='Tema oscuro';
+  }
+}
+
+function loadAdminTheme(){
+  var theme=localStorage.getItem('adminTheme');
+  var layout=document.querySelector('.admin-layout');
+  if(!layout)return;
+  
+  if(theme==='light'){
+    layout.classList.add('admin-theme-light');
+    document.getElementById('themeIcon').textContent='light_mode';
+    document.getElementById('themeLabel').textContent='Tema oscuro';
+  }
+}
 function formatPriceInput(el){
   var val=el.value.replace(/[^0-9]/g,'');
   el.value=val;
