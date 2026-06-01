@@ -610,28 +610,32 @@ function useQuickReply(index){
 }
 
 function deleteAdminConv(id){
-  if(!confirm('\u00BFEstas seguro de que queres eliminar esta conversaci\u00F3n? Esta acci\u00F3n no se puede deshacer.')){
-    return;
-  }
-  fetch(API_URL+'/api/admin/conversations',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
-    body:JSON.stringify({conversationId:id,action:'delete'})
-  })
-  .then(function(r){return r.json();})
-  .then(function(){
-    showToast('Conversaci\u00F3n eliminada');
-    adminActiveConvId=null;
-    userConvId=null;
-    loadAdminConversations();
-    var header=document.getElementById('adminChatHeader');
-    if(header){
-      header.innerHTML='<span style="font-size:14px;font-weight:600;color:var(--gray)">Seleccion\u00E1 una conversaci\u00F3n</span>';
-    }
-    var list=document.getElementById('chatMsgList');
-    if(list)list.innerHTML='';
-  })
-  .catch(function(e){console.error('Error deleting conversation:',e);showToast('Error eliminando conversaci\u00F3n');});
+  showConfirm(
+    'Eliminar conversación',
+    '¿Estás seguro de que querés eliminar esta conversación? Esta acción no se puede deshacer.',
+    { confirmText: 'Eliminar', confirmClass: 'danger' }
+  ).then(function(confirmed){
+    if(!confirmed) return;
+    fetch(API_URL+'/api/admin/conversations',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+      body:JSON.stringify({conversationId:id,action:'delete'})
+    })
+    .then(function(r){return r.json();})
+    .then(function(){
+      showSuccessToast('Conversación eliminada', 'La conversación ha sido eliminada');
+      adminActiveConvId=null;
+      userConvId=null;
+      loadAdminConversations();
+      var header=document.getElementById('adminChatHeader');
+      if(header){
+        header.innerHTML='<span style="font-size:14px;font-weight:600;color:var(--gray)">Seleccioná una conversación</span>';
+      }
+      var list=document.getElementById('chatMsgList');
+      if(list)list.innerHTML='';
+    })
+    .catch(function(e){console.error('Error deleting conversation:',e);showErrorToast('Error', 'No se pudo eliminar la conversación');});
+  });
 }
 
 function closeAdminConv(id){

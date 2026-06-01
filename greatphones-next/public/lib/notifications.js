@@ -108,15 +108,22 @@ function clearNotifs(){
 
 function deleteAllNotifs(){
   if(!currentUser)return;
-  if(!confirm('¿Eliminar todas las notificaciones?'))return;
-  fetch(API_URL+'/api/notifications/clear-all',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({userId:currentUser.id})
-  }).then(function(){
-    renderNotifPanel();
-    updateNotifBadge();
-  }).catch(function(){});
+  showConfirm(
+    'Eliminar notificaciones',
+    '¿Eliminar todas las notificaciones?',
+    { confirmText: 'Eliminar', confirmClass: 'danger' }
+  ).then(function(confirmed){
+    if(!confirmed)return;
+    fetch(API_URL+'/api/notifications/clear-all',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({userId:currentUser.id})
+    }).then(function(){
+      renderNotifPanel();
+      updateNotifBadge();
+      showSuccessToast('Notificaciones eliminadas', 'Todas las notificaciones han sido eliminadas');
+    }).catch(function(){showErrorToast('Error', 'No se pudieron eliminar las notificaciones');});
+  });
 }
 
 function updateNotifBadge(){
