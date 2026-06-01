@@ -382,6 +382,54 @@
             </div>
           </div>
         </div>
+        <!-- Garantias -->
+        <div class="srv-card" onclick="nav('garantias')">
+          <div class="srv-card-glow" style="--glow:rgba(59,130,246,.08)"></div>
+          <div class="srv-card-border" style="--bdr:rgba(59,130,246,.2)"></div>
+          <div class="srv-card-inner">
+            <div class="srv-icon" style="--ibg:rgba(59,130,246,.12);--ic:#3B82F6">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL'1">verified</span>
+            </div>
+            <h3 class="srv-title">Garantias</h3>
+            <p class="srv-desc">Consultá el estado de tu garantia con tu codigo de compra.</p>
+            <div class="srv-link" style="--lc:#3B82F6">
+              Consultar garantia
+              <span class="material-symbols-outlined srv-arrow">arrow_forward</span>
+            </div>
+          </div>
+        </div>
+        <!-- Segui tu pedido -->
+        <div class="srv-card" onclick="nav('track-order')">
+          <div class="srv-card-glow" style="--glow:rgba(16,185,129,.08)"></div>
+          <div class="srv-card-border" style="--bdr:rgba(16,185,129,.2)"></div>
+          <div class="srv-card-inner">
+            <div class="srv-icon" style="--ibg:rgba(16,185,129,.12);--ic:#10B981">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL'1">local_shipping</span>
+            </div>
+            <h3 class="srv-title">Segui tu pedido</h3>
+            <p class="srv-desc">Rastreá tu envio en tiempo real con tu numero de seguimiento.</p>
+            <div class="srv-link" style="--lc:#10B981">
+              Rastrear pedido
+              <span class="material-symbols-outlined srv-arrow">arrow_forward</span>
+            </div>
+          </div>
+        </div>
+        <!-- Chat con nosotros -->
+        <div class="srv-card" onclick="nav('chats')">
+          <div class="srv-card-glow" style="--glow:rgba(255,107,44,.08)"></div>
+          <div class="srv-card-border" style="--bdr:rgba(255,107,44,.2)"></div>
+          <div class="srv-card-inner">
+            <div class="srv-icon" style="--ibg:rgba(255,107,44,.12);--ic:var(--orange)">
+              <span class="material-symbols-outlined" style="font-variation-settings:'FILL'1">chat</span>
+            </div>
+            <h3 class="srv-title">Chat con nosotros</h3>
+            <p class="srv-desc">Atención personalizada por chat. Respondemos al instante.</p>
+            <div class="srv-link" style="--lc:var(--orange)">
+              Abrir chat
+              <span class="material-symbols-outlined srv-arrow">arrow_forward</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -795,6 +843,7 @@
         <input class="inp-f" id="garImei" placeholder="IMEI del equipo (15 digitos)" oninput="garChk()" maxlength="15">
         <button class="btn btn-o btn-full" id="garVerBtn" disabled onclick="garVerificar()">Verificar compra</button>
       </div>
+      <div id="garResult" style="display:none"></div>
       <div style="background:var(--dk2);border-radius:var(--r);padding:1.25rem;margin-top:1.5rem">
         <div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:.875rem">&#128737; Garantia de 90 dias incluida en toda compra</div>
         <div style="font-size:10px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:.875rem">Todos los equipos incluyen 90 dias de garantia sin cargo desde la fecha de compra.</div>
@@ -2504,6 +2553,7 @@ console.log('[BROWSER] Page loaded');
 <script src="/lib/admin.js"></script>
 <script src="/lib/render.js"></script>
 <script src="/lib/search.js"></script>
+<script src="/lib/warranty.js"></script>
 <script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="/lib/chat.js"></script>
