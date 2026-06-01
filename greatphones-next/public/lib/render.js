@@ -1263,7 +1263,7 @@ function saveProduct(){
     cost:0
   };
   if(!data.name||!data.price){
-    alert('Nombre y precio son requeridos');
+    showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
     return;
   }
   console.log('Saving product:', {isEdit:isEdit, prodId:prodId, data:data});
@@ -1286,8 +1286,8 @@ function saveProduct(){
     }
     nav('admin');
     loadProducts();
-    showToast(isEdit?'Producto actualizado':'Producto agregado');
-  }).catch(function(e){alert('Error: '+e.message);});
+    showSuccessToast(isEdit?'Producto actualizado':'Producto agregado', 'Los cambios han sido guardados');
+  }).catch(function(e){showErrorToast('Error', e.message || 'No se pudo guardar el producto');});
 }
 function editProduct(id){
   var p=getById(PRODUCTS,id);
@@ -1344,17 +1344,17 @@ function uploadProductImage(input){
       preview.innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
     }else{
       preview.innerHTML='📷';
-      alert('Error subiendo imagen');
+      showErrorToast('Error', 'No se pudo subir la imagen');
     }
   }).catch(function(){
     preview.innerHTML='📷';
-    alert('Error subiendo imagen');
+    showErrorToast('Error', 'No se pudo subir la imagen');
   });
 }
 function handleImageDrop(event){
   var file=event.dataTransfer.files[0];
   if(!file||!file.type.startsWith('image/')){
-    alert('Por favor arrastra una imagen');
+    showWarningToast('Formato inválido', 'Por favor arrastra una imagen');
     return;
   }
   var preview=document.getElementById('prodImagePreview');
@@ -1370,11 +1370,11 @@ function handleImageDrop(event){
       preview.innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
     }else{
       preview.innerHTML='📷';
-      alert('Error subiendo imagen');
+      showErrorToast('Error', 'No se pudo subir la imagen');
     }
   }).catch(function(){
     preview.innerHTML='📷';
-    alert('Error subiendo imagen');
+    showErrorToast('Error', 'No se pudo subir la imagen');
   });
 }
 var additionalImages=[];
@@ -1425,7 +1425,7 @@ function closeConfirm(){
 function confirmAction(confirmed){
   if(window.confirmCallback){window.confirmCallback(confirmed);}
   if(confirmed&&pendingDeleteId){var p=getById(PRODUCTS,pendingDeleteId);var pname=p?p.name:'este producto';
-    fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(){loadProducts();showToast('Eliminado: '+pname);}).catch(function(){alert('Error eliminando producto');});}
+    fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(){loadProducts();showSuccessToast('Producto eliminado', pname);}).catch(function(){showErrorToast('Error', 'No se pudo eliminar el producto');});}
   closeConfirm();
 }
 function renderAdminContent(tab){
@@ -1718,7 +1718,7 @@ function updateStock(id){
     body:JSON.stringify({stock:newStock})
   }).then(function(){
     loadProducts();
-  }).catch(function(){alert('Error actualizando stock');});
+  }).catch(function(){showErrorToast('Error', 'No se pudo actualizar el stock');});
 }
 function adjustStock(id,delta){
   var input=document.getElementById('stock-'+id);
@@ -1756,15 +1756,15 @@ function saveAllStock(){
       input.setAttribute('data-original',input.value);
     });
     renderStockList();
-    showToast('Stock guardado correctamente');
-  }).catch(function(){alert('Error guardando stock');});
+    showSuccessToast('Stock guardado', 'Los cambios han sido guardados correctamente');
+  }).catch(function(){showErrorToast('Error', 'No se pudo guardar el stock');});
 }
 function undoAllStock(){
   var inputs=document.querySelectorAll('[id^="stock-"]');
   inputs.forEach(function(input){
     input.value=input.getAttribute('data-original');
   });
-  showToast('Cambios revertidos');
+  showInfoToast('Cambios revertidos', 'Se han deshecho los cambios');
 }
 function renderStockList(){
   var list=document.getElementById('stockList');
@@ -1904,9 +1904,9 @@ function selectAllPromo(selectAll){
 }
 function applyPromo(){
   var discount=parseInt(document.getElementById('promoDiscount').value)||0;
-  if(discount<=0){alert('Ingresa un descuento mayor a 0');return;}
+  if(discount<=0){showAlert('Descuento inválido', 'Ingresa un descuento mayor a 0', 'warning');return;}
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
-  if(checkboxes.length===0){alert('Selecciona al menos un producto');return;}
+  if(checkboxes.length===0){showAlert('Selección requerida', 'Selecciona al menos un producto', 'warning');return;}
   var promises=[];
   var prodCount=0,accCount=0;
   checkboxes.forEach(function(chk){
@@ -1928,8 +1928,8 @@ function applyPromo(){
     if(prodCount>0&&accCount>0)msg+=' a '+prodCount+' producto(s) y '+accCount+' accesorio(s)';
     else if(prodCount>0)msg+=' a '+prodCount+' producto(s)';
     else if(accCount>0)msg+=' a '+accCount+' accesorio(s)';
-    showToast(msg);
-  }).catch(function(){alert('Error aplicando promoción');});
+    showSuccessToast('Promoción aplicada', msg);
+  }).catch(function(){showErrorToast('Error', 'No se pudo aplicar la promoción');});
 }
 function renderActivePromos(){
   var tbody=document.getElementById('activePromosTable');
@@ -2016,33 +2016,39 @@ function removePromo(id){
     loadProducts();
     loadAccessories();
     renderActivePromos();
-    showToast('Promoción eliminada');
-  }).catch(function(){alert('Error eliminando promoción');});
+    showSuccessToast('Promoción eliminada', 'La promoción ha sido eliminada');
+  }).catch(function(){showErrorToast('Error', 'No se pudo eliminar la promoción');});
 }
 var promoDeleteIds=[];
 function deleteSelectedPromos(){
   var checkboxes=document.querySelectorAll('.promo-del-chk:checked');
-  if(checkboxes.length===0){alert('Selecciona al menos una promoción');return;}
-  if(!confirm('Eliminar '+checkboxes.length+' promoción(es)? Esta acción no se puede deshacer.'))return;
-  promoDeleteIds=Array.from(checkboxes).map(function(chk){return chk.value;});
-  var promises=[];
-  promoDeleteIds.forEach(function(rawId){
-    var isAcc=rawId.startsWith('acc-');
-    var realId=isAcc?rawId.replace('acc-',''):rawId;
-    var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
-    promises.push(fetch(API_URL+endpoint,{
-      method:'PUT',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({discount:0,isOffer:false})
-    }));
+  if(checkboxes.length===0){showAlert('Selección requerida', 'Selecciona al menos una promoción', 'warning');return;}
+  showConfirm(
+    'Eliminar promociones',
+    '¿Eliminar '+checkboxes.length+' promoción(es)? Esta acción no se puede deshacer.',
+    { confirmText: 'Eliminar', confirmClass: 'danger' }
+  ).then(function(confirmed){
+    if(!confirmed)return;
+    promoDeleteIds=Array.from(checkboxes).map(function(chk){return chk.value;});
+    var promises=[];
+    promoDeleteIds.forEach(function(rawId){
+      var isAcc=rawId.startsWith('acc-');
+      var realId=isAcc?rawId.replace('acc-',''):rawId;
+      var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
+      promises.push(fetch(API_URL+endpoint,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({discount:0,isOffer:false})
+      }));
+    });
+    Promise.all(promises).then(function(){
+      loadProducts();
+      loadAccessories();
+      renderActivePromos();
+      showSuccessToast('Promociones eliminadas', promoDeleteIds.length+' promoción(es) eliminada(s)');
+    }).catch(function(){showErrorToast('Error', 'No se pudieron eliminar las promociones');});
+    promoDeleteIds=[];
   });
-  Promise.all(promises).then(function(){
-    loadProducts();
-    loadAccessories();
-    renderActivePromos();
-    showToast(promoDeleteIds.length+' promoción(es) eliminada(s)');
-  }).catch(function(){alert('Error eliminando promociones');});
-  promoDeleteIds=[];
 }
 function toggleSelectAllPromos(selectAll){
   var checkboxes=document.querySelectorAll('.promo-del-chk');
