@@ -1150,13 +1150,38 @@ function renderMayorista(){
 
 // =========== ADMIN ===========
 function adminTab(tab,btn){
-  document.querySelectorAll('#adm-prods,#adm-stock,#adm-orders,#adm-users').forEach(function(b){b.classList.remove('act');});
+  // Reset all sidebar nav items
+  document.querySelectorAll('.admin-nav-item').forEach(function(b){b.classList.remove('act');});
+  // Reset old tab buttons (for backwards compatibility)
   document.querySelectorAll('.atab').forEach(function(c){c.classList.remove('act');});
   document.querySelectorAll('.admin-sec').forEach(function(s){s.classList.remove('act');});
+  
+  // Activate clicked item
   btn.classList.add('act');
+  
+  // Update topbar title
+  var titles={
+    dashboard:'Dashboard',
+    prods:'Productos',
+    acc:'Accesorios',
+    stock:'Stock',
+    promos:'Promociones',
+    orders:'Pedidos',
+    arrep:'Arrepentimientos',
+    users:'Usuarios',
+    chat:'Chat'
+  };
+  var titleEl=document.getElementById('adminPageTitle');
+  if(titleEl&&titles[tab])titleEl.textContent=titles[tab];
+  
+  // Activate section (for old admin panel)
   var sec=document.getElementById('as-'+tab);
   if(sec)sec.classList.add('act');
+  
+  // Load chat if needed
   if(tab==='chat'){loadAdminConversations();initChatSocket();}
+  
+  // Render content
   renderAdminContent(tab);
 }
 function formatPriceInput(el){
