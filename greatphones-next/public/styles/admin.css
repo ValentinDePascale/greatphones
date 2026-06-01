@@ -1,9 +1,22 @@
-/* ADMIN - SIDEBAR LAYOUT */
-.admin-layout{display:flex;min-height:100vh;background:var(--cream)}
+/* ADMIN - DARK THEME VARIABLES */
+.admin-layout{
+  --admin-bg:#0f1117;
+  --admin-surface:#1a1d27;
+  --admin-surface-hover:#252830;
+  --admin-border:#2a2d3a;
+  --admin-text:#e4e4e7;
+  --admin-text-muted:#9ca3af;
+  --admin-input-bg:#252830;
+  --admin-accent:#6366f1;
+  --admin-accent-hover:#818cf8;
+  display:flex;
+  min-height:100vh;
+  background:var(--admin-bg)
+}
 .admin-sidebar{
   width:240px;
-  background:#fff;
-  border-right:1px solid var(--border);
+  background:var(--admin-surface);
+  border-right:1px solid var(--admin-border);
   display:flex;
   flex-direction:column;
   position:sticky;
@@ -14,7 +27,7 @@
 }
 .admin-sidebar-header{
   padding:20px 16px;
-  border-bottom:1px solid var(--border);
+  border-bottom:1px solid var(--admin-border);
   display:flex;
   align-items:center;
   gap:12px
@@ -34,12 +47,12 @@
   font-family:'Playfair Display',Georgia,serif;
   font-size:16px;
   font-weight:700;
-  color:var(--dk);
+  color:var(--admin-text);
   line-height:1.2
 }
 .admin-sidebar-subtitle{
   font-size:11px;
-  color:var(--gray);
+  color:var(--admin-text-muted);
   margin-top:2px
 }
 .admin-sidebar-nav{
@@ -57,7 +70,7 @@
   border-radius:8px;
   font-size:13px;
   font-weight:500;
-  color:var(--gray);
+  color:var(--admin-text-muted);
   cursor:pointer;
   transition:all .15s;
   border:none;
@@ -66,8 +79,8 @@
   text-align:left
 }
 .admin-nav-item:hover{
-  background:var(--cream);
-  color:var(--dk)
+  background:var(--admin-surface-hover);
+  color:var(--admin-text)
 }
 .admin-nav-item.act{
   background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);
@@ -106,7 +119,7 @@
 }
 .admin-sidebar-footer{
   padding:12px 8px;
-  border-top:1px solid var(--border);
+  border-top:1px solid var(--admin-border);
   display:flex;
   flex-direction:column;
   gap:4px
@@ -119,8 +132,8 @@
   overflow-x:hidden
 }
 .admin-topbar{
-  background:#fff;
-  border-bottom:1px solid var(--border);
+  background:var(--admin-surface);
+  border-bottom:1px solid var(--admin-border);
   padding:16px 24px;
   display:flex;
   align-items:center;
@@ -133,7 +146,7 @@
   font-family:'Playfair Display',Georgia,serif;
   font-size:20px;
   font-weight:700;
-  color:var(--dk);
+  color:var(--admin-text);
   margin:0
 }
 .admin-topbar-actions{
@@ -144,7 +157,37 @@
 .admin-content{
   flex:1;
   padding:24px;
-  overflow-y:auto
+  overflow-y:auto;
+  background:var(--admin-bg)
+}
+
+/* Admin dark theme buttons */
+.admin-btn{
+  padding:8px 16px;
+  border-radius:8px;
+  font-size:13px;
+  font-weight:500;
+  cursor:pointer;
+  transition:all .15s;
+  border:1px solid var(--admin-border);
+  background:var(--admin-surface);
+  color:var(--admin-text);
+  display:inline-flex;
+  align-items:center;
+  gap:6px
+}
+.admin-btn:hover{
+  background:var(--admin-surface-hover);
+  border-color:var(--admin-text-muted)
+}
+.admin-btn-primary{
+  background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);
+  border-color:var(--orange);
+  color:#fff
+}
+.admin-btn-primary:hover{
+  background:linear-gradient(135deg,var(--orange2) 0%,var(--orange) 100%);
+  border-color:var(--orange2)
 }
 
 /* Mobile: sidebar colapsa a iconos */
