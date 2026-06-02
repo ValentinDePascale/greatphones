@@ -179,6 +179,11 @@ model Quote {
   clientPhone String?
   clientCity  String?
 
+  photos      String[]
+  extras      String[]
+
+  rejectReason String?
+
   signature   String?
 
   createdAt   DateTime    @default(now())

@@ -430,3 +430,74 @@ export async function sendOrderStatusEmail(data: {
 
   return { success: true }
 }
+
+export async function sendNewQuoteEmail(data: {
+  code: string;
+  device: string;
+  storage: string;
+  condition: string;
+  finalPrice: number;
+  clientName: string;
+  clientPhone: string;
+  clientEmail?: string;
+  photos: string[];
+  extras: string[];
+}) {
+  const adminEmail = 'contacto@greatphones.com.ar'
+
+  const extrasLabels: Record<string, string> = {
+    pant: 'Pantalla perfecta (+6%)',
+    bat: 'Bateria 80%+ (+5%)',
+    icloud: 'Cuenta libre (+8%)',
+    caja: 'Caja original (+3%)',
+    acc: 'Accesorios originales (+3%)',
+  }
+
+  const extrasHtml = data.extras.length > 0
+    ? data.extras.map(e => `<li>${extrasLabels[e] || e}</li>`).join('')
+    : '<li>Ninguno</li>'
+
+  const photosHtml = data.photos.length > 0
+    ? data.photos.map(p => `<img src="${p}" style="max-width:200px;margin:8px;border-radius:8px">`).join('')
+    : '<p>No se adjuntaron fotos</p>'
+
+  await sendEmail({
+    to: adminEmail,
+    subject: `Nueva cotizacion: ${data.code} - ${data.device}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">Nueva cotizacion recibida</h2>
+        
+        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <strong>Codigo:</strong> ${data.code}<br>
+          <strong>Dispositivo:</strong> ${data.device} ${data.storage}<br>
+          <strong>Estado:</strong> ${data.condition}<br>
+          <strong>Precio estimado:</strong> $${data.finalPrice.toLocaleString('es-AR')}
+        </div>
+
+        <h3>Extras seleccionados:</h3>
+        <ul>${extrasHtml}</ul>
+
+        <h3>Datos del cliente:</h3>
+        <p>
+          <strong>Nombre:</strong> ${data.clientName}<br>
+          <strong>Telefono:</strong> ${data.clientPhone}<br>
+          ${data.clientEmail ? `<strong>Email:</strong> ${data.clientEmail}<br>` : ''}
+        </p>
+
+        <h3>Fotos del dispositivo:</h3>
+        <div>${photosHtml}</div>
+
+        <p style="margin-top: 30px;">
+          Revisa la cotizacion en el panel de administracion y acepta o rechaza segun corresponda.
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  })
+
+  return { success: true }
+}

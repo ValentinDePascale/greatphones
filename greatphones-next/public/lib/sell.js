@@ -1,5 +1,21 @@
 // =========== SELL / TASACION ===========
 var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0};
+
+function checkSellLogin(){
+  if(!currentUser){
+    if(typeof showAlert==='function'){
+      showAlert('Inicia sesion','Necesitas iniciar sesion para cotizar tu equipo','info').then(function(){
+        nav('login');
+      });
+    }else{
+      alert('Necesitas iniciar sesion para cotizar tu equipo');
+      nav('login');
+    }
+    return false;
+  }
+  return true;
+}
+
 function svStep(n){
   for(var i=0;i<=6;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
   var bars=document.querySelectorAll('#svBar .sv-bar');
@@ -101,12 +117,129 @@ function clearSig(){
   var btn=document.getElementById('svN5');
   if(btn)btn.disabled=true;
 }
-function svRenderConfirm(){
-  var msg=document.getElementById('svConfMsg');
-  if(msg)msg.textContent='Funcionalidad de envío no disponible. Por favor contactanos por WhatsApp para completar tu venta.';
-  var track=document.getElementById('svTrack');
-  if(track)track.innerHTML='<div style="text-align:center;padding:1rem;color:var(--gray);font-size:12px">Conectate al backend para enviar la cotizacion</div>';
+
+var svPhotos=[];
+
+function handleSvPhotoSelect(input){
+  if(input.files&&input.files[0])uploadSvPhoto(input.files[0]);
 }
+
+function handleSvPhotoDrop(e){
+  e.preventDefault();
+  var files=e.dataTransfer.files;
+  if(files.length>0)uploadSvPhoto(files[0]);
+}
+
+function uploadSvPhoto(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  if(svPhotos.length>=3){
+    if(typeof showWarningToast==='function')showWarningToast('Limite alcanzado','Maximo 3 fotos');
+    return;
+  }
+  var formData=new FormData();
+  formData.append('file',file);
+  fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
+    if(data.url){
+      svPhotos.push(data.url);
+      renderSvPhotoPreview();
+    }
+  }).catch(function(){});
+}
+
+function removeSvPhoto(url){
+  var idx=svPhotos.indexOf(url);
+  if(idx>-1)svPhotos.splice(idx,1);
+  renderSvPhotoPreview();
+}
+
+function renderSvPhotoPreview(){
+  var container=document.getElementById('svPhotoPreview');
+  if(!container)return;
+  if(svPhotos.length===0){container.innerHTML='';container.style.display='none';return;}
+  container.style.display='flex';
+  container.innerHTML=svPhotos.map(function(url){
+    return '<div style="position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">'+
+      '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'+
+      '<button onclick="removeSvPhoto(\''+url+'\')" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'+
+    '</div>';
+  }).join('');
+}
+
+function svSubmit(){
+  if(!checkSellLogin())return;
+
+  var btn=document.getElementById('svN5');
+  if(btn){
+    btn.disabled=true;
+    btn.textContent='Enviando...';
+  }
+
+  var nombre=document.getElementById('svNombre').value.trim();
+  var dni=document.getElementById('svDni').value.trim();
+  var tel=document.getElementById('svTel').value.trim();
+  var ciudad=document.getElementById('svCiudad').value.trim();
+  var sigCanvas=document.getElementById('sigCanvas');
+  var sigData=sigCanvas?sigCanvas.toDataURL():'';
+
+  var extrasSelected=Object.keys(sv.extras).filter(function(k){return sv.extras[k];});
+
+  var quoteData={
+    userId:currentUser.id,
+    device:sv.cat+' '+sv.model,
+    storage:sv.storage,
+    condition:sv.cond,
+    basePrice:Math.round((COTIZ_BASE[sv.model]||0)*(SMULT[sv.storage]||1)),
+    finalPrice:sv.finalPrice,
+    bonus:sv.cobro==='saldo'?Math.round(sv.finalPrice*0.05):0,
+    envio:sv.envio,
+    payment:sv.cobro,
+    clientName:nombre,
+    clientDni:dni,
+    clientPhone:tel,
+    clientCity:ciudad,
+    signature:sigData,
+    photos:svPhotos,
+    extras:extrasSelected,
+  };
+
+  fetch(API_URL+'/api/quotes',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(quoteData)
+  }).then(function(r){
+    if(!r.ok)throw new Error('Error '+r.status);
+    return r.json();
+  }).then(function(result){
+    if(result.success){
+      svRenderConfirm(result.quote);
+    }else{
+      throw new Error(result.error||'Error al enviar');
+    }
+  }).catch(function(e){
+    if(typeof showErrorToast==='function'){
+      showErrorToast('Error',e.message||'No se pudo enviar la cotizacion');
+    }else{
+      alert('Error: '+e.message);
+    }
+    if(btn){btn.disabled=false;btn.textContent='CONFIRMAR VENTA';}
+  });
+}
+
+function svRenderConfirm(quote){
+  var msg=document.getElementById('svConfMsg');
+  if(msg){
+    msg.innerHTML='<strong>Codigo: '+quote.code+'</strong><br>Tu cotizacion fue enviada correctamente.<br>Un asesor la revisara y te contactara para coordinar la inspeccion del dispositivo.<br><br><em>El precio estimado es orientativo. Hasta no comprobar fisicamente el estado del dispositivo, no se realizara ningun pago.</em>';
+  }
+  var track=document.getElementById('svTrack');
+  if(track){
+    track.innerHTML=
+      '<div class="track-step done"><span class="track-ico">&#9989;</span><div class="track-t">Enviada</div><div class="track-s">Tu cotizacion fue recibida</div></div>'+
+      '<div class="track-step"><span class="track-ico">&#128269;</span><div class="track-t">En revision</div><div class="track-s">Un asesor revisara tu cotizacion</div></div>'+
+      '<div class="track-step"><span class="track-ico">&#128230;</span><div class="track-t">Inspeccion</div><div class="track-s">Verificamos el estado del equipo</div></div>'+
+      '<div class="track-step"><span class="track-ico">&#128184;</span><div class="track-t">Pago</div><div class="track-s">Recibis el dinero acordado</div></div>';
+  }
+}
+
 function svReset(){
   sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0};
   svStep(0);

@@ -1169,7 +1169,8 @@ function adminTab(tab,btn){
     orders:'Pedidos',
     arrep:'Arrepentimientos',
     users:'Usuarios',
-    chat:'Chat'
+    chat:'Chat',
+    quotes:'Cotizaciones'
   };
   var titleEl=document.getElementById('adminPageTitle');
   if(titleEl&&titles[tab])titleEl.textContent=titles[tab];
@@ -1442,7 +1443,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -1708,6 +1709,16 @@ function renderAdminContent(tab){
     '</div>';
     loadAdminConversations();
     initChatSocket();
+  }else if(tab==='quotes'){
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
+      '<button class="ord-btn ord-btn-act" id="quoteBtnAll" onclick="loadQuotes(\'all\')">Todas</button>'+
+      '<button class="ord-btn" id="quoteBtnPending" onclick="loadQuotes(\'PENDING\')">Pendientes</button>'+
+      '<button class="ord-btn" id="quoteBtnApproved" onclick="loadQuotes(\'APPROVED\')">Aceptadas</button>'+
+      '<button class="ord-btn" id="quoteBtnRejected" onclick="loadQuotes(\'REJECTED\')">Rechazadas</button>'+
+      '<input type="text" id="quoteSearchInput" placeholder="Buscar por nombre, telefono o codigo..." oninput="searchQuotes(this.value)" style="flex:1;max-width:400px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+    '</div>'+
+    '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
+    loadQuotes('all');
   }
 }
 function updateStock(id){
@@ -2073,4 +2084,249 @@ function showToast(msg,type){
   toast.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+c+';color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:10000;box-shadow:0 8px 32px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;animation:fadeInUp .3s ease;max-width:90vw;text-align:center;backdrop-filter:blur(8px)';
   document.body.appendChild(toast);
   setTimeout(function(){toast.style.animation='fadeOutDown .3s ease';setTimeout(function(){toast.remove();},300);},3000);
+}
+
+// =========== QUOTES (COTIZACIONES) ===========
+var _allQuotes=[];
+var _quotePage=1;
+var _quoteLimit=20;
+var _quoteStatus='all';
+var _quoteSearch='';
+
+function loadQuotes(status){
+  _quoteStatus=status||'all';
+  _quotePage=1;
+  
+  document.querySelectorAll('#quoteBtnAll,#quoteBtnPending,#quoteBtnApproved,#quoteBtnRejected').forEach(function(b){b.classList.remove('ord-btn-act');});
+  if(status==='all')document.getElementById('quoteBtnAll').classList.add('ord-btn-act');
+  else if(status==='PENDING')document.getElementById('quoteBtnPending').classList.add('ord-btn-act');
+  else if(status==='APPROVED')document.getElementById('quoteBtnApproved').classList.add('ord-btn-act');
+  else if(status==='REJECTED')document.getElementById('quoteBtnRejected').classList.add('ord-btn-act');
+  
+  var url=API_URL+'/api/quotes?page='+_quotePage+'&limit='+_quoteLimit;
+  if(status!=='all')url+='&status='+status;
+  if(_quoteSearch)url+='&search='+encodeURIComponent(_quoteSearch);
+  
+  fetch(url).then(function(r){return r.json();}).then(function(res){
+    _allQuotes=res.data||[];
+    renderQuotesList(res);
+  }).catch(function(){
+    document.getElementById('quoteList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Error cargando cotizaciones</div>';
+  });
+}
+
+function searchQuotes(val){
+  _quoteSearch=val;
+  _quotePage=1;
+  loadQuotes(_quoteStatus);
+}
+
+function renderQuotesList(res){
+  var list=document.getElementById('quoteList');
+  if(!list)return;
+  
+  if(!_allQuotes||_allQuotes.length===0){
+    list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:48px;margin-bottom:1rem">&#128203;</div><div style="font-size:14px;font-weight:600;margin-bottom:.5rem">No hay cotizaciones</div><div style="font-size:12px">Las cotizaciones apareceran aqui cuando los usuarios las envien</div></div>';
+    return;
+  }
+  
+  var statusColors={PENDING:'var(--orange)',APPROVED:'var(--green)',REJECTED:'var(--red)',REVIEWING:'#8b5cf6',COMPLETED:'var(--blue)'};
+  var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revision',COMPLETED:'Completada'};
+  var statusIcons={PENDING:'&#9203;',APPROVED:'&#9989;',REJECTED:'&#10060;',REVIEWING:'&#128269;',COMPLETED:'&#128184;'};
+  
+  var html=_allQuotes.map(function(q){
+    var sc=statusColors[q.status]||'var(--gray)';
+    var sl=statusLabels[q.status]||q.status;
+    var si=statusIcons[q.status]||'&#128203;';
+    var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--admin-surface);border-radius:8px;border:1px solid var(--admin-border);margin-bottom:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--admin-border)\'" onclick="openQuoteDetail(\''+q.id+'\')">'+
+      '<div style="width:40px;height:40px;border-radius:8px;background:'+sc+'15;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+si+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:600;font-size:13px;color:var(--admin-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+q.device+'</div>'+
+        '<div style="font-size:11px;color:var(--admin-text-muted)">'+(q.clientName||'Sin nombre')+' &middot; '+date+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0">'+
+        '<div style="font-weight:700;font-size:14px;color:var(--orange)">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</div>'+
+        '<div style="font-size:10px;font-weight:600;color:'+sc+';background:'+sc+'15;padding:2px 8px;border-radius:10px;display:inline-block">'+sl+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  
+  list.innerHTML=html;
+  
+  var pagContainer=document.getElementById('quotePagination');
+  if(pagContainer){
+    var totalPages=res.totalPages||1;
+    if(totalPages<=1){pagContainer.innerHTML='';return;}
+    var phtml='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem">';
+    phtml+='<button onclick="_quotePage=Math.max(1,_quotePage-1);loadQuotes(_quoteStatus);"'+(_quotePage===1?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--admin-surface);color:var(--admin-text);font-size:13px;cursor:pointer">&#8592;</button>';
+    for(var i=1;i<=totalPages;i++){
+      if(i===_quotePage)phtml+='<span style="padding:6px 12px;border-radius:6px;background:var(--orange);color:#fff;font-size:13px;font-weight:600">'+i+'</span>';
+      else phtml+='<button onclick="_quotePage='+i+';loadQuotes(_quoteStatus);" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--admin-surface);color:var(--admin-text);font-size:13px;cursor:pointer">'+i+'</button>';
+    }
+    phtml+='<button onclick="_quotePage=Math.min('+totalPages+',_quotePage+1);loadQuotes(_quoteStatus);"'+(_quotePage===totalPages?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:var(--admin-surface);color:var(--admin-text);font-size:13px;cursor:pointer">&#8594;</button>';
+    phtml+='</div>';
+    pagContainer.innerHTML=phtml;
+  }
+}
+
+function openQuoteDetail(id){
+  var q=_allQuotes.find(function(x){return x.id===id;});
+  if(!q)return;
+  
+  var existing=document.getElementById('quoteDetailModal');
+  if(existing)existing.remove();
+  
+  var statusColors={PENDING:'var(--orange)',APPROVED:'var(--green)',REJECTED:'var(--red)',REVIEWING:'#8b5cf6',COMPLETED:'var(--blue)'};
+  var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revision',COMPLETED:'Completada'};
+  var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  
+  var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Bateria 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
+  var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
+  
+  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img src="'+p+'" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border)">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
+  
+  var modal=document.createElement('div');
+  modal.id='quoteDetailModal';
+  modal.style.cssText='display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
+  modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeQuoteDetail()"></div>'+
+    '<div style="position:relative;background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:16px;width:min(600px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
+      '<div style="padding:20px 24px;border-bottom:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between">'+
+        '<div><h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--admin-text)">Cotizacion '+q.code+'</h3><p style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+date+'</p></div>'+
+        '<button onclick="closeQuoteDetail()" style="background:none;border:none;color:var(--admin-text-muted);cursor:pointer;font-size:24px;padding:4px">&times;</button>'+
+      '</div>'+
+      '<div style="padding:24px">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
+          '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px">'+
+            '<div style="font-size:10px;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Dispositivo</div>'+
+            '<div style="font-size:14px;font-weight:600;color:var(--admin-text)">'+q.device+'</div>'+
+            '<div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+q.storage+' &middot; '+q.condition+'</div>'+
+          '</div>'+
+          '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px">'+
+            '<div style="font-size:10px;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Precio estimado</div>'+
+            '<div style="font-size:20px;font-weight:700;color:var(--orange)">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</div>'+
+            '<div style="font-size:10px;color:var(--admin-text-muted);margin-top:4px">Base: $'+(q.basePrice||0).toLocaleString('es-AR')+'</div>'+
+          '</div>'+
+        '</div>'+
+        
+        '<div style="margin-bottom:20px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Extras</div>'+
+          '<div style="display:flex;flex-wrap:wrap;gap:6px">'+extrasHtml+'</div>'+
+        '</div>'+
+        
+        '<div style="margin-bottom:20px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Datos del cliente</div>'+
+          '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Nombre</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientName||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">DNI</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientDni||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Telefono</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientPhone||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Ciudad</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientCity||'-')+'</div></div>'+
+          '</div>'+
+        '</div>'+
+        
+        '<div style="margin-bottom:20px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Fotos del dispositivo</div>'+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">'+photosHtml+'</div>'+
+        '</div>'+
+        
+        '<div style="margin-bottom:20px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Envio y cobro</div>'+
+          '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Envio</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.envio||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Cobro</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.payment||'-')+'</div></div>'+
+          '</div>'+
+        '</div>'+
+        
+        '<div style="display:flex;gap:12px;padding-top:16px;border-top:1px solid var(--admin-border)">'+
+          '<button onclick="rejectQuote(\''+q.id+'\')" style="flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Rechazar</button>'+
+          '<button onclick="approveQuote(\''+q.id+'\')" style="flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Aceptar</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  
+  document.body.appendChild(modal);
+  setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
+}
+
+function closeQuoteDetail(){
+  var modal=document.getElementById('quoteDetailModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
+  setTimeout(function(){modal.remove();},300);
+}
+
+function approveQuote(id){
+  showConfirm('Aceptar cotizacion','¿Confirmas que aceptas esta cotizacion? Se notificara al cliente.',{confirmText:'Aceptar',confirmClass:'primary'}).then(function(confirmed){
+    if(!confirmed)return;
+    fetch(API_URL+'/api/quotes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:'APPROVED'})}).then(function(r){return r.json();}).then(function(){
+      showSuccessToast('Cotizacion aceptada','El cliente sera notificado');
+      closeQuoteDetail();
+      loadQuotes(_quoteStatus);
+    }).catch(function(){showErrorToast('Error','No se pudo aceptar la cotizacion');});
+  });
+}
+
+function rejectQuote(id){
+  var existing=document.getElementById('rejectQuoteModal');
+  if(existing)existing.remove();
+  
+  var modal=document.createElement('div');
+  modal.id='rejectQuoteModal';
+  modal.style.cssText='display:flex;position:fixed;inset:0;z-index:10000;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
+  modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeRejectQuoteModal()"></div>'+
+    '<div style="position:relative;background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:16px;width:min(450px,95%);box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
+      '<div style="padding:20px 24px;border-bottom:1px solid var(--admin-border)">'+
+        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--red)">Rechazar cotizacion</h3>'+
+        '<p style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">Selecciona el motivo del rechazo</p>'+
+      '</div>'+
+      '<div style="padding:24px">'+
+        '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:1rem">'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--admin-surface-hover);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="quote-reason-cb" value="El dispositivo no coincide con la descripcion" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px;color:var(--admin-text)">El dispositivo no coincide con la descripcion</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--admin-surface-hover);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="quote-reason-cb" value="No se puede verificar la propiedad" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px;color:var(--admin-text)">No se puede verificar la propiedad</span>'+
+          '</label>'+
+          '<label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--admin-surface-hover);border-radius:8px;cursor:pointer">'+
+            '<input type="checkbox" class="quote-reason-cb" value="Modelo no aceptado" style="margin-top:2px;accent-color:var(--red);width:18px;height:18px">'+
+            '<span style="font-size:13px;color:var(--admin-text)">Modelo no aceptado</span>'+
+          '</label>'+
+        '</div>'+
+        '<textarea id="quoteRejectComment" placeholder="Otro motivo (opcional)" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;background:var(--admin-surface-hover);color:var(--admin-text);font-size:13px;resize:none;height:60px;outline:none"></textarea>'+
+        '<div style="display:flex;gap:12px;margin-top:1rem">'+
+          '<button onclick="closeRejectQuoteModal()" style="flex:1;padding:12px;background:var(--admin-surface-hover);color:var(--admin-text);border:1px solid var(--admin-border);border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Cancelar</button>'+
+          '<button onclick="confirmRejectQuote(\''+id+'\')" style="flex:1;padding:12px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Rechazar</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  
+  document.body.appendChild(modal);
+  setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
+}
+
+function closeRejectQuoteModal(){
+  var modal=document.getElementById('rejectQuoteModal');
+  if(!modal)return;
+  modal.style.opacity='0';
+  modal.querySelector('div:nth-child(2)').style.transform='scale(.9)';
+  setTimeout(function(){modal.remove();},300);
+}
+
+function confirmRejectQuote(id){
+  var cbs=document.querySelectorAll('.quote-reason-cb:checked');
+  var reasons=[];
+  cbs.forEach(function(cb){reasons.push(cb.value);});
+  var commentEl=document.getElementById('quoteRejectComment');
+  var comment=commentEl?commentEl.value.trim():'';
+  var reasonText=reasons.join('; ')+(comment?(reasons.length>0?' | ':'')+comment:'');
+  
+  fetch(API_URL+'/api/quotes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:'REJECTED',rejectReason:reasonText})}).then(function(r){return r.json();}).then(function(){
+    showSuccessToast('Cotizacion rechazada','El cliente sera notificado');
+    closeRejectQuoteModal();
+    closeQuoteDetail();
+    loadQuotes(_quoteStatus);
+  }).catch(function(){showErrorToast('Error','No se pudo rechazar la cotizacion');});
 }

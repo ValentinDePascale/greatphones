@@ -2,12 +2,19 @@
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
-  var _hidden=['sell','servicio','notebooks','mayorista','compare'];
+  var _hidden=['servicio','notebooks','mayorista','compare'];
   if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='checkout'&&!currentUser){nav('login');return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
   if(id==='chats'&&currentUser&&currentUser.role==='ADMIN'){nav('admin');return;}
+  if(id==='sell'){
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
+    var el=document.getElementById('p-'+id);
+    if(el)el.classList.add('act');
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
   var el=document.getElementById('p-'+id);
   if(el)el.classList.add('act');
