@@ -13,6 +13,7 @@ function nav(id){
     var el=document.getElementById('p-'+id);
     if(el)el.classList.add('act');
     window.scrollTo({top:0,behavior:'smooth'});
+    if(typeof svStep==='function')svStep(0);
     return;
   }
   document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
