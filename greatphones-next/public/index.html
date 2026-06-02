@@ -1629,6 +1629,9 @@
           <div id="prodBatteryField"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Bateria (%)</label><input class="inp-f" id="prodBattery" type="number" min="0" max="100" placeholder="91"></div>
           <div id="prodProcessorField" style="display:none"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Procesador</label><input class="inp-f" id="prodProcessor" placeholder="M3 Pro"></div>
         </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">IMEI</label><input class="inp-f" id="prodImei" placeholder="353456789012345" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
           <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>

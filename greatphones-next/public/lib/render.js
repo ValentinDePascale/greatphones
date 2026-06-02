@@ -1257,6 +1257,7 @@ function saveProduct(){
     ram:document.getElementById('prodRam').value||null,
     battery:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?null:(parseInt(document.getElementById('prodBattery').value)||null),
     processor:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?(document.getElementById('prodProcessor').value.trim()||null):null,
+    imei:document.getElementById('prodImei').value.trim()||null,
     imageUrl:document.getElementById('prodImageUrl').value.trim()||null,
     images:getAdditionalImages(),
     ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1',
@@ -1306,6 +1307,7 @@ function editProduct(id){
   document.getElementById('prodRam').value=p.ram||'';
   document.getElementById('prodBattery').value=p.battery||'';
   document.getElementById('prodProcessor').value=p.processor||'';
+  document.getElementById('prodImei').value=p.imei||'';
   updateProductFields();
   
   document.getElementById('prodImageUrl').value=p.imageUrl||'';
