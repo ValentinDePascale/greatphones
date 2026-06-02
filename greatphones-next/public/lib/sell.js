@@ -64,14 +64,21 @@ function renderSvPhotoPreview(){
 }
 
 function svStep(n){
-  for(var i=0;i<=6;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
+  for(var i=0;i<=4;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
   var bars=document.querySelectorAll('#svBar .sv-bar');
   bars.forEach(function(b,i){b.className='sv-bar'+(i<n?' done':i===n?' cur':'');});
   if(n===0)renderModelGrid();
   if(n===1)renderStorGrid();
-  if(n===3)svRenderPrice();
-  if(n===4)svBuildSum();
-  if(n===5)svSetupSig();
+  if(n===3){svRenderPrice();svBuildSum();svSetupSig();}
+}
+
+function filterModels(query){
+  var cards=document.querySelectorAll('.model-card');
+  var q=query.toLowerCase().trim();
+  cards.forEach(function(c){
+    var name=c.querySelector('.model-name').textContent.toLowerCase();
+    c.style.display=(q===''||name.indexOf(q)!==-1)?'':'none';
+  });
 }
 
 function renderModelGrid(){
@@ -82,7 +89,7 @@ function renderModelGrid(){
   models.forEach(function(m){
     var base=COTIZ_BASE[m]||0;
     var isSelected=sv.model===m;
-    html+='<div class="model-card'+(isSelected?' act':'')+'" onclick="svSelectModel(\''+m+'\')">'+
+    html+='<div class="model-card'+(isSelected?' act':'')+'" data-model="'+m+'" onclick="svSelectModel(\''+m+'\')">'+
       '<div class="model-ico">&#128241;</div>'+
       '<div class="model-name">'+m+'</div>'+
       '<div class="model-price">'+(base?fmt(base):'Consultar')+'</div>'+
@@ -97,7 +104,7 @@ function svSelectModel(model){
   document.querySelectorAll('.model-card').forEach(function(c){c.classList.remove('act');});
   var cards=document.querySelectorAll('.model-card');
   cards.forEach(function(c){
-    if(c.querySelector('.model-name').textContent===model)c.classList.add('act');
+    if(c.getAttribute('data-model')===model)c.classList.add('act');
   });
   var btn=document.getElementById('svN0');
   if(btn)btn.disabled=false;
@@ -176,14 +183,19 @@ function svRenderPrice(){
   if(rng)rng.textContent='Rango: '+fmt(Math.round(sv.finalPrice*0.9))+' - '+fmt(Math.round(sv.finalPrice*1.05));
 }
 
-function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChk3();}
+function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChkFinal();}
 function svCobro(tipo,el){
   sv.cobro=tipo;document.querySelectorAll('.vopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');
   var cbu=document.getElementById('svCBU');var alias=document.getElementById('svAlias');
-  if(cbu)cbu.className=tipo==='transfer'?'':'hidden';if(alias)alias.className=tipo==='mp'?'':'hidden';svChk3();
+  if(cbu)cbu.className=tipo==='transfer'?'':'hidden';if(alias)alias.className=tipo==='mp'?'':'hidden';svChkFinal();
 }
-function svChk3(){var btn=document.getElementById('svN3');if(btn)btn.disabled=!(sv.envio&&sv.cobro);}
-function svChk4(){var fields=['svNombre','svDni','svTel','svEmail'];var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>1;});var btn=document.getElementById('svN4');if(btn)btn.disabled=!ok;}
+function svChkFinal(){
+  var fieldsOk=['svNombre','svDni','svTel','svEmail'].every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>1;});
+  var sigWrap=document.getElementById('sigWrap');
+  var sigDone=sigWrap&&sigWrap.classList.contains('signed');
+  var btn=document.getElementById('svN3');
+  if(btn)btn.disabled=!(sv.envio&&sv.cobro&&fieldsOk&&sigDone);
+}
 
 function svBuildSum(){
   var envioNames={presencial:'Presencial en tienda',andreani:'Andreani prepaga',internacional:'Internacional DHL/FedEx',propio:'Correo propio'};
@@ -205,24 +217,23 @@ function svSetupSig(){
   var signed=false,drawing=false;
   function getPos(e,c){var r=c.getBoundingClientRect();var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(c.width/r.width),y:(src.clientY-r.top)*(c.height/r.height)};}
   function start(e){drawing=true;var p=getPos(e,canvas);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault();}
-  function move(e){if(!drawing)return;var p=getPos(e,canvas);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1A1208';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();e.preventDefault();signed=true;document.getElementById('sigWrap').className='sig-wrap signed';document.getElementById('sigStatus').textContent='Firma capturada';var btn=document.getElementById('svN5');if(btn)btn.disabled=false;}
+  function move(e){if(!drawing)return;var p=getPos(e,canvas);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1A1208';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();e.preventDefault();signed=true;document.getElementById('sigWrap').className='sig-wrap signed';document.getElementById('sigStatus').textContent='Firma capturada';svChkFinal();}
   function end(){drawing=false;}
   canvas.onmousedown=start;canvas.onmousemove=move;canvas.onmouseup=end;canvas.ontouchstart=start;canvas.ontouchmove=move;canvas.ontouchend=end;
 }
 
 function clearSig(){
   var canvas=document.getElementById('sigCanvas');
-  if(!canvas)canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  if(canvas)canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
   document.getElementById('sigWrap').className='sig-wrap';
   document.getElementById('sigStatus').textContent='Traza tu firma arriba';
-  var btn=document.getElementById('svN5');
-  if(btn)btn.disabled=true;
+  svChkFinal();
 }
 
 function svSubmit(){
   if(!checkSellLogin())return;
 
-  var btn=document.getElementById('svN5');
+  var btn=document.getElementById('svN3');
   if(btn){
     btn.disabled=true;
     btn.textContent='Enviando...';
@@ -266,6 +277,7 @@ function svSubmit(){
   }).then(function(result){
     if(result.success){
       svRenderConfirm(result.quote);
+      svStep(4);
     }else{
       throw new Error(result.error||'Error al enviar');
     }
@@ -275,7 +287,7 @@ function svSubmit(){
     }else{
       alert('Error: '+e.message);
     }
-    if(btn){btn.disabled=false;btn.textContent='CONFIRMAR VENTA';}
+    if(btn){btn.disabled=false;btn.textContent='ENVIAR COTIZACION';}
   });
 }
 
@@ -301,6 +313,11 @@ function svReset(){
   svUpdExt();
   svPhotos=[];
   renderSvPhotoPreview();
-  var btn0=document.getElementById('svN0');if(btn0)btn0.disabled=true;
-  var btn1=document.getElementById('svN1');if(btn1)btn1.disabled=true;
+  ['svN0','svN1','svN2','svN3'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
+  var searchEl=document.getElementById('svModelSearch');if(searchEl)searchEl.value='';
+  ['svNombre','svDni','svTel','svEmail','svCiudad'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var cbu=document.getElementById('svCBU');if(cbu)cbu.className='hidden';
+  var alias=document.getElementById('svAlias');if(alias)alias.className='hidden';
+  document.querySelectorAll('.eopt,.vopt').forEach(function(e){e.classList.remove('act');});
+  clearSig();
 }
