@@ -110,7 +110,7 @@
   <div class="catnav-inner" style="max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;height:48px;align-items:center;overflow-x:auto;scrollbar-width:none">
     <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
     <button class="cni" id="cn-shop" onclick="navShop('todos');setCN('shop')">Catálogo</button>
-    <button class="cni" id="cn-sell" style="display:none" onclick="nav('sell');setCN('sell')">Vender</button>
+    <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
     <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
     <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
     <button class="cni" id="cn-notebooks" style="display:none" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
@@ -857,15 +857,9 @@
 <div class="page" id="p-sell">
   <div class="sell-top">
     <div class="ctr">
-      <div class="sell-tag">Sin complicaciones</div>
-      <h1 class="sell-h">Vende tu equipo.<br><em style="font-style:italic;color:rgba(255,255,255,.65)">Cobras rapido.</em></h1>
-      <p class="sell-sub">Cotizacion online &middot; Revision tecnica &middot; Firma digital &middot; Pago en 24hs &middot; +5% bonus en saldo</p>
-      <div class="sell-steps">
-        <div class="step-chip"><div style="font-size:18px;margin-bottom:.3rem">&#128241;</div><div class="step-n">Paso 1</div><div class="step-t">Cotizas online</div></div>
-        <div class="step-chip"><div style="font-size:18px;margin-bottom:.3rem">&#128230;</div><div class="step-n">Paso 2</div><div class="step-t">Envias el equipo</div></div>
-        <div class="step-chip"><div style="font-size:18px;margin-bottom:.3rem">&#128269;</div><div class="step-n">Paso 3</div><div class="step-t">Lo revisamos</div></div>
-        <div class="step-chip"><div style="font-size:18px;margin-bottom:.3rem">&#128184;</div><div class="step-n">Paso 4</div><div class="step-t">Cobras</div></div>
-      </div>
+      <div class="sell-tag">Vende tu iPhone</div>
+      <h1 class="sell-h">Cotiza tu iPhone.<br><em style="font-style:italic;color:rgba(255,255,255,.65)">Cobras rapido.</em></h1>
+      <p class="sell-sub">Precio en tiempo real &middot; Revision tecnica &middot; Pago en 24hs &middot; +5% bonus en saldo GP</p>
     </div>
   </div>
   <div class="sell-body">
@@ -884,48 +878,36 @@
             <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.7">Si elegis recibir el saldo en tu cuenta GP, te sumamos un <strong style="color:var(--orange)">5% extra</strong>. Usalo en compras, garantias o reparaciones, sin vencimiento.</div>
           </div>
           <div style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:1.1rem">
-            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:.65rem">Que aceptamos</div>
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,.7);margin-bottom:.65rem">Modelos que aceptamos</div>
             <div style="display:flex;flex-wrap:wrap;gap:5px">
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">iPhone 6+</span>
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">iPad</span>
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">MacBook</span>
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">Samsung Galaxy</span>
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">Motorola</span>
-              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">Xiaomi</span>
+              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">iPhone 6 en adelante</span>
+              <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">Todos los Pro y Pro Max</span>
               <span style="font-size:10px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);padding:3px 9px;border-radius:18px">Con o sin danos</span>
             </div>
           </div>
         </div>
         <div>
           <div class="cotiz-box">
-            <div class="cotiz-top"><div class="cotiz-t">Tasacion online</div><div class="cotiz-s">Precio en tiempo real &middot; Sin compromiso</div></div>
+            <div class="cotiz-top"><div class="cotiz-t">Cotizacion online</div><div class="cotiz-s">Precio en tiempo real &middot; Sin compromiso</div></div>
             <div class="cotiz-inner">
               <div class="sv-bars" id="svBar"><div class="sv-bar done"></div><div class="sv-bar cur"></div><div class="sv-bar"></div><div class="sv-bar"></div><div class="sv-bar"></div><div class="sv-bar"></div></div>
-              <!-- Paso 0 -->
+              <!-- Paso 0: Modelo -->
               <div id="svS0">
-                <span class="flbl">Paso 1 de 6 &mdash; Que queres vender?</span>
-                <div class="cat-btns">
-                  <button class="csbtn act" onclick="svCat('iPhone',this)"><span class="csbtn-ico">&#128241;</span><span class="csbtn-t">iPhone</span></button>
-                  <button class="csbtn" onclick="svCat('iPad',this)"><span class="csbtn-ico">&#11035;</span><span class="csbtn-t">iPad</span></button>
-                  <button class="csbtn" onclick="svCat('MacBook',this)"><span class="csbtn-ico">&#128187;</span><span class="csbtn-t">MacBook</span></button>
-                  <button class="csbtn" onclick="svCat('Samsung',this)"><span class="csbtn-ico">&#127756;</span><span class="csbtn-t">Samsung</span></button>
-                  <button class="csbtn" onclick="svCat('Motorola',this)"><span class="csbtn-ico">&#12349;</span><span class="csbtn-t">Motorola</span></button>
-                  <button class="csbtn" onclick="svCat('Xiaomi',this)"><span class="csbtn-ico">&#128308;</span><span class="csbtn-t">Xiaomi</span></button>
-                </div>
-                <div class="nav-row"><button class="btn-nx" onclick="svStep(1)">Continuar</button></div>
+                <span class="flbl">Paso 1 de 6 &mdash; Selecciona tu modelo</span>
+                <div class="model-grid" id="svModelGrid"></div>
+                <div class="nav-row"><button class="btn-nx" id="svN0" disabled onclick="svStep(1)">Continuar</button></div>
               </div>
-              <!-- Paso 1 -->
+              <!-- Paso 1: Almacenamiento -->
               <div id="svS1" class="hidden">
-                <span class="flbl">Paso 2 de 6 &mdash; Modelo y almacenamiento</span>
-                <select class="sel-f" id="svMod" onchange="sv.model=this.value;svChk1();svShowPreview()"><option value="">Selecciona el modelo</option></select>
-                <select class="sel-f" id="svStor" onchange="sv.storage=this.value;svChk1();svShowPreview()"><option value="">Almacenamiento</option><option>16 GB</option><option>32 GB</option><option>64 GB</option><option>128 GB</option><option>256 GB</option><option>512 GB</option><option>1 TB</option></select>
+                <span class="flbl">Paso 2 de 6 &mdash; Almacenamiento</span>
+                <div class="stor-grid" id="svStorGrid"></div>
                 <div style="background:rgba(45,90,39,.06);border:1px solid rgba(45,90,39,.12);border-radius:var(--rsm);padding:.875rem;margin-top:.5rem">
                   <div style="font-size:10px;color:var(--gray);margin-bottom:.25rem">Precio base estimado</div>
                   <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--orange)" id="svPreview">Selecciona modelo</div>
                 </div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(0)">&#8592;</button><button class="btn-nx" id="svN1" disabled onclick="svStep(2)">Continuar</button></div>
               </div>
-              <!-- Paso 2 -->
+              <!-- Paso 2: Estado -->
               <div id="svS2" class="hidden">
                 <span class="flbl">Paso 3 de 6 &mdash; Estado del dispositivo</span>
                 <div class="cond-card act" onclick="svCond('Impecable',1.0,this)"><div class="cc-hdr"><div class="cc-name">&#10024; Impecable</div><div class="cc-pos">Precio maximo</div></div><div class="cc-det">Sin rayones, pantalla perfecta, bateria 90%+.</div></div>
@@ -942,7 +924,7 @@
                 </div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(1)">&#8592;</button><button class="btn-nx" id="svN2" disabled onclick="svStep(3)">Ver oferta</button></div>
               </div>
-              <!-- Paso 3 -->
+              <!-- Paso 3: Envio y cobro -->
               <div id="svS3" class="hidden">
                 <div class="price-reveal"><div class="pr-lbl">Saldo estimado</div><div class="pr-price" id="svPriceBig">$0</div><div class="pr-range" id="svPriceRange"></div></div>
                 <span class="flbl">Como envias el equipo?</span>
@@ -959,7 +941,7 @@
                 <div class="vopt" onclick="svCobro('efectivo',this)"><span class="vopt-ico">&#128181;</span><div><div class="vopt-t">Efectivo en sucursal</div><div class="vopt-d">Zelarrayan 179.</div></div></div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(2)">&#8592;</button><button class="btn-nx" id="svN3" disabled onclick="svStep(4)">Continuar</button></div>
               </div>
-              <!-- Paso 4 -->
+              <!-- Paso 4: Datos -->
               <div id="svS4" class="hidden">
                 <span class="flbl">Paso 5 de 6 &mdash; Tus datos</span>
                 <input class="inp-f" id="svNombre" placeholder="Nombre completo" oninput="svChk4()">
@@ -980,7 +962,7 @@
                 <div class="sum-box" id="svSum"></div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(3)">&#8592;</button><button class="btn-nx" id="svN4" disabled onclick="svStep(5)">Firmar y confirmar</button></div>
               </div>
-              <!-- Paso 5 -->
+              <!-- Paso 5: Firma -->
               <div id="svS5" class="hidden">
                 <span class="flbl">Paso 6 de 6 &mdash; Firma digital</span>
                 <div class="legal-box" id="svLegal"></div>
@@ -990,7 +972,7 @@
                 <button class="btn btn-s btn-sm" onclick="clearSig()">Limpiar</button>
                 <div class="nav-row" style="margin-top:.875rem"><button class="btn-bk" onclick="svStep(4)">&#8592;</button><button class="btn-nx btn-nx-g" id="svN5" disabled onclick="svSubmit()">CONFIRMAR VENTA</button></div>
               </div>
-              <!-- Paso 6 -->
+              <!-- Paso 6: Confirmacion -->
               <div id="svS6" class="hidden">
                 <div style="text-align:center;padding:2rem 0">
                   <div style="width:56px;height:56px;border-radius:50%;background:rgba(45,90,39,.1);border:1.5px solid rgba(45,90,39,.2);display:flex;align-items:center;justify-content:center;margin:0 auto .875rem;font-size:24px;color:var(--green)">&#10003;</div>

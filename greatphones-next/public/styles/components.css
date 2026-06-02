@@ -700,6 +700,28 @@
 .csbtn-ico{font-size:20px;margin-bottom:3px;display:block}
 .csbtn-t{font-size:9px;font-weight:600;color:var(--dk)}
 .csbtn.act .csbtn-t{color:var(--orange)}
+
+/* Model Grid - iPhone models */
+.model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1.1rem;max-height:420px;overflow-y:auto;padding-right:4px}
+.model-grid::-webkit-scrollbar{width:4px}
+.model-grid::-webkit-scrollbar-track{background:var(--cream2);border-radius:2px}
+.model-grid::-webkit-scrollbar-thumb{background:var(--gray2);border-radius:2px}
+.model-card{border:1.5px solid var(--border);border-radius:var(--rsm);padding:.75rem .5rem;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+.model-card:hover{border-color:var(--orange);transform:translateY(-2px);box-shadow:0 4px 12px rgba(255,107,44,.1)}
+.model-card.act{border-color:var(--orange);background:#FFF8F5;box-shadow:0 4px 16px rgba(255,107,44,.15)}
+.model-ico{font-size:28px;margin-bottom:6px}
+.model-name{font-size:11px;font-weight:600;color:var(--dk);margin-bottom:4px;line-height:1.3}
+.model-card.act .model-name{color:var(--orange)}
+.model-price{font-size:10px;color:var(--gray);font-weight:500}
+
+/* Storage Grid */
+.stor-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:.75rem}
+.stor-card{border:1.5px solid var(--border);border-radius:var(--rsm);padding:.75rem .5rem;background:#fff;cursor:pointer;text-align:center;transition:all .2s}
+.stor-card:hover{border-color:var(--orange);transform:translateY(-2px);box-shadow:0 4px 12px rgba(255,107,44,.1)}
+.stor-card.act{border-color:var(--orange);background:#FFF8F5;box-shadow:0 4px 16px rgba(255,107,44,.15)}
+.stor-name{font-size:13px;font-weight:600;color:var(--dk);margin-bottom:4px}
+.stor-card.act .stor-name{color:var(--orange)}
+.stor-price{font-size:10px;color:var(--gray);font-weight:500}
 .sel-f{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);background:#fff;color:var(--dk);font-size:12px;margin-bottom:7px;appearance:none;cursor:pointer;outline:none;font-family:inherit}
 .sel-f:focus{border-color:var(--orange)}
 .inp-f{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rsm);background:#fff;color:var(--dk);font-size:13px;margin-bottom:7px;transition:border-color .15s;outline:none;font-family:inherit}
