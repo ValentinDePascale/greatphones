@@ -881,10 +881,10 @@
             </div>
           </div>
           <div class="cotiz-inner">
-            <div class="sv-bars" id="svBar"><div class="sv-bar done"></div><div class="sv-bar cur"></div><div class="sv-bar"></div><div class="sv-bar"></div></div>
+            <div class="sv-bars" id="svBar"><div class="sv-bar done"></div><div class="sv-bar cur"></div><div class="sv-bar"></div><div class="sv-bar"></div><div class="sv-bar"></div><div class="sv-bar"></div></div>
             <!-- Paso 0: Modelo -->
             <div id="svS0">
-              <span class="flbl">Paso 1 de 4 &mdash; Selecciona tu modelo</span>
+              <span class="flbl">Paso 1 de 6 &mdash; Selecciona tu modelo</span>
               <div style="margin-bottom:12px">
                 <input type="text" id="svModelSearch" placeholder="Buscar modelo..." oninput="filterModels(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#fff" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
               </div>
@@ -893,17 +893,17 @@
             </div>
             <!-- Paso 1: Almacenamiento -->
             <div id="svS1" class="hidden">
-              <span class="flbl">Paso 2 de 4 &mdash; Almacenamiento</span>
+              <span class="flbl">Paso 2 de 6 &mdash; Almacenamiento</span>
               <div class="stor-grid" id="svStorGrid"></div>
               <div style="background:rgba(45,90,39,.06);border:1px solid rgba(45,90,39,.12);border-radius:var(--rsm);padding:.875rem;margin-top:.5rem">
                 <div style="font-size:10px;color:var(--gray);margin-bottom:.25rem">Precio base estimado</div>
-                <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--orange)" id="svPreview">Selecciona modelo</div>
+                <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--orange)" id="svPreview">Selecciona almacenamiento</div>
               </div>
               <div class="nav-row"><button class="btn-bk" onclick="svStep(0)">&#8592;</button><button class="btn-nx" id="svN1" disabled onclick="svStep(2)">Continuar</button></div>
             </div>
             <!-- Paso 2: Estado + Extras -->
             <div id="svS2" class="hidden">
-              <span class="flbl">Paso 3 de 4 &mdash; Estado del dispositivo</span>
+              <span class="flbl">Paso 3 de 6 &mdash; Estado del dispositivo</span>
               <div class="cond-card act" onclick="svCond('Impecable',1.0,this)"><div class="cc-hdr"><div class="cc-name">&#10024; Impecable</div><div class="cc-pos">Precio maximo</div></div><div class="cc-det">Sin rayones, pantalla perfecta, bateria 90%+.</div></div>
               <div class="cond-card" onclick="svCond('Muy bueno',0.82,this)"><div class="cc-hdr"><div class="cc-name">&#128077; Muy bueno</div><div class="cc-pos">-5% a -18%</div></div><div class="cc-det">Marcas minimas, funciona perfecto.</div></div>
               <div class="cond-card" onclick="svCond('Bueno',0.65,this)"><div class="cc-hdr"><div class="cc-name">&#128076; Bueno</div><div class="cc-neg">-18% a -35%</div></div><div class="cc-det">Rayones visibles, funciona al 100%.</div></div>
@@ -918,49 +918,36 @@
               </div>
               <div class="nav-row"><button class="btn-bk" onclick="svStep(1)">&#8592;</button><button class="btn-nx" id="svN2" disabled onclick="svStep(3)">Continuar</button></div>
             </div>
-            <!-- Paso 3: Envio + Cobro + Datos + Foto + Firma -->
+            <!-- Paso 3: Datos del cliente -->
             <div id="svS3" class="hidden">
-              <div class="price-reveal"><div class="pr-lbl">Saldo estimado</div><div class="pr-price" id="svPriceBig">$0</div><div class="pr-range" id="svPriceRange"></div></div>
-              <span class="flbl">Como envias el equipo?</span>
-              <div class="eopt" onclick="svEnvio('presencial',this)"><span class="eopt-ico">&#127978;</span><div><div class="eopt-t">Presencial en tienda</div><div class="eopt-s">Zelarrayan 179, Bahia Blanca</div></div></div>
-              <div class="eopt" onclick="svEnvio('andreani',this)"><span class="eopt-ico">&#128230;</span><div><div class="eopt-t">Andreani &mdash; etiqueta prepaga</div><div class="eopt-s">GP paga el flete &middot; Desde cualquier ciudad</div></div></div>
-              <div class="eopt" onclick="svEnvio('internacional',this)"><span class="eopt-ico">&#9992;</span><div><div class="eopt-t">Envio internacional</div><div class="eopt-s">DHL / FedEx &middot; Coordinamos el retiro</div></div></div>
-              <div class="eopt" onclick="svEnvio('propio',this)"><span class="eopt-ico">&#128666;</span><div><div class="eopt-t">Correo propio</div><div class="eopt-s">OCA, Correo Argentino u otro</div></div></div>
-              <span class="flbl" style="margin-top:.875rem;display:block">Como recibes el dinero?</span>
-              <div class="vopt" onclick="svCobro('saldo',this)"><span class="vopt-ico">&#127967;</span><div><div class="vopt-t">Saldo GP</div><div class="vopt-d">Para compras, garantias o servicio.</div><div class="vopt-bonus">+5% bonus sobre el valor aprobado</div></div></div>
-              <div class="vopt" onclick="svCobro('transfer',this)"><span class="vopt-ico">&#127968;</span><div><div class="vopt-t">Transferencia bancaria</div><div class="vopt-d">Acreditacion en 24hs habiles.</div></div></div>
-              <div id="svCBU" class="hidden"><input class="inp-f" placeholder="CBU o CVU" oninput="svChkFinal()"></div>
-              <div class="vopt" onclick="svCobro('mp',this)"><span class="vopt-ico">&#128153;</span><div><div class="vopt-t">Mercado Pago</div><div class="vopt-d">Al alias de tu cuenta.</div></div></div>
-              <div id="svAlias" class="hidden"><input class="inp-f" placeholder="Alias MP" oninput="svChkFinal()"></div>
-              <div class="vopt" onclick="svCobro('efectivo',this)"><span class="vopt-ico">&#128181;</span><div><div class="vopt-t">Efectivo en sucursal</div><div class="vopt-d">Zelarrayan 179.</div></div></div>
-              <span class="flbl" style="margin-top:1.25rem;display:block">Tus datos</span>
+              <span class="flbl">Paso 4 de 6 &mdash; Tus datos</span>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                 <div>
                   <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Nombre completo</label>
-                  <input class="inp-f" id="svNombre" placeholder="Juan Pérez" oninput="svChkFinal()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  <input class="inp-f" id="svNombre" placeholder="Juan Pérez" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
                 <div>
                   <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI / Pasaporte</label>
-                  <input class="inp-f" id="svDni" placeholder="20-34567890-9" oninput="svChkFinal()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  <input class="inp-f" id="svDni" placeholder="20-34567890-9" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                 <div>
                   <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">WhatsApp</label>
-                  <input class="inp-f" id="svTel" placeholder="11 2345 6789" oninput="svChkFinal()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  <input class="inp-f" id="svTel" placeholder="11 2345 6789" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
                 <div>
                   <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Email</label>
-                  <input class="inp-f" id="svEmail" type="email" placeholder="nombre@ejemplo.com" oninput="svChkFinal()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  <input class="inp-f" id="svEmail" type="email" placeholder="nombre@ejemplo.com" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                 </div>
               </div>
               <div style="margin-top:12px">
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad / País</label>
-                <input class="inp-f" id="svCiudad" placeholder="Bahía Blanca, Argentina" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad / Pais</label>
+                <input class="inp-f" id="svCiudad" placeholder="Bahia Blanca, Argentina" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
               </div>
               <div style="margin-top:1.25rem">
-                <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Foto del dispositivo</div>
-                <div style="font-size:11px;color:var(--gray);margin-bottom:8px">Subí una foto del frente, dorso y pantalla encendida</div>
+                <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Fotos del dispositivo (opcional, max 3)</div>
+                <div style="font-size:11px;color:var(--gray);margin-bottom:8px">Subi una foto del frente, dorso y pantalla encendida</div>
                 <div id="svPhotoArea" style="border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.05)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream)';handleSvPhotoDrop(event)" onclick="document.getElementById('svPhotoInput').click()">
                   <div style="font-size:32px;margin-bottom:.5rem">&#128247;</div>
                   <div style="font-size:12px;color:var(--gray)">Arrastra una foto o haz clic para subir</div>
@@ -968,17 +955,40 @@
                 </div>
                 <div id="svPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem"></div>
               </div>
-              <div class="sum-box" id="svSum" style="margin-top:1.25rem"></div>
-              <span class="flbl" style="margin-top:1.25rem;display:block">Firma digital</span>
-              <div class="legal-box" id="svLegal"></div>
-              <div style="font-size:11px;font-weight:600;margin-bottom:.3rem">Firma en el recuadro:</div>
-              <div class="sig-wrap" id="sigWrap"><canvas id="sigCanvas" height="100"></canvas></div>
-              <div style="font-size:9px;color:var(--gray);margin:.25rem 0 .5rem" id="sigStatus">Traza tu firma arriba</div>
-              <button class="btn btn-s btn-sm" onclick="clearSig()">Limpiar</button>
-              <div class="nav-row" style="margin-top:.875rem"><button class="btn-bk" onclick="svStep(2)">&#8592;</button><button class="btn-nx btn-nx-g" id="svN3" disabled onclick="svSubmit()">ENVIAR COTIZACION</button></div>
+              <div class="nav-row"><button class="btn-bk" onclick="svStep(2)">&#8592;</button><button class="btn-nx" id="svN3" disabled onclick="svStep(4)">Continuar</button></div>
             </div>
-            <!-- Paso 4: Confirmacion -->
+            <!-- Paso 4: Envio + Cobro -->
             <div id="svS4" class="hidden">
+              <span class="flbl">Paso 5 de 6 &mdash; Envio y cobro</span>
+              <span class="flbl" style="margin-top:.5rem;display:block">Como envias el equipo?</span>
+              <div class="eopt" onclick="svEnvio('presencial',this)"><span class="eopt-ico">&#127978;</span><div><div class="eopt-t">Presencial en tienda</div><div class="eopt-s">Zelarrayan 179, Bahia Blanca</div></div></div>
+              <div class="eopt" onclick="svEnvio('andreani',this)"><span class="eopt-ico">&#128230;</span><div><div class="eopt-t">Andreani &mdash; etiqueta prepaga</div><div class="eopt-s">GP paga el flete &middot; Desde cualquier ciudad</div></div></div>
+              <div class="eopt" onclick="svEnvio('internacional',this)"><span class="eopt-ico">&#9992;</span><div><div class="eopt-t">Envio internacional</div><div class="eopt-s">DHL / FedEx &middot; Coordinamos el retiro</div></div></div>
+              <div class="eopt" onclick="svEnvio('propio',this)"><span class="eopt-ico">&#128666;</span><div><div class="eopt-t">Correo propio</div><div class="eopt-s">OCA, Correo Argentino u otro</div></div></div>
+              <span class="flbl" style="margin-top:1rem;display:block">Como recibes el dinero?</span>
+              <div class="vopt" onclick="svCobro('saldo',this)"><span class="vopt-ico">&#127967;</span><div><div class="vopt-t">Saldo GP</div><div class="vopt-d">Para compras, garantias o servicio.</div><div class="vopt-bonus">+5% bonus sobre el valor aprobado</div></div></div>
+              <div class="vopt" onclick="svCobro('transfer',this)"><span class="vopt-ico">&#127968;</span><div><div class="vopt-t">Transferencia bancaria</div><div class="vopt-d">Acreditacion en 24hs habiles.</div></div></div>
+              <div id="svCBU" class="hidden"><input class="inp-f" id="svCBUInput" placeholder="CBU o CVU" oninput="svChkShip()"></div>
+              <div class="vopt" onclick="svCobro('mp',this)"><span class="vopt-ico">&#128153;</span><div><div class="vopt-t">Mercado Pago</div><div class="vopt-d">Al alias de tu cuenta.</div></div></div>
+              <div id="svAlias" class="hidden"><input class="inp-f" id="svAliasInput" placeholder="Alias MP" oninput="svChkShip()"></div>
+              <div class="vopt" onclick="svCobro('efectivo',this)"><span class="vopt-ico">&#128181;</span><div><div class="vopt-t">Efectivo en sucursal</div><div class="vopt-d">Zelarrayan 179.</div></div></div>
+              <div class="nav-row"><button class="btn-bk" onclick="svStep(3)">&#8592;</button><button class="btn-nx" id="svN4" disabled onclick="svStep(5)">Continuar</button></div>
+            </div>
+            <!-- Paso 5: Declaracion + Resumen -->
+            <div id="svS5" class="hidden">
+              <span class="flbl">Paso 6 de 6 &mdash; Declaracion y resumen</span>
+              <div class="price-reveal"><div class="pr-lbl">Saldo estimado</div><div class="pr-price" id="svPriceBig">$0</div><div class="pr-range" id="svPriceRange"></div></div>
+              <div class="sum-box" id="svSum"></div>
+              <div style="margin-top:1.25rem;padding:1rem;background:var(--cream);border-radius:12px;border:1px solid var(--border)">
+                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;color:var(--dk);line-height:1.6">
+                  <input type="checkbox" id="svAccept" onchange="svToggleAccept(this)" style="margin-top:3px;accent-color:var(--orange);width:18px;height:18px;flex-shrink:0">
+                  <span>Yo, <strong id="svDeclName">el cliente</strong>, declaro que el equipo es de mi propiedad y no tiene ninguna deuda o bloqueo pendiente. Acepto los terminos y condiciones de tasacion de Great Phones Bahia Blanca. Fecha: <span id="svDeclDate"></span></span>
+                </label>
+              </div>
+              <div class="nav-row"><button class="btn-bk" onclick="svStep(4)">&#8592;</button><button class="btn-nx btn-nx-g" id="svN5" disabled onclick="svSubmit()">ENVIAR COTIZACION</button></div>
+            </div>
+            <!-- Confirmacion -->
+            <div id="svS6" class="hidden">
               <div style="text-align:center;padding:2rem 0">
                 <div style="width:56px;height:56px;border-radius:50%;background:rgba(45,90,39,.1);border:1.5px solid rgba(45,90,39,.2);display:flex;align-items:center;justify-content:center;margin:0 auto .875rem;font-size:24px;color:var(--green)">&#10003;</div>
                 <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;margin-bottom:.4rem">Solicitud enviada!</div>

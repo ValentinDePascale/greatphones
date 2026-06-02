@@ -1,5 +1,5 @@
 // =========== SELL / TASACION ===========
-var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0};
+var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
 
 function checkSellLogin(){
   if(!currentUser){
@@ -64,12 +64,13 @@ function renderSvPhotoPreview(){
 }
 
 function svStep(n){
-  for(var i=0;i<=4;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
+  for(var i=0;i<=6;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
   var bars=document.querySelectorAll('#svBar .sv-bar');
   bars.forEach(function(b,i){b.className='sv-bar'+(i<n?' done':i===n?' cur':'');});
   if(n===0)renderModelGrid();
   if(n===1)renderStorGrid();
-  if(n===3){svRenderPrice();svBuildSum();svSetupSig();}
+  if(n===3)svFillUserData();
+  if(n===5){svRenderPrice();svBuildSum();svFillDecl();}
 }
 
 function filterModels(query){
@@ -183,18 +184,37 @@ function svRenderPrice(){
   if(rng)rng.textContent='Rango: '+fmt(Math.round(sv.finalPrice*0.9))+' - '+fmt(Math.round(sv.finalPrice*1.05));
 }
 
-function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChkFinal();}
+function svFillUserData(){
+  if(currentUser){
+    var nombre=document.getElementById('svNombre');
+    if(nombre&&!nombre.value)nombre.value=currentUser.name||'';
+    var email=document.getElementById('svEmail');
+    if(email&&!email.value)email.value=currentUser.email||'';
+    var tel=document.getElementById('svTel');
+    if(tel&&!tel.value)tel.value=currentUser.phone||'';
+  }
+  svChkData();
+}
+
+function svChkData(){
+  var fields=['svNombre','svDni','svTel','svEmail'];
+  var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>1;});
+  var btn=document.getElementById('svN3');
+  if(btn)btn.disabled=!ok;
+}
+
+function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChkShip();}
 function svCobro(tipo,el){
   sv.cobro=tipo;document.querySelectorAll('.vopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');
   var cbu=document.getElementById('svCBU');var alias=document.getElementById('svAlias');
-  if(cbu)cbu.className=tipo==='transfer'?'':'hidden';if(alias)alias.className=tipo==='mp'?'':'hidden';svChkFinal();
+  if(cbu)cbu.className=tipo==='transfer'?'':'hidden';if(alias)alias.className=tipo==='mp'?'':'hidden';svChkShip();
 }
-function svChkFinal(){
-  var fieldsOk=['svNombre','svDni','svTel','svEmail'].every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>1;});
-  var sigWrap=document.getElementById('sigWrap');
-  var sigDone=sigWrap&&sigWrap.classList.contains('signed');
-  var btn=document.getElementById('svN3');
-  if(btn)btn.disabled=!(sv.envio&&sv.cobro&&fieldsOk&&sigDone);
+function svChkShip(){
+  var ok=sv.envio&&sv.cobro;
+  if(sv.cobro==='transfer'){var cbu=document.getElementById('svCBUInput');if(cbu&&cbu.value.trim().length<1)ok=false;}
+  if(sv.cobro==='mp'){var alias=document.getElementById('svAliasInput');if(alias&&alias.value.trim().length<1)ok=false;}
+  var btn=document.getElementById('svN4');
+  if(btn)btn.disabled=!ok;
 }
 
 function svBuildSum(){
@@ -202,38 +222,35 @@ function svBuildSum(){
   var cobroNames={saldo:'Saldo GP (+5% bonus)',transfer:'Transferencia bancaria',mp:'Mercado Pago',efectivo:'Efectivo en sucursal'};
   var el=document.getElementById('svSum');
   if(!el)return;
-  var rows=[{k:'Equipo',v:'iPhone '+sv.model},{k:'Almacenamiento',v:sv.storage},{k:'Estado',v:sv.cond},{k:'Precio estimado',v:fmt(sv.finalPrice||0)},{k:'Envio',v:envioNames[sv.envio]||sv.envio},{k:'Cobro',v:cobroNames[sv.cobro]||sv.cobro}];
+  var rows=[
+    {k:'Equipo',v:'iPhone '+sv.model},
+    {k:'Almacenamiento',v:sv.storage},
+    {k:'Estado',v:sv.cond},
+    {k:'Precio estimado',v:fmt(sv.finalPrice||0)},
+    {k:'Envio',v:envioNames[sv.envio]||sv.envio},
+    {k:'Cobro',v:cobroNames[sv.cobro]||sv.cobro}
+  ];
   el.innerHTML=rows.map(function(r){return'<div class="sum-row"><span class="sum-k">'+r.k+'</span><span class="sum-v">'+r.v+'</span></div>';}).join('');
 }
 
-function svSetupSig(){
-  var legal=document.getElementById('svLegal');
+function svFillDecl(){
   var nombre=(document.getElementById('svNombre')||{}).value||'el cliente';
-  if(legal)legal.innerHTML='Yo, <strong>'+nombre+'</strong>, declaro que el equipo es de mi propiedad y no tiene ninguna deuda o bloqueo pendiente. Acepto los terminos y condiciones de tasacion de Great Phones Bahia Blanca. Fecha: '+new Date().toLocaleDateString('es-AR');
-  var canvas=document.getElementById('sigCanvas');
-  if(!canvas)return;
-  var ctx=canvas.getContext('2d');
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  var signed=false,drawing=false;
-  function getPos(e,c){var r=c.getBoundingClientRect();var src=e.touches?e.touches[0]:e;return{x:(src.clientX-r.left)*(c.width/r.width),y:(src.clientY-r.top)*(c.height/r.height)};}
-  function start(e){drawing=true;var p=getPos(e,canvas);ctx.beginPath();ctx.moveTo(p.x,p.y);e.preventDefault();}
-  function move(e){if(!drawing)return;var p=getPos(e,canvas);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1A1208';ctx.lineWidth=2;ctx.lineCap='round';ctx.stroke();e.preventDefault();signed=true;document.getElementById('sigWrap').className='sig-wrap signed';document.getElementById('sigStatus').textContent='Firma capturada';svChkFinal();}
-  function end(){drawing=false;}
-  canvas.onmousedown=start;canvas.onmousemove=move;canvas.onmouseup=end;canvas.ontouchstart=start;canvas.ontouchmove=move;canvas.ontouchend=end;
+  var nameEl=document.getElementById('svDeclName');
+  if(nameEl)nameEl.textContent=nombre;
+  var dateEl=document.getElementById('svDeclDate');
+  if(dateEl)dateEl.textContent=new Date().toLocaleDateString('es-AR');
 }
 
-function clearSig(){
-  var canvas=document.getElementById('sigCanvas');
-  if(canvas)canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
-  document.getElementById('sigWrap').className='sig-wrap';
-  document.getElementById('sigStatus').textContent='Traza tu firma arriba';
-  svChkFinal();
+function svToggleAccept(el){
+  sv.accepted=el.checked;
+  var btn=document.getElementById('svN5');
+  if(btn)btn.disabled=!sv.accepted;
 }
 
 function svSubmit(){
   if(!checkSellLogin())return;
 
-  var btn=document.getElementById('svN3');
+  var btn=document.getElementById('svN5');
   if(btn){
     btn.disabled=true;
     btn.textContent='Enviando...';
@@ -243,8 +260,6 @@ function svSubmit(){
   var dni=document.getElementById('svDni').value.trim();
   var tel=document.getElementById('svTel').value.trim();
   var ciudad=document.getElementById('svCiudad').value.trim();
-  var sigCanvas=document.getElementById('sigCanvas');
-  var sigData=sigCanvas?sigCanvas.toDataURL():'';
 
   var extrasSelected=Object.keys(sv.extras).filter(function(k){return sv.extras[k];});
 
@@ -262,7 +277,6 @@ function svSubmit(){
     clientDni:dni,
     clientPhone:tel,
     clientCity:ciudad,
-    signature:sigData,
     photos:svPhotos,
     extras:extrasSelected,
   };
@@ -277,7 +291,7 @@ function svSubmit(){
   }).then(function(result){
     if(result.success){
       svRenderConfirm(result.quote);
-      svStep(4);
+      svStep(6);
     }else{
       throw new Error(result.error||'Error al enviar');
     }
@@ -307,17 +321,17 @@ function svRenderConfirm(quote){
 }
 
 function svReset(){
-  sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0};
+  sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
   svStep(0);
   ['xPant','xBat','xIcloud','xCaja','xAcc'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   svUpdExt();
   svPhotos=[];
   renderSvPhotoPreview();
-  ['svN0','svN1','svN2','svN3'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
+  ['svN0','svN1','svN2','svN3','svN4','svN5'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
   var searchEl=document.getElementById('svModelSearch');if(searchEl)searchEl.value='';
   ['svNombre','svDni','svTel','svEmail','svCiudad'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var cbu=document.getElementById('svCBU');if(cbu)cbu.className='hidden';
   var alias=document.getElementById('svAlias');if(alias)alias.className='hidden';
   document.querySelectorAll('.eopt,.vopt').forEach(function(e){e.classList.remove('act');});
-  clearSig();
+  var chk=document.getElementById('svAccept');if(chk)chk.checked=false;
 }
