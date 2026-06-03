@@ -178,6 +178,8 @@ model Quote {
   clientDni   String?
   clientPhone String?
   clientCity  String?
+  clientCp    String?
+  clientProvince String?
 
   photos      String[]
   extras      String[]
