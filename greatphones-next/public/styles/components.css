@@ -675,10 +675,12 @@
 .step-n{font-size:8px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px}
 .step-t{font-size:11px;font-weight:500;color:#fff;margin-top:.2rem}
 .sell-body{background:var(--cream);padding:2rem 0}
-.sell-cotizador{max-width:680px;margin:0 auto 2rem}
-.sell-info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:900px;margin:0 auto}
-@media(max-width:768px){.sell-info-grid{grid-template-columns:1fr}}
+.sell-layout{display:grid;grid-template-columns:1fr 320px;gap:2rem;align-items:start}
+.sell-cotizador{min-width:0}
+.sell-sidebar{position:sticky;top:100px;display:flex;flex-direction:column;gap:1rem}
+@media(max-width:900px){.sell-layout{grid-template-columns:1fr}.sell-sidebar{position:static}}
 .sell-info-card{background:var(--dk2);border-radius:var(--r);padding:1.5rem;border:1px solid rgba(255,255,255,.08)}
+.sell-info-card-accent{background:rgba(255,107,44,.08);border-color:rgba(255,107,44,.2)}
 .sic-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#fff;margin-bottom:.75rem}
 .sic-item{display:flex;align-items:flex-start;gap:10px;padding:.75rem 0;border-bottom:1px solid rgba(255,255,255,.07)}
 .sic-item:last-child{border-bottom:none}
