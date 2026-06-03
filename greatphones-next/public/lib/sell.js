@@ -235,13 +235,21 @@ function svFillUserData(){
     if(email&&!email.value)email.value=currentUser.email||'';
     var tel=document.getElementById('svTel');
     if(tel&&!tel.value)tel.value=currentUser.phone||'';
+    var dni=document.getElementById('svDni');
+    if(dni&&!dni.value)dni.value=currentUser.dni||'';
+    var ciudad=document.getElementById('svCiudad');
+    if(ciudad&&!ciudad.value)ciudad.value=currentUser.ciudad||'';
+    var cp=document.getElementById('svCp');
+    if(cp&&!cp.value)cp.value=currentUser.cp||'';
+    var provincia=document.getElementById('svProvincia');
+    if(provincia&&!provincia.value)provincia.value=currentUser.provincia||'';
   }
   svChkData();
 }
 
 function svChkData(){
-  var fields=['svNombre','svDni','svTel','svEmail'];
-  var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>1;});
+  var fields=['svNombre','svDni','svTel','svEmail','svCiudad','svProvincia'];
+  var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>0;});
   var btn=document.getElementById('svN3');
   if(btn)btn.disabled=!ok;
 }
@@ -303,6 +311,8 @@ function svSubmit(){
   var dni=document.getElementById('svDni').value.trim();
   var tel=document.getElementById('svTel').value.trim();
   var ciudad=document.getElementById('svCiudad').value.trim();
+  var cp=document.getElementById('svCp').value.trim();
+  var provincia=document.getElementById('svProvincia').value.trim();
 
   var extrasSelected=Object.keys(sv.extras).filter(function(k){return sv.extras[k];});
 
@@ -320,6 +330,8 @@ function svSubmit(){
     clientDni:dni,
     clientPhone:tel,
     clientCity:ciudad,
+    clientCp:cp,
+    clientProvince:provincia,
     photos:svPhotos,
     extras:extrasSelected,
   };
@@ -372,7 +384,8 @@ function svReset(){
   renderSvPhotoPreview();
   ['svN0','svN1','svN2','svN3','svN4','svN5'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
   var searchEl=document.getElementById('svModelSearch');if(searchEl)searchEl.value='';
-  ['svNombre','svDni','svTel','svEmail','svCiudad'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['svNombre','svDni','svTel','svEmail','svCiudad','svCp'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  var provincia=document.getElementById('svProvincia');if(provincia)provincia.value='';
   var cbu=document.getElementById('svCBU');if(cbu)cbu.className='hidden';
   var alias=document.getElementById('svAlias');if(alias)alias.className='hidden';
   document.querySelectorAll('.eopt,.vopt').forEach(function(e){e.classList.remove('act');});

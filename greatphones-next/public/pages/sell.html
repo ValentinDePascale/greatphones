@@ -72,13 +72,13 @@
                     <input class="inp-f" id="svNombre" placeholder="Juan Pérez" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                   </div>
                   <div>
-                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI / Pasaporte</label>
+                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI</label>
                     <input class="inp-f" id="svDni" placeholder="20-34567890-9" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                   </div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
                   <div>
-                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">WhatsApp</label>
+                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Telefono</label>
                     <input class="inp-f" id="svTel" placeholder="11 2345 6789" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                   </div>
                   <div>
@@ -86,9 +86,43 @@
                     <input class="inp-f" id="svEmail" type="email" placeholder="nombre@ejemplo.com" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
                   </div>
                 </div>
+                <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:12px">
+                  <div>
+                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad</label>
+                    <input class="inp-f" id="svCiudad" placeholder="Bahia Blanca" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  </div>
+                  <div>
+                    <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Codigo Postal</label>
+                    <input class="inp-f" id="svCp" placeholder="8000" oninput="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  </div>
+                </div>
                 <div style="margin-top:12px">
-                  <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad / Pais</label>
-                  <input class="inp-f" id="svCiudad" placeholder="Bahia Blanca, Argentina" style="padding:12px 16px;border-radius:12px;font-size:13px" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                  <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Provincia</label>
+                  <select class="inp-f" id="svProvincia" onchange="svChkData()" style="padding:12px 16px;border-radius:12px;font-size:13px;outline:none;background:#fff;appearance:none;cursor:pointer;width:100%" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+                    <option value="">Seleccionar...</option>
+                    <option value="Buenos Aires">Buenos Aires</option>
+                    <option value="CABA">Capital Federal</option>
+                    <option value="Córdoba">Córdoba</option>
+                    <option value="Santa Fe">Santa Fe</option>
+                    <option value="Mendoza">Mendoza</option>
+                    <option value="Tucumán">Tucumán</option>
+                    <option value="Entre Ríos">Entre Ríos</option>
+                    <option value="Salta">Salta</option>
+                    <option value="Neuquén">Neuquén</option>
+                    <option value="Río Negro">Río Negro</option>
+                    <option value="Chubut">Chubut</option>
+                    <option value="Santa Cruz">Santa Cruz</option>
+                    <option value="Tierra del Fuego">Tierra del Fuego</option>
+                    <option value="San Juan">San Juan</option>
+                    <option value="San Luis">San Luis</option>
+                    <option value="La Rioja">La Rioja</option>
+                    <option value="Catamarca">Catamarca</option>
+                    <option value="Santiago del Estero">Santiago del Estero</option>
+                    <option value="Formosa">Formosa</option>
+                    <option value="Corrientes">Corrientes</option>
+                    <option value="Misiones">Misiones</option>
+                    <option value="La Pampa">La Pampa</option>
+                  </select>
                 </div>
                 <div style="margin-top:1.25rem">
                   <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Fotos del dispositivo (opcional, max 3)</div>
