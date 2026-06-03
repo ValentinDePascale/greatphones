@@ -1,6 +1,33 @@
 // =========== SELL / TASACION ===========
 var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
 
+function svBtnSuccess(btn){
+  if(!btn)return;
+  btn.classList.remove('sv-success');
+  void btn.offsetWidth;
+  btn.classList.add('sv-success');
+  setTimeout(function(){btn.classList.remove('sv-success');},700);
+  try{
+    var cartBadge=document.querySelector('[id*="cartBadge"],[id*="CartBadge"],[class*="cart-badge"]');
+    if(!cartBadge)cartBadge=document.querySelector('button[onclick*="openCart"],button[onclick*="toggleCart"]');
+    var cartIcon=cartBadge||document.querySelector('header svg, header [class*="cart"]');
+    if(!cartIcon)return;
+    var br=btn.getBoundingClientRect();
+    var cr=cartIcon.getBoundingClientRect();
+    var dot=document.createElement('div');
+    dot.className='pcard-add-dot';
+    dot.style.cssText='position:fixed;left:'+(br.left+br.width/2-4)+'px;top:'+(br.top+br.height/2-4)+'px;width:8px;height:8px;border-radius:50%;background:var(--orange);box-shadow:0 0 12px rgba(255,107,44,.8);z-index:9999;pointer-events:none;transition:all .65s cubic-bezier(.5,-.5,.7,1.4)';
+    document.body.appendChild(dot);
+    var dx=cr.left+cr.width/2-(br.left+br.width/2);
+    var dy=cr.top+cr.height/2-(br.top+br.height/2);
+    requestAnimationFrame(function(){
+      dot.style.transform='translate('+dx+'px,'+dy+'px) scale(.4)';
+      dot.style.opacity='0';
+    });
+    setTimeout(function(){if(dot.parentNode)dot.parentNode.removeChild(dot);},700);
+  }catch(e){}
+}
+
 function svMagnetic(e,el){
   var r=el.getBoundingClientRect();
   var x=((e.clientX-r.left)/r.width)*100;

@@ -356,8 +356,23 @@
 .pcard-old{font-size:13px;color:var(--gray);text-decoration:line-through}
 .pcard-cuota{font-size:12px;color:var(--green)}
 .pcard-stock{font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:6px 10px;border-radius:8px;width:fit-content}
-.pcard-add{width:100%;background:var(--orange);color:#fff;font-size:14px;font-weight:600;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:auto;transition:all .2s;box-shadow:0 4px 16px rgba(255,107,44,.35)}
-.pcard-add:hover{background:var(--orange2);box-shadow:0 8px 24px rgba(255,107,44,.45)}
+.pcard-add{position:relative;width:100%;background:linear-gradient(135deg,var(--orange) 0%,#E54A0E 100%);background-size:200% 200%;color:#fff;font-size:14px;font-weight:600;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:auto;overflow:hidden;transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s ease,background-position .6s ease;box-shadow:0 4px 16px rgba(255,107,44,.35);isolation:isolate}
+.pcard-add::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.35) 50%,transparent 70%);background-size:200% 100%;background-position:200% 0;transition:background-position .8s ease;z-index:0;pointer-events:none}
+.pcard-add > *{position:relative;z-index:1}
+.pcard-add:hover{background-position:100% 100%;box-shadow:0 10px 28px rgba(255,107,44,.5),0 0 0 1px rgba(255,107,44,.3);transform:translateY(-2px) scale(1.015)}
+.pcard-add:hover::before{background-position:-100% 0}
+.pcard-add:active{transform:translateY(0) scale(.97);box-shadow:0 2px 8px rgba(255,107,44,.4);transition-duration:.08s}
+.pcard-add.sv-success{animation:pcardAddSuccess .6s cubic-bezier(.34,1.56,.64,1)}
+@keyframes pcardAddSuccess{
+  0%{transform:scale(1)}
+  20%{transform:scale(.94);background:linear-gradient(135deg,#2D5A27 0%,#1A3D12 100%)}
+  40%{transform:scale(1.04)}
+  100%{transform:scale(1);background:linear-gradient(135deg,var(--green) 0%,#1A3D12 100%)}
+}
+.pcard-add .pcard-add-dot{position:absolute;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 12px rgba(255,107,44,.8),0 0 4px rgba(255,255,255,.9);pointer-events:none;z-index:5}
+
+/* Compact variant (used inside other listings) */
+.pcard-add.compact{font-size:12px;padding:12px;border-radius:8px}
 .pcard-bdg{position:absolute;top:16px;left:16px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:2;box-shadow:0 2px 8px rgba(255,0,0,.3)}
 .pcard-img{position:relative;aspect-ratio:1/1;background:var(--cream);overflow:hidden;margin:16px;display:flex;align-items:center;justify-content:center}
 .pcard-img img{object-fit:cover;width:100%;height:100%;transition:transform .5s}
@@ -401,8 +416,9 @@
 .pcard-old{font-size:12px;color:var(--gray);text-decoration:line-through}
 .pcard-cuota{font-size:11px;color:var(--green)}
 .pcard-stock{font-size:11px;color:var(--red);background:rgba(239,68,68,.1);padding:4px 8px;border-radius:6px;width:fit-content}
-.pcard-add{width:100%;background:var(--orange);color:#fff;font-size:12px;font-weight:600;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-top:auto;transition:all .2s;box-shadow:0 2px 8px rgba(255,107,44,.3)}
-.pcard-add:hover{background:var(--orange2);box-shadow:0 4px 16px rgba(255,107,44,.45)}
+.pcard-add{width:100%;background:var(--orange);color:#fff;font-size:12px;font-weight:600;padding:12px;border-radius:8px;border:none;cursor:pointer;margin-top:auto;box-shadow:0 2px 8px rgba(255,107,44,.3);transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .35s ease,background-color .25s}
+.pcard-add:hover{background:var(--orange2);box-shadow:0 4px 16px rgba(255,107,44,.45);transform:translateY(-1px) scale(1.01)}
+.pcard-add:active{transform:translateY(0) scale(.97);transition-duration:.08s}
 .prail{display:flex;gap:12px;overflow-x:auto;scrollbar-width:none;padding-bottom:4px}
 .prail::-webkit-scrollbar{display:none}
 
@@ -1009,4 +1025,31 @@
   30%{opacity:1}
   100%{opacity:0;background-position:-100% -100%}
 }
+
+/* === DETAIL PAGE BUTTONS === */
+.det-btn{position:relative;overflow:hidden;transition:transform .35s cubic-bezier(.34,1.56,.64,1),box-shadow .4s ease;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.det-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,.25) 50%,transparent 70%);background-size:200% 100%;background-position:200% 0;transition:background-position .8s ease;pointer-events:none}
+.det-btn > *{position:relative;z-index:1}
+.det-btn-cart{background:linear-gradient(135deg,var(--orange) 0%,#E54A0E 100%);background-size:200% 200%;box-shadow:0 6px 18px rgba(255,107,44,.35)}
+.det-btn-cart:hover{background-position:100% 100%;box-shadow:0 12px 28px rgba(255,107,44,.5),0 0 0 1px rgba(255,107,44,.4);transform:translateY(-2px) scale(1.02)}
+.det-btn-cart:hover::before{background-position:-100% 0}
+.det-btn-cart:active{transform:translateY(0) scale(.98);box-shadow:0 2px 8px rgba(255,107,44,.4);transition-duration:.08s}
+.det-btn-buy{background:linear-gradient(135deg,var(--green) 0%,#1A3D12 100%);background-size:200% 200%;box-shadow:0 6px 18px rgba(45,90,39,.4);position:relative}
+.det-btn-buy:hover{background-position:100% 100%;box-shadow:0 12px 28px rgba(45,90,39,.55),0 0 0 1px rgba(45,90,39,.5);transform:translateY(-2px) scale(1.02)}
+.det-btn-buy:hover::before{background-position:-100% 0}
+.det-btn-buy:active{transform:translateY(0) scale(.98);transition-duration:.08s}
+.det-btn-buy::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 0 rgba(45,90,39,.5);animation:detBuyPulse 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes detBuyPulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(45,90,39,0)}
+  50%{box-shadow:0 0 0 8px rgba(45,90,39,.15)}
+}
+.det-btn-buy:hover::after{animation-duration:1.2s}
+.det-btn.sv-success{animation:detBtnSuccess .7s cubic-bezier(.34,1.56,.64,1)}
+@keyframes detBtnSuccess{
+  0%{transform:scale(1)}
+  20%{transform:scale(.95);filter:brightness(1.2)}
+  50%{transform:scale(1.05)}
+  100%{transform:scale(1)}
+}
+.det-btn .det-btn-fly{position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;box-shadow:0 0 16px currentColor;pointer-events:none;z-index:5;opacity:0}
 .pr-range{font-size:10px;color:var(--gray);margin-top:.25rem}

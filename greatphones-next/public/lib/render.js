@@ -55,11 +55,13 @@ function renderDetBadges(p){
   el.innerHTML=badges.map(function(b){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">'+b.ico+' '+b.text+'</div>';}).join('');
 }
 
-function addToCartAcc(id){
+function addToCartAcc(id,triggerEl){
   var a=getById(window.ACCS,id);if(!a)return;
   var existing=Cart.find(function(item){return item.id===id;});
   if(existing){existing.qty++;}else{Cart.push({id:id,qty:1});}
-  saveCart();updCartBadge();openCart();showToast('Agregado al carrito');
+  saveCart();updCartBadge();
+  if(triggerEl&&typeof svBtnSuccess==='function')svBtnSuccess(triggerEl);
+  openCart();showToast('Agregado al carrito');
 }
 function addToCartFromDetail(){if(currentProd)addToCart(currentProd.id);}
 function buyNow(){if(currentProd){addToCart(currentProd.id);openCheckout();}}
@@ -456,7 +458,7 @@ function renderGrid(gid,prods){
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
       '</div>'+
-      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
+      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
       '</div>'+
       '</article>';
   }).join('');
@@ -498,7 +500,7 @@ function renderHomeRail(){
     var favIcon=isFav?'\u2665':'\u2661';
     var priceHtml=isPromoActive?'<span style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'';
     var discBadge=isPromoActive?'<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span>':'';
-    var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
+    var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
     var onclick=isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"';
     return '<article class="'+cardClass+'"'+onclick+' style="'+cardStyle+'">'+
       '<div style="'+imgWrapStyle+'">'+
@@ -548,7 +550,7 @@ function renderOfferStrip(){
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(fp)+'</div>'+
       '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
       '</div>'+
-      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
+      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
       '</div>'+
       '</article>';
   }).join('');
@@ -667,7 +669,7 @@ function renderAccGrid(){
       (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--gray);text-decoration:line-through">'+fmt(a.price)+'</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff">-'+a.discount+'%</span></div>':'')+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
       '</div>'+
-      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
+      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
       '</div>'+
       '</article>';
   }).join('');
@@ -704,8 +706,8 @@ function openAccDetail(id){
   if(badgesEl)badgesEl.innerHTML='<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">\u2713 Garantia incluida</div>';
 
   var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
-  if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartAcc(currentAcc.id);};}
-  if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){addToCartAcc(currentAcc.id);openCart();};}
+  if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartAcc(currentAcc.id,addCartBtn);};}
+  if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){if(typeof svBtnSuccess==='function')svBtnSuccess(buyNowBtn);addToCartAcc(currentAcc.id);setTimeout(function(){nav('checkout');},400);};}
 
   _accImages=[];
   if(currentAcc.imageUrl)_accImages.push(currentAcc.imageUrl);
