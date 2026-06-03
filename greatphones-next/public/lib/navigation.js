@@ -2,6 +2,7 @@
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
+  ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
   var _hidden=['servicio','notebooks','mayorista','compare'];
   if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}

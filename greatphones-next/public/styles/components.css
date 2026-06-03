@@ -337,14 +337,14 @@
 @media(max-width:900px){.carousel .pcard{width:240px}}
 @media(max-width:460px){.carousel .pcard{width:200px;gap:12px}}
 
-.pcard{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:all .3s;display:flex;flex-direction:column;position:relative;box-shadow:0 4px 24px rgba(26,28,30,.08)}
-.pcard:hover{box-shadow:0 16px 48px rgba(26,28,30,.15);transform:translateY(-4px)}
+.pcard{background:#fff;border-radius:20px;overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:transform .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s cubic-bezier(.2,.8,.2,1),border-color .3s;display:flex;flex-direction:column;position:relative;box-shadow:0 4px 24px rgba(26,28,30,.08)}
+.pcard:hover{box-shadow:0 20px 50px rgba(26,28,30,.18),0 0 0 1px rgba(255,107,44,.15);transform:translateY(-6px);border-color:rgba(255,107,44,.25)}
 .pcard-out-of-stock{opacity:.7;pointer-events:none}
 .pcard-out-of-stock:hover{transform:none;box-shadow:0 4px 24px rgba(26,28,30,.08)}
 .pcard-out-of-stock .pcard-add{background:var(--gray)!important;cursor:default!important;box-shadow:none!important}
 .pcard>div:first-child{position:relative;aspect-ratio:1/1;background:var(--cream);overflow:hidden;margin:16px;display:flex;align-items:center;justify-content:center}
-.pcard>div:first-child img{object-fit:cover;width:100%;height:100%;transition:transform .5s}
-.pcard:hover>div:first-child img{transform:scale(1.05)}
+.pcard>div:first-child img{object-fit:cover;width:100%;height:100%;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
+.pcard:hover>div:first-child img{transform:scale(1.08)}
 .pcard>div:first-child span{display:flex;align-items:center;justify-content:center;font-size:64px}
 .pcard-fav{position:absolute;top:16px;right:16px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.95);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:2;box-shadow:0 4px 12px rgba(0,0,0,.12);transition:all .2s}
 .pcard-fav:hover{transform:scale(1.1)}
@@ -962,4 +962,51 @@
 .sum-row{display:flex;justify-content:space-between;padding:.35rem 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:11px}
 .sum-row:last-child{border-bottom:none}
 .sum-k{color:var(--gray)}.sum-v{font-weight:500}
+
+/* === CATALOG ENTRANCE: PER-ROW STAGGERED REVEAL === */
+/* One-time reveal animation: when .pgrid has .pgrid-reveal, every pcard inside animates in.
+   Per-row delay is computed via :nth-child arithmetic (4-col grid). */
+.pgrid-reveal .pcard{
+  animation:pcardReveal .85s cubic-bezier(.2,.8,.2,1) both;
+}
+.pgrid-reveal .pcard:nth-child(4n+1){animation-delay:.04s}
+.pgrid-reveal .pcard:nth-child(4n+2){animation-delay:.10s}
+.pgrid-reveal .pcard:nth-child(4n+3){animation-delay:.16s}
+.pgrid-reveal .pcard:nth-child(4n+4){animation-delay:.22s}
+.pgrid-reveal .pcard:nth-child(n+5){animation-delay:.28s}
+.pgrid-reveal .pcard:nth-child(n+9){animation-delay:.32s}
+.pgrid-reveal .pcard:nth-child(n+13){animation-delay:.36s}
+.pgrid-reveal .pcard>div:first-child::after{
+  content:'';position:absolute;inset:0;background:var(--cream);
+  transform-origin:top;animation:pcardImgWipe .85s cubic-bezier(.7,0,.3,1) both;
+  z-index:3;pointer-events:none;
+}
+@keyframes pcardReveal{
+  0%{opacity:0;transform:translateY(28px) scale(.96);filter:blur(6px)}
+  60%{filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}
+}
+@keyframes pcardImgWipe{
+  0%{transform:scaleY(1)}
+  100%{transform:scaleY(0)}
+}
+/* pcard body content fade-up after image reveals */
+.pgrid-reveal .pcard-body{animation:pcardBodyIn .6s cubic-bezier(.2,.8,.2,1) .5s both}
+@keyframes pcardBodyIn{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:translateY(0)}}
+
+/* === CATALOG: AMBIENT ENTRANCE PERKS === */
+/* Shimmer on card border on first reveal */
+.pgrid-reveal .pcard{position:relative;overflow:hidden}
+.pgrid-reveal .pcard::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;padding:1px;
+  background:linear-gradient(135deg,transparent 30%,rgba(255,107,44,.4) 50%,transparent 70%);
+  background-size:200% 200%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  animation:pcardBorderShine 1.4s ease-out both;pointer-events:none;z-index:4;
+}
+@keyframes pcardBorderShine{
+  0%{opacity:0;background-position:200% 200%}
+  30%{opacity:1}
+  100%{opacity:0;background-position:-100% -100%}
+}
 .pr-range{font-size:10px;color:var(--gray);margin-top:.25rem}
