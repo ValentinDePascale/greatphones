@@ -1,6 +1,22 @@
 // =========== SELL / TASACION ===========
 var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
 
+function svMagnetic(e,el){
+  var r=el.getBoundingClientRect();
+  var x=((e.clientX-r.left)/r.width)*100;
+  var y=((e.clientY-r.top)/r.height)*100;
+  el.style.setProperty('--mx',x+'%');
+  el.style.setProperty('--my',y+'%');
+  var cx=r.width/2;
+  var cy=r.height/2;
+  var dx=(e.clientX-r.left-cx)*0.15;
+  var dy=(e.clientY-r.top-cy)*0.15;
+  el.style.transform='translate('+dx+'px,'+dy+'px) translateY(-4px) scale(1.02)';
+}
+function svMagneticReset(el){
+  el.style.transform='';
+}
+
 function checkSellLogin(){
   if(!currentUser){
     if(typeof showAlert==='function'){
@@ -90,7 +106,7 @@ function renderModelGrid(){
   models.forEach(function(m){
     var base=COTIZ_BASE[m]||0;
     var isSelected=sv.model===m;
-    html+='<div class="model-card'+(isSelected?' act':'')+'" data-model="'+m+'" onclick="svSelectModel(\''+m+'\')">'+
+    html+='<div class="model-card'+(isSelected?' act':'')+'" data-model="'+m+'" onclick="svSelectModel(\''+m+'\')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">'+
       '<div class="model-ico">&#128241;</div>'+
       '<div class="model-name">'+m+'</div>'+
       '<div class="model-price">'+(base?fmt(base):'Consultar')+'</div>'+
