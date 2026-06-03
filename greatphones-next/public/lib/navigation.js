@@ -15,20 +15,15 @@ function nav(id){
     if(el)el.classList.add('act');
     window.scrollTo({top:0,behavior:'smooth'});
     if(typeof svStep==='function')svStep(0);
-    return;
+  }else{
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
+    var el=document.getElementById('p-'+id);
+    if(el)el.classList.add('act');
+    window.scrollTo({top:0,behavior:'smooth'});
   }
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
-  var el=document.getElementById('p-'+id);
-  if(el)el.classList.add('act');
-  window.scrollTo({top:0,behavior:'smooth'});
   if(id==='admin'&&typeof loadAdminTheme==='function'){loadAdminTheme();}
   if(id==='cuenta'||id==='checkout'||id==='admin'||id==='terminos'||id==='privacidad'||id==='edit-profile'){
     document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
-  }
-  if(id==='edit-profile'){
-    if(window.location.pathname!=='/edit-profile'){
-      window.history.pushState({page:'edit-profile'},'',window.location.pathname+'edit-profile');
-    }
   }
   if(id==='terminos'||id==='privacidad'){
     window.scrollTo({top:0,behavior:'smooth'});
@@ -121,7 +116,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
+  var urlMap={home:'',shop:'shop',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -985,6 +980,7 @@ function handleInitialRoute(){
   if(path==='privacidad'){nav('privacidad');return;}
   if(path==='login'){nav('login');return;}
   if(path==='register'){nav('register');return;}
+  if(path==='sell'){nav('sell');return;}
   if(path.indexOf('detail/')===0){
     pendingDetailId=path.replace('detail/','');
     return;
