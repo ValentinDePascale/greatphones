@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import nodemailer from 'nodemailer'
+import { sendEmail } from '@/lib/email'
 import { rateLimit } from '@/lib/rate-limit'
-
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-})
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -59,8 +51,7 @@ export async function POST(request: Request) {
       }
 
       try {
-        await transporter.sendMail({
-          from: 'Great Phones <greatphones2024@gmail.com>',
+        await sendEmail({
           to: email,
           subject: 'Codigo de verificacion - Great Phones',
           html: `
@@ -75,7 +66,7 @@ export async function POST(request: Request) {
           `,
         })
       } catch (emailErr) {
-        console.error('[VERIFY] Gmail error:', emailErr)
+        console.error('[VERIFY] Email error:', emailErr)
         return NextResponse.json({ error: 'No se pudo enviar el codigo de verificacion' }, { status: 500 })
       }
 

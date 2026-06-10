@@ -3,15 +3,15 @@ import { join } from 'path'
 
 export const dynamic = 'force-dynamic'
 
+const htmlPath = join(process.cwd(), 'public', 'index.html')
+const cachedHtml = existsSync(htmlPath)
+  ? readFileSync(htmlPath, 'utf-8')
+  : '<h1>Loading...</h1>'
+
 export default function Home() {
-  const htmlPath = join(process.cwd(), 'public', 'index.html')
-  const html = existsSync(htmlPath) 
-    ? readFileSync(htmlPath, 'utf-8') 
-    : '<h1>Loading...</h1>'
-  
   return (
-    <div 
-      dangerouslySetInnerHTML={{ __html: html }} 
+    <div
+      dangerouslySetInnerHTML={{ __html: cachedHtml }}
       suppressHydrationWarning
     />
   )

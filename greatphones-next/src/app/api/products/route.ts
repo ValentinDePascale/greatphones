@@ -1,43 +1,45 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { 
-  ProductCreateSchema, 
+import {
+  ProductCreateSchema,
   ProductUpdateSchema,
-  formatZodError 
+  formatZodError
 } from '@/lib/validations'
+import { productCache } from '@/lib/cache'
+import { getCorsHeaders, corsOptions } from '@/lib/cors'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-}
-
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: corsHeaders,
-  })
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin')
+  return corsOptions(origin)
 }
 
 export async function GET(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   const { searchParams } = new URL(request.url)
   const brand = searchParams.get('brand')
   const offer = searchParams.get('offer')
   const search = searchParams.get('search')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '20')
-   
-  try {
+
+  const cacheKey = `products:${brand||''}:${offer||''}:${search||''}:${page}:${limit}`
+  const cached = productCache.get(cacheKey)
+  if (cached) {
+    return NextResponse.json(cached, { headers: corsHeaders })
+  }
+
+   try {
     const where: any = {}
-    
+
     if (brand) {
       where.brand = { equals: brand, mode: 'insensitive' }
     }
-    
+
     if (offer === 'true') {
       where.isOffer = true
     }
-    
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
         { sub: { contains: search, mode: 'insensitive' } },
       ]
     }
-    
+
     const total = await prisma.product.count({ where })
     const products = await prisma.product.findMany({
       where,
@@ -53,14 +55,18 @@ export async function GET(request: Request) {
       skip: (page - 1) * limit,
       take: limit,
     })
-    
-    return NextResponse.json({
+
+    const response = {
       data: products,
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-    }, { headers: corsHeaders })
+    }
+
+    productCache.set(cacheKey, response)
+
+    return NextResponse.json(response, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching products:', error)
     return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500, headers: corsHeaders })
@@ -68,6 +74,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const body = await request.json()
     
@@ -105,7 +113,9 @@ export async function POST(request: Request) {
         offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
       },
     })
-    
+
+    productCache.clear()
+
     return NextResponse.json(newProduct, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating product:', error)
@@ -114,6 +124,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -156,7 +168,9 @@ export async function PUT(request: Request) {
         ...(body.offerEnd && { offerEnd: new Date(body.offerEnd) }),
       },
     })
-    
+
+    productCache.clear()
+
     return NextResponse.json(updatedProduct, { headers: corsHeaders })
   } catch (error) {
     console.error('Error updating product:', error)
@@ -165,6 +179,8 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -178,7 +194,9 @@ export async function DELETE(request: Request) {
       prisma.favorite.deleteMany({ where: { productId: id } }),
       prisma.product.delete({ where: { id } }),
     ])
-    
+
+    productCache.clear()
+
     return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error deleting product:', error)

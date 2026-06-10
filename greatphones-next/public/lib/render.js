@@ -107,7 +107,7 @@ function loadProducts(){
   renderSkeletonGrid('ofertasGrid',4);
   renderSkeletonGrid('featuredGrid',4);
   showLoadingBar();
-  fetch(API_URL+'/api/products').then(function(r){return r.json();}).then(function(res){
+  cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
     PRODUCTS=res.data||res;
     hideLoadingBar();
     if(window.checkPendingDetail)window.checkPendingDetail();
@@ -127,7 +127,7 @@ function loadProducts(){
 
 function loadAccessories(){
   renderSkeletonGrid('accGrid',8);
-  fetch(API_URL+'/api/accessories').then(function(r){return r.json();}).then(function(res){
+  cachedFetch(API_URL+'/api/accessories',null,60000).then(function(res){
     window.ACCS=res.data||res;
     if(document.getElementById('accGrid'))renderAccGrid();
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
@@ -1037,11 +1037,10 @@ function clearAdvF(){
 function renderOrderHistory(){
   var list=document.getElementById('orderHistory');
   if(!list)return;
-  var user=localStorage.getItem('gp_user');
+  var user=Storage.get('user');
   if(!user){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Inicia sesion para ver tu historial</div>';return;}
   try{
-    var u=JSON.parse(user);
-    fetch(API_URL+'/api/orders?userId='+u.id).then(function(r){return r.json();}).then(function(ords){
+    cachedFetch(API_URL+'/api/orders?userId='+user.id,null,15000).then(function(ords){
       if(ords.length===0){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">No tenes pedidos</div>';}
       else{list.innerHTML=ords.map(function(o){return'<div class="order-item"><div class="oi-ico">📱</div><div style="flex:1"><div class="oi-n">'+(o.items[0]?.product?.name||'Producto')+'</div><div class="oi-s">'+o.code+' · '+new Date(o.createdAt).toLocaleDateString('es-AR')+'</div></div><div><div class="oi-p">$'+o.total.toLocaleString('es-AR')+'</div><span class="oi-bdg">'+o.status+'</span></div></div>';}).join('');}
     }).catch(function(){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando pedidos</div>';});
@@ -1050,15 +1049,132 @@ function renderOrderHistory(){
 function renderQuotHistory(){
   var list=document.getElementById('quotHistory');
   if(!list)return;
-  var user=localStorage.getItem('gp_user');
+  var user=Storage.get('user');
   if(!user){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Inicia sesion para ver tus cotizaciones</div>';return;}
   try{
-    var u=JSON.parse(user);
-    fetch(API_URL+'/api/quotes?userId='+u.id).then(function(r){return r.json();}).then(function(qts){
+    cachedFetch(API_URL+'/api/quotes?userId='+user.id,null,15000).then(function(qts){
       if(qts.length===0){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">No tenes cotizaciones</div>';}
       else{list.innerHTML=qts.map(function(q){return'<div class="order-item"><div class="oi-ico">📱</div><div style="flex:1"><div class="oi-n">'+q.device+' '+q.storage+'</div><div class="oi-s">'+q.code+' · '+new Date(q.createdAt).toLocaleDateString('es-AR')+'</div></div><div><div class="oi-p">$'+q.finalPrice.toLocaleString('es-AR')+'</div><span class="oi-bdg">'+q.status+'</span></div></div>';}).join('');}
     }).catch(function(){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando cotizaciones</div>';});
   }catch(e){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando cotizaciones</div>';}
+}
+
+function loadClientQuotes(){
+  var list=document.getElementById('clientQuoteList');
+  if(!list)return;
+  if(!currentUser){
+    list.innerHTML='<div style="text-align:center;padding:1.5rem 0;color:var(--gray)"><p style="font-size:13px">Inicia sesión para ver tus cotizaciones</p></div>';
+    return;
+  }
+  list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--gray)"><div style="display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .6s linear infinite"></div></div>';
+
+  cachedFetch(API_URL+'/api/quotes?userId='+currentUser.id+'&page=1&limit=5',null,15000).then(function(res){
+    var quotes=res.data||[];
+    if(quotes.length===0){
+      list.innerHTML='<div style="text-align:center;padding:1.5rem 0;color:var(--gray)">'+
+        '<div style="width:50px;height:50px;background:var(--cream3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">'+
+        '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M12 13h.01"/></svg></div>'+
+        '<p style="font-size:13px;font-weight:500;margin-bottom:8px">No tenes cotizaciones</p>'+
+        '<button onclick="nav(\'sell\')" style="color:var(--green);background:none;border:none;font-size:13px;font-weight:700;cursor:pointer">Solicitar una ahora</button></div>';
+      return;
+    }
+    var statusColors={PENDING:'var(--orange)',APPROVED:'var(--green)',REJECTED:'var(--red)',REVIEWING:'#8b5cf6',COMPLETED:'var(--blue)'};
+    var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revisión',COMPLETED:'Completada'};
+    var statusIcons={PENDING:'&#9203;',APPROVED:'&#9989;',REJECTED:'&#10060;',REVIEWING:'&#128269;',COMPLETED:'&#128184;'};
+    var html=quotes.map(function(q){
+      var sc=statusColors[q.status]||'var(--gray)';
+      var sl=statusLabels[q.status]||q.status;
+      var si=statusIcons[q.status]||'&#128203;';
+      var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--cream2);border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'var(--cream3)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--cream2)\'" onclick="openClientQuoteDetail(\''+q.id+'\')">'+
+        '<div style="width:36px;height:36px;border-radius:8px;background:'+sc+'18;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+si+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-weight:600;font-size:13px;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+q.device+' '+q.storage+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">'+date+' · '+q.code+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0">'+
+          '<div style="font-weight:700;font-size:13px;color:var(--orange)">$'+q.finalPrice.toLocaleString('es-AR')+'</div>'+
+          '<div style="font-size:10px;font-weight:600;color:'+sc+';background:'+sc+'18;padding:2px 8px;border-radius:10px;display:inline-block">'+sl+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    if(res.total>5){
+      html+='<div style="text-align:center;margin-top:8px"><button onclick="nav(\'sell\')" style="color:var(--green);background:none;border:none;font-size:12px;font-weight:600;cursor:pointer">Ver todas →</button></div>';
+    }
+    list.innerHTML=html;
+  }).catch(function(){
+    list.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--gray);font-size:13px">Error cargando cotizaciones</div>';
+  });
+}
+
+function openClientQuoteDetail(id){
+  fetch(API_URL+'/api/quotes?userId='+currentUser.id+'&page=1&limit=100').then(function(r){return r.json();}).then(function(res){
+    var q=(res.data||[]).find(function(x){return x.id===id;});
+    if(!q)return;
+    
+    var existing=document.getElementById('clientQuoteDetailModal');
+    if(existing)existing.remove();
+    
+    var statusColors={PENDING:'var(--orange)',APPROVED:'var(--green)',REJECTED:'var(--red)',REVIEWING:'#8b5cf6',COMPLETED:'var(--blue)'};
+    var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revisión',COMPLETED:'Completada'};
+    var sc=statusColors[q.status]||'var(--gray)';
+    var sl=statusLabels[q.status]||q.status;
+    var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    
+    var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Batería 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
+    var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--cream3);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:12px;color:var(--gray)">Ninguno</span>';
+    
+    var conditionLabels={excellent:'Excelente',good:'Bueno',fair:'Regular',poor:'Defectuoso'};
+    
+    var modal=document.createElement('div');
+    modal.id='clientQuoteDetailModal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)';
+    modal.onclick=function(e){if(e.target===modal)modal.remove();};
+    
+    var content='<div style="background:var(--cream2);border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'+
+      '<div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--cream2);z-index:1;border-radius:16px 16px 0 0">'+
+        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Cotización '+q.code+'</h3>'+
+        '<button onclick="document.getElementById(\'clientQuoteDetailModal\').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray);padding:4px 8px;border-radius:6px" onmouseover="this.style.background=\'var(--cream3)\'" onmouseout="this.style.background=\'none\'">&times;</button>'+
+      '</div>'+
+      '<div style="padding:1.5rem">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding:12px;background:var(--cream3);border-radius:10px">'+
+          '<div style="width:40px;height:40px;border-radius:8px;background:'+sc+'18;display:flex;align-items:center;justify-content:center;font-size:20px">'+
+            (q.status==='PENDING'?'&#9203;':q.status==='APPROVED'?'&#9989;':q.status==='REJECTED'?'&#10060;':q.status==='REVIEWING'?'&#128269;':'&#128184;')+
+          '</div>'+
+          '<div><div style="font-weight:700;font-size:14px;color:'+sc+'">'+sl+'</div><div style="font-size:11px;color:var(--gray)">'+date+'</div></div>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem">'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Dispositivo</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+q.device+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Almacenamiento</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+q.storage+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Condición</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+(conditionLabels[q.condition]||q.condition)+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Precio estimado</div><div style="font-weight:700;font-size:16px;color:var(--orange)">$'+q.finalPrice.toLocaleString('es-AR')+'</div></div>'+
+        '</div>'+
+        '<div style="margin-bottom:1.25rem"><div style="font-size:11px;color:var(--gray);margin-bottom:6px">Extras seleccionados</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+extrasHtml+'</div></div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem;padding-top:1rem;border-top:1px solid var(--border)">'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Envío</div><div style="font-weight:500;font-size:13px;color:var(--dk)">'+(q.envio==='pickup'?'Retiro en tienda':'Correo argentino')+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Pago</div><div style="font-weight:500;font-size:13px;color:var(--dk)">'+(q.payment==='transfer'?'Transferencia bancaria':q.payment==='cash'?'Efectivo':'MercadoPago')+'</div></div>'+
+        '</div>'+
+        '<div style="padding-top:1rem;border-top:1px solid var(--border)">'+
+          '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">Datos del cliente</div>'+
+          '<div style="font-size:13px;color:var(--dk);line-height:1.8">'+
+            '<div><strong>Nombre:</strong> '+(q.clientName||'No especificado')+'</div>'+
+            '<div><strong>DNI:</strong> '+(q.clientDni||'No especificado')+'</div>'+
+            '<div><strong>Teléfono:</strong> '+(q.clientPhone||'No especificado')+'</div>'+
+            (q.clientProvince?'<div><strong>Provincia:</strong> '+q.clientProvince+(q.clientCp?' (CP: '+q.clientCp+')':'')+'</div>':'')+
+          '</div>'+
+        '</div>'+
+        (q.rejectReason?'<div style="margin-top:1.25rem;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px">'+
+          '<div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:4px">Motivo de rechazo</div>'+
+          '<div style="font-size:13px;color:var(--dk)">'+q.rejectReason+'</div>'+
+        '</div>':'')+
+      '</div>'+
+    '</div>';
+    
+    modal.innerHTML=content;
+    document.body.appendChild(modal);
+  }).catch(function(){
+    alert('Error cargando el detalle de la cotización');
+  });
 }
 
 // =========== INIT ===========
@@ -1178,7 +1294,8 @@ function adminTab(tab,btn){
     arrep:'Arrepentimientos',
     users:'Usuarios',
     chat:'Chat',
-    quotes:'Cotizaciones'
+    quotes:'Cotizaciones',
+    instore:'Venta en Tienda'
   };
   var titleEl=document.getElementById('adminPageTitle');
   if(titleEl&&titles[tab])titleEl.textContent=titles[tab];
@@ -1451,7 +1568,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -1727,6 +1844,12 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
     loadQuotes('all');
+  }else if(tab==='instore'){
+    if(typeof loadInStoreHistory==='function'){
+      loadInStoreHistory();
+    }else{
+      el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando módulo de ventas...</div>';
+    }
   }
 }
 function updateStock(id){
@@ -1889,7 +2012,7 @@ function renderPromoProducts(){
         '<span style="font-size:12px;font-weight:700;color:var(--dk)">'+fmt(item.price)+'</span>'+
         (item.isOffer?'<span style="font-size:9px;color:var(--red);font-weight:700;background:rgba(255,0,0,0.05);padding:2px 6px;border-radius:8px">-'+item.discount+'%</span>':'')+
       '</div>'+
-      '</article>';
+      '</div>';
   }).join('');
   var rail=document.getElementById('homeRail');if(rail&&!rail.dataset.svRevealed){rail.classList.add('pgrid-reveal');rail.dataset.svRevealed='1';}else if(rail){rail.classList.remove('pgrid-reveal');}
 }

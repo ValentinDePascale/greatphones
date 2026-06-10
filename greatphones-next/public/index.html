@@ -203,49 +203,49 @@
       </div>
       <div class="cat-scroll">
         <div class="cat-flex">
-          <button class="cat-card cat-card-iphone" onclick="navShop('iPhone')">
+          <button class="cat-card cat-card-iphone" onclick="navShop('iPhone')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="smartphone">smartphone</span>
             </div>
             <span class="cat-label">iPhone</span>
           </button>
-          <button class="cat-card cat-card-macbook" onclick="navShop('MacBook')">
+          <button class="cat-card cat-card-macbook" onclick="navShop('MacBook')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="laptop_mac">laptop</span>
             </div>
             <span class="cat-label">MacBook</span>
           </button>
-          <button class="cat-card cat-card-ipad" onclick="navShop('iPad')">
+          <button class="cat-card cat-card-ipad" onclick="navShop('iPad')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="tablet_mac">tablet</span>
             </div>
             <span class="cat-label">iPad</span>
           </button>
-          <button class="cat-card cat-card-samsung" onclick="navShop('Samsung')">
+          <button class="cat-card cat-card-samsung" onclick="navShop('Samsung')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="ad_units">phone_android</span>
             </div>
             <span class="cat-label">Samsung</span>
           </button>
-          <button class="cat-card cat-card-notebooks" style="display:none" onclick="nav('notebooks')">
+          <button class="cat-card cat-card-notebooks" style="display:none" onclick="nav('notebooks')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="computer">computer</span>
             </div>
             <span class="cat-label">Notebooks</span>
           </button>
-          <button class="cat-card cat-card-accesorios" onclick="nav('accesorios')">
+          <button class="cat-card cat-card-accesorios" onclick="nav('accesorios')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="headphones">headphones</span>
             </div>
             <span class="cat-label">Accesorios</span>
           </button>
-          <button class="cat-card cat-card-garantias" onclick="nav('garantias')">
+          <button class="cat-card cat-card-garantias" onclick="nav('garantias')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
               <span class="material-symbols-outlined text-3xl" data-icon="verified_user">verified</span>
             </div>
             <span class="cat-label">Garantías</span>
           </button>
-          <button class="cat-card cat-card-accent" onclick="navShop('ofertas')">
+          <button class="cat-card cat-card-accent" onclick="navShop('ofertas')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap cat-ico-accent">
               <span class="material-symbols-outlined text-3xl" data-icon="local_offer" style="font-variation-settings:'FILL'1">sell</span>
             </div>
@@ -1048,7 +1048,7 @@
           </div>
           <div class="sell-info-card sell-info-card-accent">
             <div class="sic-title" style="color:var(--orange)">+5% bonus en saldo GP</div>
-            <div style="font-size:11px;color:rgba(255,255,255,.55);line-height:1.7">Si elegis recibir el saldo en tu cuenta GP, te sumamos un <strong style="color:var(--orange)">5% extra</strong>. Usalo en compras, garantias o reparaciones, sin vencimiento.</div>
+            <div style="font-size:11px;color:rgba(0,0,0,.7);line-height:1.7">Si elegis recibir el saldo en tu cuenta GP, te sumamos un <strong style="color:var(--orange)">5% extra</strong>. Usalo en compras, garantias o reparaciones, sin vencimiento.</div>
           </div>
           <div class="sell-info-card">
             <div class="sic-title">Modelos que aceptamos</div>
@@ -1323,13 +1323,7 @@
               <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--green)">Mis Cotizaciones</h3>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray2)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
             </div>
-            <div style="text-align:center;padding:2rem 0;color:var(--gray)">
-              <div style="width:60px;height:60px;background:var(--cream3);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M12 13h.01"/></svg>
-              </div>
-              <p style="font-size:14px;font-weight:500">No tenes cotizaciones</p>
-              <button style="margin-top:12px;color:var(--green);background:none;border:none;font-size:13px;font-weight:700;cursor:pointer">Solicitar una ahora</button>
-            </div>
+            <div id="clientQuoteList" style="min-height:120px"></div>
           </div>
         </div>
       </div>
@@ -1611,6 +1605,10 @@
         <button class="admin-nav-item" id="adm-quotes" onclick="adminTab('quotes',this)">
           <span class="admin-nav-icon material-symbols-outlined">receipt_long</span>
           <span class="admin-nav-label">Cotizaciones</span>
+        </button>
+        <button class="admin-nav-item" id="adm-instore" onclick="adminTab('instore',this)">
+          <span class="admin-nav-icon material-symbols-outlined">point_of_sale</span>
+          <span class="admin-nav-label">Venta en Tienda</span>
         </button>
       </nav>
       <div class="admin-sidebar-footer">
@@ -2613,9 +2611,10 @@ function toggleDeleteBtn(){
   <img id="lightboxImg" style="max-width:92vw;max-height:90vh;border-radius:12px;object-fit:contain;box-shadow:0 20px 60px rgba(0,0,0,.5)">
 </div>
 
-<script src="/lib/constants.js"></script>
-<script src="/lib/utils.js"></script>
-<script src="/lib/navigation.js"></script>
+<script defer src="/lib/constants.js"></script>
+<script defer src="/lib/storage.js"></script>
+<script defer src="/lib/utils.js"></script>
+<script defer src="/lib/navigation.js"></script>
 <!-- Cookie Banner -->
 <div id="cookieBanner">
   <div class="cb-container">
@@ -2675,30 +2674,33 @@ function toggleDeleteBtn(){
 <script>
 console.log('[BROWSER] Page loaded');
 </script>
-<script src="/lib/favorites.js"></script>
-<script src="/lib/cart.js"></script>
-<script src="/lib/checkout.js"></script>
-<script src="/lib/notifications.js"></script>
-<script src="/lib/cookies.js"></script>
-<script src="/lib/sell.js"></script>
-<script src="/lib/admin.js"></script>
-<script src="/lib/admin-ui.js"></script>
-<script src="/lib/render.js"></script>
-<script src="/lib/search.js"></script>
-<script src="/lib/warranty.js"></script>
-<script src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="/lib/chat.js"></script>
-<script>initFavorites();initCart();handleInitialRoute();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);</script>
+<script defer src="/lib/favorites.js"></script>
+<script defer src="/lib/cart.js"></script>
+<script defer src="/lib/checkout.js"></script>
+<script defer src="/lib/notifications.js"></script>
+<script defer src="/lib/cookies.js"></script>
+<script defer src="/lib/sell.js"></script>
+<script defer src="/lib/admin.js"></script>
+<script defer src="/lib/admin-ui.js"></script>
+<script defer src="/lib/instore.js"></script>
+<script defer src="/lib/render.js"></script>
+<script defer src="/lib/search.js"></script>
+<script defer src="/lib/warranty.js"></script>
+<script defer src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script defer src="/lib/chat.js"></script>
 <script>
-(function(){
-  if(currentUser){
-    if(typeof updateNotifBadge==='function')updateNotifBadge();
-    if(typeof startNotifPolling==='function')startNotifPolling();
-    if(typeof updateMsgBadge==='function')updateMsgBadge();
-    if(typeof startChatNotifPolling==='function')startChatNotifPolling();
-  }
-})();
+document.addEventListener('DOMContentLoaded', function() {
+  initFavorites();initCart();handleInitialRoute();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);
+  (function(){
+    if(currentUser){
+      if(typeof updateNotifBadge==='function')updateNotifBadge();
+      if(typeof startNotifPolling==='function')startNotifPolling();
+      if(typeof updateMsgBadge==='function')updateMsgBadge();
+      if(typeof startChatNotifPolling==='function')startChatNotifPolling();
+    }
+  })();
+});
 </script>
 
 <!-- Chat Side Panel -->

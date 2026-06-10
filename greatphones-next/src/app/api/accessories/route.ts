@@ -1,25 +1,21 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { 
-  AccessoryCreateSchema, 
+import {
+  AccessoryCreateSchema,
   AccessoryUpdateSchema,
-  formatZodError 
+  formatZodError
 } from '@/lib/validations'
+import { accessoryCache } from '@/lib/cache'
+import { getCorsHeaders, corsOptions } from '@/lib/cors'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-}
-
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: corsHeaders,
-  })
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin')
+  return corsOptions(origin)
 }
 
 export async function GET(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const category = searchParams.get('category')
@@ -27,26 +23,38 @@ export async function GET(request: Request) {
   const search = searchParams.get('search')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '20')
-   
+
   try {
     if (id) {
+      const cacheKey = `accessory:${id}`
+      const cached = accessoryCache.get(cacheKey)
+      if (cached) {
+        return NextResponse.json(cached, { headers: corsHeaders })
+      }
       const accessory = await prisma.accessory.findUnique({ where: { id } })
       if (!accessory) {
         return NextResponse.json({ error: 'Accesorio no encontrado' }, { status: 404, headers: corsHeaders })
       }
+      accessoryCache.set(cacheKey, accessory)
       return NextResponse.json(accessory, { headers: corsHeaders })
     }
-    
+
+    const cacheKey = `accessories:${category||''}:${brand||''}:${search||''}:${page}:${limit}`
+    const cached = accessoryCache.get(cacheKey)
+    if (cached) {
+      return NextResponse.json(cached, { headers: corsHeaders })
+    }
+
     const where: any = { isActive: true }
-    
+
     if (category && category !== 'todos') {
       where.category = category
     }
-    
+
     if (brand) {
       where.brand = { equals: brand, mode: 'insensitive' }
     }
-    
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -55,7 +63,7 @@ export async function GET(request: Request) {
         { description: { contains: search, mode: 'insensitive' } },
       ]
     }
-    
+
     const total = await prisma.accessory.count({ where })
     const accessories = await prisma.accessory.findMany({
       where,
@@ -63,14 +71,18 @@ export async function GET(request: Request) {
       skip: (page - 1) * limit,
       take: limit,
     })
-    
-    return NextResponse.json({
+
+    const response = {
       data: accessories,
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
-    }, { headers: corsHeaders })
+    }
+
+    accessoryCache.set(cacheKey, response)
+
+    return NextResponse.json(response, { headers: corsHeaders })
   } catch (error) {
     console.error('Error fetching accessories:', error)
     return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500, headers: corsHeaders })
@@ -78,6 +90,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const body = await request.json()
     
@@ -110,7 +124,9 @@ export async function POST(request: Request) {
         offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
       },
     })
-    
+
+    accessoryCache.clear()
+
     return NextResponse.json(newAccessory, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating accessory:', error)
@@ -119,6 +135,8 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -162,7 +180,9 @@ export async function PUT(request: Request) {
       where: { id },
       data,
     })
-    
+
+    accessoryCache.clear()
+
     return NextResponse.json(updatedAccessory, { headers: corsHeaders })
   } catch (error: any) {
     console.error('Error updating accessory:', error)
@@ -173,6 +193,8 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
@@ -184,7 +206,9 @@ export async function DELETE(request: Request) {
     await prisma.accessory.delete({
       where: { id },
     })
-    
+
+    accessoryCache.clear()
+
     return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch (error) {
     console.error('Error deleting accessory:', error)

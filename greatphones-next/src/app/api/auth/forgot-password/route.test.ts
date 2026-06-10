@@ -43,7 +43,7 @@ describe('POST /api/auth/forgot-password', () => {
 
   it('is rate limited after 3 attempts', async () => {
     const { prisma } = await import('@/lib/prisma')
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: '1', email: 'ratelimit@test.com' })
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: '1', email: 'ratelimit@test.com' } as any)
 
     const { POST } = await import('./route')
     const makeReq = () =>

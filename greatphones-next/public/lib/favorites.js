@@ -1,21 +1,20 @@
 var favorites=[];
 function getFavKey(){
-  return currentUser?'gp_fav_'+currentUser.id:'gp_favorites';
+  return currentUser?'fav_'+currentUser.id:'favorites';
 }
 function initFavorites(){
   try{
-    var stored=localStorage.getItem(getFavKey());
-    if(stored)favorites=JSON.parse(stored);
+    var stored=Storage.get(getFavKey());
+    if(stored)favorites=stored;
   }catch(e){favorites=[];}
   updFavBadge();
 }
 function saveFavorites(){
-  try{localStorage.setItem(getFavKey(),JSON.stringify(favorites));}catch(e){}
+  try{Storage.set(getFavKey(),favorites);}catch(e){}
 }
 function loadUserFavorites(){
   if(currentUser){
-    fetch(API_URL+'/api/favorites?userId='+currentUser.id)
-      .then(function(r){return r.json();})
+    cachedFetch(API_URL+'/api/favorites?userId='+currentUser.id,null,15000)
       .then(function(data){
         if(Array.isArray(data)){
           favorites=data.map(function(p){return p.id;});
@@ -25,14 +24,14 @@ function loadUserFavorites(){
         }
       })
       .catch(function(){
-        var stored=localStorage.getItem(getFavKey());
-        favorites=stored?JSON.parse(stored):[];
+        var stored=Storage.get(getFavKey());
+        favorites=stored||[];
         updFavBadge();
       });
   }else{
     try{
-      var stored=localStorage.getItem(getFavKey());
-      favorites=stored?JSON.parse(stored):[];
+      var stored=Storage.get(getFavKey());
+      favorites=stored||[];
     }catch(e){favorites=[];}
     updFavBadge();
   }

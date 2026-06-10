@@ -51,48 +51,47 @@ export async function GET(request: Request) {
       prisma.user.count({ where: { createdAt: { gte: lastMonth, lt: currentMonth } } }),
     ])
 
-    // Monthly stats - fetch all orders for the year once
-    const yearOrders = await prisma.order.findMany({
-      where: { createdAt: { gte: startOfYear } },
-      select: { total: true, createdAt: true },
+    // Monthly stats - fetch orders and users for the year in parallel
+    const [yearOrders, yearUsers] = await Promise.all([
+      prisma.order.findMany({
+        where: { createdAt: { gte: startOfYear } },
+        select: { total: true, createdAt: true },
+      }),
+      prisma.user.findMany({
+        where: { createdAt: { gte: startOfYear } },
+        select: { createdAt: true },
+      }),
+    ])
+
+    // Index orders by month using Map for O(1) lookups
+    const ordersByMonth = new Map<number, { revenue: number; orders: number }>()
+    yearOrders.forEach((o) => {
+      const monthIndex = new Date(o.createdAt).getMonth()
+      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0 }
+      existing.revenue += o.total || 0
+      existing.orders++
+      ordersByMonth.set(monthIndex, existing)
     })
 
+    // Index users by month using Map for O(1) lookups
+    const usersByMonth = new Map<number, number>()
+    yearUsers.forEach((u) => {
+      const monthIndex = new Date(u.createdAt).getMonth()
+      usersByMonth.set(monthIndex, (usersByMonth.get(monthIndex) || 0) + 1)
+    })
+
+    // Build monthly stats with O(1) lookups instead of O(n) iterations
     const monthlyStats = MONTHS.map((month, i) => {
-      const monthStart = new Date(currentYear, i, 1)
-      const monthEnd = new Date(currentYear, i + 1, 1)
-      let revenue = 0
-      let orders = 0
-      yearOrders.forEach((o) => {
-        const d = new Date(o.createdAt)
-        if (d >= monthStart && d < monthEnd) {
-          revenue += o.total || 0
-          orders++
-        }
-      })
+      const orderData = ordersByMonth.get(i) || { revenue: 0, orders: 0 }
+      const userCount = usersByMonth.get(i) || 0
       return {
         month,
         monthIndex: i,
-        revenue,
-        orders,
-        avgTicket: orders > 0 ? Math.round(revenue / orders) : 0,
-        newUsers: 0,
+        revenue: orderData.revenue,
+        orders: orderData.orders,
+        avgTicket: orderData.orders > 0 ? Math.round(orderData.revenue / orderData.orders) : 0,
+        newUsers: userCount,
       }
-    })
-
-    // Get monthly user counts in a single query
-    const yearUsers = await prisma.user.findMany({
-      where: { createdAt: { gte: startOfYear } },
-      select: { createdAt: true },
-    })
-    monthlyStats.forEach((stat, i) => {
-      const monthStart = new Date(currentYear, i, 1)
-      const monthEnd = new Date(currentYear, i + 1, 1)
-      yearUsers.forEach((u) => {
-        const d = new Date(u.createdAt)
-        if (d >= monthStart && d < monthEnd) {
-          stat.newUsers++
-        }
-      })
     })
 
     // Annual totals
@@ -101,66 +100,62 @@ export async function GET(request: Request) {
     const annualAvgTicket = annualOrders > 0 ? Math.round(annualRevenue / annualOrders) : 0
     const annualUsers = monthlyStats.reduce((sum, m) => sum + m.newUsers, 0)
 
-    // Recent orders
-    const recentOrders = await prisma.order.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: {
-        id: true,
-        code: true,
-        clientName: true,
-        clientEmail: true,
-        total: true,
-        status: true,
-        createdAt: true,
-      },
-    })
-
-    // Top products by sold count
-    const topProducts = await prisma.product.findMany({
-      orderBy: { sold: 'desc' },
-      take: 3,
-      where: { sold: { gt: 0 } },
-      select: {
-        id: true,
-        name: true,
-        sub: true,
-        brand: true,
-        sold: true,
-        imageUrl: true,
-        ico: true,
-      },
-    })
-
-    // Low stock products (stock <= 3)
-    const lowStockProducts = await prisma.product.findMany({
-      where: { stock: { lte: 3 } },
-      orderBy: { stock: 'asc' },
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        brand: true,
-        stock: true,
-        imageUrl: true,
-        ico: true,
-      },
-    })
-
-    // Low stock accessories
-    const lowStockAccessories = await prisma.accessory.findMany({
-      where: { stock: { lte: 3 }, isActive: true },
-      orderBy: { stock: 'asc' },
-      take: 5,
-      select: {
-        id: true,
-        name: true,
-        brand: true,
-        stock: true,
-        imageUrl: true,
-        ico: true,
-      },
-    })
+    // Recent orders, top products, and low stock - all independent, run in parallel
+    const [recentOrders, topProducts, lowStockProducts, lowStockAccessories] = await Promise.all([
+      prisma.order.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 5,
+        select: {
+          id: true,
+          code: true,
+          clientName: true,
+          clientEmail: true,
+          total: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      prisma.product.findMany({
+        orderBy: { sold: 'desc' },
+        take: 3,
+        where: { sold: { gt: 0 } },
+        select: {
+          id: true,
+          name: true,
+          sub: true,
+          brand: true,
+          sold: true,
+          imageUrl: true,
+          ico: true,
+        },
+      }),
+      prisma.product.findMany({
+        where: { stock: { lte: 3 } },
+        orderBy: { stock: 'asc' },
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          stock: true,
+          imageUrl: true,
+          ico: true,
+        },
+      }),
+      prisma.accessory.findMany({
+        where: { stock: { lte: 3 }, isActive: true },
+        orderBy: { stock: 'asc' },
+        take: 5,
+        select: {
+          id: true,
+          name: true,
+          brand: true,
+          stock: true,
+          imageUrl: true,
+          ico: true,
+        },
+      }),
+    ])
 
     // Order statuses distribution
     const orderStatuses = await Promise.all(
@@ -177,7 +172,7 @@ export async function GET(request: Request) {
     })
 
     const brandMap: Record<string, number> = {}
-    const productIds = brandSalesData.map((b) => b.productId)
+    const productIds = brandSalesData.map((b) => b.productId).filter((id): id is string => id !== null)
     const products = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, brand: true },
@@ -186,6 +181,7 @@ export async function GET(request: Request) {
     products.forEach((p) => { productBrandMap[p.id] = p.brand || 'Otros' })
 
     brandSalesData.forEach((item) => {
+      if (!item.productId) return
       const brand = productBrandMap[item.productId] || 'Otros'
       brandMap[brand] = (brandMap[brand] || 0) + (item._sum.quantity || 0)
     })

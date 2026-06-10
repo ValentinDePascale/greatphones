@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
-    product: { findUnique: vi.fn() },
+    product: { findMany: vi.fn() },
     order: { create: vi.fn() },
     $transaction: vi.fn((fn) => fn({ product: { update: vi.fn() }, order: { create: vi.fn() } })),
   },
@@ -38,7 +38,7 @@ describe('POST /api/checkout', () => {
         total: 0,
       }),
     })
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
   })
 
@@ -59,14 +59,14 @@ describe('POST /api/checkout', () => {
         total: 100,
       }),
     })
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
   })
 
   it('returns 400 when product stock is insufficient', async () => {
     const { prisma } = await import('@/lib/prisma')
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: 'user1', email: 'test@test.com' })
-    vi.mocked(prisma.product.findUnique).mockResolvedValue({ id: '1', stock: 0 })
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: 'user1', email: 'test@test.com' } as any)
+    vi.mocked(prisma.product.findMany).mockResolvedValue([{ id: '1', stock: 0 }] as any)
 
     const { POST } = await import('./route')
     const req = new Request('http://localhost/api/checkout', {
@@ -84,7 +84,7 @@ describe('POST /api/checkout', () => {
         total: 100,
       }),
     })
-    const res = await POST(req)
+    const res = await POST(req as any)
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toContain('Stock insuficiente')

@@ -1,9 +1,9 @@
 /* ========== COOKIE CONSENT MANAGER ========== */
 
-const COOKIE_KEY = 'gp_cookie_consent';
+const COOKIE_KEY = 'cookie_consent';
 
 function initCookieConsent() {
-  const consent = localStorage.getItem(COOKIE_KEY);
+  const consent = Storage.get(COOKIE_KEY);
   if (!consent) {
     showCookieBanner();
   } else {
@@ -30,11 +30,10 @@ function showCookieModal() {
   hideCookieBanner();
   const modal = document.getElementById('cookieModal');
   if (modal) {
-    const saved = localStorage.getItem(COOKIE_KEY);
+    const saved = Storage.get(COOKIE_KEY);
     if (saved) {
-      const prefs = JSON.parse(saved);
-      document.getElementById('cookieAnalytics').checked = prefs.analytics;
-      document.getElementById('cookieMarketing').checked = prefs.marketing;
+      document.getElementById('cookieAnalytics').checked = saved.analytics;
+      document.getElementById('cookieMarketing').checked = saved.marketing;
     }
     setTimeout(() => modal.classList.add('show'), 10);
   }
@@ -66,23 +65,21 @@ function saveCookiePreferences() {
 }
 
 function savePreferences(prefs) {
-  localStorage.setItem(COOKIE_KEY, JSON.stringify(prefs));
+  Storage.set(COOKIE_KEY, prefs);
   hideCookieBanner();
   hideCookieModal();
   loadTrackingScripts();
 }
 
 function loadTrackingScripts() {
-  const consent = localStorage.getItem(COOKIE_KEY);
+  const consent = Storage.get(COOKIE_KEY);
   if (!consent) return;
 
-  const prefs = JSON.parse(consent);
-
-  if (prefs.analytics) {
+  if (consent.analytics) {
     loadScript('https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX', 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX');
   }
 
-  if (prefs.marketing) {
+  if (consent.marketing) {
     loadScript('https://connect.facebook.net/en_US/fbevents.js', 'https://connect.facebook.net/en_US/fbevents.js');
   }
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SendMessageSchema, formatZodError } from '@/lib/validations'
 import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
+import { getIO } from '@/lib/socket'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -66,28 +67,30 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
     }
 
-    // Get conversation with user and admin details
-    const conversation = await prisma.conversation.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: { id: true, name: true, email: true }
-        },
-        admin: {
-          select: { id: true, name: true, email: true }
+    // Get conversation with user and admin details, and check sender role - in parallel
+    const [conversation, senderUser] = await Promise.all([
+      prisma.conversation.findUnique({
+        where: { id },
+        include: {
+          user: {
+            select: { id: true, name: true, email: true }
+          },
+          admin: {
+            select: { id: true, name: true, email: true }
+          }
         }
-      }
-    })
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true }
+      }),
+    ])
 
     if (!conversation) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
     // Determine if sender is admin or user
-    const senderUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true }
-    });
     const isAdminSender = senderUser?.role === 'ADMIN' || userId === 'admin';
     const isUserSender = conversation.userId === userId;
 
@@ -249,7 +252,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     // Emit socket event for real-time delivery (production: integrated server)
-    const io = (globalThis as any).io;
+    const io = getIO();
     if (io) {
       io.to(id).emit('newMessage', { ...message, conversationId: id, fromUserId: userId });
     }

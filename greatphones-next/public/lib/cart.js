@@ -4,16 +4,16 @@ var cartMigrated=false;
 var _lastRemovedItem=null;
 var _undoTimeout=null;
 function getCartKey(){
-  return currentUser?'gp_cart_'+currentUser.id:'gp_cart';
+  return currentUser?'cart_'+currentUser.id:'cart';
 }
 function initCart(){
   try{
-    var stored=localStorage.getItem(getCartKey());
-    if(stored)Cart=JSON.parse(stored);
+    var stored=Storage.get(getCartKey());
+    if(stored)Cart=stored;
     else Cart=[];
     if(currentUser&&!cartMigrated){
       cartMigrated=true;
-      var anonCart=localStorage.getItem('gp_cart');
+      var anonCart=Storage.getRaw('gp_cart');
       if(anonCart){
         try{
           var anonItems=JSON.parse(anonCart);
@@ -24,7 +24,7 @@ function initCart(){
               else{Cart.push(item);}
             });
             saveCart();
-            localStorage.removeItem('gp_cart');
+            Storage.removeRaw('gp_cart');
           }
         }catch(e){}
       }
@@ -32,7 +32,7 @@ function initCart(){
   }catch(e){Cart=[];}
   updCartBadge();
   window.addEventListener('storage',function(e){
-    if(e.key===getCartKey()){
+    if(e.key===Storage.get(getCartKey())){
       try{
         var newCart=e.newValue?JSON.parse(e.newValue):[];
         if(JSON.stringify(newCart)!==JSON.stringify(Cart)){
@@ -47,7 +47,7 @@ function initCart(){
   });
 }
 function saveCart(){
-  try{localStorage.setItem(getCartKey(),JSON.stringify(Cart));}catch(e){}
+  try{Storage.set(getCartKey(),Cart);}catch(e){}
   updCartBadge();
 }
 function openCart(){

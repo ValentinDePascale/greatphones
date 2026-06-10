@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server'
-
 const ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:3002',
@@ -7,19 +5,21 @@ const ALLOWED_ORIGINS = [
   'https://greatphones.com.ar',
 ]
 
-export function corsHeaders(origin: string | null) {
-  const headers: Record<string, string> = {}
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    headers['Access-Control-Allow-Origin'] = origin
+export function getCorsHeaders(origin?: string | null) {
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
+    ? origin
+    : 'https://greatphones.onrender.com'
+
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User-Id',
   }
-  headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-  headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-  return headers
 }
 
-export function corsResponse(data: unknown, status = 200, origin: string | null = null) {
-  return NextResponse.json(data, {
-    status,
-    headers: corsHeaders(origin)
+export function corsOptions(origin?: string | null) {
+  return new Response(null, {
+    status: 204,
+    headers: getCorsHeaders(origin),
   })
 }

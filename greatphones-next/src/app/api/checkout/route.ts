@@ -65,8 +65,11 @@ export async function POST(request: NextRequest) {
 
     const orderCode = generateOrderCode();
 
+    const productIds = items.map((item: any) => item.id);
+    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+    const productMap = new Map(products.map((p: any) => [p.id, p]));
     for (const item of items) {
-      const product = await prisma.product.findUnique({ where: { id: item.id } });
+      const product = productMap.get(item.id);
       if (!product) {
         return NextResponse.json({ error: `Producto no encontrado: ${item.name}` }, { status: 400 });
       }

@@ -3,6 +3,7 @@ var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 function nav(id){
   ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
+  var _cf=document.querySelector('.cat-flex');if(_cf)_cf.classList.remove('cat-reveal');
   var _hidden=['servicio','notebooks','mayorista','compare'];
   if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}
@@ -28,7 +29,7 @@ function nav(id){
   if(id==='terminos'||id==='privacidad'){
     window.scrollTo({top:0,behavior:'smooth'});
   }
-  if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');}
+  if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
   if(id==='register'){
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
     document.getElementById('p-register').classList.add('act');
@@ -44,15 +45,14 @@ function nav(id){
     return;
   }
   if(id==='login'){
-    var saved=localStorage.getItem('gp_remember');
+    var saved=Storage.get('remember');
     if(saved){
       try{
-        var creds=JSON.parse(saved);
         var emailEl=document.getElementById('loginEmail');
         var passEl=document.getElementById('loginPassword');
         var remEl=document.getElementById('loginRemember');
-        if(emailEl)emailEl.value=creds.email||'';
-        if(passEl)passEl.value=creds.password||'';
+        if(emailEl)emailEl.value=saved.email||'';
+        if(passEl)passEl.value=saved.password||'';
         if(remEl)remEl.checked=true;
       }catch(e){}
     }
@@ -78,12 +78,13 @@ function nav(id){
   if(id==='cuenta'){
     renderOrderHistory();
     renderQuotHistory();
+    loadClientQuotes();
   }
   if(id==='admin'){
     window.currentAdminTab='prods';
     renderAdminContent('prods');
   }
-  if(id==='home'){renderHomeRail();renderOfferStrip();}
+  if(id==='home'){renderHomeRail();renderOfferStrip();var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
   if(id==='admin-product'){
     if(!window.isEditingProduct){
       document.getElementById('prodId').value='';
@@ -218,11 +219,11 @@ async function doLogin(){
     }
     currentUser=data.user;
     updateUserUI();
-    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    Storage.set('user',currentUser);
     if(remember&&remember.checked){
-      localStorage.setItem('gp_remember',JSON.stringify({email:email,password:password}));
+      Storage.set('remember',{email:email,password:password});
     }else{
-      localStorage.removeItem('gp_remember');
+      Storage.remove('remember');
     }
     loadUserFavorites();
     initCart();
@@ -275,8 +276,8 @@ async function doResetPassword(){
 }
 function doLogout(){
   currentUser=null;
-  localStorage.removeItem('gp_user');
-  localStorage.removeItem('gp_remember');
+  Storage.remove('user');
+  Storage.remove('remember');
   document.querySelector('button[onclick="nav(\'cuenta\')"]').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
   if(adminLink)adminLink.remove();
@@ -348,9 +349,9 @@ document.addEventListener('click',function(e){
   if(!e.target.closest('.notif-wrap'))closeNotifPanel();
 });
 (function(){
-  var saved=localStorage.getItem('gp_user');
+  var saved=Storage.get('user');
   if(saved){
-    try{currentUser=JSON.parse(saved);updateUserUI();loadUserFavorites();}catch(e){}
+    try{currentUser=saved;updateUserUI();loadUserFavorites();}catch(e){}
   }
   checkGoogleSession();
 })();
@@ -368,7 +369,7 @@ function checkGoogleSession(){
       }).then(function(r){return r.json();}).then(function(data){
         if(data.user){
           currentUser=data.user;
-          localStorage.setItem('gp_user',JSON.stringify(currentUser));
+          Storage.set('user',currentUser);
           updateUserUI();
           loadUserFavorites();
           initCart();
@@ -382,7 +383,7 @@ function checkGoogleSession(){
         }
       }).catch(function(){
         currentUser={id:id,email:email,name:name,role:'CLIENT'};
-        localStorage.setItem('gp_user',JSON.stringify(currentUser));
+        Storage.set('user',currentUser);
         updateUserUI();
         loadUserFavorites();
         initCart();
@@ -476,7 +477,7 @@ async function verifyAndCompleteSignup(){
     if(signupData.error){showLoginError(signupData.error);return;}
     currentUser=signupData.user;
     closeLogin();updateUserUI();
-    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    Storage.set('user',currentUser);
     loadUserFavorites();initCart();loadProducts();
     showToast('Cuenta creada, bienvenido '+(currentUser.name||''));
     if(signupCodeTimer)clearInterval(signupCodeTimer);
@@ -623,7 +624,7 @@ async function verifyAndCompleteRegister(){
       if(signinData.error){showToast(signinData.error);return;}
       currentUser=signinData.user;
     }
-    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    Storage.set('user',currentUser);
     updateUserUI();
     loadUserFavorites();
     initCart();
@@ -767,7 +768,7 @@ function saveEditProfile(){
   }).then(function(r){return r.json();}).then(function(data){
     if(data.error){showToast('Error: '+data.error);return;}
     currentUser=data.user;
-    localStorage.setItem('gp_user',JSON.stringify(currentUser));
+    Storage.set('user',currentUser);
     updateUserUI();
     showToast('Perfil actualizado correctamente');
   }).catch(function(){showToast('Error de conexion');});

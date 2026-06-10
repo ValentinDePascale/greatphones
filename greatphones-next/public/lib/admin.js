@@ -53,6 +53,8 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
     loadPendingOrders();
+  }else if(tab==='instore'){
+    loadInStoreHistory();
   }else{
     content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">SecciÃ³n en desarrollo</div>';
   }

@@ -65,12 +65,13 @@ export async function POST(request: NextRequest) {
 
       const pd = paymentData as any;
       const preferenceId = pd.preference_id;
+      const externalReference = pd.external_reference;
       const status = pd.status;
       const paymentMethod = pd.payment_method_id;
       const installments = pd.installments || 1;
 
-      // Find order by preference_id
-      const order = await prisma.order.findFirst({
+      // Find order by preference_id or external_reference (for in-store sales)
+      let order = await prisma.order.findFirst({
         where: { mpPreferenceId: preferenceId },
         include: {
           items: {
@@ -81,8 +82,22 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // If not found by preference_id, try by external_reference (order code)
+      if (!order && externalReference) {
+        order = await prisma.order.findFirst({
+          where: { code: externalReference },
+          include: {
+            items: {
+              include: {
+                product: true
+              }
+            }
+          }
+        });
+      }
+
       if (!order) {
-        console.error('[MP Webhook] Order not found for preference:', preferenceId);
+        console.error('[MP Webhook] Order not found for preference:', preferenceId, 'or external_reference:', externalReference);
         return NextResponse.json({ received: true });
       }
 
@@ -116,34 +131,34 @@ export async function POST(request: NextRequest) {
 
       // Deduct stock if payment approved (release reservation)
       if (status === 'approved') {
-        for (const item of order.items) {
-          if (item.productId) {
-            await prisma.product.update({
+        await Promise.all(
+          order.items
+            .filter((item: any) => item.productId)
+            .map((item: any) => prisma.product.update({
               where: { id: item.productId },
               data: {
                 reserved: { decrement: item.quantity },
                 sold: { increment: item.quantity }
               }
-            }).catch(err => {
+            }).catch((err: Error) => {
               console.error('[MP Webhook] Error updating product:', item.productId, err);
-            });
-          }
-        }
+            }))
+        );
       } else if (status === 'rejected' || status === 'cancelled') {
         // Release reserved stock on payment failure
-        for (const item of order.items) {
-          if (item.productId) {
-            await prisma.product.update({
+        await Promise.all(
+          order.items
+            .filter((item: any) => item.productId)
+            .map((item: any) => prisma.product.update({
               where: { id: item.productId },
               data: {
                 stock: { increment: item.quantity },
                 reserved: { decrement: item.quantity }
               }
-            }).catch(err => {
+            }).catch((err: Error) => {
               console.error('[MP Webhook] Error releasing stock for product:', item.productId, err);
-            });
-          }
-        }
+            }))
+        );
       }
 
       // Update order with payment info
