@@ -148,27 +148,36 @@ function loadMessages(convId,scrollBottom){
 function renderMsgs(msgs){
   var list=document.getElementById('chatMsgList');
   if(!list)return;
+  _lastMsgDate=null;
   if(!msgs||msgs.length===0){
     list.innerHTML='<div style="text-align:center;padding:2rem 1rem;color:var(--gray)"><div style="width:64px;height:64px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:28px">\u{1F4AC}</div><p style="font-size:14px;font-family:\'Playfair Display\',Georgia,serif;font-weight:600;color:var(--dk);margin-bottom:.4rem">Hola! Como podemos ayudarte?</p><p style="font-size:12px">Escribe tu consulta y te responderemos a la brevedad</p></div>';
     return;
   }
-  list.innerHTML=msgs.map(function(m){
+  var html='';
+  msgs.forEach(function(m){
+    var msgDate=new Date(m.createdAt);
+    var dateStr=msgDate.toDateString();
+    if(dateStr!==_lastMsgDate){
+      html+='<div style="text-align:center;padding:8px 0 12px;position:relative"><span style="font-size:10px;font-weight:600;color:var(--gray);background:var(--cream);padding:3px 14px;border-radius:10px;letter-spacing:.3px;text-transform:uppercase">'+formatDate(msgDate)+'</span></div>';
+      _lastMsgDate=dateStr;
+    }
     var isMine=currentUser&&m.from===currentUser.id;
-    var time=formatTime(new Date(m.createdAt));
+    var time=formatTime(msgDate);
     var content='';
     if(m.imageUrl){
-      content='<img src="'+m.imageUrl+'" class="msg-img" onclick="openLightbox(\''+m.imageUrl+'\')">';
+      content='<img src="'+m.imageUrl+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+m.imageUrl+'\')">';
       if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+m.imageCaption+'</p>';
     }else{
-      content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
+      content='<p style="margin:0;line-height:1.5">'+escapeHtml(m.text||'')+'</p>';
     }
-    return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
+    html+='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
       '<div class="msg-bubble">'+
         content+
         '<div class="msg-time">'+time+'</div>'+
       '</div>'+
     '</div>';
-  }).join('');
+  });
+  list.innerHTML=html;
 }
 
 function appendMessageToChat(msg){
@@ -178,14 +187,20 @@ function appendMessageToChat(msg){
     var existing=list.querySelector('[data-msg-id="'+msg.id+'"]');
     if(existing)return;
   }
+  var msgDate=new Date(msg.createdAt);
+  var dateStr=msgDate.toDateString();
+  if(dateStr!==_lastMsgDate){
+    list.insertAdjacentHTML('beforeend','<div style="text-align:center;padding:8px 0 12px;position:relative;animation:fadeIn .3s ease"><span style="font-size:10px;font-weight:600;color:var(--gray);background:var(--cream);padding:3px 14px;border-radius:10px;letter-spacing:.3px;text-transform:uppercase">'+formatDate(msgDate)+'</span></div>');
+    _lastMsgDate=dateStr;
+  }
   var isMine=currentUser&&msg.from===currentUser.id;
-  var time=formatTime(new Date(msg.createdAt));
+  var time=formatTime(msgDate);
   var content='';
   if(msg.imageUrl){
-    content='<img src="'+msg.imageUrl+'" class="msg-img" onclick="openLightbox(\''+msg.imageUrl+'\')">';
+    content='<img src="'+msg.imageUrl+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+msg.imageUrl+'\')">';
     if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+msg.imageCaption+'</p>';
   }else{
-    content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
+    content='<p style="margin:0;line-height:1.5">'+escapeHtml(msg.text||'')+'</p>';
   }
   var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .3s ease">'+
     '<div class="msg-bubble">'+
@@ -480,6 +495,14 @@ function scrollToBottom(){
 function formatTime(d){
   return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
 }
+function formatDate(d){
+  var today=new Date();var yesterday=new Date(today);yesterday.setDate(yesterday.getDate()-1);
+  var dd=String(d.getDate()).padStart(2,'0');var mm=String(d.getMonth()+1).padStart(2,'0');var yyyy=d.getFullYear();
+  if(d.toDateString()===today.toDateString())return'Hoy';
+  if(d.toDateString()===yesterday.toDateString())return'Ayer';
+  return dd+'/'+mm+'/'+yyyy;
+}
+var _lastMsgDate=null;
 
 function timeAgo(d){
   var now=new Date();
@@ -521,8 +544,9 @@ function filterAndRenderAdminConvs(convs){
     filtered=convs.filter(function(c){
       var userName=(c.user&&c.user.name)?c.user.name.toLowerCase():'';
       var userEmail=(c.user&&c.user.email)?c.user.email.toLowerCase():'';
+      var userDni=(c.user&&c.user.dni)?c.user.dni.toLowerCase():'';
       var lastMsg=(c.messages&&c.messages[0])?(c.messages[0].text||'').toLowerCase():'';
-      return userName.indexOf(q)!==-1||userEmail.indexOf(q)!==-1||lastMsg.indexOf(q)!==-1;
+      return userName.indexOf(q)!==-1||userEmail.indexOf(q)!==-1||userDni.indexOf(q)!==-1||lastMsg.indexOf(q)!==-1;
     });
   }
   renderAdminConvList(filtered);
@@ -533,28 +557,60 @@ function searchAdminConvs(query){
   filterAndRenderAdminConvs(window._adminConvs||[]);
 }
 
+function getInitials(name){
+  if(!name)return'?';
+  var parts=name.trim().split(/\s+/);
+  if(parts.length>=2)return(parts[0][0]+parts[1][0]).toUpperCase();
+  return parts[0][0].toUpperCase();
+}
+var avatarGradients=['linear-gradient(135deg,#FF6B2C,#e55a1a)','linear-gradient(135deg,#2563eb,#1d4ed8)','linear-gradient(135deg,#059669,#047857)','linear-gradient(135deg,#7c3aed,#6d28d9)','linear-gradient(135deg,#d97706,#b45309)','linear-gradient(135deg,#dc2626,#b91c1c)','linear-gradient(135deg,#0891b2,#0e7490)','linear-gradient(135deg,#db2777,#be185d)'];
+function getAvatarGrad(name){
+  if(!name)return avatarGradients[0];
+  var hash=0;
+  for(var i=0;i<name.length;i++){hash=name.charCodeAt(i)+((hash<<5)-hash);}
+  return avatarGradients[Math.abs(hash)%avatarGradients.length];
+}
+
 function renderAdminConvList(convs){
   var list=document.getElementById('adminConvList');
+  var count=document.getElementById('adminConvCount');
   if(!list)return;
   if(!convs||convs.length===0){
-    list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">\u{1F4AC}</p><p style="font-size:14px">No hay conversaciones</p></div>';
+    list.innerHTML='<div style="text-align:center;padding:3rem 1.5rem;color:var(--gray)"><div style="width:56px;height:56px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:24px">\u{1F4AC}</div><p style="font-size:14px;font-weight:600;color:var(--dk);margin-bottom:4px">Sin conversaciones</p><p style="font-size:12px;line-height:1.5">No hay chats disponibles.<br>Cuando un cliente inicie uno, aparecerá aquí.</p></div>';
+    if(count)count.textContent='0';
     return;
   }
+  if(count)count.textContent=convs.length;
   list.innerHTML=convs.map(function(c){
-    var lastMsg=c.messages&&c.messages[0]?c.messages[0].text||'\u{1F4F7}':''; 
-    var time=c.lastMsgAt?timeAgo(new Date(c.lastMsgAt)):'Sin mensajes';
+    var lastMsg=c.messages&&c.messages[0]?c.messages[0].text||'\u{1F4F7} Imagen':''; 
+    var time=c.lastMsgAt?timeAgo(new Date(c.lastMsgAt)):'';
     var unreadCount=c.unreadByAdmin||0;
-    var unreadBadge=unreadCount>0?'<span style="background:var(--orange);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px">'+unreadCount+'</span>':'';
+    var userName=c.user?c.user.name:'Cliente';
+    var userEmail=c.user?c.user.email:'';
+    var initials=getInitials(userName);
+    var grad=getAvatarGrad(userName);
     var isActive=c.id===adminActiveConvId;
-    return '<div class="conv-item'+(isActive?' act-conv':'')+'" onclick="openAdminConv(\''+c.id+'\')" style="cursor:pointer;padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;transition:background .15s;background:'+(isActive?'rgba(255,107,44,.05)':'')+'" onmouseover="this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.background=\''+(isActive?'rgba(255,107,44,.05)':'')+'\'">'+
-      '<div style="width:44px;height:44px;border-radius:50%;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">\u{1F464}</div>'+
+    var status=c.status||'OPEN';
+    var statusColors={OPEN:'#059669',CLOSED:'var(--gray)',RESOLVED:'#2563eb'};
+    var statusLabels={OPEN:'Abierta',CLOSED:'Cerrada',RESOLVED:'Resuelta'};
+    var statusColor=statusColors[status]||'var(--gray)';
+    var statusLabel=statusLabels[status]||status;
+    return '<div onclick="openAdminConv(\''+c.id+'\')" style="cursor:pointer;padding:14px 18px;display:flex;gap:12px;align-items:flex-start;transition:all .15s;background:'+(isActive?'rgba(255,107,44,.07)':'transparent')+';border-left:3px solid '+(isActive?'var(--orange)':'transparent')+';position:relative" onmouseover="this.style.background=\''+(isActive?'rgba(255,107,44,.07)':'rgba(255,107,44,.04)')+'\'" onmouseout="this.style.background=\''+(isActive?'rgba(255,107,44,.07)':'transparent')+'\'">'+
+      '<div style="width:40px;height:40px;min-width:40px;border-radius:50%;background:'+grad+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.1)">'+initials+'</div>'+
       '<div style="flex:1;min-width:0">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">'+
-          '<span style="font-size:13px;font-weight:600;color:var(--dk)">'+(c.user?c.user.name:'Cliente')+'</span>'+
-          unreadBadge+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
+          '<span style="font-size:13px;font-weight:600;color:var(--dk)">'+userName+'</span>'+
+          '<div style="display:flex;align-items:center;gap:6px">'+
+            (time?'<span style="font-size:10px;color:var(--gray)">'+time+'</span>':'')+
+            (unreadCount>0?'<span style="background:var(--orange);color:#fff;font-size:9px;font-weight:700;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:9px;padding:0 5px;box-sizing:border-box">'+(unreadCount>99?'99+':unreadCount)+'</span>':'')+
+          '</div>'+
         '</div>'+
-        '<div style="font-size:12px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px">'+lastMsg+'</div>'+
-        '<div style="font-size:10px;color:var(--gray);margin-top:2px">'+time+'</div>'+
+        (userEmail?'<div style="font-size:10px;color:var(--gray);margin-bottom:4px">'+userEmail+'</div>':'')+
+        '<div style="display:flex;align-items:center;gap:6px">'+
+          '<span style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+(lastMsg||'Sin mensajes')+'</span>'+
+          '<span style="width:5px;height:5px;border-radius:50%;background:'+statusColor+';flex-shrink:0"></span>'+
+          '<span style="font-size:9px;color:'+statusColor+';font-weight:500;text-transform:uppercase;letter-spacing:.3px">'+statusLabel+'</span>'+
+        '</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -569,22 +625,40 @@ function openAdminConv(id){
   renderQuickReplies();
   loadAdminConversations();
   
-  var header=document.getElementById('adminChatHeader');
-  if(header){
-    var conv=window._adminConvs?window._adminConvs.find(function(c){return c.id===id;}):null;
-    var userName=conv&&conv.user?conv.user.name:'Cliente';
-    header.innerHTML='<span style="font-size:14px;font-weight:600">'+userName+'</span>'+
-      '<div style="display:flex;gap:6px">'+
-        '<button onclick="deleteAdminConv(\''+id+'\')" style="padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Borrar conversaci\u00F3n</button>'+
-      '</div>';
+  var conv=window._adminConvs?window._adminConvs.find(function(c){return c.id===id;}):null;
+  var userName=conv&&conv.user?conv.user.name:'Cliente';
+  var userEmail=conv&&conv.user?conv.user.email:'';
+  var userDni=conv&&conv.user?conv.user.dni:'';
+  var initials=getInitials(userName);
+  var grad=getAvatarGrad(userName);
+  
+  var avatarEl=document.getElementById('adminChatAvatar');
+  if(avatarEl){
+    avatarEl.style.display='flex';
+    avatarEl.style.background=grad;
+    avatarEl.textContent=initials;
   }
+  var nameEl=document.getElementById('adminChatName');
+  if(nameEl)nameEl.textContent=userName;
+  var subEl=document.getElementById('adminChatSub');
+  if(subEl){
+    var subParts=[];
+    if(userEmail)subParts.push(userEmail);
+    if(userDni)subParts.push('DNI: '+userDni);
+    subEl.textContent=subParts.join(' · ')||'Cliente';
+  }
+  var closeBtn=document.getElementById('adminCloseConvBtn');
+  if(closeBtn)closeBtn.style.display='inline-flex';
+  var deleteBtn=document.getElementById('adminDeleteConvBtn');
+  if(deleteBtn)deleteBtn.style.display='inline-flex';
 }
 
+var quickReplyIcons=['\u2705','\u{1F68A}','\u{1F6E1}','\u{1F3ED}','\u23F3','\u2764'];
 var cannedReplies=[
-  {label:'Pedido confirmado',text:'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.'},
+  {label:'Confirmado',text:'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.'},
   {label:'Enviado',text:'Tu pedido fue enviado! Te compartiremos el numero de tracking para que puedas seguirlo.'},
-  {label:'Garantia',text:'Tu compra tiene garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos.'},
-  {label:'Retiro en tienda',text:'Tu pedido esta listo para retiro en nuestro local: Zelarrayan 179, Bahia Blanca. Horario: Lun a Vie 10-19hs.'},
+  {label:'Garantía',text:'Tu compra tiene garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos.'},
+  {label:'Retiro',text:'Tu pedido esta listo para retiro en nuestro local: Zelarrayan 179, Bahia Blanca. Horario: Lun a Vie 10-19hs.'},
   {label:'Demora',text:'Estamos teniendo una leve demora en tu pedido. Te agradecemos la paciencia y te avisaremos apenas este listo.'},
   {label:'Gracias',text:'Gracias por tu compra! Si tenes alguna consulta no dudes en escribirnos. Estamos para ayudarte.'},
 ];
@@ -593,10 +667,10 @@ function renderQuickReplies(){
   var container=document.getElementById('quickReplies');
   if(!container)return;
   container.style.display='flex';
-  container.innerHTML='<span style="font-size:10px;color:var(--gray);width:100%;margin-bottom:2px">Respuestas rapidas:</span>'+
-    cannedReplies.map(function(r,i){
-      return '<button onclick="useQuickReply('+i+')" style="padding:4px 10px;font-size:11px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--cream2)\'">'+r.label+'</button>';
-    }).join('');
+  container.innerHTML=cannedReplies.map(function(r,i){
+    var ico=quickReplyIcons[i]||'\u{1F4AC}';
+    return '<button onclick="useQuickReply('+i+')" title="'+r.text+'" style="padding:5px 12px 5px 10px;font-size:11px;font-weight:500;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.08)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--cream2)\';this.style.color=\'var(--dk)\'"><span style="font-size:13px">'+ico+'</span> '+r.label+'</button>';
+  }).join('');
 }
 
 function useQuickReply(index){
@@ -610,6 +684,7 @@ function useQuickReply(index){
 }
 
 function deleteAdminConv(id){
+  if(!id)return;
   showConfirm(
     'Eliminar conversación',
     '¿Estás seguro de que querés eliminar esta conversación? Esta acción no se puede deshacer.',
@@ -623,14 +698,11 @@ function deleteAdminConv(id){
     })
     .then(function(r){return r.json();})
     .then(function(){
-      showSuccessToast('Conversación eliminada', 'La conversación ha sido eliminada');
+      showSuccessToast('Conversación eliminada', 'El chat y sus mensajes fueron eliminados.');
       adminActiveConvId=null;
       userConvId=null;
+      resetAdminChatHeader();
       loadAdminConversations();
-      var header=document.getElementById('adminChatHeader');
-      if(header){
-        header.innerHTML='<span style="font-size:14px;font-weight:600;color:var(--gray)">Seleccioná una conversación</span>';
-      }
       var list=document.getElementById('chatMsgList');
       if(list)list.innerHTML='';
     })
@@ -638,7 +710,21 @@ function deleteAdminConv(id){
   });
 }
 
+function resetAdminChatHeader(){
+  var avatarEl=document.getElementById('adminChatAvatar');
+  if(avatarEl)avatarEl.style.display='none';
+  var nameEl=document.getElementById('adminChatName');
+  if(nameEl)nameEl.textContent='Seleccioná una conversación';
+  var subEl=document.getElementById('adminChatSub');
+  if(subEl)subEl.textContent='';
+  var closeBtn=document.getElementById('adminCloseConvBtn');
+  if(closeBtn)closeBtn.style.display='none';
+  var deleteBtn=document.getElementById('adminDeleteConvBtn');
+  if(deleteBtn)deleteBtn.style.display='none';
+}
+
 function closeAdminConv(id){
+  if(!id)return;
   fetch(API_URL+'/api/admin/conversations',{
     method:'POST',
     headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
@@ -646,9 +732,13 @@ function closeAdminConv(id){
   })
   .then(function(r){return r.json();})
   .then(function(){
-    showToast('Conversaci\u00F3n cerrada');
+    showSuccessToast('Conversación cerrada','El chat se ha marcado como cerrado.');
     adminActiveConvId=null;
+    userConvId=null;
+    resetAdminChatHeader();
     loadAdminConversations();
+    var list=document.getElementById('chatMsgList');
+    if(list)list.innerHTML='';
   })
   .catch(function(e){console.error('Error closing conversation:',e);});
 }

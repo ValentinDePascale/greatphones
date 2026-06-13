@@ -217,3 +217,52 @@ function showWarningToast(title, message) {
 function showInfoToast(title, message) {
   showToast({ title: title, message: message, type: 'info' });
 }
+
+/**
+ * Show a toast with undo button
+ * @param {string} title - Toast title
+ * @param {string} message - Toast message
+ * @param {function} onUndo - Callback when undo is clicked
+ * @param {number} duration - Duration in ms (default 5000)
+ */
+function showUndoToast(title, message, onUndo, duration) {
+  var container = document.getElementById('adminToastContainer');
+  if (!container) return;
+  
+  duration = duration || 5000;
+  
+  var toast = document.createElement('div');
+  toast.className = 'admin-toast';
+  
+  var iconHTML = '<div class="admin-toast-icon success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg></div>';
+  var contentHTML = '<div class="admin-toast-content">' +
+    '<div class="admin-toast-title">' + title + '</div>' +
+    '<div class="admin-toast-message">' + message + '</div>' +
+    '</div>';
+  var undoHTML = '<button class="admin-toast-undo" style="background:var(--orange);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Deshacer</button>';
+  var closeHTML = '<button class="admin-toast-close" onclick="this.parentElement.remove()">&times;</button>';
+  var progressHTML = '<div class="admin-toast-progress" style="animation-duration:' + duration + 'ms"></div>';
+  
+  toast.innerHTML = iconHTML + contentHTML + undoHTML + closeHTML + progressHTML;
+  container.appendChild(toast);
+  
+  // Add undo handler
+  var undoBtn = toast.querySelector('.admin-toast-undo');
+  undoBtn.onclick = function() {
+    toast.remove();
+    if (onUndo) onUndo();
+  };
+  
+  setTimeout(function() {
+    toast.classList.add('show');
+  }, 10);
+  
+  setTimeout(function() {
+    toast.classList.remove('show');
+    setTimeout(function() {
+      if (toast.parentElement) {
+        toast.remove();
+      }
+    }, 300);
+  }, duration);
+}

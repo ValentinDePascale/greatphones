@@ -4,7 +4,7 @@ var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://loca
 function nav(id){
   ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
   var _cf=document.querySelector('.cat-flex');if(_cf)_cf.classList.remove('cat-reveal');
-  var _hidden=['servicio','notebooks','mayorista','compare'];
+  var _hidden=['servicio','notebooks','mayorista'];
   if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}
   if(id==='checkout'&&!currentUser){nav('login');return;}
@@ -66,6 +66,7 @@ function nav(id){
     if(firstFchip)firstFchip.classList.add('act');
   }
   if(id==='ofertas'){renderOfertasGrid();setCN('ofertas');}
+  if(id==='compare'){setCN('compare');}
   if(id==='accesorios'){renderAccGrid();setCN('accesorios');}
   if(id==='favoritos')renderFavGrid();
   if(id==='chats'){
@@ -117,7 +118,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'shop',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order'};
+  var urlMap={home:'',shop:'shop',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
@@ -973,6 +974,7 @@ function handleInitialRoute(){
   if(path==='favoritos'){nav('favoritos');return;}
   if(path==='accesorios'){nav('accesorios');return;}
   if(path==='garantias'){nav('garantias');return;}
+  if(path==='compare'){nav('compare');return;}
   if(path==='chats'){nav('chats');return;}
   if(path==='admin'){nav('admin');return;}
   if(path==='cuenta'){nav('cuenta');return;}

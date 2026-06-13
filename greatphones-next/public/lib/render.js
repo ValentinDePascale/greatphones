@@ -2271,16 +2271,19 @@ function renderQuotesList(res){
     var sl=statusLabels[q.status]||q.status;
     var si=statusIcons[q.status]||'&#128203;';
     var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--admin-surface);border-radius:8px;border:1px solid var(--admin-border);margin-bottom:8px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--admin-border)\'" onclick="openQuoteDetail(\''+q.id+'\')">'+
-      '<div style="width:40px;height:40px;border-radius:8px;background:'+sc+'15;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+si+'</div>'+
-      '<div style="flex:1;min-width:0">'+
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--admin-surface);border-radius:8px;border:1px solid var(--admin-border);margin-bottom:8px;transition:all .2s">'+
+      '<div style="width:40px;height:40px;border-radius:8px;background:'+sc+'15;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer" onclick="openQuoteDetail(\''+q.id+'\')">'+si+'</div>'+
+      '<div style="flex:1;min-width:0;cursor:pointer" onclick="openQuoteDetail(\''+q.id+'\')">'+
         '<div style="font-weight:600;font-size:13px;color:var(--admin-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+q.device+'</div>'+
         '<div style="font-size:11px;color:var(--admin-text-muted)">'+(q.clientName||'Sin nombre')+' &middot; '+date+'</div>'+
       '</div>'+
-      '<div style="text-align:right;flex-shrink:0">'+
+      '<div style="text-align:right;flex-shrink:0;margin-right:12px">'+
         '<div style="font-weight:700;font-size:14px;color:var(--orange)">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</div>'+
         '<div style="font-size:10px;font-weight:600;color:'+sc+';background:'+sc+'15;padding:2px 8px;border-radius:10px;display:inline-block">'+sl+'</div>'+
       '</div>'+
+      '<button onclick="deleteQuote(\''+q.id+'\')" style="width:32px;height:32px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background=\'var(--red)\';this.style.color=\'white\'" onmouseout="this.style.background=\'rgba(239,68,68,.1)\';this.style.color=\'var(--red)\'" title="Eliminar cotización">'+
+        '<span class="material-symbols-outlined" style="font-size:18px">delete</span>'+
+      '</button>'+
     '</div>';
   }).join('');
   
@@ -2461,4 +2464,17 @@ function confirmRejectQuote(id){
     closeQuoteDetail();
     loadQuotes(_quoteStatus);
   }).catch(function(){showErrorToast('Error','No se pudo rechazar la cotizacion');});
+}
+
+function deleteQuote(id){
+  if(!confirm('¿Eliminar esta cotización? Esta acción no se puede deshacer.'))return;
+  
+  fetch(API_URL+'/api/quotes?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(res){
+    if(res.success){
+      showSuccessToast('Cotización eliminada','Se eliminó correctamente');
+      loadQuotes(_quoteStatus);
+    }else{
+      showErrorToast('Error','No se pudo eliminar la cotización');
+    }
+  }).catch(function(){showErrorToast('Error','No se pudo eliminar la cotización');});
 }

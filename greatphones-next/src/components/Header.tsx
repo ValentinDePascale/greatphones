@@ -121,6 +121,10 @@ export default function Header() {
               <span className="text-2xl">🏷️</span>
               <span>Ofertas</span>
             </button>
+            <button className="flex flex-col items-center gap-1 text-xs text-[var(--gray)] hover:text-[var(--orange)] shrink-0">
+              <span className="text-2xl">📊</span>
+              <span>Comparar</span>
+            </button>
           </div>
         </div>
       </div>

@@ -951,6 +951,8 @@ function renderAccAdditionalImagesList(){
 function deleteAccessory(id){
   var a=getById(window.ACCS||[],id);
   var aname=a?a.name:'este accesorio';
+  // Guardar una copia del accesorio para poder restaurarlo
+  var accessoryBackup = a ? JSON.parse(JSON.stringify(a)) : null;
   var modal=document.getElementById('deleteAccessoryModal');
   if(!modal){
     var m=document.createElement('div');
@@ -975,7 +977,22 @@ function deleteAccessory(id){
   document.getElementById('btnConfirmDeleteAccessory').onclick=function(){
     closeDeleteAccessoryModal();
     fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
-      showToast('Accesorio eliminado');
+      showUndoToast('Accesorio eliminado', aname, function(){
+        // Undo: restore accessory con datos originales
+        if(accessoryBackup){
+          fetch(API_URL+'/api/accessories',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(accessoryBackup)
+          }).then(function(){
+            loadAccessories();
+            loadAdminAccessories();
+            showSuccessToast('Accesorio restaurado', aname);
+          }).catch(function(){
+            showErrorToast('Error', 'No se pudo restaurar el accesorio');
+          });
+        }
+      });
       loadAccessories();
       loadAdminAccessories();
     }).catch(function(){showToast('Error eliminando');});
@@ -1069,6 +1086,8 @@ function duplicateProduct(id){
 function deleteProduct(id){
   var p=getById(PRODUCTS,id);
   var pname=p?p.name:'este producto';
+  // Guardar una copia del producto para poder restaurarlo
+  var productBackup = p ? JSON.parse(JSON.stringify(p)) : null;
   var modal=document.getElementById('deleteProductModal');
   if(!modal){
     var m=document.createElement('div');
@@ -1096,7 +1115,22 @@ function deleteProduct(id){
       if(!r.ok)throw new Error('Error '+r.status);
       return r.json();
     }).then(function(){
-      showToast('Producto eliminado: '+pname);
+      showUndoToast('Producto eliminado', pname, function(){
+        // Undo: restore product con datos originales
+        if(productBackup){
+          fetch(API_URL+'/api/products',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(productBackup)
+          }).then(function(){
+            loadProducts();
+            loadAdminProducts();
+            showSuccessToast('Producto restaurado', pname);
+          }).catch(function(){
+            showErrorToast('Error', 'No se pudo restaurar el producto');
+          });
+        }
+      });
       loadProducts();
       loadAdminProducts();
     }).catch(function(e){showToast('Error eliminando: '+e.message);});

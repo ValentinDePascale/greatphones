@@ -103,11 +103,12 @@ function removeFromCart(id){
   if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
     renderCheckoutSummary();
   }
-  showToast('Producto eliminado');
   showUndoRemove();
 }
 function showUndoRemove(){
   if(_undoTimeout)clearTimeout(_undoTimeout);
+  var existingToast=document.getElementById('toast');
+  if(existingToast)existingToast.remove();
   var toast=document.querySelector('.toast-container');
   if(!toast){
     toast=document.createElement('div');
@@ -129,6 +130,7 @@ function undoRemove(){
   if(_undoTimeout)clearTimeout(_undoTimeout);
   var toast=document.querySelector('.toast-container');
   if(toast)toast.innerHTML='';
+  _lastRemovedItem.item.qty=1;
   Cart.splice(_lastRemovedItem.index,0,_lastRemovedItem.item);
   saveCart();
   updCartBadge();
