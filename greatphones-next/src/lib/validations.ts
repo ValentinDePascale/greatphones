@@ -231,3 +231,50 @@ export type CreateConversationPayload = z.infer<typeof CreateConversationSchema>
 export type SendMessagePayload = z.infer<typeof SendMessageSchema>
 export type MarkReadPayload = z.infer<typeof MarkReadSchema>
 export type AssignConversationPayload = z.infer<typeof AssignConversationSchema>
+
+// ==================== INVENTARIO ====================
+export const InventoryCreateSchema = z.object({
+  imei: z.string().regex(/^\d{15}$/, 'IMEI debe tener 15 dígitos'),
+  serialNumber: z.string().optional(),
+
+  // Auto-completado (opcional si se pasa desde el frontend ya resuelto)
+  brand: z.string().optional(),
+  modelName: z.string().optional(),
+  storage: z.string().optional(),
+  color: z.string().optional(),
+  modelNumber: z.string().optional(),
+  deviceType: z.string().optional(),
+  specs: z.any().optional(),
+  imageUrl: z.string().optional(),
+
+  // Datos del negocio
+  purchasePrice: z.number().int().min(0, 'Precio de compra requerido'),
+  cosmeticCondition: z.enum(['Nuevo', 'Impecable', 'Muy bueno', 'Bueno']).default('Impecable'),
+  functionalCondition: z.string().optional(),
+  batteryHealth: z.number().int().min(0).max(100).optional(),
+  notes: z.string().optional(),
+  investor: z.string().optional(),
+  targetPrice: z.number().int().min(0).optional(),
+
+  // Proveedor
+  supplierId: z.string().optional(),
+  purchasedFrom: z.string().optional(),
+})
+
+export const InventoryUpdateSchema = InventoryCreateSchema.partial()
+
+export const InventorySellSchema = z.object({
+  salePrice: z.number().int().min(0, 'Precio de venta requerido'),
+  clientName: z.string().optional(),
+  clientDni: z.string().optional(),
+  paymentMethod: z.string().optional(),
+  notes: z.string().optional(),
+})
+
+export const ImeiLookupSchema = z.object({
+  imei: z.string().regex(/^\d{15}$/, 'IMEI debe tener 15 dígitos'),
+})
+
+export type InventoryCreatePayload = z.infer<typeof InventoryCreateSchema>
+export type InventoryUpdatePayload = z.infer<typeof InventoryUpdateSchema>
+export type InventorySellPayload = z.infer<typeof InventorySellSchema>

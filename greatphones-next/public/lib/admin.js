@@ -53,6 +53,20 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
     loadPendingOrders();
+  }else if(tab==='inventory'){
+    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
+      '<input type="text" id="invSearchInput" placeholder="Buscar por código, IMEI, marca, modelo..." oninput="loadInventoryAdmin(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+      '<select id="invStatusFilter" onchange="loadInventoryAdmin(document.getElementById(\'invSearchInput\').value,1)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">'+
+        '<option value="">Todos los estados</option>'+
+        '<option value="IN_STOCK">En stock</option>'+
+        '<option value="SOLD">Vendidos</option>'+
+        '<option value="IN_REPAIR">En reparación</option>'+
+        '<option value="RESERVED">Reservados</option>'+
+        '<option value="ON_HOLD">En espera</option>'+
+      '</select>'+
+      '<button class="btn btn-o" onclick="showAddInventoryModal()">+ Agregar dispositivo</button>'+
+    '</div><div class="adm-list" id="invList"></div><div id="invPagination"></div>';
+    loadInventoryAdmin();
   }else if(tab==='instore'){
     loadInStoreHistory();
   }else{

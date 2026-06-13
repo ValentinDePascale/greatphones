@@ -38,8 +38,10 @@ model User {
   favorites       Favorite[]
   accounts        Account[]
   sessions        Session[]
-  arrepentimientos Arrepentimiento[]
-  sentMessages    Message[]
+  arrepentimientos      Arrepentimiento[]
+  sentMessages          Message[]
+  createdInventoryItems InventoryItem[]    @relation("CreatedBy")
+  soldInventoryItems    InventoryItem[]    @relation("SoldBy")
 }
 
 enum Role {
@@ -82,10 +84,94 @@ model Product {
   updatedAt   DateTime  @updatedAt
   slug       String?
 
+  modelGroup String?
+
   supplierId  String?
-  supplier   Supplier?  @relation(fields: [supplierId], references: [id])
-  orderItems OrderItem[]
-  favorites  Favorite[]
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
+  orderItems  OrderItem[]
+  favorites   Favorite[]
+  inventoryItems InventoryItem[]
+}
+
+// ==================== INVENTARIO FÍSICO ====================
+enum InventoryStatus {
+  IN_STOCK
+  IN_REPAIR
+  RESERVED
+  ON_HOLD
+  SOLD
+}
+
+model InventoryItem {
+  id              String          @id @default(cuid())
+  code            String          @unique
+  imei            String          @unique
+  serialNumber    String?
+
+  // Auto-completado por API IMEI
+  brand           String
+  modelName       String
+  storage         String?
+  color           String?
+  modelNumber     String?
+  deviceType      String
+  specs           Json?
+  imageUrl        String?
+
+  // Datos manuales del negocio
+  purchasePrice   Int
+  cosmeticCondition String
+  functionalCondition String?
+  batteryHealth   Int?
+  notes           String?
+  investor        String?
+  targetPrice     Int?
+
+  // Estado
+  status          InventoryStatus @default(IN_STOCK)
+
+  // QR
+  qrCode          String?
+  labelPrinted    Boolean         @default(false)
+
+  // Links
+  productId       String?
+  product         Product?        @relation(fields: [productId], references: [id])
+  supplierId      String?
+  supplier        Supplier?       @relation(fields: [supplierId], references: [id])
+
+  // Purchase tracking
+  purchasedFrom   String?
+  purchaseDate    DateTime        @default(now())
+
+  // Sale tracking
+  salePrice       Int?
+  soldAt          DateTime?
+  soldById        String?
+  soldBy          User?           @relation("SoldBy", fields: [soldById], references: [id])
+
+  // Creator
+  createdById     String
+  createdBy       User            @relation("CreatedBy", fields: [createdById], references: [id])
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  history         InventoryHistory[]
+}
+
+model InventoryHistory {
+  id              String        @id @default(cuid())
+  inventoryItemId String
+  inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+
+  type            String        // CREATED | STATUS_CHANGE | REPAIR | SOLD | LABEL_PRINTED | NOTE
+  oldValue        String?
+  newValue        String?
+  description     String?
+  userId          String?
+
+  createdAt       DateTime      @default(now())
 }
 
 // ==================== PEDIDOS ====================
@@ -314,8 +400,9 @@ model Supplier {
   notes     String?
   total     Int       @default(0)
 
-  products  Product[]
-  createdAt DateTime  @default(now())
+  products        Product[]
+  inventoryItems  InventoryItem[]
+  createdAt       DateTime @default(now())
 }
 
 // ==================== CONVERSACIONES ====================

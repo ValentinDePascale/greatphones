@@ -1,0 +1,207 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import {
+  InventoryCreateSchema,
+  formatZodError
+} from '@/lib/validations'
+import { getCorsHeaders, corsOptions } from '@/lib/cors'
+import QRCode from 'qrcode'
+
+const API_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get('origin')
+  return corsOptions(origin)
+}
+
+async function generateCode(): Promise<string> {
+  const last = await prisma.inventoryItem.findFirst({
+    orderBy: { code: 'desc' },
+    select: { code: true }
+  })
+  let num = 1
+  if (last) {
+    const match = last.code.match(/CMP-(\d+)/)
+    if (match) num = parseInt(match[1]) + 1
+  }
+  return `CMP-${String(num).padStart(3, '0')}`
+}
+
+function generateSpecs(data: any) {
+  const specs: Record<string, any> = {}
+  if (data.specs) return data.specs
+  if (data.storage) specs.almacenamiento = data.storage
+  if (data.color) specs.color = data.color
+  return specs
+}
+
+export async function GET(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+  try {
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const search = searchParams.get('search')
+    const imei = searchParams.get('imei')
+    const code = searchParams.get('code')
+    const productId = searchParams.get('productId')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '50')
+
+    const where: any = {}
+
+    if (status) where.status = status
+    if (imei) where.imei = imei
+    if (code) where.code = code
+    if (productId) where.productId = productId
+    if (search) {
+      where.OR = [
+        { code: { contains: search, mode: 'insensitive' } },
+        { imei: { contains: search } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { modelName: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+
+    const total = await prisma.inventoryItem.count({ where })
+    const items = await prisma.inventoryItem.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        product: { select: { id: true, name: true, price: true } },
+        supplier: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, name: true } },
+      }
+    })
+
+    return NextResponse.json({
+      data: items,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    }, { headers: corsHeaders })
+  } catch (error) {
+    console.error('Error fetching inventory:', error)
+    return NextResponse.json({ error: 'Error al obtener inventario' }, { status: 500, headers: corsHeaders })
+  }
+}
+
+export async function POST(request: Request) {
+  const origin = request.headers.get('origin')
+  const corsHeaders = getCorsHeaders(origin)
+  try {
+    const body = await request.json()
+    const validation = InventoryCreateSchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
+    }
+
+    const data = validation.data
+
+    // Check if IMEI already exists
+    const existing = await prisma.inventoryItem.findUnique({ where: { imei: data.imei } })
+    if (existing) {
+      return NextResponse.json({ error: 'El IMEI ya existe en el inventario' }, { status: 409, headers: corsHeaders })
+    }
+
+    // Generate unique code
+    const code = await generateCode()
+
+    // Find or create matching Product
+    let productId: string | null = null
+    if (data.brand && data.modelName) {
+      const productMatch = await prisma.product.findFirst({
+        where: {
+          brand: data.brand,
+          modelGroup: data.modelName,
+          storage: data.storage || null,
+          color: data.color || null,
+        }
+      })
+
+      if (productMatch) {
+        productId = productMatch.id
+        await prisma.product.update({
+          where: { id: productMatch.id },
+          data: { stock: { increment: 1 } }
+        })
+      } else if (data.brand && data.modelName) {
+        // Create new product
+        const newProduct = await prisma.product.create({
+          data: {
+            name: data.modelName,
+            brand: data.brand,
+            sub: [data.storage, data.color].filter(Boolean).join(' / ') || null,
+            modelGroup: data.modelName,
+            condition: data.cosmeticCondition || 'Impecable',
+            price: data.targetPrice || 0,
+            cost: data.purchasePrice || 0,
+            stock: 1,
+            type: data.deviceType || 'celular',
+            storage: data.storage || null,
+            color: data.color || null,
+            battery: data.batteryHealth || null,
+            imageUrl: data.imageUrl || null,
+            ico: '📱',
+          }
+        })
+        productId = newProduct.id
+      }
+    }
+
+    // Generate QR
+    const qrUrl = `${API_URL}/inv/${code}`
+    const qrCode = await QRCode.toDataURL(qrUrl, {
+      width: 300,
+      margin: 2,
+      color: { dark: '#000000', light: '#ffffff' }
+    })
+
+    // Create inventory item
+    const item = await prisma.inventoryItem.create({
+      data: {
+        code,
+        imei: data.imei,
+        serialNumber: data.serialNumber,
+        brand: data.brand || '',
+        modelName: data.modelName || '',
+        storage: data.storage,
+        color: data.color,
+        modelNumber: data.modelNumber,
+        deviceType: data.deviceType || 'celular',
+        specs: generateSpecs(data),
+        imageUrl: data.imageUrl,
+        purchasePrice: data.purchasePrice,
+        cosmeticCondition: data.cosmeticCondition || 'Impecable',
+        functionalCondition: data.functionalCondition,
+        batteryHealth: data.batteryHealth,
+        notes: data.notes,
+        investor: data.investor,
+        targetPrice: data.targetPrice,
+        productId,
+        supplierId: data.supplierId,
+        purchasedFrom: data.purchasedFrom,
+        qrCode,
+        createdById: body.createdById || 'unknown',
+      }
+    })
+
+    // Create history entry
+    await prisma.inventoryHistory.create({
+      data: {
+        inventoryItemId: item.id,
+        type: 'CREATED',
+        description: `Dispositivo creado desde IMEI ${data.imei}${productId ? ' — vinculado a catálogo' : ''}`,
+        userId: body.createdById,
+      }
+    })
+
+    return NextResponse.json(item, { status: 201, headers: corsHeaders })
+  } catch (error) {
+    console.error('Error creating inventory item:', error)
+    return NextResponse.json({ error: 'Error al crear item de inventario', details: (error as Error).message }, { status: 500, headers: corsHeaders })
+  }
+}
