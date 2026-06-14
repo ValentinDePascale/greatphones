@@ -1287,6 +1287,7 @@ function adminTab(tab,btn){
   var titles={
     dashboard:'Dashboard',
     prods:'Productos',
+    inventory:'Inventario',
     acc:'Accesorios',
     stock:'Stock',
     promos:'Promociones',
@@ -1568,7 +1569,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-inventory,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -1844,6 +1845,24 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
     loadQuotes('all');
+  }else if(tab==='inventory'){
+    if(typeof loadInventoryAdmin==='function'){
+      el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
+        '<input type="text" id="invSearchInput" placeholder="Buscar por código, IMEI, marca, modelo..." oninput="loadInventoryAdmin(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '<select id="invStatusFilter" onchange="loadInventoryAdmin(document.getElementById(\'invSearchInput\').value,1)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">'+
+          '<option value="">Todos los estados</option>'+
+          '<option value="IN_STOCK">En stock</option>'+
+          '<option value="SOLD">Vendidos</option>'+
+          '<option value="IN_REPAIR">En reparación</option>'+
+          '<option value="RESERVED">Reservados</option>'+
+          '<option value="ON_HOLD">En espera</option>'+
+        '</select>'+
+        '<button class="btn btn-o" onclick="showAddInventoryModal()">+ Agregar dispositivo</button>'+
+      '</div><div class="adm-list" id="invList"></div><div id="invPagination"></div>';
+      loadInventoryAdmin();
+    }else{
+      el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando módulo de inventario...</div>';
+    }
   }else if(tab==='instore'){
     if(typeof loadInStoreHistory==='function'){
       loadInStoreHistory();
