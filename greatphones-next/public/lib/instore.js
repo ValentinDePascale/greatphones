@@ -5,7 +5,8 @@ var instoreState = {
   cashReceived: 0,
   searchQuery: '',
   searchResults: [],
-  customModal: null
+  customModal: null,
+  invDevice: null  // scanned/looked-up inventory device
 }
 
 function renderInStoreSale() {
@@ -13,13 +14,23 @@ function renderInStoreSale() {
   if (!content) return
 
   content.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 380px;gap:1.5rem;height:calc(100vh - 140px);min-height:600px">
+    <style>
+      .pos-layout{display:grid;grid-template-columns:1fr 380px;gap:1.5rem;height:calc(100vh - 140px);min-height:600px}
+      .pos-inv-result{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:12px 16px;margin-bottom:8px}
+      .pos-inv-result .remove{float:right;background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;padding:0 4px}
+      .pos-inv-result .remove:hover{color:#dc2626}
+      @media(max-width:900px){
+        .pos-layout{grid-template-columns:1fr;height:auto;min-height:auto}
+        .pos-right{position:static!important}
+      }
+    </style>
+    <div class="pos-layout">
       
       <!-- LEFT COLUMN: Product Selection -->
       <div style="display:flex;flex-direction:column;gap:1rem;overflow:hidden">
         
         <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <h2 style="font-size:24px;font-weight:700;color:var(--dk)">Nueva Venta</h2>
           <button onclick="loadInStoreHistory()" class="btn btn-o" style="padding:8px 16px">
             <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">history</span>
@@ -33,12 +44,12 @@ function renderInStoreSale() {
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Cliente</label>
               <input type="text" id="instore-clientName" placeholder="Nombre completo" 
-                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px">
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">DNI</label>
               <input type="text" id="instore-clientDni" placeholder="12345678" 
-                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px">
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
             </div>
           </div>
         </div>
@@ -47,7 +58,7 @@ function renderInStoreSale() {
         <div style="position:relative">
           <input type="text" id="instore-search" placeholder="Buscar productos o accesorios... (Ctrl+K)" 
             oninput="handleInstoreSearch(this.value)"
-            style="width:100%;padding:12px 16px 12px 44px;border:2px solid var(--border);border-radius:12px;font-size:14px;transition:border-color .2s"
+            style="width:100%;padding:12px 16px 12px 44px;border:2px solid var(--border);border-radius:12px;font-size:14px;transition:border-color .2s;box-sizing:border-box"
             onfocus="this.style.borderColor='var(--orange)'"
             onblur="this.style.borderColor='var(--border)'">
           <span class="material-symbols-outlined" style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:20px">search</span>
@@ -56,9 +67,29 @@ function renderInStoreSale() {
         <!-- Search Results -->
         <div id="instore-searchResults" style="flex:1;overflow-y:auto;display:none"></div>
 
+        <!-- Inventory Device Scanner -->
+        <div style="background:var(--cream2);padding:0.75rem 1rem;border-radius:12px;border:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span class="material-symbols-outlined" style="font-size:18px;color:var(--orange)">qr_code_scanner</span>
+            <span style="font-size:13px;font-weight:600;color:var(--dk)">Agregar dispositivo de inventario</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="instore-invImei" placeholder="Escaneá QR o ingresá IMEI" maxlength="15"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')"
+              style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box">
+            <button onclick="lookupInventoryDevice()" class="btn btn-o" style="padding:8px 12px;white-space:nowrap;font-size:12px">
+              <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">search</span>
+            </button>
+            <button onclick="openCameraScanner()" class="btn btn-o" style="padding:8px 12px;white-space:nowrap;font-size:12px" title="Escanear QR con cámara">
+              <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">photo_camera</span>
+            </button>
+          </div>
+          <div id="instore-invResult"></div>
+        </div>
+
         <!-- Items List -->
         <div style="flex:1;overflow-y:auto;background:var(--cream2);border-radius:12px;border:1px solid var(--border);padding:1rem">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">
             <h3 style="font-size:16px;font-weight:700">Items (${instoreState.items.length})</h3>
             <button onclick="openCustomProductModal()" class="btn btn-o" style="padding:6px 12px;font-size:12px">
               + Producto custom
@@ -69,7 +100,7 @@ function renderInStoreSale() {
       </div>
 
       <!-- RIGHT COLUMN: Sticky Summary -->
-      <div style="position:sticky;top:0;height:fit-content">
+      <div class="pos-right" style="position:sticky;top:0;height:fit-content">
         <div style="background:var(--cream2);border-radius:12px;border:1px solid var(--border);padding:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,.08)">
           
           <!-- Payment Method -->
@@ -83,7 +114,7 @@ function renderInStoreSale() {
               </button>
               <button onclick="selectPaymentMethod('transfer')" id="btn-transfer"
                 style="padding:12px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
-                <div style="font-size:20px;margin-bottom:4px"></div>
+                <div style="font-size:20px;margin-bottom:4px">📲</div>
                 <div style="font-size:12px;font-weight:600">Transferencia</div>
               </button>
             </div>
@@ -106,7 +137,7 @@ function renderInStoreSale() {
             <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Monto Recibido</label>
             <input type="number" id="instore-cashReceived" placeholder="0" 
               oninput="calculateChange()"
-              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem">
+              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem;box-sizing:border-box">
             <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(45,90,39,.1);border-radius:8px">
               <span style="font-size:12px;font-weight:600;color:var(--green)">Cambio</span>
               <span id="instore-change" style="font-size:16px;font-weight:700;color:var(--green)">$0</span>
@@ -137,6 +168,192 @@ function renderInStoreSale() {
   updateSummary()
 }
 
+// =========== INVENTORY DEVICE LOOKUP ===========
+var scannedInvDevice = null  // temporary storage for scanned/looked-up device
+
+function lookupInventoryDevice() {
+  var imei = document.getElementById('instore-invImei').value.trim()
+  if (!imei || imei.length < 10) { showToast('Ingresá un IMEI válido (15 dígitos)', 'error'); return }
+
+  showToast('Buscando dispositivo...', 'info')
+  fetch(API_URL + '/api/inventory?imei=' + encodeURIComponent(imei))
+    .then(r => r.json())
+    .then(res => {
+      var items = res.data || []
+      if (items.length === 0) {
+        showToast('No se encontró un dispositivo con ese IMEI en el inventario', 'error')
+        return
+      }
+      var device = items[0]
+      if (device.status !== 'IN_STOCK') {
+        showToast('El dispositivo ya fue vendido o está en otro estado', 'error')
+        return
+      }
+      showInvDeviceResult(device)
+    })
+    .catch(err => {
+      console.error('Error looking up device:', err)
+      showToast('Error al buscar dispositivo', 'error')
+    })
+}
+
+function showInvDeviceResult(device) {
+  scannedInvDevice = device
+  var container = document.getElementById('instore-invResult')
+  if (!container) return
+
+  container.innerHTML = `
+    <div class="pos-inv-result" style="margin-top:8px">
+      <button class="remove" onclick="clearInvDevice()">✕</button>
+      <div style="font-size:12px;font-weight:600;color:#16a34a;margin-bottom:4px">✅ ${device.brand} ${device.modelName}</div>
+      <div style="font-size:11px;color:var(--gray)">
+        ${[device.storage, device.color].filter(Boolean).join(' — ')} · ${device.imei} · <strong>$${(device.targetPrice || device.purchasePrice).toLocaleString('es-AR')}</strong>
+      </div>
+      <button onclick="addInvDeviceToSale()" class="btn btn-primary" style="margin-top:8px;padding:6px 14px;font-size:11px;width:100%">
+        + Agregar a la venta
+      </button>
+    </div>
+  `
+}
+
+function clearInvDevice() {
+  scannedInvDevice = null
+  var container = document.getElementById('instore-invResult')
+  if (container) container.innerHTML = ''
+  document.getElementById('instore-invImei').value = ''
+}
+
+function addInvDeviceToSale() {
+  if (!scannedInvDevice) { showToast('No hay dispositivo seleccionado', 'error'); return }
+
+  var device = scannedInvDevice
+  var price = device.targetPrice || device.purchasePrice
+
+  // Check if already in cart
+  var existing = instoreState.items.find(i => i.inventoryItemId === device.id)
+  if (existing) {
+    showToast('Este dispositivo ya está en la venta', 'warning')
+    return
+  }
+
+  instoreState.items.push({
+    type: 'inventory',
+    inventoryItemId: device.id,
+    code: device.code,
+    imei: device.imei,
+    name: device.brand + ' ' + device.modelName,
+    brand: device.brand,
+    modelName: device.modelName,
+    storage: device.storage,
+    color: device.color,
+    price: price,
+    quantity: 1,
+    imageUrl: device.imageUrl
+  })
+
+  clearInvDevice()
+  renderItemsList()
+  updateSummary()
+  showToast(`${device.brand} ${device.modelName} agregado`, 'success')
+}
+
+// =========== QR/BARCODE CAMERA SCANNER ===========
+function processQRImage(file) {
+  showToast('Procesando QR...', 'info')
+  var reader = new FileReader()
+  reader.onload = function(e) {
+    var img = new Image()
+    img.onload = function() {
+      var canvas = document.createElement('canvas')
+      canvas.width = img.width
+      canvas.height = img.height
+      var ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0)
+      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      try {
+        var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' })
+        if (code && code.data) {
+          var url = code.data.trim()
+          var match = url.match(/\/inv\/([A-Za-z0-9-]+)/)
+          if (match) {
+            lookupInvByCode(match[1])
+            return
+          }
+          var digits = url.replace(/[^0-9]/g, '')
+          if (digits.length === 15) {
+            document.getElementById('instore-invImei').value = digits
+            lookupInventoryDevice()
+            return
+          }
+          showToast('QR no corresponde a un dispositivo del inventario', 'error')
+        } else {
+          showToast('No se detectó un QR válido en la imagen', 'error')
+        }
+      } catch(err) {
+        showToast('Error al leer el QR', 'error')
+      }
+    }
+    img.src = e.target.result
+  }
+  reader.readAsDataURL(file)
+}
+
+var cameraInput = null
+
+function openCameraScanner() {
+  if (typeof jsQR === 'undefined') {
+    var script = document.createElement('script')
+    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
+    script.onload = function() { triggerCamera() }
+    script.onerror = function() { showToast('Error al cargar escáner', 'error') }
+    document.head.appendChild(script)
+  } else {
+    triggerCamera()
+  }
+}
+
+function triggerCamera() {
+  if (!cameraInput) {
+    cameraInput = document.createElement('input')
+    cameraInput.type = 'file'
+    cameraInput.accept = 'image/*'
+    cameraInput.capture = 'environment'
+    cameraInput.style.display = 'none'
+    cameraInput.addEventListener('change', function(e) {
+      if (e.target.files && e.target.files.length > 0) {
+        processQRImage(e.target.files[0])
+      }
+      cameraInput.value = ''
+    })
+    document.body.appendChild(cameraInput)
+  }
+  cameraInput.click()
+}
+
+function lookupInvByCode(code) {
+  showToast('Buscando dispositivo...', 'info')
+  fetch(API_URL + '/api/inventory?code=' + encodeURIComponent(code))
+    .then(r => r.json())
+    .then(res => {
+      var items = res.data || []
+      if (items.length === 0) {
+        showToast('No se encontró dispositivo con ese código', 'error')
+        return
+      }
+      var device = items[0]
+      if (device.status !== 'IN_STOCK') {
+        showToast('El dispositivo ya no está disponible', 'error')
+        return
+      }
+      showInvDeviceResult(device)
+    })
+    .catch(err => {
+      console.error('Error looking up by code:', err)
+      showToast('Error al buscar dispositivo', 'error')
+    })
+}
+
+// =========== SEARCH ===========
 function handleInstoreSearch(query) {
   instoreState.searchQuery = query
   
@@ -180,7 +397,7 @@ function renderSearchResults(results) {
         onmouseout="this.style.transform='none';this.style.boxShadow='none'">
         
         <div style="width:60px;height:60px;border-radius:8px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
-          ${item.imageUrl ? `<img src="${item.imageUrl}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:24px"></span>'}
+          ${item.imageUrl ? `<img src="${item.imageUrl}" style="width:100%;height:100%;object-fit:cover">` : '<span style="font-size:24px">📱</span>'}
         </div>
         
         <div style="flex:1;min-width:0">
@@ -249,19 +466,19 @@ function openCustomProductModal() {
       <div style="margin-bottom:1rem">
         <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Nombre</label>
         <input type="text" id="customName" placeholder="Ej: Funda personalizada" 
-          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box">
       </div>
       
       <div style="margin-bottom:1rem">
         <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Precio</label>
         <input type="number" id="customPrice" placeholder="0" 
-          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box">
       </div>
       
       <div style="margin-bottom:1.5rem">
         <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Cantidad</label>
         <input type="number" id="customQuantity" placeholder="1" value="1" min="1"
-          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;box-sizing:border-box">
       </div>
       
       <div style="display:flex;gap:0.75rem">
@@ -316,23 +533,29 @@ function renderItemsList() {
     return
   }
 
-  list.innerHTML = instoreState.items.map((item, i) => `
-    <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:white;border-radius:10px;margin-bottom:0.5rem;border:1px solid var(--border)">
+  list.innerHTML = instoreState.items.map((item, i) => {
+    var isInventory = item.type === 'inventory'
+    return `
+    <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:white;border-radius:10px;margin-bottom:0.5rem;border:1px solid ${isInventory ? 'var(--orange)' : 'var(--border)'}">
       ${item.imageUrl ? `
         <div style="width:50px;height:50px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0">
           <img src="${item.imageUrl}" style="width:100%;height:100%;object-fit:cover">
         </div>
       ` : `
         <div style="width:50px;height:50px;border-radius:8px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <span style="font-size:20px">${item.itemType === 'accesorio' ? '📦' : '📱'}</span>
+          <span style="font-size:20px">${isInventory ? '📱' : (item.itemType === 'accesorio' ? '📦' : '📱')}</span>
         </div>
       `}
       
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
-        <div style="font-size:11px;color:var(--gray)">$${item.price.toLocaleString('es-AR')} c/u</div>
+        <div style="font-size:11px;color:var(--gray)">
+          ${isInventory ? `${item.storage ? item.storage + ' · ' : ''}${item.color ? item.color + ' · ' : ''}${item.code}` : '$' + item.price.toLocaleString('es-AR') + ' c/u'}
+        </div>
+        ${isInventory ? `<div style="font-size:10px;color:var(--orange);font-weight:600;margin-top:2px">📋 ${item.code} · ${item.imei}</div>` : ''}
       </div>
       
+      ${!isInventory ? `
       <div style="display:flex;align-items:center;gap:0.5rem">
         <button onclick="updateItemQuantity(${i}, -1)" 
           style="width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:white;cursor:pointer;font-size:16px;font-weight:600"
@@ -344,23 +567,28 @@ function renderItemsList() {
           onmouseover="this.style.background='var(--cream3)'"
           onmouseout="this.style.background='white'">+</button>
       </div>
+      ` : '<div style="min-width:60px;text-align:center"><span style="font-size:10px;color:var(--gray)">1 unidad</span></div>'}
       
       <div style="min-width:100px;text-align:right;font-weight:700;font-size:14px;color:var(--dk)">
-        $${(item.price * item.quantity).toLocaleString('es-AR')}
+        $${(item.price * (item.quantity || 1)).toLocaleString('es-AR')}
       </div>
       
       <button onclick="removeItem(${i})" 
-        style="width:28px;height:28px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center"
+        style="width:28px;height:28px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"
         onmouseover="this.style.background='var(--red)';this.style.color='white'"
         onmouseout="this.style.background='rgba(239,68,68,.1)';this.style.color='var(--red)'">
         <span class="material-symbols-outlined" style="font-size:16px">delete</span>
       </button>
-    </div>
-  `).join('')
+    </div>`
+  }).join('')
 }
 
 function updateItemQuantity(index, delta) {
   var item = instoreState.items[index]
+  
+  // Inventory items can only have quantity 1
+  if (item.type === 'inventory') return
+
   var newQty = item.quantity + delta
 
   if (item.type === 'catalog' && newQty > item.stock) {
@@ -413,7 +641,7 @@ function selectPaymentMethod(method) {
 
 function calculateChange() {
   var cashReceived = parseInt(document.getElementById('instore-cashReceived').value) || 0
-  var total = instoreState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  var total = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
   var change = cashReceived - total
 
   var changeEl = document.getElementById('instore-change')
@@ -422,7 +650,7 @@ function calculateChange() {
 }
 
 function updateSummary() {
-  var subtotal = instoreState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  var subtotal = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
 
   document.getElementById('instore-subtotal').textContent = '$' + subtotal.toLocaleString('es-AR')
   document.getElementById('instore-total').textContent = '$' + subtotal.toLocaleString('es-AR')
@@ -442,8 +670,10 @@ function clearInstoreSale() {
       cashReceived: 0,
       searchQuery: '',
       searchResults: [],
-      customModal: null
+      customModal: null,
+      invDevice: null
     }
+    scannedInvDevice = null
     renderInStoreSale()
     showToast('Venta limpiada', 'info')
   }
@@ -468,7 +698,7 @@ function confirmInStoreSale() {
     return
   }
 
-  var total = instoreState.items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
+  var total = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
 
   if (instoreState.paymentMethod === 'cash') {
     var cashReceived = parseInt(document.getElementById('instore-cashReceived').value) || 0
@@ -487,6 +717,12 @@ function confirmInStoreSale() {
           type: 'catalog',
           productId: item.productId,
           quantity: item.quantity,
+          price: item.price
+        }
+      } else if (item.type === 'inventory') {
+        return {
+          type: 'inventory',
+          inventoryItemId: item.inventoryItemId,
           price: item.price
         }
       } else {
@@ -579,8 +815,10 @@ function closeSaleSuccess(btn) {
     cashReceived: 0,
     searchQuery: '',
     searchResults: [],
-    customModal: null
+    customModal: null,
+    invDevice: null
   }
+  scannedInvDevice = null
   renderInStoreSale()
 }
 
@@ -594,7 +832,7 @@ function showQRModal(data) {
       <h2 style="margin-bottom:1.5rem;font-size:20px;font-weight:700">Escaneá el QR</h2>
       
       <div style="background:white;padding:1.5rem;border-radius:12px;margin-bottom:1.5rem;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,.1)">
-        <img src="data:image/png;base64,${data.qrCodeBase64}" alt="QR Code" style="width:250px;height:250px">
+        <img src="data:image/png;base64,${data.qrCodeBase64}" alt="QR Code" style="width:250px;height:250px;max-width:100%">
       </div>
       
       <div style="font-size:24px;font-weight:800;color:var(--orange);margin-bottom:0.5rem">$${data.amount.toLocaleString('es-AR')}</div>
@@ -674,8 +912,10 @@ function closePaymentSuccess(btn) {
     cashReceived: 0,
     searchQuery: '',
     searchResults: [],
-    customModal: null
+    customModal: null,
+    invDevice: null
   }
+  scannedInvDevice = null
   renderInStoreSale()
 }
 
@@ -700,8 +940,10 @@ function cancelInStoreSale(orderId) {
       cashReceived: 0,
       searchQuery: '',
       searchResults: [],
-      customModal: null
+      customModal: null,
+      invDevice: null
     }
+    scannedInvDevice = null
     renderInStoreSale()
   })
   .catch(err => {
@@ -725,7 +967,7 @@ function loadInStoreHistory(page, filters) {
 
   content.innerHTML = `
     <div style="max-width:1200px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px">
         <h2 style="font-size:24px;font-weight:700">Historial de Ventas</h2>
         <button onclick="renderInStoreSale()" class="btn btn-primary">+ Nueva Venta</button>
       </div>
@@ -780,10 +1022,10 @@ function renderInStoreHistoryList(orders) {
   }
 
   list.innerHTML = orders.map(order => `
-    <div style="background:white;padding:1rem;border-radius:10px;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);transition:all .2s"
+    <div style="background:white;padding:1rem;border-radius:10px;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);transition:all .2s;flex-wrap:wrap;gap:8px"
       onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'"
       onmouseout="this.style.boxShadow='none'">
-      <div style="flex:1">
+      <div style="flex:1;min-width:200px">
         <div style="font-weight:700;font-size:14px;margin-bottom:4px">${order.code}</div>
         <div style="font-size:12px;color:var(--gray);margin-bottom:2px">${order.clientName} · DNI: ${order.clientDni}</div>
         <div style="font-size:11px;color:var(--gray)">${new Date(order.createdAt).toLocaleString('es-AR')}</div>
@@ -808,7 +1050,7 @@ function renderInStoreHistoryPagination(currentPage, totalPages) {
   var pagination = document.getElementById('instore-historyPagination')
   if (!pagination || totalPages <= 1) return
 
-  var html = '<div style="display:flex;justify-content:center;gap:0.5rem">'
+  var html = '<div style="display:flex;justify-content:center;gap:0.5rem;flex-wrap:wrap">'
 
   for (var i = 1; i <= totalPages; i++) {
     html += `<button onclick="loadInStoreHistory(${i})" class="btn ${i === currentPage ? 'btn-primary' : 'btn-o'}" style="min-width:40px;padding:8px 12px">${i}</button>`

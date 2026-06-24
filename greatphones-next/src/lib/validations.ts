@@ -256,6 +256,9 @@ export const InventoryCreateSchema = z.object({
   investor: z.string().optional(),
   targetPrice: z.number().int().min(0).optional(),
 
+  // Vinculación a producto existente
+  productId: z.string().optional(),
+
   // Proveedor
   supplierId: z.string().optional(),
   purchasedFrom: z.string().optional(),
@@ -275,6 +278,12 @@ export const ImeiLookupSchema = z.object({
   imei: z.string().regex(/^\d{15}$/, 'IMEI debe tener 15 dígitos'),
 })
 
+export const InventoryStatusSchema = z.object({
+  status: z.enum(['IN_STOCK', 'IN_REPAIR', 'RESERVED', 'ON_HOLD', 'SOLD']),
+  notes: z.string().optional(),
+})
+
 export type InventoryCreatePayload = z.infer<typeof InventoryCreateSchema>
 export type InventoryUpdatePayload = z.infer<typeof InventoryUpdateSchema>
 export type InventorySellPayload = z.infer<typeof InventorySellSchema>
+export type InventoryStatusPayload = z.infer<typeof InventoryStatusSchema>

@@ -97,6 +97,9 @@
       <button class="nbtn" onclick="nav('cuenta')" title="Mi Cuenta" aria-label="Mi Cuenta">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </button>
+      <button class="nbtn nbtn-scan" id="navScanBtn" onclick="window.location.href='/scan'" title="Escanear QR" aria-label="Escanear QR" style="display:none">
+        <span class="material-symbols-outlined" style="font-size:20px">qr_code_scanner</span>
+      </button>
       <button class="nbtn nbtn-sell" style="display:none" onclick="nav('sell')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         <span>Vender</span>
@@ -118,6 +121,9 @@
     <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantías</button>
     <button class="cni" id="cn-compare" onclick="nav('compare');setCN('compare')">Comparar</button>
     <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')" style="color:var(--orange)">Ofertas</button>
+    <button class="cni" id="cn-scan" onclick="window.location.href='/scan'" style="color:var(--green);font-weight:700;display:none">
+      <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">qr_code_scanner</span> Escanear
+    </button>
   </div>
 </div>
 
@@ -810,6 +816,11 @@
           </div>
           <!-- Trust Badges -->
           <div id="detBadges" style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)"></div>
+          <!-- Variant Selector -->
+          <div id="detVariants" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Variantes disponibles</div>
+            <div id="detVariantsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+          </div>
           <!-- Total & Buttons -->
           <div style="padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;justify-content:space-between;align-items:center">
@@ -819,6 +830,10 @@
               <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Agregar al carrito</button>
               <button class="det-btn det-btn-buy" id="detBuyNow" onclick="buyNow()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Comprar ahora</button>
             </div>
+            <button onclick="consultarProducto()" id="detConsultBtn" style="width:100%;padding:10px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)';this.style.background='rgba(255,107,44,.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)';this.style.background='transparent'">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Consultar por chat
+            </button>
           </div>
         </div>
       </div>
@@ -1627,10 +1642,7 @@
           <span class="admin-nav-icon material-symbols-outlined">inventory_2</span>
           <span class="admin-nav-label">Productos</span>
         </button>
-        <button class="admin-nav-item" id="adm-inventory" onclick="adminTab('inventory',this)">
-          <span class="admin-nav-icon material-symbols-outlined">qr_code_scanner</span>
-          <span class="admin-nav-label">Inventario</span>
-        </button>
+
         <button class="admin-nav-item" id="adm-acc" onclick="adminTab('acc',this)">
           <span class="admin-nav-icon material-symbols-outlined">headphones</span>
           <span class="admin-nav-label">Accesorios</span>
@@ -1756,6 +1768,13 @@
         <div style="display:grid;grid-template-columns:1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">IMEI</label><input class="inp-f" id="prodImei" placeholder="353456789012345" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
         </div>
+        <div id="variantsSection" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--gray)">📦 Variantes / IMEIs vinculados</div>
+            <button class="btn btn-o btn-sm" onclick="showImeiProductModal(document.getElementById('prodId').value)">+ Agregar variante</button>
+          </div>
+          <div id="variantsList"></div>
+        </div>
         <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
           <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
@@ -1777,8 +1796,8 @@
       <div style="flex:1">
         <div style="font-size:16px;font-weight:700;color:var(--dk);font-family:'Playfair Display',Georgia,serif">Great Phones</div>
         <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:4px">
-          <span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
-          En línea
+          <span id="chatOnlineDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+          <span id="chatOnlineText">En línea</span>
         </div>
       </div>
       <div style="padding:8px;border-radius:10px;background:var(--cream2);cursor:pointer" onclick="nav('home')" title="Cerrar chat">
@@ -1787,13 +1806,27 @@
     </div>
     
     <!-- Messages Area -->
-    <div class="msg-list" id="chatMsgList" style="flex:1;min-height:0;padding:20px;overflow-y:auto;background:transparent;scroll-behavior:smooth"></div>
+    <div class="msg-list-wrap">
+      <div class="msg-list" id="chatMsgList" style="flex:1;min-height:0;padding:20px;overflow-y:auto;background:transparent;scroll-behavior:smooth"></div>
+      <button class="scroll-fab" id="scrollFab" onclick="clickScrollFab()" title="Ir al último mensaje">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 9l-6 6-6-6"/></svg>
+        <span class="scroll-fab-badge" id="scrollFabBadge">0</span>
+      </button>
+    </div>
     
     <!-- Typing Indicator -->
-    <div id="typingIndicator" style="padding:8px 20px;font-size:12px;color:var(--gray);display:none;background:transparent"></div>
+    <div id="typingIndicator" style="display:none;padding:6px 20px;font-size:12px;color:var(--gray);background:transparent"></div>
+    
+    <!-- Toolbar -->
+    <div class="chat-toolbar">
+      <button class="chat-toolbar-btn" onclick="showAutoReply()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Preguntas frecuentes
+      </button>
+    </div>
     
     <!-- Input Area -->
-    <div style="background:#fff;border-top:1px solid var(--border);padding:16px 20px;flex-shrink:0">
+    <div style="background:#fff;border-top:1px solid var(--border);padding:12px 20px 16px;flex-shrink:0">
       <div style="display:flex;align-items:center;gap:10px;background:var(--cream2);border-radius:16px;padding:8px 12px;border:1.5px solid var(--border);transition:border-color .2s" onfocus-within="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
         <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;font-size:18px;color:var(--gray);transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray)'">
           &#128247;
@@ -1976,11 +2009,15 @@
           <div style="display:flex;align-items:center;gap:12px">
             <div id="adminChatAvatar" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#e55a1a);display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">GP</div>
             <div>
-              <div id="adminChatName" style="font-size:14px;font-weight:600;color:var(--dk)">Seleccioná una conversación</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div id="adminChatName" style="font-size:14px;font-weight:600;color:var(--dk)">Seleccioná una conversación</div>
+                <span id="adminOnlineDot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:none" title="En línea"></span>
+              </div>
               <div id="adminChatSub" style="font-size:11px;color:var(--gray);margin-top:1px"></div>
             </div>
           </div>
           <div id="adminChatActions" style="display:flex;gap:6px">
+            <button id="chatSoundToggle" onclick="toggleChatSound()" title="Silenciar notificaciones" style="padding:7px 10px;font-size:14px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:8px;cursor:pointer;line-height:1">🔊</button>
             <button id="adminCloseConvBtn" onclick="closeAdminConv(adminActiveConvId)" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">Cerrar</button>
             <button id="adminDeleteConvBtn" onclick="deleteAdminConv(adminActiveConvId)" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">Eliminar</button>
           </div>
@@ -1993,9 +2030,10 @@
         <div id="quickReplies" style="padding:8px 20px;background:#fff;display:none;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)"></div>
         <!-- Input area -->
         <div style="padding:12px 20px 14px;background:#fff;border-top:1px solid var(--border)">
-          <div style="display:flex;gap:10px;align-items:flex-end">
+          <div style="display:flex;gap:8px;align-items:flex-end">
+            <button onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto" style="padding:10px;background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:16px;color:var(--gray);transition:all .15s;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">📦</button>
             <div style="flex:1;position:relative">
-              <input id="adminChatInput" type="text" placeholder="Escribí un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdminMessage()}" style="width:100%;padding:11px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:var(--cream);transition:border-color .2s,box-shadow .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)';this.style.boxShadow='0 0 0 3px rgba(255,107,44,.1)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+              <input id="adminChatInput" type="text" placeholder="Escribí un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdminMessage()}" oninput="handleAdminTyping()" style="width:100%;padding:11px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:var(--cream);transition:border-color .2s,box-shadow .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)';this.style.boxShadow='0 0 0 3px rgba(255,107,44,.1)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
             </div>
             <button onclick="sendAdminMessage()" style="padding:11px 20px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 10px rgba(255,107,44,.25);display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 14px rgba(255,107,44,.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 3px 10px rgba(255,107,44,.25)'">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
@@ -2775,7 +2813,6 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/admin.js"></script>
 <script defer src="/lib/admin-ui.js"></script>
 <script defer src="/lib/instore.js"></script>
-<script defer src="/lib/inventory-admin.js"></script>
 <script defer src="/lib/render.js"></script>
 <script defer src="/lib/search.js"></script>
 <script defer src="/lib/warranty.js"></script>
@@ -2814,11 +2851,24 @@ document.addEventListener('DOMContentLoaded', function() {
     </button>
   </div>
   <!-- Messages Area -->
-  <div id="panelMsgList" style="flex:1;overflow-y:auto;padding:16px;scroll-behavior:smooth"></div>
+  <div style="flex:1;min-height:0;position:relative">
+    <div id="panelMsgList" style="position:absolute;inset:0;overflow-y:auto;padding:16px;scroll-behavior:smooth"></div>
+    <button class="scroll-fab" id="panelScrollFab" onclick="clickPanelScrollFab()" title="Ir al último mensaje" style="bottom:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 9l-6 6-6-6"/></svg>
+      <span class="scroll-fab-badge" id="panelScrollFabBadge">0</span>
+    </button>
+  </div>
   <!-- Typing Indicator -->
-  <div id="panelTyping" style="padding:8px 16px;font-size:12px;color:var(--gray);display:none"></div>
+  <div id="panelTyping" style="display:none;padding:6px 16px;font-size:11px;color:var(--gray)"></div>
+  <!-- Toolbar -->
+  <div class="chat-toolbar">
+    <button class="chat-toolbar-btn" onclick="showAutoReply()">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      Preguntas frecuentes
+    </button>
+  </div>
   <!-- Input Area -->
-  <div style="padding:12px 16px;border-top:1px solid var(--border);flex-shrink:0">
+  <div style="padding:10px 16px 14px;border-top:1px solid var(--border);flex-shrink:0">
     <div style="display:flex;align-items:center;gap:8px;background:var(--cream2);border-radius:12px;padding:6px 10px;border:1.5px solid var(--border);transition:border-color .2s" onfocus-within="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
       <button onclick="document.getElementById('panelImgIn').click()" style="background:none;border:none;cursor:pointer;padding:4px;border-radius:6px;font-size:16px;color:var(--gray);transition:color .15s;flex-shrink:0" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray)'">&#128247;</button>
       <input type="file" id="panelImgIn" accept="image/*" style="display:none" onchange="sendPanelImg(this)">
@@ -2830,37 +2880,28 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- Chat Toggle Button -->
-<button id="chatWidgetBtn" onclick="toggleChatPanel()" style="position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#FF8F5E);border:none;color:#fff;font-size:24px;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,107,44,.4);transition:all .2s;z-index:700" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-</button>
+<div id="chatWidgetWrap">
+  <div class="chat-widget-preview" id="chatWidgetPreview"></div>
+  <button id="chatWidgetBtn" onclick="toggleChatPanel()" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#FF8F5E);border:none;color:#fff;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(255,107,44,.4);transition:all .2s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  </button>
+</div>
 <script>
 var chatPanelOpen=false;
-(function(){
-  var btn=document.getElementById('chatWidgetBtn');
-  if(!btn)return;
-  function updateWidget(){
-    if(currentUser&&document.querySelector('.page.act')&&document.querySelector('.page.act').id!=='p-chats'&&!chatPanelOpen){
-      btn.style.display='flex';
-    }else{
-      btn.style.display='none';
-    }
-  }
-  var origNav=window.nav;
-  window.nav=function(id){origNav(id);setTimeout(updateWidget,100);};
-  updateWidget();
-})();
 function toggleChatPanel(){
   if(!currentUser){openLogin();return;}
   chatPanelOpen=!chatPanelOpen;
   var panel=document.getElementById('chatPanel');
-  var btn=document.getElementById('chatWidgetBtn');
+  var wrap=document.getElementById('chatWidgetWrap');
   if(chatPanelOpen){
     panel.style.transform='translateX(0)';
-    btn.style.display='none';
+    if(wrap)wrap.style.display='none';
+    var preview=document.getElementById('chatWidgetPreview');
+    if(preview)preview.classList.remove('show');
     openUserChat();
   }else{
     panel.style.transform='translateX(100%)';
-    btn.style.display='flex';
+    if(wrap)wrap.style.display='flex';
   }
 }
 </script>
@@ -2897,6 +2938,87 @@ function toggleChatPanel(){
 
 <!-- Admin Toast Container -->
 <div id="adminToastContainer" class="admin-toast-container"></div>
+
+<!-- Product Search Modal -->
+<div id="productSearchOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeProductSearch()">
+  <div style="background:#fff;border-radius:20px;width:min(520px,100%);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.25);animation:modalIn .25s ease">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <h3 style="font-size:16px;font-weight:700;color:var(--dk);font-family:'Playfair Display',Georgia,serif;margin:0">Buscar producto para compartir</h3>
+      <button onclick="closeProductSearch()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:12px 24px;flex-shrink:0">
+      <div style="position:relative">
+        <svg style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray);pointer-events:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="productSearchInput" placeholder="Buscar por nombre, marca..." oninput="searchAdminProducts(this.value)" autocomplete="off" style="width:100%;padding:12px 14px 12px 40px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;outline:none;background:var(--cream);transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+    </div>
+    <div id="productSearchResults" style="flex:1;overflow-y:auto;padding:4px 12px 16px;min-height:200px">
+      <div style="text-align:center;padding:3rem 1rem;color:var(--gray)">
+        <div style="font-size:32px;margin-bottom:12px">🔍</div>
+        <p style="font-size:13px;font-weight:500;color:var(--dk);margin-bottom:4px">Escribí para buscar productos</p>
+        <p style="font-size:12px">Compartí un producto en el chat como tarjeta</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Canned Replies Modal -->
+<div id="manageRepliesOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeManageReplies()">
+  <div style="background:#fff;border-radius:20px;width:min(500px,100%);max-height:80vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.25);animation:modalIn .25s ease">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <h3 style="font-size:16px;font-weight:700;color:var(--dk);font-family:'Playfair Display',Georgia,serif;margin:0">Gestionar Respuestas Rápidas</h3>
+      <button onclick="closeManageReplies()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:12px 24px;flex-shrink:0;display:flex;gap:8px">
+      <input type="text" id="newReplyLabel" placeholder="Etiqueta (ej: Enviado)" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+      <input type="text" id="newReplyText" placeholder="Texto de la respuesta" style="flex:2;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;outline:none" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+      <button onclick="addCannedReply()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">Agregar</button>
+    </div>
+    <div id="cannedReplyList" style="flex:1;overflow-y:auto;padding:8px 12px 16px;min-height:150px"></div>
+    <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
+      <button onclick="closeManageReplies()" style="padding:8px 16px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Cancelar</button>
+      <button onclick="saveCannedReplies()" style="padding:8px 16px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Quote from Chat Modal -->
+<div id="createQuoteOverlay" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:5000;display:none;align-items:center;justify-content:center;padding:1rem;backdrop-filter:blur(4px)" onclick="if(event.target===this)closeCreateQuote()">
+  <div style="background:#fff;border-radius:20px;width:min(460px,100%);max-height:90vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(0,0,0,.25);animation:modalIn .25s ease">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <h3 style="font-size:16px;font-weight:700;color:var(--dk);font-family:'Playfair Display',Georgia,serif;margin:0">Crear Cotización</h3>
+      <button onclick="closeCreateQuote()" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 24px;flex:1;overflow-y:auto">
+      <div style="display:grid;gap:12px">
+        <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Dispositivo</label><input type="text" id="quoteDevice" placeholder="Ej: iPhone 13 Pro Max" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Almacenamiento</label><select id="quoteStorage" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;box-sizing:border-box"><option value="64GB">64GB</option><option value="128GB">128GB</option><option value="256GB">256GB</option><option value="512GB">512GB</option><option value="1TB">1TB</option></select></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Estado</label><select id="quoteCondition" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff;box-sizing:border-box"><option value="Nuevo">Nuevo</option><option value="Excelente">Excelente</option><option value="Bueno">Bueno</option><option value="Regular">Regular</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio base</label><input type="number" id="quoteBasePrice" placeholder="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio final</label><input type="number" id="quoteFinalPrice" placeholder="0" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+        </div>
+        <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Cliente</label><input type="text" id="quoteClientName" placeholder="Nombre del cliente" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">DNI</label><input type="text" id="quoteClientDni" placeholder="DNI" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+          <div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Teléfono</label><input type="text" id="quoteClientPhone" placeholder="Teléfono" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'"></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
+      <button onclick="closeCreateQuote()" style="padding:8px 16px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Cancelar</button>
+      <button onclick="submitQuoteFromChat()" style="padding:8px 16px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700">Crear Cotización</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

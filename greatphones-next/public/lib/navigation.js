@@ -129,6 +129,7 @@ function nav(id){
       try{window.history.pushState(stateData,'',path?'/'+path:'/');}catch(e){}
     }
   }
+  updateChatWidget();
 }
 function navShop(cat){
   if(cat==='ofertas'){
@@ -300,6 +301,19 @@ function updateUserUI(){
     if(currentUser&&currentUser.role==='ADMIN'){chatBtn.style.display='none';}
     else{chatBtn.style.display='';}
   }
+  // Chat widget visibility
+  updateChatWidget();
+  // Scanner buttons: only for admins
+  var navScanBtn=document.getElementById('navScanBtn');
+  var cnScanBtn=document.getElementById('cn-scan');
+  if(currentUser&&currentUser.role==='ADMIN'){
+    if(navScanBtn)navScanBtn.style.display='';
+    if(cnScanBtn)cnScanBtn.style.display='';
+  }else{
+    if(navScanBtn)navScanBtn.style.display='none';
+    if(cnScanBtn)cnScanBtn.style.display='none';
+  }
+
   if(currentUser&&currentUser.role==='ADMIN'){
     var topbar=document.querySelector('.tb-right');
     if(topbar){
@@ -344,6 +358,14 @@ function updateUserUI(){
     if(typeof stopNotifPolling==='function')stopNotifPolling();
     if(typeof stopChatNotifPolling==='function')stopChatNotifPolling();
   }
+}
+function updateChatWidget(){
+  var wrap=document.getElementById('chatWidgetWrap');
+  if(!wrap)return;
+  var activePage=document.querySelector('.page.act');
+  if(activePage&&activePage.id==='p-chats'){wrap.style.display='none';return;}
+  if(window.chatPanelOpen){wrap.style.display='none';return;}
+  wrap.style.display='flex';
 }
 document.addEventListener('click',function(e){
   if(!e.target.closest('.nav-search'))document.getElementById('searchDD').classList.remove('open');

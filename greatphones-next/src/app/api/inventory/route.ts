@@ -110,9 +110,9 @@ export async function POST(request: Request) {
     // Generate unique code
     const code = await generateCode()
 
-    // Find or create matching Product
-    let productId: string | null = null
-    if (data.brand && data.modelName) {
+    // Use provided productId or find/create matching Product
+    let productId: string | null = data.productId || null
+    if (!productId && data.brand && data.modelName) {
       const productMatch = await prisma.product.findFirst({
         where: {
           brand: data.brand,
@@ -124,11 +124,7 @@ export async function POST(request: Request) {
 
       if (productMatch) {
         productId = productMatch.id
-        await prisma.product.update({
-          where: { id: productMatch.id },
-          data: { stock: { increment: 1 } }
-        })
-      } else if (data.brand && data.modelName) {
+      } else {
         // Create new product
         const newProduct = await prisma.product.create({
           data: {
@@ -139,7 +135,7 @@ export async function POST(request: Request) {
             condition: data.cosmeticCondition || 'Impecable',
             price: data.targetPrice || 0,
             cost: data.purchasePrice || 0,
-            stock: 1,
+            stock: 0,
             type: data.deviceType || 'celular',
             storage: data.storage || null,
             color: data.color || null,
@@ -149,6 +145,17 @@ export async function POST(request: Request) {
           }
         })
         productId = newProduct.id
+      }
+    }
+    // Increment product stock when linking to existing product
+    if (productId) {
+      try {
+        await prisma.product.update({
+          where: { id: productId },
+          data: { stock: { increment: 1 } }
+        })
+      } catch (e) {
+        // Product might not exist
       }
     }
 

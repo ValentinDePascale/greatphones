@@ -54,19 +54,7 @@ function renderAdminContent(tab){
     '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
     loadPendingOrders();
   }else if(tab==='inventory'){
-    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
-      '<input type="text" id="invSearchInput" placeholder="Buscar por código, IMEI, marca, modelo..." oninput="loadInventoryAdmin(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
-      '<select id="invStatusFilter" onchange="loadInventoryAdmin(document.getElementById(\'invSearchInput\').value,1)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">'+
-        '<option value="">Todos los estados</option>'+
-        '<option value="IN_STOCK">En stock</option>'+
-        '<option value="SOLD">Vendidos</option>'+
-        '<option value="IN_REPAIR">En reparación</option>'+
-        '<option value="RESERVED">Reservados</option>'+
-        '<option value="ON_HOLD">En espera</option>'+
-      '</select>'+
-      '<button class="btn btn-o" onclick="showAddInventoryModal()">+ Agregar dispositivo</button>'+
-    '</div><div class="adm-list" id="invList"></div><div id="invPagination"></div>';
-    loadInventoryAdmin();
+    content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:40px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
   }else if(tab==='instore'){
     loadInStoreHistory();
   }else{

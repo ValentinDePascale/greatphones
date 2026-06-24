@@ -927,15 +927,7 @@
 .sv-bar.cur{background:linear-gradient(90deg,#FF8F5E 0%,var(--orange) 50%,#E54A0E 100%);position:relative}
 .sv-bar.cur::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.6) 50%,transparent 100%);background-size:200% 100%;animation:svShimmer 1.8s ease-in-out infinite}
 
-/* Model & storage cards: magnetic hover with ripple */
-.model-card,.stor-card,.cond-card,.eopt,.vopt{position:relative;overflow:hidden;transform-style:preserve-3d;transition:all .4s cubic-bezier(.34,1.56,.64,1)}
-.model-card::after,.stor-card::after,.cond-card::after,.eopt::after,.vopt::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,107,44,.15) 0%,transparent 50%);opacity:0;transition:opacity .3s;pointer-events:none}
-.model-card:hover::after,.stor-card:hover::after,.cond-card:hover::after,.eopt:hover::after,.vopt:hover::after{opacity:1}
-.model-card:hover,.stor-card:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 12px 28px rgba(255,107,44,.18),0 4px 8px rgba(0,0,0,.08)}
-.cond-card:hover,.eopt:hover,.vopt:hover{transform:translateX(4px);box-shadow:0 8px 20px rgba(255,107,44,.15)}
-.model-card.act,.stor-card.act{animation:svPulse .6s cubic-bezier(.34,1.56,.64,1),svGlowIn .8s ease-out}
-.cond-card.act,.eopt.act,.vopt.act{animation:svGlowIn .7s ease-out}
-.model-card .model-ico{transition:transform .5s cubic-bezier(.34,1.56,.64,1);display:inline-block}
+.model-card .model-ico{display:inline-block}
 .model-card:hover .model-ico{transform:scale(1.2)}
 
 /* Price reveal: count-up animation + glow */

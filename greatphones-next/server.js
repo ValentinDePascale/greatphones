@@ -24,7 +24,7 @@ app.prepare().then(() => {
       credentials: true
     },
     pingTimeout: 60000,
-    pingInterval: 25000
+    pingInterval: 10000
   });
 
   globalThis.io = io;
@@ -39,6 +39,7 @@ app.prepare().then(() => {
   io.on('connection', (socket) => {
     console.log(`[Socket] User connected: ${socket.userId} (${socket.id})`);
     onlineUsers.set(socket.userId, socket.id);
+    socket.join(socket.userId);
     io.emit('userOnline', { userId: socket.userId });
 
     socket.on('joinConversation', (conversationId) => {
@@ -92,6 +93,10 @@ app.prepare().then(() => {
 
     socket.on('messageSent', (data) => {
       io.to(data.conversationId).emit('newMessage', { ...data.message, fromUserId: socket.userId });
+    });
+
+    socket.on('ping', () => {
+      socket.emit('pong');
     });
 
     socket.on('disconnect', () => {

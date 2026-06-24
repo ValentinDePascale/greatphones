@@ -40,10 +40,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
-    // Calculate total and validate stock
-    let subtotal = 0
+    // Categorize items
     const catalogItems = items.filter((i: any) => i.type === 'catalog')
     const customItems = items.filter((i: any) => i.type === 'custom')
+    const inventoryItems = items.filter((i: any) => i.type === 'inventory')
+
+    // Calculate total and validate
+    let subtotal = 0
 
     // Validate stock for catalog products
     if (catalogItems.length > 0) {
@@ -65,6 +68,32 @@ export async function POST(request: Request) {
           }, { status: 400 })
         }
         subtotal += product.price * item.quantity
+      }
+    }
+
+    // Validate inventory items (must exist and be IN_STOCK)
+    const inventoryItemRecords: any[] = []
+    if (inventoryItems.length > 0) {
+      const invIds = inventoryItems.map((i: any) => i.inventoryItemId)
+      const invItems = await prisma.inventoryItem.findMany({
+        where: { id: { in: invIds } },
+        include: { product: true }
+      })
+
+      const invMap = new Map(invItems.map(i => [i.id, i]))
+
+      for (const item of inventoryItems) {
+        const invItem = invMap.get(item.inventoryItemId)
+        if (!invItem) {
+          return NextResponse.json({ error: `Dispositivo de inventario no encontrado` }, { status: 400 })
+        }
+        if (invItem.status !== 'IN_STOCK') {
+          return NextResponse.json({
+            error: `El dispositivo ${invItem.code} no está disponible (estado: ${invItem.status})`
+          }, { status: 400 })
+        }
+        subtotal += item.price || invItem.targetPrice || invItem.purchasePrice
+        inventoryItemRecords.push(invItem)
       }
     }
 
@@ -130,6 +159,22 @@ export async function POST(request: Request) {
                   quantity: item.quantity,
                   price: item.price
                 }
+              } else if (item.type === 'inventory') {
+                // Find the inventory item record to check for linked product
+                const invRecord = inventoryItemRecords.find(r => r.id === item.inventoryItemId)
+                if (invRecord?.productId) {
+                  return {
+                    productId: invRecord.productId,
+                    quantity: 1,
+                    price: item.price || invRecord.targetPrice || invRecord.purchasePrice
+                  }
+                }
+                return {
+                  customName: invRecord ? `${invRecord.brand} ${invRecord.modelName}` : 'Dispositivo inventario',
+                  customPrice: item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0,
+                  quantity: 1,
+                  price: item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0
+                }
               } else {
                 return {
                   customName: item.name,
@@ -146,7 +191,7 @@ export async function POST(request: Request) {
         }
       })
 
-      // Update stock
+      // Update catalog product stock
       if (paymentMethod === 'cash') {
         for (const item of catalogItems) {
           await tx.product.update({
@@ -158,13 +203,64 @@ export async function POST(request: Request) {
           })
         }
       } else {
-        // Reserve stock for transfer
         for (const item of catalogItems) {
           await tx.product.update({
             where: { id: item.productId },
             data: {
               stock: { decrement: item.quantity },
               reserved: { increment: item.quantity }
+            }
+          })
+        }
+      }
+
+      // Handle inventory items: mark as SOLD, update linked product stock, create history
+      if (inventoryItems.length > 0) {
+        for (let i = 0; i < inventoryItems.length; i++) {
+          const invItem = inventoryItemRecords[i]
+          const salePrice = inventoryItems[i].price || invItem.targetPrice || invItem.purchasePrice
+
+          // Update inventory item status to SOLD
+          await tx.inventoryItem.update({
+            where: { id: invItem.id },
+            data: {
+              status: 'SOLD',
+              salePrice,
+              soldAt: new Date(),
+              soldById: adminId,
+            }
+          })
+
+          // Decrement product stock if linked
+          if (invItem.productId) {
+            if (paymentMethod === 'cash') {
+              await tx.product.update({
+                where: { id: invItem.productId },
+                data: {
+                  stock: { decrement: 1 },
+                  sold: { increment: 1 }
+                }
+              })
+            } else {
+              await tx.product.update({
+                where: { id: invItem.productId },
+                data: {
+                  stock: { decrement: 1 },
+                  reserved: { increment: 1 }
+                }
+              })
+            }
+          }
+
+          // Create inventory history entry
+          await tx.inventoryHistory.create({
+            data: {
+              inventoryItemId: invItem.id,
+              type: 'SOLD',
+              oldValue: 'IN_STOCK',
+              newValue: 'SOLD',
+              description: `Vendido en tienda — ${clientName} (${clientDni})${paymentMethod === 'cash' ? ' — Efectivo' : ' — Transferencia'}`,
+              userId: adminId,
             }
           })
         }

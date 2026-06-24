@@ -57,7 +57,7 @@ function updFavBadge(){
   if(b){b.textContent=n;if(n>0)b.classList.remove('hidden');else b.classList.add('hidden');}
 }
 function toggleDetFav(){
-  var targetId=currentProd?currentProd.id:(currentAcc?currentAcc.id:null);
+  var targetId=window._selectedVariant&&window._selectedVariant.productId?window._selectedVariant.productId:(currentProd?currentProd.id:(currentAcc?currentAcc.id:null));
   if(!targetId)return;
   var idx=favorites.indexOf(targetId);
   var fb=document.getElementById('detFavBtn');

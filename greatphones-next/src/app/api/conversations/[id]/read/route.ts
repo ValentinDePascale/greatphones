@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { emitUnreadUpdate } from '@/lib/socket'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -56,6 +57,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       where: { id },
       data: updateData
     })
+
+    // Emit unreadUpdate so badges update instantly
+    if (readerId) {
+      emitUnreadUpdate(readerId)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

@@ -149,7 +149,7 @@ function startNotifPolling(){
   if(_notifPollInterval)clearInterval(_notifPollInterval);
   _notifPollInterval=setInterval(function(){
     if(currentUser)updateNotifBadge();
-  },30000);
+  },120000);
 }
 
 function stopNotifPolling(){

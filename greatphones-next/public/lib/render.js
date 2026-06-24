@@ -47,11 +47,12 @@ function renderSpecsGrid(specs){
   }).join('');
 }
 
-function renderDetBadges(p){
+function renderDetBadges(p,extraCond){
   var el=document.getElementById('detBadges');if(!el)return;
   var type=(p.type||'').toLowerCase();
   var badges=[{ico:'\u2713',text:'90 Dias Garantia'},{ico:'\u2713',text:'Cable + funda gratis'},{ico:'\u2713',text:'Dev. 7 dias'}];
   if(type==='celular')badges.splice(1,0,{ico:'\u2713',text:'IMEI Verificado'});
+  if(extraCond)badges.unshift({ico:'\uD83D\uDCF1',text:extraCond});
   el.innerHTML=badges.map(function(b){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">'+b.ico+' '+b.text+'</div>';}).join('');
 }
 
@@ -102,13 +103,18 @@ function renderSkeletonGrid(gid,count){
 }
 
 function loadProducts(){
-  renderSkeletonGrid('homeRail',4);
-  renderSkeletonGrid('shopGrid',8);
-  renderSkeletonGrid('ofertasGrid',4);
-  renderSkeletonGrid('featuredGrid',4);
-  showLoadingBar();
+  var useCache=!!window._productsLoaded;
+  if(!useCache){
+    renderSkeletonGrid('homeRail',4);
+    renderSkeletonGrid('shopGrid',8);
+    renderSkeletonGrid('ofertasGrid',4);
+    renderSkeletonGrid('featuredGrid',4);
+    showLoadingBar();
+  }
   cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
     PRODUCTS=res.data||res;
+    window._productsLoaded=true;
+    if(useCache)return; // Skip re-renders for background cache refresh
     hideLoadingBar();
     if(window.checkPendingDetail)window.checkPendingDetail();
     renderHomeRail();
@@ -126,9 +132,12 @@ function loadProducts(){
 }
 
 function loadAccessories(){
-  renderSkeletonGrid('accGrid',8);
+  var useCache=!!window._accLoaded;
+  if(!useCache)renderSkeletonGrid('accGrid',8);
   cachedFetch(API_URL+'/api/accessories',null,60000).then(function(res){
     window.ACCS=res.data||res;
+    window._accLoaded=true;
+    if(useCache)return;
     if(document.getElementById('accGrid'))renderAccGrid();
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
@@ -278,7 +287,7 @@ function renderDashTopProducts(d){
       topUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--gray)">Sin datos</li>';
     }else{
       topUl.innerHTML=d.topProducts.map(function(p,i){
-        var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
+        var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
         return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'var(--cream2)\'" onmouseout="this.style.background=\'transparent\'">'+
           '<div style="width:44px;height:44px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
           '<div style="flex:1;min-width:0">'+
@@ -302,7 +311,7 @@ function renderDashStockAlerts(d){
       stockUl.innerHTML='<li style="padding:16px;text-align:center;color:var(--green)">Todo el stock OK \u2705</li>';
     }else{
       stockUl.innerHTML=d.lowStock.map(function(p){
-        var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
+        var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(p.ico||'\uD83D\uDCF1')+'</span>';
         return'<li style="display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;transition:background .15s" onmouseover="this.style.background=\'rgba(239,68,68,.05)\'" onmouseout="this.style.background=\'transparent\'">'+
           '<div style="width:40px;height:40px;border-radius:8px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+imgHtml+'</div>'+
           '<div style="flex:1;min-width:0">'+
@@ -433,12 +442,37 @@ function renderGrid(gid,prods){
   }
   var now=new Date();
   grid.innerHTML=prods.map(function(p){
+    if(p.isGroup){
+      var isOutOfStock=p.stock===0;
+      var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+      var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">\u{1F525} Nuevo</div>':'');
+      var isFav=isFavorite(p.id);
+      return '<article class="pcard pcard-group" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
+        '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
+        badge+
+        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
+        imgHtml+
+        '<div style="position:absolute;bottom:16px;right:16px;background:var(--orange);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;z-index:2;box-shadow:0 2px 8px rgba(255,107,44,.4)">'+p.variantCount+' var.</div>'+
+        '</div>'+
+        '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
+        '<div>'+
+        '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:4px">'+p.name+'</h3>'+
+        '<p class="pcard-sub" style="font-size:12px;color:var(--gray);margin-bottom:4px">'+p.brand+'</p>'+
+        '</div>'+
+        '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
+        '<div class="pcard-price" style="font-size:22px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">Desde '+fmt(p.price)+'</div>'+
+        '<div style="font-size:12px;color:var(--gray);font-weight:500">'+p.sub+'</div>'+
+        '</div>'+
+        '<button class="pcard-add" onclick="event.stopPropagation();openDetail(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">Ver variantes</button>'+
+        '</div>'+
+        '</article>';
+    }
     var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
     var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
-    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">🔥 Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
+    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">\u{1F525} Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':''));
     var discBadge='';
     var isFav=isFavorite(p.id);
     return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
@@ -455,10 +489,10 @@ function renderGrid(gid,prods){
       '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
       (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span></div>':'')+
       '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
-      (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">🔥 Solo '+p.stock+' disponibles</div>':'')+
+      '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">\u{1F4B3} 12x '+fmt(cuota)+' sin inter\u00E9s</div>'+
+      (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">\u{1F525} Solo '+p.stock+' disponibles</div>':'')+
       '</div>'+
-      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
+      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">\u{1F6D2} Agregar al carrito</button>')+
       '</div>'+
       '</article>';
   }).join('');
@@ -478,7 +512,7 @@ function renderHomeRail(){
     var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
     var badge;
     if(isOutOfStock){
       badge='<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>';
@@ -533,7 +567,7 @@ function renderOfferStrip(){
   strip.innerHTML=offers.map(function(p){
     var fp=Math.round(p.price*(1-p.discount/100));
     var cuota=Math.round(fp/12);
-    var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px">'+p.ico+'</span>';
+    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px">'+p.ico+'</span>';
     var isFav=favorites.indexOf(p.id)!==-1;
     return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
       '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
@@ -587,27 +621,73 @@ function renderShopGrid(){
   if(filterState.hideNoStock){
     prods=prods.filter(function(p){return p.stock>0;});
   }
+  // Group by modelGroup
+  var groups={};
+  var standalone=[];
+  prods.forEach(function(p){
+    if(p.modelGroup){
+      if(!groups[p.modelGroup])groups[p.modelGroup]=[];
+      groups[p.modelGroup].push(p);
+    }else{
+      standalone.push(p);
+    }
+  });
+  var displayList=[];
+  Object.keys(groups).forEach(function(key){
+    var variants=groups[key];
+    if(variants.length<=1){
+      displayList.push(variants[0]);
+      return;
+    }
+    variants.sort(function(a,b){return a.price-b.price;});
+    var cheapest=variants[0];
+    var inStock=variants.some(function(v){return v.stock>0;});
+    var newestDate=variants.reduce(function(max,v){
+      var d=new Date(v.createdAt||0);
+      return d>max?d:max;
+    },new Date(0));
+    var maxDiscount=variants.reduce(function(max,v){return Math.max(max,v.discount||0);},0);
+    var maxBattery=variants.reduce(function(max,v){return Math.max(max,v.battery||0);},0);
+    displayList.push({
+      id:cheapest.id,
+      isGroup:true,
+      modelGroup:key,
+      brand:cheapest.brand,
+      name:key,
+      sub:variants.length+' '+(variants.length===1?'variante':'variantes'),
+      price:cheapest.price,
+      imageUrl:cheapest.imageUrl,
+      ico:cheapest.ico,
+      stock:inStock?variants.reduce(function(s,v){return s+v.stock;},0):0,
+      createdAt:newestDate.toISOString(),
+      discount:maxDiscount,
+      battery:maxBattery,
+      condition:cheapest.condition,
+      variantCount:variants.length
+    });
+  });
+  displayList=displayList.concat(standalone);
+  // Sort display list
   if(currentSort==='asc'){
-    prods.sort(function(a,b){return a.price-b.price;});
+    displayList.sort(function(a,b){return a.price-b.price;});
   }else if(currentSort==='desc'){
-    prods.sort(function(a,b){return b.price-a.price;});
+    displayList.sort(function(a,b){return b.price-a.price;});
   }else if(currentSort==='new'){
-    prods.sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+    displayList.sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
   }else if(currentSort==='disc'){
-    prods.sort(function(a,b){return (b.discount||0)-(a.discount||0);});
+    displayList.sort(function(a,b){return (b.discount||0)-(a.discount||0);});
   }else if(currentSort==='bat'){
-    prods.sort(function(a,b){return (b.battery||0)-(a.battery||0);});
+    displayList.sort(function(a,b){return (b.battery||0)-(a.battery||0);});
   }else{
-    prods.sort(function(a,b){
+    displayList.sort(function(a,b){
       var stockA=a.stock>0?0:1;
       var stockB=b.stock>0?0:1;
       if(stockA!==stockB)return stockA-stockB;
       return new Date(b.createdAt||0)-new Date(a.createdAt||0);
     });
   }
-  var count=document.getElementById('shopCount');
-  if(count)count.textContent=prods.length+' productos';
-  renderGrid('shopGrid',prods);
+  if(count)count.textContent=displayList.length+' productos';
+  renderGrid('shopGrid',displayList);
   var sg=document.getElementById('shopGrid');if(sg)sg.dataset.svRevealed='1';
 }
 function renderOfertasGrid(){
@@ -651,7 +731,7 @@ function renderAccGrid(){
     var isPromoActive=a.isOffer&&a.discount>0;
     var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
     var isOutOfStock=a.stock===0;
-    var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(a.ico||'\u{1F4E6}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'\u{1F4E6}')+'</span>';
+    var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(a.ico||'\u{1F4E6}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'\u{1F4E6}')+'</span>';
     var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(isPromoActive?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+a.discount+'% OFF</div>':(a.category?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+a.category+'</div>':''));
     var isFav=isFavorite(a.id);
     return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openAccDetail(\''+a.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
@@ -718,7 +798,7 @@ function openAccDetail(id){
       var accImgUrl=_accImages[0];
       mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
         '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-          '<img src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+          '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
           '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
             '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
           '</div>'+
@@ -727,7 +807,7 @@ function openAccDetail(id){
     else{mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><span style="font-size:80px">'+ico+'</span>';}
   }
   if(thumbsContainer){
-    if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div onclick="switchAccMainImg('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div onclick="switchAccMainImg('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img loading="lazy" src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
     else{thumbsContainer.style.display='none';}
   }
   detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
@@ -740,17 +820,92 @@ function switchAccMainImg(idx){
   var accImgUrl=_accImages[idx];
   if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
     '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
       '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
       '</div>'+
     '</div>';
   if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';}}
 }
-function openDetail(id){
+function openDetail(id, variantId){
   var activePage=document.querySelector('.page.act');
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
   currentProd=getById(PRODUCTS,id);if(!currentProd)return;
+  window._detailVariants=[];
+  window._selectedVariantIdx=-1;
+  window._selectedVariant=null;
+  // Collect all product IDs sharing the same modelGroup
+  var variantProdIds=[id];
+  if(currentProd.modelGroup){
+    variantProdIds=[];
+    for(var gi=0;gi<PRODUCTS.length;gi++){
+      if(PRODUCTS[gi].modelGroup===currentProd.modelGroup)
+        variantProdIds.push(PRODUCTS[gi].id);
+    }
+  }
+  var cacheKey=currentProd.modelGroup||id;
+  if(!window._variantCache)window._variantCache={};
+  if(window._variantCache[cacheKey]&&window._variantCache[cacheKey].length>0){
+    window._detailVariants=window._variantCache[cacheKey].filter(function(v){return v.status!=='SOLD';});
+    renderDetailVariants();
+    var now=new Date();
+    var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
+    var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
+    var cuota12=Math.round(finalPrice/12);
+    var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
+    var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
+    var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
+    var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
+    renderDetailImages();updDetTotal();
+    renderDetBadges(currentProd);
+    var fb=document.getElementById('detFavBtn');
+    if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
+    // Select variant AFTER base render so it can override specs/name/badges
+    if(variantId){
+      for(var vi=0;vi<window._detailVariants.length;vi++){
+        if(window._detailVariants[vi].id===variantId||window._detailVariants[vi].imei===variantId){
+          selectDetailVariant(vi);break;
+        }
+      }
+    }else if(window._detailVariants.length>0)selectDetailVariant(0);
+    nav('detail');
+    return;
+  }
+  var fetchUrls=variantProdIds.map(function(pid){
+    return API_URL+'/api/inventory?productId='+pid+'&limit=50';
+  });
+  Promise.all(fetchUrls.map(function(url){return fetch(url).then(function(r){return r.json();});})).then(function(results){
+    if(currentProd.id!==id)return;
+    var items=[];
+    results.forEach(function(res){
+      var data=res.data||res||[];
+      items=items.concat(data);
+    });
+    var seen={};
+    items=items.filter(function(v){
+      if(seen[v.id])return false;
+      seen[v.id]=true;
+      return true;
+    });
+    if(items.length>0)window._variantCache[cacheKey]=items;
+    window._detailVariants=items.filter(function(v){return v.status!=='SOLD';});
+    renderDetailVariants();
+    if(variantId){
+      for(var vi=0;vi<window._detailVariants.length;vi++){
+        if(window._detailVariants[vi].id===variantId||window._detailVariants[vi].imei===variantId){
+          selectDetailVariant(vi);
+          break;
+        }
+      }
+    }else if(window._detailVariants.length>0){
+      selectDetailVariant(0);
+    }
+  }).catch(function(){
+    if(currentProd.id!==id)return;
+    window._detailVariants=[];
+    renderDetailVariants();
+  });
+
   var now=new Date();
   var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
   var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
@@ -776,8 +931,11 @@ function openDetail(id){
   var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
   if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartFromDetail();};}
   if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){buyNow();};}
+  var consultBtn=document.getElementById('detConsultBtn');
+  if(consultBtn)consultBtn.style.display='flex';
 
   renderDetailImages();updDetTotal();
+  renderDetailVariants();
   var fb=document.getElementById('detFavBtn');
   if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
   nav('detail');
@@ -809,7 +967,7 @@ function renderDetailImages(){
   var imgUrl=allImages[0];
   mainImg.innerHTML=favBtn+prevBtn+nextBtn+
     '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
       '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
       '</div>'+
@@ -820,7 +978,7 @@ function renderDetailImages(){
   if(prevEl)prevEl.style.display=showArrows?'flex':'none';
   if(nextEl)nextEl.style.display=showArrows?'flex':'none';
   if(thumbsContainer){
-    if(allImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div onclick="setDetailImage('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img src="'+url+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    if(allImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div onclick="setDetailImage('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img loading="lazy" src="'+url+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
     else{thumbsContainer.style.display='none';}
   }
 }
@@ -834,7 +992,7 @@ function setDetailImage(index){
   var imgUrl=allImages[index];
   if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>'+
     '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
       '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
       '</div>'+
@@ -856,6 +1014,113 @@ function nextDetailImage(){
   if(allImages.length<=1)return;
   detailCurrentImageIndex=(detailCurrentImageIndex+1)%allImages.length;
   setDetailImage(detailCurrentImageIndex);
+}
+function selectDetailVariant(idx){
+  var vars=window._detailVariants||[];
+  if(idx<0||idx>=vars.length)return;
+  window._selectedVariantIdx=idx;
+  window._selectedVariant=vars[idx];
+  var v=vars[idx];
+  // Override price and condition in the detail view
+  if(v.targetPrice){
+    var now=new Date();
+    var isPromo=currentProd.isOffer&&currentProd.discount>0;
+    var basePrice=v.targetPrice;
+    var priceEl=document.getElementById('detPrice');
+    if(priceEl)priceEl.textContent=fmt(basePrice);
+    var totalEl=document.getElementById('detTotal');
+    if(totalEl)totalEl.textContent=fmt(basePrice);
+    var cuota12=Math.round(basePrice/12);
+    var cuotaText=document.getElementById('detCuotaText');
+    if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+  }
+  // Update name to reflect variant details
+  var suffixParts=[];
+  if(v.color)suffixParts.push(v.color);
+  if(v.storage)suffixParts.push(v.storage);
+  var variantSuffix=suffixParts.length?' ('+suffixParts.join(' / ')+')':'';
+  var name2El=document.getElementById('detName2');
+  if(name2El)name2El.textContent=currentProd.name+variantSuffix;
+  var nameEl=document.getElementById('detName');
+  if(nameEl)nameEl.textContent=currentProd.name+variantSuffix;
+  // Rebuild specs grid with variant-specific data
+  var mergedProd={
+    type:v.deviceType||currentProd.type,
+    condition:v.cosmeticCondition||currentProd.condition,
+    battery:v.batteryHealth,
+    color:v.color,
+    ram:currentProd.ram,
+    storage:v.storage||currentProd.storage,
+    stock:currentProd.stock,
+    sub:currentProd.sub,
+    processor:currentProd.processor,
+    screen:currentProd.screen,
+    isOffer:currentProd.isOffer,
+    discount:currentProd.discount
+  };
+  renderSpecsGrid(buildSpecsForProduct(mergedProd));
+  // Override condition badge
+  if(v.cosmeticCondition||v.functionalCondition){
+    var condStr=[v.cosmeticCondition,v.functionalCondition].filter(Boolean).join(' - ');
+    renderDetBadges(mergedProd,condStr);
+  }
+  // Show variant-specific image
+  if(v.imageUrl){
+    var mainImg=document.getElementById('detImgMain');
+    if(mainImg){
+      mainImg.innerHTML='<button onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFavorite(currentProd.id)?'\u2665':'\u2661')+'</button>'+
+        '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+v.imageUrl+'\')">'+
+          '<img loading="lazy" src="'+v.imageUrl+'" style="width:100%;height:100%;object-fit:contain">'+
+        '</div>';
+    }
+  }
+  // Show condition note
+  var descEl=document.getElementById('detDesc');
+  if(descEl){
+    var note=v.notes||'';
+    var condNote='';
+    if(v.cosmeticCondition||v.batteryHealth!=null){
+      var parts=[];
+      if(v.cosmeticCondition)parts.push('Estado: '+v.cosmeticCondition);
+      if(v.batteryHealth!=null)parts.push('Batería: '+v.batteryHealth+'%');
+      condNote=parts.join(' | ');
+    }
+    var fullDesc=[currentProd.description||currentProd.sub||'',condNote,note].filter(Boolean).join('<br>');
+    if(fullDesc){descEl.innerHTML=fullDesc;descEl.style.display='block';}else{descEl.style.display='none';}
+  }
+  // Highlight the selected pill
+  renderDetailVariants();
+}
+
+function renderDetailVariants(){
+  var container=document.getElementById('detVariants');
+  var list=document.getElementById('detVariantsList');
+  if(!container||!list)return;
+  var variants=window._detailVariants||[];
+  if(variants.length===0){
+    container.style.display='none';
+    return;
+  }
+  container.style.display='block';
+  list.innerHTML=variants.map(function(v,i){
+    var isActive=i===window._selectedVariantIdx;
+    var parts=[];
+    if(v.color)parts.push(v.color);
+    if(v.storage)parts.push(v.storage);
+    if(v.cosmeticCondition&&!v.color&&!v.storage)parts.push(v.cosmeticCondition);
+    var label=parts.join(' \u00B7 ')||'Variante '+(i+1);
+    if(v.targetPrice)label+=' — '+fmt(v.targetPrice);
+    var clickAttr=variants.length>1?'onclick="selectDetailVariant('+i+')"':'';
+    var cursor=variants.length>1?'pointer':'default';
+    return '<button '+clickAttr+' style="'+
+      'padding:8px 16px;border-radius:10px;border:2px solid '+(isActive?'var(--orange)':'var(--border)')+';'+
+      'background:'+(isActive?'var(--orange)':'#fff')+';'+
+      'color:'+(isActive?'#fff':'var(--dk)')+';'+
+      'font-size:13px;font-weight:'+(isActive?'700':'500')+';'+
+      'cursor:'+cursor+';'+
+      'transition:all .15s;box-shadow:'+(isActive?'0 2px 8px rgba(255,107,44,.3)':'none')+
+      '">'+label+'</button>';
+  }).join('');
 }
 function selCuota(el,n){
   document.querySelectorAll('.cuota-btn').forEach(function(c){
@@ -1306,7 +1571,7 @@ function adminTab(tab,btn){
   if(sec)sec.classList.add('act');
   
   // Load chat if needed
-  if(tab==='chat'){loadAdminConversations();initChatSocket();}
+  if(tab==='chat'){loadAdminConversations();initChatSocket();initChatSound();}
   
   // Render content
   renderAdminContent(tab);
@@ -1439,7 +1704,7 @@ function editProduct(id){
   
   document.getElementById('prodImageUrl').value=p.imageUrl||'';
   if(p.imageUrl){
-    document.getElementById('prodImagePreview').innerHTML='<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
+    document.getElementById('prodImagePreview').innerHTML='<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
   }else{
     document.getElementById('prodImagePreview').innerHTML='📷';
   }
@@ -1456,6 +1721,33 @@ function editProduct(id){
   }
   isEditingProduct=true;
   nav('admin-product');
+  // Fetch variants for this product on demand
+  var vs=document.getElementById('variantsSection');
+  var vl=document.getElementById('variantsList');
+  if(vs&&vl){
+    vs.style.display='block';
+    vl.innerHTML='<div style="text-align:center;padding:10px;color:var(--gray);font-size:12px">Cargando variantes...</div>';
+    fetch(API_URL+'/api/inventory?productId='+p.id+'&limit=50').then(function(r){return r.json();}).then(function(res){
+      var vc=res.data||res||[];
+      if(vc.length>0){
+        vl.innerHTML=vc.map(function(v){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--cream2);border-radius:8px;margin-bottom:6px">'+
+            '<span style="font-size:14px">📱</span>'+
+            '<div style="flex:1;font-size:12px">'+
+              '<div style="font-weight:600">'+(v.color||'')+(v.storage?' · '+v.storage:'')+'</div>'+
+              '<div style="color:var(--gray);font-size:11px">IMEI: …'+v.imei.slice(-4)+'</div>'+
+            '</div>'+
+            '<div style="font-size:11px;color:var(--gray)">$'+(v.targetPrice||0).toLocaleString('es-AR')+'</div>'+
+            '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+(v.status==='SOLD'?'var(--red)':v.status==='IN_REPAIR'?'var(--orange)':'var(--green)')+'">'+(v.status||'IN_STOCK')+'</span>'+
+          '</div>';
+        }).join('');
+      }else{
+        vl.innerHTML='<div style="font-size:12px;color:var(--gray);padding:10px;text-align:center">Sin variantes. Agregá IMEIs para este producto.</div>';
+      }
+    }).catch(function(){
+      vl.innerHTML='<div style="font-size:12px;color:var(--red);padding:10px;text-align:center">Error al cargar variantes</div>';
+    });
+  }
 }
 function uploadProductImage(input){
   var file=input.files[0];
@@ -1470,7 +1762,7 @@ function uploadProductImage(input){
   }).then(function(r){return r.json();}).then(function(data){
     if(data.url){
       document.getElementById('prodImageUrl').value=data.url;
-      preview.innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
+      preview.innerHTML='<img loading="lazy" src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
     }else{
       preview.innerHTML='📷';
       showErrorToast('Error', 'No se pudo subir la imagen');
@@ -1496,7 +1788,7 @@ function handleImageDrop(event){
   }).then(function(r){return r.json();}).then(function(data){
     if(data.url){
       document.getElementById('prodImageUrl').value=data.url;
-      preview.innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
+      preview.innerHTML='<img loading="lazy" src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px">';
     }else{
       preview.innerHTML='📷';
       showErrorToast('Error', 'No se pudo subir la imagen');
@@ -1534,7 +1826,7 @@ function renderAdditionalImage(url,index){
   var container=document.getElementById('prodAdditionalImages');
   var div=document.createElement('div');
   div.style.cssText='position:relative;width:60px;height:60px;flex-shrink:0';
-  div.innerHTML='<img src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px"><button onclick="removeAdditionalImage('+index+')" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:var(--red);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;line-height:1">×</button>';
+  div.innerHTML='<img loading="lazy" src="'+url+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px"><button onclick="removeAdditionalImage('+index+')" style="position:absolute;top:-5px;right:-5px;width:18px;height:18px;background:var(--red);color:#fff;border:none;border-radius:50%;font-size:12px;cursor:pointer;line-height:1">×</button>';
   container.appendChild(div);
 }
 function removeAdditionalImage(index){
@@ -1557,19 +1849,289 @@ function confirmAction(confirmed){
     fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(){loadProducts();showSuccessToast('Producto eliminado', pname);}).catch(function(){showErrorToast('Error', 'No se pudo eliminar el producto');});}
   closeConfirm();
 }
+function showAddProductByImeiModal(){
+  showImeiProductModal(null);
+}
+function showImeiProductModal(existingProductId){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px';
+  overlay.onclick=function(e){if(e.target===overlay)closeModal();};
+
+  var modal=document.createElement('div');
+  modal.style.cssText='background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative';
+  modal.onclick=function(e){e.stopPropagation();};
+
+  var loadingProduct=false, imeiData=null;
+
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:20px;font-weight:700;color:var(--dk)">'+(existingProductId?'Agregar variante':'Nuevo producto por IMEI')+'</h3><button onclick="document.getElementById(\'imeiModalOverlay\').remove()" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--cream2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--gray)">✕</button></div>'+
+    '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--gray)">IMEI del dispositivo</label>'+
+    '<div style="display:flex;gap:8px"><input type="text" id="imeiInput" maxlength="15" placeholder="Ingresá o escaneá el IMEI de 15 dígitos" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none">'+
+    '<button id="imeiLookupBtn" onclick="lookupImei()" style="padding:10px 20px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Buscar</button>'+
+    '<button onclick="startImeiScanner()" title="Escaneá el código QR" style="width:44px;height:44px;border-radius:10px;background:var(--cream2);border:1.5px solid var(--border);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">📷</button></div>'+
+    '<div id="imeiError" style="display:none;font-size:12px;color:var(--red);margin-top:6px"></div></div>'+
+    '<div id="imeiResult" style="display:none"></div>'+
+    '<div id="imeiForm" style="display:none">'+
+      '<div id="imeiFormFields" style="display:grid;gap:14px;margin-top:16px">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><input class="imei-fld" id="if-brand"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName"></div>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Color</label><input class="imei-fld" id="if-color" placeholder="Ej: Graphite"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">RAM</label><select class="imei-fld" id="if-ram"><option value="">—</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option></select></div>'+
+        '</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Tipo</label><select class="imei-fld" id="if-type"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Condición</label><select class="imei-fld" id="if-condition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>'+
+        '</div>'+
+        '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:10px">📸 Imagen del producto</div>'+
+          '<div style="display:flex;gap:12px;align-items:start">'+
+            '<div id="imeiImgPreview" style="width:100px;height:100px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:36px;border:2px dashed var(--border);flex-shrink:0;overflow:hidden">📷</div>'+
+            '<div><label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:8px;font-size:12px;cursor:pointer">Subir imagen<input type="file" accept="image/*" style="display:none" onchange="uploadImeiProductImage(this)"></label>'+
+            '<input type="hidden" id="imeiImgUrl"></div>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">'+
+        '<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:10px">💰 Datos del negocio</div>'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Precio de venta *</label><input class="imei-fld" id="if-price" type="text" placeholder="Ej: 950000" oninput="formatPriceInput(this)"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Precio de compra</label><input class="imei-fld" id="if-cost" type="text" placeholder="Ej: 720000" oninput="formatPriceInput(this)"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Batería (%)</label><input class="imei-fld" id="if-battery" type="number" min="0" max="100" placeholder="89"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Proveedor / Comprado a</label><input class="imei-fld" id="if-purchasedFrom" placeholder="Ej: iShop BA"></div>'+
+        '</div>'+
+        '<div style="margin-top:12px"><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Notas / Estado funcional</label><textarea class="imei-fld" id="if-notes" placeholder="Ej: Pantalla rayada, funciona perfecto" style="height:60px;resize:none"></textarea></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">'+
+        '<button id="imeiSaveBtn" onclick="saveImeiProduct(\''+(existingProductId||'')+'\')" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Guardar producto</button>'+
+        '<button onclick="document.getElementById(\'imeiModalOverlay\').remove()" style="padding:12px 24px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:14px;cursor:pointer">Cancelar</button>'+
+      '</div>'+
+    '</div>';
+
+  modal.innerHTML=html;
+  overlay.id='imeiModalOverlay';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Add input styles
+  var style=document.createElement('style');
+  style.textContent='.imei-fld{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff}.imei-fld:focus{border-color:var(--orange)}';
+  document.head.appendChild(style);
+
+  // If editing existing product, pre-fill and skip IMEI step
+  if(existingProductId){
+    var p=getById(PRODUCTS,existingProductId);
+    if(p){
+      document.getElementById('imeiInput').value='';
+      document.getElementById('imeiInput').disabled=true;
+      document.getElementById('imeiLookupBtn').style.display='none';
+      document.getElementById('if-brand').value=p.brand||'';
+      document.getElementById('if-modelName').value=p.name||'';
+      document.getElementById('if-storage').value=p.storage||'';
+      document.getElementById('if-color').value=p.color||'';
+      document.getElementById('if-ram').value=p.ram||'';
+      document.getElementById('if-type').value=p.type||'celular';
+      document.getElementById('if-condition').value=p.condition||'Impecable';
+      document.getElementById('if-price').value=p.price||'';
+      document.getElementById('if-cost').value=p.cost||'';
+      document.getElementById('if-battery').value=p.battery||'';
+      document.getElementById('imeiResult').style.display='block';
+      document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--gray)">📱 Agregando variante a <strong>'+p.name+'</strong></div>';
+      document.getElementById('imeiForm').style.display='block';
+    }
+  }
+
+  // Global helper functions for this modal
+  window.lookupImei=function(){
+    var input=document.getElementById('imeiInput');
+    var imei=input.value.trim();
+    if(imei.length!==15){
+      document.getElementById('imeiError').style.display='block';
+      document.getElementById('imeiError').textContent='El IMEI debe tener exactamente 15 dígitos';
+      return;
+    }
+    document.getElementById('imeiError').style.display='none';
+    var btn=document.getElementById('imeiLookupBtn');
+    btn.textContent='Buscando...';
+    btn.disabled=true;
+
+    fetch(API_URL+'/api/inventory/lookup-imei',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({imei:imei})
+    }).then(function(r){return r.json();}).then(function(data){
+      btn.textContent='Buscar';
+      btn.disabled=false;
+      if(data.error){
+        document.getElementById('imeiError').style.display='block';
+        document.getElementById('imeiError').textContent=data.error;
+        return;
+      }
+      imeiData=data;
+      document.getElementById('if-brand').value=data.brand||'';
+      document.getElementById('if-modelName').value=data.modelName||'';
+      document.getElementById('if-storage').value=data.storage||'';
+      document.getElementById('if-color').value=data.color||'';
+      document.getElementById('if-ram').value=data.ram||'';
+      document.getElementById('if-type').value=data.deviceType||'celular';
+      if(data.imageUrl){
+        document.getElementById('imeiImgPreview').innerHTML='<img loading="lazy" src="'+data.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+      }
+      document.getElementById('imeiResult').style.display='block';
+      document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:rgba(34,197,94,.1);border-radius:8px;font-size:13px;color:var(--green)">✅ Datos obtenidos del IMEI. Revisá y editá si es necesario.</div>';
+      document.getElementById('imeiForm').style.display='block';
+      document.getElementById('imeiInput').disabled=true;
+      btn.style.display='none';
+    }).catch(function(){
+      btn.textContent='Buscar';
+      btn.disabled=false;
+      document.getElementById('imeiError').style.display='block';
+      document.getElementById('imeiError').textContent='Error al consultar el IMEI. Completá los datos manualmente.';
+      document.getElementById('imeiForm').style.display='block';
+    });
+  };
+
+  window.startImeiScanner=function(){
+    showInfoToast('Escáner', 'Usá un lector QR externo o ingresá el IMEI manualmente');
+    // Future: integrate QR scanner library
+  };
+
+  window.uploadImeiProductImage=function(input){
+    var file=input.files[0];
+    if(!file)return;
+    var preview=document.getElementById('imeiImgPreview');
+    preview.innerHTML='<span style="font-size:12px;color:var(--gray)">Subiendo...</span>';
+    var fd=new FormData();
+    fd.append('file',file);
+    fetch(API_URL+'/api/upload',{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(data){
+      if(data.url){
+        document.getElementById('imeiImgUrl').value=data.url;
+        preview.innerHTML='<img loading="lazy" src="'+data.url+'" style="width:100%;height:100%;object-fit:cover">';
+      }else{
+        preview.innerHTML='📷';
+        showErrorToast('Error','No se pudo subir la imagen');
+      }
+    }).catch(function(){
+      preview.innerHTML='📷';
+      showErrorToast('Error','No se pudo subir la imagen');
+    });
+  };
+
+  window.saveImeiProduct=function(existingId){
+    var imei=document.getElementById('imeiInput').value.trim();
+    var brand=document.getElementById('if-brand').value.trim();
+    var modelName=document.getElementById('if-modelName').value.trim();
+    if(!modelName&&!existingId){
+      showErrorToast('Error','El nombre del modelo es requerido');
+      return;
+    }
+    var price=parseInt((document.getElementById('if-price').value||'0').replace(/[^0-9]/g,''))||0;
+    if(!price&&!existingId){
+      showErrorToast('Error','El precio de venta es requerido');
+      return;
+    }
+
+    var btn=document.getElementById('imeiSaveBtn');
+    btn.textContent='Guardando...';
+    btn.disabled=true;
+
+    var productData={
+      name: modelName || document.getElementById('if-modelName').value,
+      brand: brand || 'Otro',
+      sub: [document.getElementById('if-storage').value,document.getElementById('if-color').value].filter(Boolean).join(' / '),
+      price: price,
+      cost: parseInt((document.getElementById('if-cost').value||'0').replace(/[^0-9]/g,''))||0,
+      condition: document.getElementById('if-condition').value,
+      type: document.getElementById('if-type').value,
+      storage: document.getElementById('if-storage').value || null,
+      color: document.getElementById('if-color').value || null,
+      ram: document.getElementById('if-ram').value || null,
+      battery: parseInt(document.getElementById('if-battery').value)||null,
+      imageUrl: document.getElementById('imeiImgUrl').value || null,
+      ico: '📱',
+      stock: 1,
+    };
+
+    if(existingId){
+      // Create inventory item (backend handles stock increment)
+      fetch(API_URL+'/api/inventory',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          imei: imei,
+          brand: brand,
+          modelName: productData.name,
+          storage: productData.storage,
+          color: productData.color,
+          ram: productData.ram,
+          deviceType: productData.type,
+          imageUrl: document.getElementById('imeiImgUrl').value||null,
+          productId: existingId,
+          purchasePrice: productData.cost,
+          cosmeticCondition: productData.condition,
+          batteryHealth: productData.battery,
+          targetPrice: productData.price,
+          createdById: (Storage.get('user')||{}).id||'unknown'
+        })
+      }).then(function(){
+        showSuccessToast('Variante agregada','Se agregó el IMEI al producto');
+        document.getElementById('imeiModalOverlay').remove();
+        loadProducts();
+      }).catch(function(err){
+        btn.textContent='Guardar producto';
+        btn.disabled=false;
+        showErrorToast('Error','No se pudo guardar: '+(err.message||'error'));
+      });
+    }else{
+      // Create via inventory endpoint (creates product + inventory item)
+      fetch(API_URL+'/api/inventory',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          imei: imei,
+          brand: brand,
+          modelName: productData.name,
+          storage: productData.storage,
+          color: productData.color,
+          ram: productData.ram,
+          deviceType: productData.type,
+          imageUrl: document.getElementById('imeiImgUrl').value||null,
+          purchasePrice: productData.cost,
+          cosmeticCondition: productData.condition,
+          batteryHealth: productData.battery,
+          targetPrice: productData.price,
+          createdById: (Storage.get('user')||{}).id||'unknown'
+        })
+      }).then(function(res){
+        showSuccessToast('Producto creado','Se creó el producto con IMEI');
+        document.getElementById('imeiModalOverlay').remove();
+        loadProducts();
+      }).catch(function(err){
+        btn.textContent='Guardar producto';
+        btn.disabled=false;
+        showErrorToast('Error','No se pudo crear: '+(err.message||'error'));
+      });
+    }
+  };
+}
+
 function renderAdminContent(tab){
   if(!tab)tab='prods';
   var el=document.getElementById('adminContent');
   if(!el)return;
   window.currentAdminTab=tab;
   if(tab!=='chats'){window.adminActiveConvId=null;}
+  if(tab!=='dashboard'&&window._dashRefreshInterval){
+    clearInterval(window._dashRefreshInterval);
+    window._dashRefreshInterval=null;
+  }
   
   if(tab==='acc'&&(!window.ACCS||window.ACCS.length===0)){
     loadAccessories();
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-inventory,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -1674,11 +2236,11 @@ function renderAdminContent(tab){
     return;
   }
   if(tab==='prods'){
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><button class="btn btn-o btn-sm" onclick="window.isEditingProduct=false;nav(\'admin-product\')">+ Agregar producto</button></div>'+
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button></div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">'+
       PRODUCTS.map(function(p){
-        var lowStock=p.stock<=2;
-        var imgHtml=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
+        var lowStock=p.stock<=0;
+        var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
         return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid '+(lowStock?'var(--red)':'var(--border)')+';transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\''+(lowStock?'var(--red)':'var(--border)')+'\'">'+
           '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden">'+imgHtml+'</div>'+
 '<div style="padding:10px;display:flex;flex-direction:column;min-height:150px">'+
@@ -1686,7 +2248,7 @@ function renderAdminContent(tab){
              '<div style="font-size:10px;color:var(--gray);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.sub||'')+'</div>'+
              '<div style="display:flex;justify-content:space-between;align-items:center">'+
                '<span style="font-weight:700;color:var(--orange);font-size:13px">'+fmt(p.price)+'</span>'+
-               '<span style="font-size:10px;color:'+(lowStock?'var(--red)':'var(--gray)')+'">'+(lowStock?'⚠ '+p.stock:p.stock+' en stock')+'</span>'+
+               '<span style="font-size:10px;color:'+(lowStock?'var(--red)':'var(--gray)')+'">'+(lowStock?'Sin stock':p.stock+' en stock')+'</span>'+
               '</div>'+
               (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
                '<div style="display:flex;gap:4px;margin-top:auto;padding-top:8px;flex-wrap:wrap">'+
@@ -1783,7 +2345,7 @@ function renderAdminContent(tab){
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Accesorios ('+accs.length+')</h3><button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;nav(\'admin-acc\')">+ Agregar accesorio</button></div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">'+
       accs.map(function(a){
-        var imgHtml=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">'+(a.ico||'📦')+'</span>';
+        var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">'+(a.ico||'📦')+'</span>';
         return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
           '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden">'+imgHtml+'</div>'+
           '<div style="padding:10px;display:flex;flex-direction:column;min-height:120px">'+
@@ -1819,16 +2381,32 @@ function renderAdminContent(tab){
       '</div>'+
       '<div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">'+
         '<div id="adminChatHeader" style="padding:14px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
-          '<span style="font-size:13px;font-weight:600;color:var(--gray)">Seleccioná una conversación</span>'+
-          '<div style="display:flex;gap:6px">'+
+          '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">'+
+            '<span id="adminChatName" style="font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Seleccioná una conversación</span>'+
+            '<span id="adminOnlineDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:none;flex-shrink:0" title="En línea"></span>'+
+          '</div>'+
+          '<div style="display:flex;gap:4px;flex-shrink:0">'+
+            '<button onclick="openMsgSearch()" id="adminMsgSearchBtn" title="Buscar en mensajes (Ctrl+F)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">🔍</button>'+
+            '<button onclick="openManageReplies()" id="adminManageRepliesBtn" title="Gestionar respuestas rápidas (Ctrl+Shift+R)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">⚡</button>'+
+            '<button onclick="openCreateQuoteFromChat()" id="adminQuoteBtn" title="Crear cotización desde el chat" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">💲</button>'+
+            '<button onclick="exportConversation()" id="adminExportBtn" title="Exportar conversación (Ctrl+Shift+E)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">📥</button>'+
             '<button id="adminAssignConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer">Asignar</button>'+
             '<button id="adminCloseConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Cerrar</button>'+
           '</div>'+
         '</div>'+
+        '<div id="msgSearchBar" style="display:none;padding:8px 14px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
+          '<div style="display:flex;gap:6px;align-items:center">'+
+            '<input id="msgSearchInput" type="text" placeholder="Buscar en mensajes..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;background:#fff" onkeydown="if(event.key===\'Enter\')searchInMessages(this.value)" oninput="if(!this.value)searchInMessages(\'\')">'+
+            '<button onclick="searchInMessages(document.getElementById(\'msgSearchInput\').value)" style="padding:6px 10px;background:var(--orange);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">Buscar</button>'+
+            '<button onclick="closeMsgSearch()" style="padding:6px 8px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px">✕</button>'+
+          '</div>'+
+        '</div>'+
         '<div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:14px"></div>'+
         '<div id="typingIndicator" style="padding:4px 14px;font-size:11px;color:var(--gray);display:none"></div>'+
+        '<div id="quickReplies" style="padding:6px 14px;background:#fff;display:none;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)"></div>'+
         '<div style="padding:10px 14px;background:#fff;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center">'+
-          '<input id="adminChatInput" type="text" placeholder="Escribí un mensaje..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\')sendAdminMessage()">'+
+          '<button onclick="openProductSearch()" title="Compartir producto" style="padding:7px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;color:var(--gray);transition:all .15s;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">📦</button>'+
+          '<input id="adminChatInput" type="text" placeholder="Escribí un mensaje... (Ctrl+Enter para enviar)" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.ctrlKey&&!event.shiftKey)sendAdminMessage();if(event.key===\'Enter\'&&event.ctrlKey)sendAdminMessage()">'+
           '<button onclick="sendAdminMessage()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Enviar</button>'+
         '</div>'+
       '</div>'+
@@ -1846,23 +2424,7 @@ function renderAdminContent(tab){
     '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
     loadQuotes('all');
   }else if(tab==='inventory'){
-    if(typeof loadInventoryAdmin==='function'){
-      el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
-        '<input type="text" id="invSearchInput" placeholder="Buscar por código, IMEI, marca, modelo..." oninput="loadInventoryAdmin(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
-        '<select id="invStatusFilter" onchange="loadInventoryAdmin(document.getElementById(\'invSearchInput\').value,1)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">'+
-          '<option value="">Todos los estados</option>'+
-          '<option value="IN_STOCK">En stock</option>'+
-          '<option value="SOLD">Vendidos</option>'+
-          '<option value="IN_REPAIR">En reparación</option>'+
-          '<option value="RESERVED">Reservados</option>'+
-          '<option value="ON_HOLD">En espera</option>'+
-        '</select>'+
-        '<button class="btn btn-o" onclick="showAddInventoryModal()">+ Agregar dispositivo</button>'+
-      '</div><div class="adm-list" id="invList"></div><div id="invPagination"></div>';
-      loadInventoryAdmin();
-    }else{
-      el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando módulo de inventario...</div>';
-    }
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1.5rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
   }else if(tab==='instore'){
     if(typeof loadInStoreHistory==='function'){
       loadInStoreHistory();
@@ -2021,7 +2583,7 @@ function renderPromoProducts(){
         '<input type="checkbox" id="'+chkId+'" '+(isSelected?'checked':'')+' style="width:16px;height:16px;border-radius:4px;border:2px solid var(--border);cursor:pointer" onclick="event.stopPropagation()">'+
       '</div>'+
       '<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;margin-bottom:8px;background:var(--cream2);display:flex;align-items:center;justify-content:center">'+
-        (item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px">'+item.ico+'</span>')+
+        (item.imageUrl?'<img loading="lazy" src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:28px">'+item.ico+'</span>')+
       '</div>'+
       '<div style="margin-bottom:2px">'+
         '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange)">'+item.brand+' <span style="color:var(--gray);font-weight:400">['+item.type+']</span></div>'+
@@ -2155,7 +2717,7 @@ function renderActivePromos(){
       '<td style="padding:12px">'+
         '<div style="display:flex;align-items:center;gap:10px">'+
           '<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center">'+
-            (p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+p.ico+'</span>')+
+            (p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+p.ico+'</span>')+
           '</div>'+
           '<div><div style="font-weight:600;font-size:13px">'+p.name+'</div><div style="font-size:10px;color:var(--gray)">'+p.sub+' <span style="color:var(--orange);font-weight:600">['+p.type+']</span></div></div>'+
         '</div>'+
@@ -2338,7 +2900,7 @@ function openQuoteDetail(id){
   var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Bateria 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
   var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
   
-  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img src="'+p+'" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border)">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
+  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+p+'" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border)">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
   
   var modal=document.createElement('div');
   modal.id='quoteDetailModal';

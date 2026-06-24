@@ -21,9 +21,19 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50')
     const cursor = searchParams.get('cursor')
+    const search = searchParams.get('search') || ''
+
+    const where: any = { conversationId: id }
+
+    if (search) {
+      where.OR = [
+        { text: { contains: search, mode: 'insensitive' } },
+        { imageCaption: { contains: search, mode: 'insensitive' } },
+      ]
+    }
 
     const query: any = {
-      where: { conversationId: id },
+      where,
       orderBy: { createdAt: 'desc' },
       take: Math.min(limit, 100),
       include: {
@@ -255,6 +265,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const io = getIO();
     if (io) {
       io.to(id).emit('newMessage', { ...message, conversationId: id, fromUserId: userId });
+    }
+
+    // Emit unreadUpdate for the recipient so badges update instantly
+    if (isUserSender && conversation.adminId) {
+      const { emitUnreadUpdate } = await import('@/lib/socket');
+      emitUnreadUpdate(conversation.adminId);
+    } else if (isAdminSender) {
+      const { emitUnreadUpdate } = await import('@/lib/socket');
+      emitUnreadUpdate(conversation.userId);
     }
 
     return NextResponse.json(message, { status: 201 })
