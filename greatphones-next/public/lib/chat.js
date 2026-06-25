@@ -1359,8 +1359,22 @@ function openAdminConv(id){
   if(exportBtn)exportBtn.style.display='inline-flex';
   var dot=document.getElementById('adminOnlineDot');
   if(dot)dot.style.display='inline-block';
+  
+  // Mobile: show chat, hide conversation list
+  if(window.innerWidth<=768){
+    var convSide=document.querySelector('.chat-conv-side');
+    var msgArea=document.querySelector('.chat-msg-area');
+    if(convSide)convSide.classList.add('hide');
+    if(msgArea)msgArea.classList.add('show');
+  }
 }
 
+function closeMobileChat(){
+  var convSide=document.querySelector('.chat-conv-side');
+  var msgArea=document.querySelector('.chat-msg-area');
+  if(convSide)convSide.classList.remove('hide');
+  if(msgArea)msgArea.classList.remove('show');
+}
 var quickReplyIcons=['\u2705','\u{1F68A}','\u{1F6E1}','\u{1F3ED}','\u23F3','\u2764'];
 var cannedReplies=[
   {label:'Confirmado',text:'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.'},

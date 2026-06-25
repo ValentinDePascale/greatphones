@@ -1575,6 +1575,9 @@ function adminTab(tab,btn){
   
   // Render content
   renderAdminContent(tab);
+  
+  // Close mobile sidebar on navigation
+  closeMobileSidebar();
 }
 
 function toggleAdminTheme(){
@@ -1606,6 +1609,23 @@ function loadAdminTheme(){
     document.getElementById('themeIcon').textContent='light_mode';
     document.getElementById('themeLabel').textContent='Tema oscuro';
   }
+}
+function toggleMobileSidebar(){
+  var sidebar=document.querySelector('.admin-sidebar');
+  var backdrop=document.querySelector('.admin-sidebar-backdrop');
+  if(!sidebar)return;
+  var isOpen=sidebar.classList.contains('open');
+  sidebar.classList.toggle('open');
+  if(backdrop)backdrop.classList.toggle('active');
+  document.body.style.overflow=isOpen?'':'hidden';
+}
+function closeMobileSidebar(){
+  var sidebar=document.querySelector('.admin-sidebar');
+  var backdrop=document.querySelector('.admin-sidebar-backdrop');
+  if(!sidebar)return;
+  sidebar.classList.remove('open');
+  if(backdrop)backdrop.classList.remove('active');
+  document.body.style.overflow='';
 }
 function formatPriceInput(el){
   var val=el.value.replace(/[^0-9]/g,'');
@@ -2139,9 +2159,9 @@ function renderAdminContent(tab){
     var monthOptions=months.map(function(m,i){return'<option value="'+i+'"'+(i===new Date().getMonth()?' selected':'')+'>'+m+'</option>';}).join('');
     
     el.innerHTML='<div id="dashboard-view">'+
-      '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">'+
+      '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px" class="dash-header">'+
         '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard</h1>'+
-        '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px">'+
+        '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px" class="dash-header-actions">'+
           '<button id="dashTabMensual" onclick="setDashView(\'mensual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--orange);color:#fff">Mensual</button>'+
           '<button id="dashTabAnual" onclick="setDashView(\'anual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--gray)">Anual</button>'+
           '<select id="dashMonthSelect" onchange="updateDashMonth(this.value)" style="padding:8px 12px;border:none;border-left:1px solid var(--border);border-radius:0 8px 8px 0;font-size:13px;font-weight:600;color:var(--dk);background:transparent;outline:none;cursor:pointer">'+monthOptions+'</select>'+
@@ -2149,7 +2169,7 @@ function renderAdminContent(tab){
       '</header>'+
       
       '<!-- KPI Cards -->'+
-      '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem">'+
+      '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem" class="dash-kpis">'+
         '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
           '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
             '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-revenue-label">Ingresos</h3>'+
@@ -2185,7 +2205,7 @@ function renderAdminContent(tab){
       '</section>'+
       
       '<!-- Recent Orders & Top Products -->'+
-      '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem">'+
+      '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem" class="dash-row">'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
           '<div style="padding:16px;border-bottom:1px solid var(--border);background:var(--cream2);display:flex;justify-content:space-between;align-items:center">'+
             '<h2 style="font-size:16px;font-weight:700">Ultimos Pedidos</h2>'+
@@ -2207,7 +2227,7 @@ function renderAdminContent(tab){
       '</section>'+
       
       '<!-- Charts Row -->'+
-      '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">'+
+      '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px" class="dash-charts-row">'+
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
           '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Pedidos por Estado</h2>'+
           '<div style="position:relative;height:260px"><canvas id="statusChart"></canvas></div>'+
@@ -2237,7 +2257,7 @@ function renderAdminContent(tab){
   }
   if(tab==='prods'){
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button></div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" class="admin-prods-grid">'+
       PRODUCTS.map(function(p){
         var lowStock=p.stock<=0;
         var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
@@ -2265,9 +2285,9 @@ function renderAdminContent(tab){
     var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
     var allBrandsSet=new Set(allBrands.concat(accBrands));
     var brandsHtml=Array.from(allBrandsSet).map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:12px">'+
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:12px" class="stock-filters">'+
       '<h3 style="font-size:16px">Gestion de Stock</h3>'+
-      '<div style="display:flex;gap:12px;align-items:center">'+
+      '<div style="display:flex;gap:12px;align-items:center" class="stock-actions">'+
         '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="stockFilterType" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
         '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="stockFilterBrand" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
         '<div style="display:flex;gap:8px;align-items:flex-end"><button onclick="undoAllStock()" class="btn btn-g btn-sm">Deshacer</button><button onclick="saveAllStock()" class="btn btn-o btn-sm">Guardar</button></div>'+
@@ -2288,7 +2308,7 @@ function renderAdminContent(tab){
       '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Crear Promoción</h3>'+
       '<p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem">Diseña ofertas exclusivas para tu colección.</p>'+
       
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
+      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)" class="promo-filters">'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Tipo</label><select class="sel-f" id="promoItemType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brandsHtml+'</select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Categoría</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas</option></select></div>'+
@@ -2296,14 +2316,14 @@ function renderAdminContent(tab){
       '</div>'+
       
       '<div style="margin-bottom:1rem">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem" class="promo-select-actions">'+
           '<h4 style="font-size:18px;font-weight:600">Seleccionar Productos</h4>'+
           '<div style="display:flex;gap:8px">'+
             '<button onclick="selectAllPromo(true)" style="background:var(--green);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer">Seleccionar todos</button>'+
             '<button onclick="selectAllPromo(false)" style="background:var(--cream2);color:var(--dk);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);cursor:pointer">Deseleccionar todos</button>'+
           '</div>'+
         '</div>'+
-        '<div id="promoProductList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px"></div>'+
+        '<div id="promoProductList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px" class="promo-prods-grid"></div>'+
       '</div>'+
       
       '<button onclick="applyPromo()" style="width:100%;background:var(--orange);color:#fff;padding:16px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-top:1rem">Publicar Promoción</button>'+
@@ -2325,7 +2345,7 @@ function renderAdminContent(tab){
   }else if(tab==='orders'){
     var content=document.getElementById('adminContent');
     if(content){
-      content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
+      content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center" class="ord-tabs">'+
         '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="loadPendingOrders()">Pedidos en Espera</button>'+
         '<button class="ord-btn" id="btnAcceptedOrders" onclick="loadAcceptedOrders()">Pedidos Aceptados</button>'+
         '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
@@ -2343,7 +2363,7 @@ function renderAdminContent(tab){
   }else if(tab==='acc'){
     var accs=window.ACCS||[];
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Accesorios ('+accs.length+')</h3><button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;nav(\'admin-acc\')">+ Agregar accesorio</button></div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" class="admin-prods-grid">'+
       accs.map(function(a){
         var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">'+(a.ico||'📦')+'</span>';
         return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
@@ -2364,7 +2384,7 @@ function renderAdminContent(tab){
       }).join('')+
       '</div>';
   }else if(tab==='arrep'){
-    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">'+
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
       '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="loadArrepPendientes()">Pendientes</button>'+
       '<button class="ord-btn" id="arrepBtnAceptados" onclick="loadArrepAceptados()">Aceptados</button>'+
       '<button class="ord-btn" id="arrepBtnRechazados" onclick="loadArrepRechazados()">Rechazados</button>'+
@@ -2374,14 +2394,15 @@ function renderAdminContent(tab){
   }else if(tab==='users'){
     el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Usuarios</p><p style="font-size:12px">Proximamente podras gestionar usuarios</p></div>';
   }else if(tab==='chat'){
-    el.innerHTML='<div style="display:flex;gap:0;height:600px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
-      '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto">'+
+    el.innerHTML='<div style="display:flex;gap:0;height:600px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
+      '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto" class="chat-conv-side">'+
         '<div style="padding:14px;border-bottom:1px solid var(--border)"><h3 style="font-size:15px;font-weight:700">Conversaciones</h3></div>'+
         '<div id="adminConvList"></div>'+
       '</div>'+
-      '<div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">'+
+      '<div style="flex:1;display:flex;flex-direction:column;background:var(--cream)" class="chat-msg-area">'+
         '<div id="adminChatHeader" style="padding:14px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
           '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">'+
+            '<button class="chat-back-btn" onclick="closeMobileChat()" style="display:none;padding:4px;background:transparent;border:none;cursor:pointer;font-size:20px;color:var(--gray);margin-right:4px;line-height:1">←</button>'+
             '<span id="adminChatName" style="font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Seleccioná una conversación</span>'+
             '<span id="adminOnlineDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:none;flex-shrink:0" title="En línea"></span>'+
           '</div>'+
@@ -2537,7 +2558,7 @@ function renderStockList(){
   var pagContainer=document.getElementById('stockPagination');
   if(pagContainer){
     if(totalPages<=1){pagContainer.innerHTML='';return;}
-    var html='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem">';
+    var html='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem" class="admin-pagination">';
     html+='<button onclick="window._stockPage=Math.max(1,window._stockPage-1);renderStockList();"'+(page===1?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">←</button>';
     var s=Math.max(1,page-2);
     var e=Math.min(totalPages,page+2);

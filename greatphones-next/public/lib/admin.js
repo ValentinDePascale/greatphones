@@ -359,16 +359,16 @@ function showOrderModal(order){
   modal.id='orderDetailModal';
   modal.style.cssText='display:flex;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
   modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeOrderDetail()"></div>'+
-    '<div style="position:relative;background:#fff;border-radius:20px;width:min(700px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
-      '<div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10;border-radius:20px 20px 0 0">'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(700px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s" class="order-detail-modal">'+
+      '<div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:10;border-radius:20px 20px 0 0" class="od-header">'+
         '<div>'+
           '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:20px;font-weight:700">'+order.code+'</h3>'+
           '<p style="font-size:12px;color:var(--gray)">'+dateStr+'</p>'+
         '</div>'+
         '<button onclick="closeOrderDetail()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%" onmouseover="this.style.background=\'var(--cream2)\'" onmouseout="this.style.background=\'none\'">×</button>'+
       '</div>'+
-      '<div style="padding:1.5rem 2rem">'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">'+
+      '<div style="padding:1.5rem 2rem" class="od-content">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem" class="od-grid">'+
           '<div style="background:var(--cream2);border-radius:12px;padding:1rem">'+
             '<div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Cliente</div>'+
             '<div style="font-size:14px;font-weight:600">'+userName+'</div>'+
@@ -485,12 +485,12 @@ function shipOrder(orderId){
   modal.id='shipOrderModal';
   modal.style.cssText='display:flex;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s';
   modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeShipOrderModal()"></div>'+
-    '<div style="position:relative;background:#fff;border-radius:20px;width:min(450px,95%);box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(450px,95%);box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s" class="ship-modal">'+
       '<div style="padding:1.5rem 2rem;border-bottom:1px solid var(--border)">'+
         '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:#8b5cf6">Marcar como enviado</h3>'+
         '<p style="font-size:12px;color:var(--gray);margin-top:4px">Ingresa el numero de tracking del envio</p>'+
       '</div>'+
-      '<div style="padding:1.5rem 2rem">'+
+      '<div style="padding:1.5rem 2rem" class="ship-content">'+
         '<label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px">Numero de tracking</label>'+
         '<input type="text" id="shipTrackingInput" placeholder="Ej: AR123456789AR" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;box-sizing:border-box;outline:none" onfocus="this.style.borderColor=\'#8b5cf6\'">'+
         '<div style="display:flex;gap:10px;margin-top:1.25rem">'+
@@ -629,11 +629,9 @@ function renderArrepList(list,tab){
         '</div>'+
         '<span style="padding:4px 12px;border-radius:12px;background:var(--orange);color:#fff;font-size:11px;font-weight:600">'+a.estado+'</span>'+
       '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px" class="arrep-detail-grid">'+
         '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
-          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Orden</div>'+
-          '<div style="font-size:13px;font-weight:600">'+(a.orderCode||a.orderId)+'</div>'+
-          '<div style="font-size:13px;color:var(--orange);font-weight:700">$'+(a.orderTotal||0).toLocaleString('es-AR')+'</div>'+
+          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Orden</div>'
         '</div>'+
         '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
           '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Direccion de devolucion</div>'+
@@ -644,7 +642,7 @@ function renderArrepList(list,tab){
       '<div style="font-size:11px;color:var(--gray);margin-bottom:10px">Solicitado: '+dateStr+'</div>';
     
     if(tab==='pendientes'){
-      html+='<div style="display:flex;gap:8px">'+
+      html+='<div style="display:flex;gap:8px" class="arrep-actions">'+
         '<button class="ord-btn ord-btn-act" onclick="acceptArrep(\''+a.id+'\')" style="flex:1">Aceptar arrepentimiento</button>'+
         '<button class="ord-btn" onclick="rejectArrep(\''+a.id+'\')" style="flex:1;border-color:var(--red);color:var(--red)">Rechazar</button>'+
       '</div>';

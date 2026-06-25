@@ -204,7 +204,25 @@
   border-color:var(--orange2)
 }
 
-/* Mobile: sidebar colapsa a iconos */
+/* ========== HAMBURGER & BACKDROP ========== */
+.admin-hamburger{
+  display:none;align-items:center;justify-content:center;
+  width:36px;height:36px;border:none;border-radius:8px;
+  background:var(--admin-surface-hover);color:var(--admin-text);
+  font-size:20px;cursor:pointer;flex-shrink:0;
+  transition:background .15s;margin-right:8px
+}
+.admin-hamburger:hover{background:var(--admin-border)}
+.admin-sidebar-backdrop{
+  display:none;position:fixed;inset:0;z-index:501;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
+  opacity:0;transition:opacity .3s ease;pointer-events:none
+}
+.admin-sidebar-backdrop.active{
+  opacity:1;pointer-events:auto
+}
+
+/* Tablet: sidebar colapsa a iconos */
 @media(max-width:1024px){
   .admin-sidebar{width:72px}
   .admin-sidebar-header{padding:16px 12px;justify-content:center}
@@ -219,10 +237,140 @@
   .admin-topbar-title{font-size:16px}
 }
 
-/* Tablet: sidebar expandible */
+/* Mobile: sidebar como drawer overlay */
+@media(max-width:768px){
+  .admin-hamburger{display:flex}
+  .admin-sidebar-backdrop{display:block}
+  .admin-sidebar{
+    position:fixed;top:0;left:0;z-index:502;
+    width:280px;height:100vh;
+    transform:translateX(-100%);
+    transition:transform .3s cubic-bezier(.22,1,.36,1);
+    box-shadow:4px 0 24px rgba(0,0,0,.15)
+  }
+  .admin-sidebar.open{transform:translateX(0)}
+  .admin-sidebar-header{padding:16px;justify-content:flex-start}
+  .admin-sidebar-title,.admin-sidebar-subtitle{display:block}
+  .admin-nav-label{display:block}
+  .admin-nav-item{justify-content:flex-start;padding:10px 12px}
+  .admin-nav-icon{width:20px;height:20px;font-size:18px}
+  .admin-nav-badge{position:static}
+  .admin-main{margin-left:0}
+  .admin-topbar{padding:10px 12px}
+  .admin-topbar-title{font-size:15px}
+  .admin-topbar-actions{gap:6px}
+  .admin-topbar-actions .admin-btn{padding:6px 10px;font-size:11px}
+  .admin-topbar-actions .admin-btn .material-symbols-outlined{font-size:14px!important}
+  .admin-content{padding:12px}
+  
+  /* Dashboard responsive */
+  .dash-kpis{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .dash-row{grid-template-columns:1fr!important;gap:12px!important}
+  .dash-charts-row{grid-template-columns:1fr!important;gap:12px!important}
+  .dash-header{flex-direction:column!important;align-items:stretch!important;gap:10px!important}
+  .dash-header-actions{width:100%}
+  .dash-header-actions select{flex:1}
+  
+  /* Productos / Accesorios grid */
+  .admin-prods-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  .admin-prods-grid > div{font-size:11px}
+  .admin-prods-grid img[style*="height:120px"]{height:100px!important}
+  
+  /* Stock responsive */
+  .stock-filters{flex-direction:column!important;align-items:stretch!important}
+  .stock-filters > div{width:100%}
+  .stock-filters > div select{width:100%}
+  .stock-actions{justify-content:stretch!important}
+  .stock-actions button{flex:1}
+  .stock-input{width:40px!important;padding:4px!important;font-size:12px!important}
+  .stock-btn{width:36px!important;height:36px!important;font-size:18px!important}
+  
+  /* Orders / Arrep tabs */
+  .ord-tabs{overflow-x:auto;flex-wrap:nowrap!important;gap:4px!important;padding-bottom:4px}
+  .ord-tabs button{white-space:nowrap;flex-shrink:0;font-size:11px;padding:8px 10px!important}
+  
+  /* Orders list - touch friendly */
+  .adm-item{padding:12px!important}
+  .adm-item .adm-item-name{font-size:12px}
+  .adm-item .adm-item-sub{font-size:10px}
+  .adm-item .adm-item-price{font-size:13px}
+  .adm-item button{min-height:36px;min-width:36px}
+  
+  /* Arrep cards */
+  .arrep-detail-grid{grid-template-columns:1fr!important;gap:8px!important}
+  .arrep-actions button{min-height:44px;font-size:12px}
+  
+  /* Promos */
+  .promo-filters{grid-template-columns:1fr 1fr!important;gap:10px!important}
+  .promo-prods-grid{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  .promo-select-actions{flex-direction:column;gap:8px}
+  .promo-select-actions button{width:100%}
+  
+  /* Modals */
+  .admin-modal{padding:16px!important;width:calc(100% - 24px)!important;margin:0 12px}
+  .admin-modal-title{font-size:18px!important}
+  .admin-modal-message{font-size:13px!important}
+  .admin-modal-actions{gap:8px!important}
+  .admin-modal-btn{min-height:44px;font-size:13px!important;padding:10px 16px!important}
+  
+  /* Order detail modal */
+  .order-detail-modal{padding:12px!important;width:calc(100% - 16px)!important}
+  .order-detail-modal .od-grid{grid-template-columns:1fr!important;gap:10px!important}
+  .order-detail-modal .od-content{padding:1rem!important}
+  .order-detail-modal .od-header{padding:1rem!important}
+  
+  /* Ship modal */
+  .ship-modal{padding:12px!important}
+  .ship-modal .ship-content{padding:1rem!important}
+  
+  /* Chat responsive */
+  .admin-chat-wrap{height:calc(100vh - 120px)!important;border-radius:8px!important}
+  .admin-chat-wrap .chat-conv-side{width:100%!important;display:flex;flex-direction:column}
+  .admin-chat-wrap .chat-conv-side.hide{display:none}
+  .admin-chat-wrap .chat-msg-area{width:100%!important;display:none;flex-direction:column}
+  .admin-chat-wrap .chat-msg-area.show{display:flex}
+  .admin-chat-wrap .chat-back-btn{display:flex!important}
+  .chat-input-row input{font-size:14px!important;padding:10px 12px!important}
+  .chat-input-row button{min-height:40px;padding:8px 16px!important;font-size:13px!important}
+  
+  /* Quotes */
+  .admin-content input[type="text"]{font-size:16px!important}
+  
+  /* Pagination */
+  .admin-pagination button{min-height:40px;min-width:40px;font-size:14px!important}
+  
+  /* Toast on mobile */
+  .admin-toast-container{right:12px!important;bottom:12px!important;left:12px!important}
+  .admin-toast{min-width:0!important;max-width:100%!important}
+  
+  /* Login overlay */
+  #loginOverlay > div:last-child > div{padding:1rem!important}
+  #loginOverlay > div:last-child{width:calc(100% - 24px)!important}
+  
+  /* Cart overlay */
+  #cartOverlay > div:last-child{width:100vw!important}
+  
+  /* Buttons: minimum touch target */
+  .btn,.admin-btn,.ord-btn,.apr-btn,.adm-btn-o,.adm-btn-g{min-height:40px}
+}
+
+/* Tablet: sidebar semi-expandible */
+@media(min-width:769px) and (max-width:1024px){
+  .dash-kpis{grid-template-columns:repeat(2,1fr)!important}
+  .dash-charts-row{grid-template-columns:1fr 1fr!important}
+}
+
+/* Desktop: sidebar expandido */
 @media(min-width:1025px) and (max-width:1280px){
   .admin-sidebar{width:200px}
   .admin-content{padding:20px}
+}
+
+/* Hide hamburger + backdrop on tablet+ */
+@media(min-width:769px){
+  .admin-hamburger{display:none!important}
+  .admin-sidebar-backdrop{display:none!important}
+  .chat-back-btn{display:none!important}
 }
 
 /* ADMIN LOGIN */
