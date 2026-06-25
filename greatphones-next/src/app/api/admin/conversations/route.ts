@@ -15,7 +15,7 @@ export async function OPTIONS() {
     headers: {
       'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Headers': 'Content-Type, X-User-Id',
     },
   })
 }

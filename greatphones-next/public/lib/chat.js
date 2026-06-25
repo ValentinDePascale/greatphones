@@ -1221,16 +1221,34 @@ var adminActiveConvId=null;
 var _adminConvSearchQuery='';
 function loadAdminConversations(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
+  var list=document.getElementById('adminConvList');
+  if(!list){
+    setTimeout(loadAdminConversations,100);
+    return;
+  }
+  list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:14px">Cargando conversaciones...</p></div>';
   fetch(API_URL+'/api/admin/conversations',{
     headers:{'X-User-Id':currentUser.id}
   })
-    .then(function(r){return r.json();})
+    .then(function(r){
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      return r.json();
+    })
     .then(function(data){
-      if(!Array.isArray(data)){console.error('Invalid admin conversations response:',data);return;}
+      if(!Array.isArray(data)){
+        console.error('Invalid admin conversations response:',data);
+        var list=document.getElementById('adminConvList');
+        if(list)list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)"><p style="font-size:14px;font-weight:600;margin-bottom:8px">Error al cargar conversaciones</p><p style="font-size:12px">Respuesta invalida del servidor</p><button class="ord-btn" onclick="loadAdminConversations()" style="margin-top:12px">Reintentar</button></div>';
+        return;
+      }
       window._adminConvs=data;
       filterAndRenderAdminConvs(data);
     })
-    .catch(function(e){console.error('Error loading admin conversations:',e);});
+    .catch(function(e){
+      console.error('Error loading admin conversations:',e);
+      var list=document.getElementById('adminConvList');
+      if(list)list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)"><p style="font-size:14px;font-weight:600;margin-bottom:8px">Error de conexión</p><p style="font-size:12px">No se pudieron cargar las conversaciones</p><button class="ord-btn" onclick="loadAdminConversations()" style="margin-top:12px">Reintentar</button></div>';
+    });
 }
 
 function filterAndRenderAdminConvs(convs){
