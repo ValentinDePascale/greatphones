@@ -1323,7 +1323,7 @@ function renderAdminConvList(convs){
         '</div>'+
         (userEmail?'<div style="font-size:10px;color:var(--gray);margin-bottom:4px">'+userEmail+'</div>':'')+
         '<div style="display:flex;align-items:center;gap:6px">'+
-          '<span style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+(lastMsg||'Sin mensajes')+'</span>'+
+          '<span class="conv-last-msg" style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+(lastMsg||'Sin mensajes')+'</span>'+
           '<span style="width:5px;height:5px;border-radius:50%;background:'+statusColor+';flex-shrink:0"></span>'+
           '<span style="font-size:9px;color:'+statusColor+';font-weight:500;text-transform:uppercase;letter-spacing:.3px">'+statusLabel+'</span>'+
         '</div>'+

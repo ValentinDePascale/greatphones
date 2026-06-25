@@ -10,6 +10,8 @@ function nav(id){
   if(id==='checkout'&&!currentUser){nav('login');return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
   if(id==='chats'&&currentUser&&currentUser.role==='ADMIN'){nav('admin');return;}
+  var chatBtn=document.getElementById('chatWidgetBtn');
+  if(chatBtn)chatBtn.style.display=(id==='admin')?'none':'';
   if(id==='sell'){
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');});
     var el=document.getElementById('p-'+id);
