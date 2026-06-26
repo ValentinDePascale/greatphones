@@ -2921,7 +2921,7 @@ function openQuoteDetail(id){
   var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Bateria 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
   var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
   
-  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+p+'" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border)">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
+  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+p+'" onclick="openLightbox(\''+p+'\')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
   
   var modal=document.createElement('div');
   modal.id='quoteDetailModal';
@@ -2981,10 +2981,10 @@ function openQuoteDetail(id){
       '</div>'+
     '</div>';
   
-  document.body.appendChild(modal);
+  var target=document.querySelector('.admin-main')||document.querySelector('.admin-layout')||document.body;
+  target.appendChild(modal);
   setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
 }
-
 function closeQuoteDetail(){
   var modal=document.getElementById('quoteDetailModal');
   if(!modal)return;
@@ -3040,10 +3040,10 @@ function rejectQuote(id){
       '</div>'+
     '</div>';
   
-  document.body.appendChild(modal);
+  var target=document.querySelector('.admin-main')||document.querySelector('.admin-layout')||document.body;
+  target.appendChild(modal);
   setTimeout(function(){modal.style.opacity='1';modal.querySelector('div:nth-child(2)').style.transform='scale(1)';},10);
 }
-
 function closeRejectQuoteModal(){
   var modal=document.getElementById('rejectQuoteModal');
   if(!modal)return;

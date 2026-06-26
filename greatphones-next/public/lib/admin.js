@@ -312,7 +312,7 @@ function showOrderModal(order){
   }
   
   var itemsHtml=(order.items||[]).map(function(item){
-    var img=item.productImage?'<img src="'+item.productImage+'" style="width:48px;height:48px;object-fit:cover;border-radius:8px">':'<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">📱</div>';
+    var img=item.productImage?'<img src="'+item.productImage+'" onclick="openLightbox(\''+item.productImage+'\')" style="width:48px;height:48px;object-fit:cover;border-radius:8px;cursor:zoom-in">':'<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px">📱</div>';
     return'<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">'+
       img+
       '<div style="flex:1">'+
