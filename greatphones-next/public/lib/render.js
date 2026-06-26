@@ -64,9 +64,6 @@ function addToCartAcc(id,triggerEl){
   if(triggerEl&&typeof svBtnSuccess==='function')svBtnSuccess(triggerEl);
   openCart();showToast('Agregado al carrito');
 }
-function addToCartFromDetail(){if(currentProd)addToCart(currentProd.id);}
-function buyNow(){if(currentProd){addToCart(currentProd.id);openCheckout();}}
-
 var _loadingBarEl=null;
 function showLoadingBar(){
   if(!_loadingBarEl){
