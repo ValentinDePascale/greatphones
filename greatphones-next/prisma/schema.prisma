@@ -174,6 +174,23 @@ model InventoryHistory {
   createdAt       DateTime      @default(now())
 }
 
+// ==================== CACHE DE IMEI (TAC) ====================
+model TacCache {
+  id          String   @id @default(cuid())
+  tac         String   @unique          // primeros 8 dígitos del IMEI
+  brand       String
+  modelName   String
+  storage     String?
+  color       String?
+  modelNumber String?
+  deviceType  String   @default("celular")
+  imageUrl    String?
+  specs       Json?
+  hitCount    Int      @default(1)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 // ==================== PEDIDOS ====================
 model Order {
   id        String      @id @default(cuid())
