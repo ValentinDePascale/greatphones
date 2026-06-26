@@ -1023,11 +1023,15 @@ function selectDetailVariant(idx){
     var now=new Date();
     var isPromo=currentProd.isOffer&&currentProd.discount>0;
     var basePrice=v.targetPrice;
+    var finalPrice=isPromo?Math.round(v.targetPrice*(1-currentProd.discount/100)):v.targetPrice;
     var priceEl=document.getElementById('detPrice');
-    if(priceEl)priceEl.textContent=fmt(basePrice);
+    if(priceEl)priceEl.textContent=fmt(finalPrice);
     var totalEl=document.getElementById('detTotal');
-    if(totalEl)totalEl.textContent=fmt(basePrice);
-    var cuota12=Math.round(basePrice/12);
+    if(totalEl)totalEl.textContent=fmt(finalPrice);
+    var oldEl=document.getElementById('detOld');
+    if(isPromo&&oldEl){oldEl.textContent=fmt(basePrice);oldEl.style.display='inline';}
+    else if(oldEl)oldEl.style.display='none';
+    var cuota12=Math.round(finalPrice/12);
     var cuotaText=document.getElementById('detCuotaText');
     if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
   }
