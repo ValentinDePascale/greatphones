@@ -8,6 +8,7 @@ export async function OPTIONS(request: Request) {
 }
 
 const IMEI_INFO_API_KEY = process.env.IMEI_INFO_API_KEY
+const HICELLTEK_API_KEY = process.env.HICELLTEK_API_KEY
 
 interface ImeiResult {
   brand: string
@@ -32,6 +33,35 @@ const FALLBACK_TABLE: Record<string, Partial<ImeiResult>> = {
   '354821093847569': { brand: 'Samsung', modelName: 'Galaxy S23+', storage: '256 GB', color: 'Cream', modelNumber: 'SM-S916B', deviceType: 'celular' },
   '354821093847570': { brand: 'Motorola', modelName: 'Moto Edge 50 Pro', storage: '256 GB', color: 'Black Beauty', modelNumber: 'XT2403', deviceType: 'celular' },
   '354821093847571': { brand: 'Xiaomi', modelName: 'Xiaomi 13T', storage: '256 GB', color: 'Alpine Blue', modelNumber: '2306EPN60G', deviceType: 'celular' },
+}
+
+async function lookupHiCellTek(imei: string): Promise<ImeiResult | null> {
+  try {
+    const response = await fetch('https://imei.hicelltek.com/api/v1/tac/lookup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': HICELLTEK_API_KEY!,
+      },
+      body: JSON.stringify({ query: imei }),
+      signal: AbortSignal.timeout(10000)
+    })
+    if (!response.ok) return null
+    const apiData = await response.json()
+    if (!apiData || !apiData.brand) return null
+    return {
+      brand: apiData.brand || '',
+      modelName: apiData.model || apiData.modelName || '',
+      storage: apiData.storage || null,
+      color: apiData.color || null,
+      modelNumber: apiData.modelNumber || null,
+      deviceType: 'celular',
+      imageUrl: apiData.imageUrl || null,
+      specs: apiData.specs || null,
+    }
+  } catch {
+    return null
+  }
 }
 
 function fallbackLookup(imei: string): ImeiResult | null {
@@ -85,6 +115,14 @@ export async function POST(request: Request) {
         }
       } catch (apiError) {
         console.warn('IMEI API error, falling back to local table:', apiError)
+      }
+    }
+
+    // Try HiCellTek free API if key is configured
+    if (HICELLTEK_API_KEY) {
+      const hicelltekResult = await lookupHiCellTek(imei)
+      if (hicelltekResult) {
+        return NextResponse.json(hicelltekResult, { headers: corsHeaders })
       }
     }
 
