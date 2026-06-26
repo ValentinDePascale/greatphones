@@ -86,12 +86,16 @@ function addToCart(id,triggerEl,variant){
     if(variant){
       entry.variantId=variant.imei;
       var cleanName=[p.brand||'',p.modelGroup||p.name,variant.color,variant.storage].filter(Boolean).join(' ');
+      var variantPrice=variant.targetPrice;
+      if(p&&p.isOffer&&p.discount>0&&variantPrice>0){
+        variantPrice=Math.round(variantPrice*(1-p.discount/100));
+      }
       entry.variantInfo={
         color:variant.color,
         storage:variant.storage,
         ram:variant.ram,
         condition:variant.cosmeticCondition,
-        price:variant.targetPrice,
+        price:variantPrice,
         image:variant.imageUrl,
         name:cleanName
       };

@@ -1110,7 +1110,12 @@ function renderDetailVariants(){
     if(v.storage)parts.push(v.storage);
     if(v.cosmeticCondition&&!v.color&&!v.storage)parts.push(v.cosmeticCondition);
     var label=parts.join(' \u00B7 ')||'Variante '+(i+1);
-    if(v.targetPrice)label+=' — '+fmt(v.targetPrice);
+    if(v.targetPrice){
+      var isPromo=currentProd&&currentProd.isOffer&&currentProd.discount>0;
+      var pillPrice=isPromo?Math.round(v.targetPrice*(1-currentProd.discount/100)):v.targetPrice;
+      if(isPromo)label+=' — <span style="text-decoration:line-through;opacity:.5">'+fmt(v.targetPrice)+'</span> <strong>'+fmt(pillPrice)+'</strong>';
+      else label+=' — '+fmt(v.targetPrice);
+    }
     var clickAttr=variants.length>1?'onclick="selectDetailVariant('+i+')"':'';
     var cursor=variants.length>1?'pointer':'default';
     return '<button '+clickAttr+' style="'+
