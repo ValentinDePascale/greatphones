@@ -9,9 +9,6 @@ export async function OPTIONS(request: Request) {
   return corsOptions(origin)
 }
 
-const IMEI_INFO_API_KEY = process.env.IMEI_INFO_API_KEY
-const HICELLTEK_API_KEY = process.env.HICELLTEK_API_KEY
-
 interface ImeiResult {
   brand: string
   modelName: string
@@ -44,90 +41,6 @@ function fallbackLookup(imei: string): Partial<ImeiResult> | null {
   return { ...fb, imageUrl: null, specs: null }
 }
 
-async function lookupHiCellTek(imei: string): Promise<ImeiResult | null> {
-  try {
-    const response = await fetch('https://imei.hicelltek.com/api/v1/tac/lookup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Api-Key': HICELLTEK_API_KEY!,
-      },
-      body: JSON.stringify({ query: imei }),
-      signal: AbortSignal.timeout(10000)
-    })
-    if (!response.ok) return null
-    const d = await response.json()
-    if (!d || !d.brand) return null
-    return {
-      brand: d.brand || '',
-      modelName: d.model || d.modelName || '',
-      storage: d.storage || null,
-      color: d.color || null,
-      modelNumber: d.modelNumber || null,
-      deviceType: 'celular',
-      imageUrl: d.imageUrl || null,
-      specs: d.specs || null,
-    }
-  } catch {
-    return null
-  }
-}
-
-async function lookupImeiInfo(imei: string): Promise<ImeiResult | null> {
-  try {
-    const response = await fetch(`https://imei.info/api/v1/check?api_key=${IMEI_INFO_API_KEY}&imei=${imei}`, {
-      signal: AbortSignal.timeout(10000)
-    })
-    if (!response.ok) return null
-    const d = await response.json()
-    return {
-      brand: d.brand || '',
-      modelName: d.model || d.model_name || '',
-      storage: d.storage || null,
-      color: d.color || null,
-      modelNumber: d.model_number || null,
-      deviceType: 'celular',
-      imageUrl: d.image || null,
-      specs: d.specs || null,
-    }
-  } catch {
-    return null
-  }
-}
-
-async function saveToCache(tac: string, result: ImeiResult) {
-  try {
-    await prisma.tacCache.upsert({
-      where: { tac },
-      update: { hitCount: { increment: 1 } },
-      create: {
-        tac,
-        brand: result.brand,
-        modelName: result.modelName,
-        storage: result.storage,
-        color: result.color,
-        modelNumber: result.modelNumber,
-        deviceType: result.deviceType,
-        imageUrl: result.imageUrl,
-        specs: result.specs ?? Prisma.DbNull,
-      }
-    })
-  } catch {
-    // non-critical
-  }
-}
-
-async function hitCache(tac: string) {
-  try {
-    await prisma.tacCache.update({
-      where: { tac },
-      data: { hitCount: { increment: 1 } }
-    })
-  } catch {
-    // non-critical
-  }
-}
-
 export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
@@ -141,10 +54,13 @@ export async function POST(request: Request) {
     const { imei } = validation.data
     const tac = extractTac(imei)
 
-    // 1. Check TAC cache
+    // 1. Check TAC cache (22,527 pre-seeded TACs from Osmocom DB)
     const cached = await prisma.tacCache.findUnique({ where: { tac } })
     if (cached) {
-      hitCache(tac)
+      prisma.tacCache.update({
+        where: { tac },
+        data: { hitCount: { increment: 1 } }
+      }).catch(() => {})
       return NextResponse.json({
         brand: cached.brand,
         modelName: cached.modelName,
@@ -157,26 +73,13 @@ export async function POST(request: Request) {
       }, { headers: corsHeaders })
     }
 
-    // 2. Try external APIs
-    let apiResult: ImeiResult | null = null
-    if (IMEI_INFO_API_KEY) {
-      apiResult = await lookupImeiInfo(imei)
-    }
-    if (!apiResult && HICELLTEK_API_KEY) {
-      apiResult = await lookupHiCellTek(imei)
-    }
-    if (apiResult) {
-      saveToCache(tac, apiResult)
-      return NextResponse.json(apiResult, { headers: corsHeaders })
-    }
-
-    // 3. Fallback to local table
+    // 2. Fallback to local table (testing IMEIs)
     const fallback = fallbackLookup(imei)
     if (fallback) {
       return NextResponse.json(fallback, { headers: corsHeaders })
     }
 
-    // 4. Nothing found
+    // 3. Nothing found
     return NextResponse.json({
       brand: '',
       modelName: '',
