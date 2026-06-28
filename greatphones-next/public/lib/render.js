@@ -1756,14 +1756,21 @@ function editProduct(id){
       var vc=res.data||res||[];
       if(vc.length>0){
         vl.innerHTML=vc.map(function(v){
+          var statusColor=v.status==='SOLD'?'var(--red)':v.status==='IN_REPAIR'?'var(--orange)':v.status==='RESERVED'?'var(--blue,#3B82F6)':v.status==='ON_HOLD'?'#A855F7':'var(--green)';
+          var statusLabel=v.status==='IN_STOCK'?'En stock':v.status==='SOLD'?'Vendido':v.status==='IN_REPAIR'?'Reparación':v.status==='RESERVED'?'Reservado':v.status==='ON_HOLD'?'Espera':v.status;
+          var qrBtn='';
+          if(v.qrCode){
+            qrBtn='<button onclick="downloadQrCode(\''+v.qrCode+'\',\''+v.code+'\')" title="Descargar QR" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--cream);cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">⬇</button>';
+          }
           return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--cream2);border-radius:8px;margin-bottom:6px">'+
             '<span style="font-size:14px">📱</span>'+
-            '<div style="flex:1;font-size:12px">'+
+            '<div style="flex:1;font-size:12px;min-width:0">'+
               '<div style="font-weight:600">'+(v.color||'')+(v.storage?' · '+v.storage:'')+'</div>'+
-              '<div style="color:var(--gray);font-size:11px">IMEI: …'+v.imei.slice(-4)+'</div>'+
+              '<div style="color:var(--gray);font-size:11px">'+v.code+' · …'+v.imei.slice(-4)+'</div>'+
             '</div>'+
-            '<div style="font-size:11px;color:var(--gray)">$'+(v.targetPrice||0).toLocaleString('es-AR')+'</div>'+
-            '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+(v.status==='SOLD'?'var(--red)':v.status==='IN_REPAIR'?'var(--orange)':'var(--green)')+'">'+(v.status||'IN_STOCK')+'</span>'+
+            '<div style="font-size:11px;color:var(--gray);white-space:nowrap">$'+(v.targetPrice||0).toLocaleString('es-AR')+'</div>'+
+            qrBtn+
+            '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+statusColor+'">'+statusLabel+'</span>'+
           '</div>';
         }).join('');
       }else{
@@ -1774,6 +1781,14 @@ function editProduct(id){
     });
   }
 }
+window.downloadQrCode=function(qrDataUrl,code){
+  var link=document.createElement('a');
+  link.href=qrDataUrl;
+  link.download='qr-'+code+'.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 function uploadProductImage(input){
   var file=input.files[0];
   if(!file)return;
