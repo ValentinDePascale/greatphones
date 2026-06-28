@@ -119,7 +119,7 @@ function loadProducts(){
     renderSkeletonGrid('featuredGrid',4);
     showLoadingBar();
   }
-  cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
+  return cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
     PRODUCTS=res.data||res;
     window._productsLoaded=true;
     if(useCache)return; // Skip re-renders for background cache refresh
@@ -2199,8 +2199,9 @@ function showImeiProductModal(existingProductId){
       }).then(function(res){
         if(!res.ok)return res.json().then(function(e){throw new Error(e.error||'Error del servidor');});
         showSuccessToast('Variante agregada','Se agregó el IMEI al producto');
-        document.getElementById('imeiModalOverlay').remove();
-        invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
+        invalidateCache('/api/products');window._productsLoaded=false;loadProducts().then(function(){
+          document.getElementById('imeiModalOverlay').remove();
+        });
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
@@ -2229,8 +2230,9 @@ function showImeiProductModal(existingProductId){
       }).then(function(res){
         if(!res.ok)return res.json().then(function(e){throw new Error(e.error||'Error del servidor');});
         showSuccessToast('Producto creado','Se creó el producto con IMEI');
-        document.getElementById('imeiModalOverlay').remove();
-        invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
+        invalidateCache('/api/products');window._productsLoaded=false;loadProducts().then(function(){
+          document.getElementById('imeiModalOverlay').remove();
+        });
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
