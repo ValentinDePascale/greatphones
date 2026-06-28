@@ -2156,7 +2156,7 @@ function showImeiProductModal(existingProductId){
       }).then(function(){
         showSuccessToast('Variante agregada','Se agregó el IMEI al producto');
         document.getElementById('imeiModalOverlay').remove();
-        loadProducts();
+        invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
@@ -2185,7 +2185,7 @@ function showImeiProductModal(existingProductId){
       }).then(function(res){
         showSuccessToast('Producto creado','Se creó el producto con IMEI');
         document.getElementById('imeiModalOverlay').remove();
-        loadProducts();
+        invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
@@ -2866,6 +2866,11 @@ function togglePromoRow(id){
   if(chk)chk.checked=!chk.checked;
 }
 function showToast(msg,type){
+  // Support both render.js (msg,type) and admin-ui.js ({title,message,type}) signatures
+  if(typeof msg==='object'&&msg!==null){
+    type=msg.type||type;
+    msg=msg.message||msg.title||'';
+  }
   var existing=document.getElementById('toast');
   if(existing)existing.remove();
   var toast=document.createElement('div');
