@@ -36,6 +36,121 @@ function generateSpecs(data: any) {
   return specs
 }
 
+async function reuseOrphanedItem(existing: any, data: any, origin: string | null, corsHeaders: HeadersInit) {
+  // Find or create a Product for this orphaned item
+  let productId: string | null = null
+  if (data.brand && data.modelName) {
+    const productMatch = await prisma.product.findFirst({
+      where: {
+        brand: data.brand,
+        modelGroup: data.modelName,
+        storage: data.storage || null,
+        color: data.color || null,
+      }
+    })
+    if (productMatch) {
+      productId = productMatch.id
+    } else {
+      const newProduct = await prisma.product.create({
+        data: {
+          name: data.modelName,
+          brand: data.brand,
+          sub: [data.storage, data.color].filter(Boolean).join(' / ') || null,
+          modelGroup: data.modelName,
+          condition: data.cosmeticCondition || 'Impecable',
+          price: data.targetPrice || 0,
+          cost: data.purchasePrice || 0,
+          stock: 0,
+          type: data.deviceType || 'celular',
+          storage: data.storage || null,
+          color: data.color || null,
+          battery: data.batteryHealth || null,
+          imageUrl: data.imageUrl || null,
+          ram: data.ram || null,
+          screen: data.screen || null,
+          imei: data.imei,
+          ico: '📱',
+        }
+      })
+      productId = newProduct.id
+    }
+  }
+  if (productId) {
+    await prisma.product.update({
+      where: { id: productId },
+      data: { stock: { increment: 1 } }
+    }).catch(() => {})
+  }
+
+  // Resolve createdById
+  let resolvedUserId = data.createdById
+  if (!resolvedUserId) {
+    const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } })
+    if (firstUser) resolvedUserId = firstUser.id
+  }
+  if (resolvedUserId) {
+    const userExists = await prisma.user.findUnique({ where: { id: resolvedUserId }, select: { id: true } })
+    if (!userExists) resolvedUserId = undefined
+  }
+  if (!resolvedUserId) {
+    const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } })
+    if (firstUser) resolvedUserId = firstUser.id
+  }
+
+  // Update the orphaned item with new data
+  const updated = await prisma.inventoryItem.update({
+    where: { id: existing.id },
+    data: {
+      brand: data.brand || existing.brand,
+      modelName: data.modelName || existing.modelName,
+      storage: data.storage ?? existing.storage,
+      color: data.color ?? existing.color,
+      modelNumber: data.modelNumber ?? existing.modelNumber,
+      deviceType: data.deviceType || existing.deviceType,
+      specs: data.specs ?? existing.specs,
+      imageUrl: data.imageUrl ?? existing.imageUrl,
+      purchasePrice: data.purchasePrice,
+      cosmeticCondition: data.cosmeticCondition || 'Impecable',
+      functionalCondition: data.functionalCondition ?? existing.functionalCondition,
+      batteryHealth: data.batteryHealth ?? existing.batteryHealth,
+      notes: data.notes ?? existing.notes,
+      investor: data.investor ?? existing.investor,
+      targetPrice: data.targetPrice ?? existing.targetPrice,
+      productId,
+    }
+  })
+
+  // History entry
+  await prisma.inventoryHistory.create({
+    data: {
+      inventoryItemId: updated.id,
+      type: 'UPDATED',
+      description: `Dispositivo re-vinculado desde IMEI ${data.imei} ${productId ? '— vinculado a nuevo catálogo' : ''}`,
+      userId: resolvedUserId!,
+    }
+  })
+
+  // Save TAC to cache
+  const tac = data.imei.substring(0, 8)
+  prisma.tacCache.upsert({
+    where: { tac },
+    update: { hitCount: { increment: 1 } },
+    create: {
+      tac,
+      brand: data.brand || '',
+      modelName: data.modelName || '',
+      storage: data.storage || null,
+      color: data.color || null,
+      modelNumber: data.modelNumber || null,
+      deviceType: data.deviceType || 'celular',
+      imageUrl: data.imageUrl || null,
+      specs: Prisma.DbNull,
+    }
+  }).catch(() => {})
+
+  return NextResponse.json(updated, { status: 200, headers: corsHeaders })
+}
+
 export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
@@ -105,7 +220,11 @@ export async function POST(request: Request) {
     // Check if IMEI already exists
     const existing = await prisma.inventoryItem.findUnique({ where: { imei: data.imei } })
     if (existing) {
-      return NextResponse.json({ error: 'El IMEI ya existe en el inventario' }, { status: 409, headers: corsHeaders })
+      if (existing.productId) {
+        return NextResponse.json({ error: 'El IMEI ya existe en el inventario' }, { status: 409, headers: corsHeaders })
+      }
+      // Orphaned item (product was deleted). Reuse it by updating with new data.
+      return await reuseOrphanedItem(existing, data, origin, corsHeaders)
     }
 
     // Generate unique code
