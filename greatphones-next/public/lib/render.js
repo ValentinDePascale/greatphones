@@ -1670,9 +1670,11 @@ function saveProduct(){
       return [];
     }
   }
+  var brandSel=document.getElementById('prodBrand');
+  var brandOther=document.getElementById('prodBrandOther');
   var data={
     name:document.getElementById('prodName').value.trim(),
-    brand:document.getElementById('prodBrand').value.trim(),
+    brand: brandSel.value==='__other__'?(brandOther?brandOther.value.trim():''):brandSel.value,
     sub:document.getElementById('prodDescription').value.trim().substring(0,60)||null,
     description:document.getElementById('prodDescription').value.trim()||null,
     price:parseInt(document.getElementById('prodPrice').value.replace(/[^0-9]/g,''))||0,
@@ -1723,7 +1725,37 @@ function editProduct(id){
   if(!p)return;
   document.getElementById('prodId').value=p.id;
   document.getElementById('prodName').value=p.name||'';
-  document.getElementById('prodBrand').value=p.brand||'iPhone';
+  // Dynamically populate brand select with all existing brands
+  var brandSel=document.getElementById('prodBrand');
+  var brands=getUniqueBrands();
+  var currentBrand=p.brand||'';
+  var brandOpts='<option value="">Seleccioná marca...</option>'+brands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('')+'<option value="__other__">Otra...</option>';
+  brandSel.innerHTML=brandOpts;
+  var otherInput=document.getElementById('prodBrandOther');
+  if(!otherInput){
+    otherInput=document.createElement('input');
+    otherInput.className='inp-f';
+    otherInput.id='prodBrandOther';
+    otherInput.placeholder='Escribí la marca';
+    otherInput.style.display='none';
+    otherInput.style.marginTop='6px';
+    brandSel.parentNode.appendChild(otherInput);
+  }
+  if(brands.indexOf(currentBrand)!==-1){
+    brandSel.value=currentBrand;
+    otherInput.style.display='none';
+  }else if(currentBrand){
+    brandSel.value='__other__';
+    otherInput.value=currentBrand;
+    otherInput.style.display='block';
+  }else{
+    brandSel.value='';
+    otherInput.style.display='none';
+  }
+  brandSel.onchange=function(){
+    if(brandSel.value==='__other__'){otherInput.style.display='block';otherInput.focus();}
+    else{otherInput.style.display='none';}
+  };
   document.getElementById('prodDescription').value=p.description||'';
   document.getElementById('prodPrice').value=p.price||'';
   document.getElementById('prodStock').value=p.stock||'';
