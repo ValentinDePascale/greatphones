@@ -1789,6 +1789,11 @@ window.downloadQrCode=function(qrDataUrl,code){
   link.click();
   document.body.removeChild(link);
 };
+function getUniqueBrands(){
+  var brands={};
+  (PRODUCTS||[]).forEach(function(p){if(p.brand)brands[p.brand]=true;});
+  return Object.keys(brands).sort();
+}
 function uploadProductImage(input){
   var file=input.files[0];
   if(!file)return;
@@ -1903,6 +1908,7 @@ function showImeiProductModal(existingProductId){
 
   var loadingProduct=false, imeiData=null;
 
+  var brandOptions=getUniqueBrands().map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
   var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:20px;font-weight:700;color:var(--dk)">'+(existingProductId?'Agregar variante':'Nuevo producto por IMEI')+'</h3><button onclick="document.getElementById(\'imeiModalOverlay\').remove()" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--cream2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--gray)">✕</button></div>'+
     '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--gray)">IMEI del dispositivo</label>'+
     '<div style="display:flex;gap:8px"><input type="text" id="imeiInput" maxlength="15" placeholder="Ingresá o escaneá el IMEI de 15 dígitos" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none">'+
@@ -1913,7 +1919,7 @@ function showImeiProductModal(existingProductId){
     '<div id="imeiForm" style="display:none">'+
       '<div id="imeiFormFields" style="display:grid;gap:14px;margin-top:16px">'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><input class="imei-fld" id="if-brand"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><select class="imei-fld" id="if-brand" onchange="toggleImeiBrandOther()"><option value="">Seleccioná marca...</option>'+brandOptions+'<option value="__other__">Otra...</option></select><input class="imei-fld" id="if-brand-other" placeholder="Escribí la marca" style="display:none;margin-top:6px"></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName"></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
@@ -1921,9 +1927,10 @@ function showImeiProductModal(existingProductId){
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Color</label><input class="imei-fld" id="if-color" placeholder="Ej: Graphite"></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">RAM</label><select class="imei-fld" id="if-ram"><option value="">—</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option></select></div>'+
         '</div>'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Tipo</label><select class="imei-fld" id="if-type"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Condición</label><select class="imei-fld" id="if-condition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Pantalla</label><select class="imei-fld" id="if-screen"><option value="">—</option><option value="4.7">4.7"</option><option value="5.4">5.4"</option><option value="5.8">5.8"</option><option value="6.1">6.1"</option><option value="6.3">6.3"</option><option value="6.5">6.5"</option><option value="6.7">6.7"</option><option value="6.9">6.9"</option><option value="7.6">7.6"</option><option value="13.3">13.3"</option><option value="14">14"</option><option value="15.6">15.6"</option><option value="16">16"</option></select></div>'+
         '</div>'+
         '<div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">'+
           '<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:10px">📸 Imagen del producto</div>'+
@@ -1960,6 +1967,17 @@ function showImeiProductModal(existingProductId){
   style.textContent='.imei-fld{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff}.imei-fld:focus{border-color:var(--orange)}';
   document.head.appendChild(style);
 
+  window.toggleImeiBrandOther=function(){
+    var sel=document.getElementById('if-brand');
+    var other=document.getElementById('if-brand-other');
+    if(sel.value==='__other__'){
+      other.style.display='block';
+      other.focus();
+    }else{
+      other.style.display='none';
+    }
+  };
+
   // If editing existing product, pre-fill and skip IMEI step
   if(existingProductId){
     var p=getById(PRODUCTS,existingProductId);
@@ -1967,11 +1985,19 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiInput').value='';
       document.getElementById('imeiInput').disabled=true;
       document.getElementById('imeiLookupBtn').style.display='none';
-      document.getElementById('if-brand').value=p.brand||'';
+      var brandSel=document.getElementById('if-brand');
+      if(brandSel.querySelector('option[value="'+p.brand+'"]')){
+        brandSel.value=p.brand||'';
+      }else{
+        brandSel.value='__other__';
+        document.getElementById('if-brand-other').value=p.brand||'';
+        document.getElementById('if-brand-other').style.display='block';
+      }
       document.getElementById('if-modelName').value=p.name||'';
       document.getElementById('if-storage').value=p.storage||'';
       document.getElementById('if-color').value=p.color||'';
       document.getElementById('if-ram').value=p.ram||'';
+      document.getElementById('if-screen').value=p.screen||'';
       document.getElementById('if-type').value=p.type||'celular';
       document.getElementById('if-condition').value=p.condition||'Impecable';
       document.getElementById('if-price').value=p.price||'';
@@ -2011,11 +2037,19 @@ function showImeiProductModal(existingProductId){
         return;
       }
       imeiData=data;
-      document.getElementById('if-brand').value=data.brand||'';
+      var brandSel=document.getElementById('if-brand');
+      if(brandSel.querySelector('option[value="'+data.brand+'"]')){
+        brandSel.value=data.brand||'';
+      }else{
+        brandSel.value='__other__';
+        document.getElementById('if-brand-other').value=data.brand||'';
+        document.getElementById('if-brand-other').style.display='block';
+      }
       document.getElementById('if-modelName').value=data.modelName||'';
       document.getElementById('if-storage').value=data.storage||'';
       document.getElementById('if-color').value=data.color||'';
       document.getElementById('if-ram').value=data.ram||'';
+      document.getElementById('if-screen').value=data.screen||'';
       document.getElementById('if-type').value=data.deviceType||'celular';
       if(data.imageUrl){
         document.getElementById('imeiImgPreview').innerHTML='<img loading="lazy" src="'+data.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
@@ -2062,7 +2096,8 @@ function showImeiProductModal(existingProductId){
 
   window.saveImeiProduct=function(existingId){
     var imei=document.getElementById('imeiInput').value.trim();
-    var brand=document.getElementById('if-brand').value.trim();
+    var brandSel=document.getElementById('if-brand');
+    var brand=brandSel.value==='__other__'?document.getElementById('if-brand-other').value.trim():brandSel.value;
     var modelName=document.getElementById('if-modelName').value.trim();
     if(!modelName&&!existingId){
       showErrorToast('Error','El nombre del modelo es requerido');
@@ -2078,6 +2113,7 @@ function showImeiProductModal(existingProductId){
     btn.textContent='Guardando...';
     btn.disabled=true;
 
+    var screenVal=document.getElementById('if-screen').value;
     var productData={
       name: modelName || document.getElementById('if-modelName').value,
       brand: brand || 'Otro',
@@ -2089,6 +2125,7 @@ function showImeiProductModal(existingProductId){
       storage: document.getElementById('if-storage').value || null,
       color: document.getElementById('if-color').value || null,
       ram: document.getElementById('if-ram').value || null,
+      screen: screenVal?parseFloat(screenVal):null,
       battery: parseInt(document.getElementById('if-battery').value)||null,
       imageUrl: document.getElementById('imeiImgUrl').value || null,
       ico: '📱',
@@ -2106,6 +2143,7 @@ function showImeiProductModal(existingProductId){
           storage: productData.storage,
           color: productData.color,
           ram: productData.ram,
+          screen: productData.screen,
           deviceType: productData.type,
           imageUrl: document.getElementById('imeiImgUrl').value||null,
           productId: existingId,
@@ -2135,6 +2173,7 @@ function showImeiProductModal(existingProductId){
           storage: productData.storage,
           color: productData.color,
           ram: productData.ram,
+          screen: productData.screen,
           deviceType: productData.type,
           imageUrl: document.getElementById('imeiImgUrl').value||null,
           purchasePrice: productData.cost,

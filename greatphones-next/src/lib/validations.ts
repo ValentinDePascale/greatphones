@@ -246,6 +246,8 @@ export const InventoryCreateSchema = z.object({
   deviceType: z.string().nullish(),
   specs: z.any().nullish(),
   imageUrl: z.string().nullish(),
+  ram: z.string().nullish(),
+  screen: z.number().nullish(),
 
   // Datos del negocio
   purchasePrice: z.number().int().min(0, 'Precio de compra requerido'),

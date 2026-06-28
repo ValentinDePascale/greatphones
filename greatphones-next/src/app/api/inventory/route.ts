@@ -142,6 +142,9 @@ export async function POST(request: Request) {
             color: data.color || null,
             battery: data.batteryHealth || null,
             imageUrl: data.imageUrl || null,
+            ram: data.ram || null,
+            screen: data.screen || null,
+            imei: data.imei,
             ico: '📱',
           }
         })
