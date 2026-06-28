@@ -1803,18 +1803,8 @@ function editProduct(id){
           var statusLabel=v.status==='IN_STOCK'?'En stock':v.status==='SOLD'?'Vendido':v.status==='IN_REPAIR'?'Reparación':v.status==='RESERVED'?'Reservado':v.status==='ON_HOLD'?'Espera':v.status;
           var qrBtn='';
           if(v.qrCode){
-            qrBtn='<button onclick="downloadQrCode(\''+v.qrCode+'\',\''+v.code+'\')" title="Descargar QR" style="width:28px;height:28px;border:none;border-radius:6px;background:var(--cream);cursor:pointer;font-size:13px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0">⬇</button>';
+            qrBtn='<button onclick="downloadQrCode(\''+v.qrCode+'\',\''+v.code+'\')" title="Descargar QR" style="padding:6px 10px;border:none;border-radius:8px;background:#1A1A2E;color:#fff;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:.5px;display:inline-flex;align-items:center;gap:4px;flex-shrink:0;text-transform:uppercase">⬇ QR</button>';
           }
-          return '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--cream2);border-radius:8px;margin-bottom:6px">'+
-            '<span style="font-size:14px">📱</span>'+
-            '<div style="flex:1;font-size:12px;min-width:0">'+
-              '<div style="font-weight:600">'+(v.color||'')+(v.storage?' · '+v.storage:'')+'</div>'+
-              '<div style="color:var(--gray);font-size:11px">'+v.code+' · …'+v.imei.slice(-4)+'</div>'+
-            '</div>'+
-            '<div style="font-size:11px;color:var(--gray);white-space:nowrap">$'+(v.targetPrice||0).toLocaleString('es-AR')+'</div>'+
-            qrBtn+
-            '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;color:#fff;background:'+statusColor+'">'+statusLabel+'</span>'+
-          '</div>';
         }).join('');
       }else{
         vl.innerHTML='<div style="font-size:12px;color:var(--gray);padding:10px;text-align:center">Sin variantes. Agregá IMEIs para este producto.</div>';
@@ -1831,6 +1821,23 @@ window.downloadQrCode=function(qrDataUrl,code){
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+};
+window.showQrDownloadModal=function(qrDataUrl,code,label){
+  var overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:99999;display:flex;align-items:center;justify-content:center';
+  overlay.onclick=function(e){if(e.target===overlay)overlay.remove();};
+  overlay.innerHTML='<div style="background:#fff;border-radius:20px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3);position:relative">'+
+    '<button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:none;background:var(--cream2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--gray)">✕</button>'+
+    '<div style="font-size:14px;font-weight:700;color:#1A1A2E;margin-bottom:4px">QR del dispositivo</div>'+
+    '<div style="font-size:12px;color:#888;margin-bottom:20px">'+(label||code)+'</div>'+
+    '<div style="background:#F5F0EB;border-radius:16px;padding:20px;display:inline-block;margin-bottom:20px">'+
+      '<img src="'+qrDataUrl+'" alt="QR" style="width:200px;height:200px;display:block">'+
+    '</div>'+
+    '<div style="font-size:11px;color:var(--gray);margin-bottom:16px">Código: <strong style="color:#FF6B2C">'+code+'</strong></div>'+
+    '<button onclick="downloadQrCode(\''+qrDataUrl+'\',\''+code+'\')" style="width:100%;padding:14px;background:#1A1A2E;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">⬇ Descargar QR</button>'+
+    '<div style="font-size:10px;color:#ccc;margin-top:12px">Imprimí y pegá en la caja del dispositivo</div>'+
+  '</div>';
+  document.body.appendChild(overlay);
 };
 function getUniqueBrands(){
   var brands={};
@@ -2229,9 +2236,14 @@ function showImeiProductModal(existingProductId){
         })
       }).then(function(res){
         if(!res.ok)return res.json().then(function(e){throw new Error(e.error||'Error del servidor');});
-        showSuccessToast('Producto creado','Se creó el producto con IMEI');
-        invalidateCache('/api/products');window._productsLoaded=false;loadProducts().then(function(){
-          document.getElementById('imeiModalOverlay').remove();
+        return res.json().then(function(created){
+          showSuccessToast('Producto creado','Se creó el producto con IMEI');
+          if(created&&created.qrCode){
+            showQrDownloadModal(created.qrCode, created.code, created.brand+' '+created.modelName);
+          }
+          invalidateCache('/api/products');window._productsLoaded=false;loadProducts().then(function(){
+            document.getElementById('imeiModalOverlay').remove();
+          });
         });
       }).catch(function(err){
         btn.textContent='Guardar producto';
