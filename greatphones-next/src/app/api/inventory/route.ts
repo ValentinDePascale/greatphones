@@ -160,6 +160,21 @@ export async function POST(request: Request) {
       }
     }
 
+    // Resolve createdById
+    let resolvedUserId = data.createdById
+    if (!resolvedUserId) {
+      const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } })
+      if (firstUser) resolvedUserId = firstUser.id
+    }
+    if (resolvedUserId) {
+      const userExists = await prisma.user.findUnique({ where: { id: resolvedUserId }, select: { id: true } })
+      if (!userExists) resolvedUserId = undefined
+    }
+    if (!resolvedUserId) {
+      const firstUser = await prisma.user.findFirst({ orderBy: { createdAt: 'asc' }, select: { id: true } })
+      if (firstUser) resolvedUserId = firstUser.id
+    }
+
     // Generate QR
     const qrUrl = `${API_URL}/inv/${code}`
     const qrCode = await QRCode.toDataURL(qrUrl, {
@@ -193,7 +208,7 @@ export async function POST(request: Request) {
         supplierId: data.supplierId,
         purchasedFrom: data.purchasedFrom,
         qrCode,
-        createdById: body.createdById || 'unknown',
+        createdById: resolvedUserId!,
       }
     })
 

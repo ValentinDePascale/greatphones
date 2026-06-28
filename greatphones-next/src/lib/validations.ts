@@ -262,6 +262,9 @@ export const InventoryCreateSchema = z.object({
   // Proveedor
   supplierId: z.string().optional(),
   purchasedFrom: z.string().optional(),
+
+  // Usuario
+  createdById: z.string().optional(),
 })
 
 export const InventoryUpdateSchema = InventoryCreateSchema.partial()
