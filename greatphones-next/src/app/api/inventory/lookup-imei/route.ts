@@ -79,18 +79,10 @@ export async function POST(request: Request) {
       return NextResponse.json(fallback, { headers: corsHeaders })
     }
 
-    // 3. Nothing found
+    // 3. Nothing found — return error so frontend shows manual form
     return NextResponse.json({
-      brand: '',
-      modelName: '',
-      storage: '',
-      color: '',
-      modelNumber: '',
-      deviceType: 'celular',
-      imageUrl: null,
-      specs: null,
-      warning: 'No se pudo identificar automáticamente. Complete los campos manualmente.'
-    }, { headers: corsHeaders })
+      error: 'No se pudo identificar el IMEI. Complete los campos manualmente.'
+    }, { status: 404, headers: corsHeaders })
   } catch (error) {
     console.error('Error in IMEI lookup:', error)
     return NextResponse.json({ error: 'Error al consultar IMEI' }, { status: 500, headers: corsHeaders })

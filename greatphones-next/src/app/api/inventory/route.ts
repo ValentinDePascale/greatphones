@@ -6,6 +6,7 @@ import {
 } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import QRCode from 'qrcode'
+import { Prisma } from '@prisma/client'
 
 const API_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
@@ -205,6 +206,24 @@ export async function POST(request: Request) {
         userId: body.createdById,
       }
     })
+
+    // Save TAC to cache for future auto-fill
+    const tac = data.imei.substring(0, 8)
+    prisma.tacCache.upsert({
+      where: { tac },
+      update: { hitCount: { increment: 1 } },
+      create: {
+        tac,
+        brand: data.brand || '',
+        modelName: data.modelName || '',
+        storage: data.storage || null,
+        color: data.color || null,
+        modelNumber: data.modelNumber || null,
+        deviceType: data.deviceType || 'celular',
+        imageUrl: data.imageUrl || null,
+        specs: Prisma.DbNull,
+      }
+    }).catch(() => {})
 
     return NextResponse.json(item, { status: 201, headers: corsHeaders })
   } catch (error) {

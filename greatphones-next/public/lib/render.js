@@ -1992,6 +1992,7 @@ function showImeiProductModal(existingProductId){
       if(data.error){
         document.getElementById('imeiError').style.display='block';
         document.getElementById('imeiError').textContent=data.error;
+        document.getElementById('imeiForm').style.display='block';
         return;
       }
       imeiData=data;
