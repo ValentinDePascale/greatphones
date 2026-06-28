@@ -1902,7 +1902,7 @@ function closeConfirm(){
 function confirmAction(confirmed){
   if(window.confirmCallback){window.confirmCallback(confirmed);}
   if(confirmed&&pendingDeleteId){var p=getById(PRODUCTS,pendingDeleteId);var pname=p?p.name:'este producto';
-    fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(){loadProducts();showSuccessToast('Producto eliminado', pname);}).catch(function(){showErrorToast('Error', 'No se pudo eliminar el producto');});}
+    fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(r){if(!r.ok)throw new Error('Error del servidor');loadProducts();showSuccessToast('Producto eliminado', pname);}).catch(function(e){showErrorToast('Error',e.message||'No se pudo eliminar el producto');});}
   closeConfirm();
 }
 function showAddProductByImeiModal(){
