@@ -235,36 +235,36 @@ export type AssignConversationPayload = z.infer<typeof AssignConversationSchema>
 // ==================== INVENTARIO ====================
 export const InventoryCreateSchema = z.object({
   imei: z.string().regex(/^\d{15}$/, 'IMEI debe tener 15 dígitos'),
-  serialNumber: z.string().optional(),
+  serialNumber: z.string().nullish(),
 
   // Auto-completado (opcional si se pasa desde el frontend ya resuelto)
-  brand: z.string().optional(),
-  modelName: z.string().optional(),
-  storage: z.string().optional(),
-  color: z.string().optional(),
-  modelNumber: z.string().optional(),
-  deviceType: z.string().optional(),
-  specs: z.any().optional(),
-  imageUrl: z.string().optional(),
+  brand: z.string().nullish(),
+  modelName: z.string().nullish(),
+  storage: z.string().nullish(),
+  color: z.string().nullish(),
+  modelNumber: z.string().nullish(),
+  deviceType: z.string().nullish(),
+  specs: z.any().nullish(),
+  imageUrl: z.string().nullish(),
 
   // Datos del negocio
   purchasePrice: z.number().int().min(0, 'Precio de compra requerido'),
   cosmeticCondition: z.enum(['Nuevo', 'Impecable', 'Muy bueno', 'Bueno']).default('Impecable'),
-  functionalCondition: z.string().optional(),
-  batteryHealth: z.number().int().min(0).max(100).optional(),
-  notes: z.string().optional(),
-  investor: z.string().optional(),
-  targetPrice: z.number().int().min(0).optional(),
+  functionalCondition: z.string().nullish(),
+  batteryHealth: z.number().int().min(0).max(100).nullish(),
+  notes: z.string().nullish(),
+  investor: z.string().nullish(),
+  targetPrice: z.number().int().min(0).nullish(),
 
   // Vinculación a producto existente
-  productId: z.string().optional(),
+  productId: z.string().nullish(),
 
   // Proveedor
-  supplierId: z.string().optional(),
-  purchasedFrom: z.string().optional(),
+  supplierId: z.string().nullish(),
+  purchasedFrom: z.string().nullish(),
 
   // Usuario
-  createdById: z.string().optional(),
+  createdById: z.string().nullish(),
 })
 
 export const InventoryUpdateSchema = InventoryCreateSchema.partial()
