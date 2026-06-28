@@ -3,6 +3,17 @@ var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://loca
 var PRODUCTS=[];
 var currentProd=null;
 var currentAcc=null;
+
+// Magnetic hover for category cards
+window.svMagnetic=function(e,el){
+  var r=el.getBoundingClientRect();
+  var x=e.clientX-r.left-r.width/2;
+  var y=e.clientY-r.top-r.height/2;
+  el.style.transform='translate('+(x*0.2)+'px,'+(y*0.2)+'px)';
+};
+window.svMagneticReset=function(el){
+  el.style.transform='';
+};
 var detWMult=0,detDExtra=0,selCuotas=1;
 
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
@@ -2153,14 +2164,15 @@ function showImeiProductModal(existingProductId){
           targetPrice: productData.price,
           createdById: (Storage.get('user')||{}).id||'unknown'
         })
-      }).then(function(){
+      }).then(function(res){
+        if(!res.ok)return res.json().then(function(e){throw new Error(e.error||'Error del servidor');});
         showSuccessToast('Variante agregada','Se agregó el IMEI al producto');
         document.getElementById('imeiModalOverlay').remove();
         invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
-        showErrorToast('Error','No se pudo guardar: '+(err.message||'error'));
+        showErrorToast('Error',err.message||'No se pudo guardar');
       });
     }else{
       // Create via inventory endpoint (creates product + inventory item)
@@ -2183,13 +2195,14 @@ function showImeiProductModal(existingProductId){
           createdById: (Storage.get('user')||{}).id||'unknown'
         })
       }).then(function(res){
+        if(!res.ok)return res.json().then(function(e){throw new Error(e.error||'Error del servidor');});
         showSuccessToast('Producto creado','Se creó el producto con IMEI');
         document.getElementById('imeiModalOverlay').remove();
         invalidateCache('/api/products');window._productsLoaded=false;loadProducts();
       }).catch(function(err){
         btn.textContent='Guardar producto';
         btn.disabled=false;
-        showErrorToast('Error','No se pudo crear: '+(err.message||'error'));
+        showErrorToast('Error',err.message||'No se pudo crear');
       });
     }
   };
