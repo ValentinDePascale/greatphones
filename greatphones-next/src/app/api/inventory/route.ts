@@ -5,6 +5,7 @@ import {
   formatZodError
 } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
+import { productCache } from '@/lib/cache'
 import QRCode from 'qrcode'
 import { Prisma } from '@prisma/client'
 
@@ -148,6 +149,7 @@ async function reuseOrphanedItem(existing: any, data: any, origin: string | null
     }
   }).catch(() => {})
 
+  productCache.clear()
   return NextResponse.json(updated, { status: 200, headers: corsHeaders })
 }
 
@@ -362,6 +364,7 @@ export async function POST(request: Request) {
       }
     }).catch(() => {})
 
+    productCache.clear()
     return NextResponse.json(item, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating inventory item:', error)
