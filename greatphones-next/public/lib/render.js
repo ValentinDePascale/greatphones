@@ -1814,6 +1814,18 @@ function editProduct(id){
     });
   }
 }
+window.downloadProductQr=function(productId){
+  fetch(API_URL+'/api/inventory?productId='+productId+'&limit=5').then(function(r){return r.json();}).then(function(res){
+    var items=res.data||res;
+    if(!items||items.length===0){showInfoToast('Sin QR','Este producto no tiene variantes con QR');return;}
+    var item=items[0];
+    if(item.qrCode){
+      showQrDownloadModal(item.qrCode,item.code,item.brand+' '+item.modelName);
+    }else{
+      showInfoToast('Sin QR','La variante de este producto no tiene código QR generado');
+    }
+  }).catch(function(){showErrorToast('Error','No se pudo obtener el QR del producto');});
+};
 window.downloadQrCode=function(qrDataUrl,code){
   var link=document.createElement('a');
   link.href=qrDataUrl;
@@ -2391,10 +2403,11 @@ function renderAdminContent(tab){
               '</div>'+
               (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
                '<div style="display:flex;gap:4px;margin-top:auto;padding-top:8px;flex-wrap:wrap">'+
-                 '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
-                 '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
-                 '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
-               '</div>'+
+                  '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
+                  '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
+                  '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
+                  '<button class="btn btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px;background:#1A1A2E;color:#fff" onclick="downloadProductQr(\''+p.id+'\')">⬇ QR</button>'+
+                '</div>'+
             '</div>'+
          '</div>';
        }).join('')+
