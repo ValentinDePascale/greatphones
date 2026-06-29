@@ -43,41 +43,32 @@ export default function ScanClient() {
   }
 
   async function iniciarEscanner() {
-    if (!jsqrLoaded.current) {
-      setError('El escáner aún no terminó de cargar. Verificá tu conexión a internet.')
-      setStatus('error')
-      return
-    }
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setError('Este navegador no soporta la cámara o la página no está en HTTPS. Probá desde otro dispositivo o conectate con HTTPS.')
-      setStatus('error')
-      return
-    }
     setStatus('requesting')
     setError('')
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
-      })
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
       streamRef.current = stream
       const video = videoRef.current
       if (!video) { pararCamara(); return }
       video.srcObject = stream
-      video.setAttribute('playsinline', 'true')
       await video.play()
       setStatus('scanning')
       scanningRef.current = true
       loopEscaneo()
     } catch (err: any) {
-      setStatus('error')
-      if (err.name === 'NotAllowedError') {
-        setError('Permiso de cámara denegado. Ajustá los permisos en la configuración de tu celular.')
+      if (!jsqrLoaded.current) {
+        setError('El escáner no terminó de cargar. Verificá tu conexión a internet.')
+      } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setError('Este navegador no soporta la cámara o la página no está en HTTPS.')
+      } else if (err.name === 'NotAllowedError') {
+        setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 en la barra → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → Chrome/Safari → activar.')
       } else if (err.name === 'NotFoundError') {
-        setError('No se encontró la cámara trasera en este dispositivo.')
+        setError('No se encontró la cámara en este dispositivo.')
       } else {
-        setError('Error al acceder a la cámara: ' + (err.message || 'desconocido'))
+        setError('Error al acceder a la cámara: ' + (err.message || 'desconocido') + '. Probá cerrando otras apps que usen la cámara.')
       }
+      setStatus('error')
     }
   }
 
