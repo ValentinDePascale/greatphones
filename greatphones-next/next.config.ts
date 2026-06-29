@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   turbopack: {},
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || [],
 };
 
 export default nextConfig;
