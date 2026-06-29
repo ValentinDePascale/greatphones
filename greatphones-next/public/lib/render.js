@@ -2182,42 +2182,74 @@ function showImeiProductModal(existingProductId){
       return false;
     }
 
-    // ---- Barcode detection methods ----
-
-    // ---- Barcode detection setup (synchronous) ----
+    // ---- Barcode detection setup ----
     var barcodeDetector=null;
     var usandoQuagga=false;
     var detectando=false;
+    var ultimaDetect=0;
 
     function initBarcodeDetector(){
       if(!window.BarcodeDetector)return false;
-      var formatos=['code_128','ean_13','code_39','ean_8','upc_a'];
-      for(var i=0;i<formatos.length;i++){
-        try{
-          barcodeDetector=new BarcodeDetector({formats:[formatos[i]]});
-          return true;
-        }catch(e){}
+      try{
+        barcodeDetector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a']});
+        return true;
+      }catch(e){
+        var list=['code_128','ean_13','code_39','ean_8','upc_a'];
+        for(var i=0;i<list.length;i++){
+          try{barcodeDetector=new BarcodeDetector({formats:[list[i]]});return true;}catch(e2){}
+        }
+        return false;
+      }
+    }
+
+    // ---- Luhn validation para IMEI (evita falsos positivos) ----
+    function luhnValido(n){
+      var s=0,a=false;
+      for(var i=n.length-1;i>=0;i--){
+        var v=parseInt(n[i],10);
+        if(a){v*=2;if(v>9)v-=9;}
+        s+=v;a=!a;
+      }
+      return s%10===0;
+    }
+
+    function procesarDigitos(raw){
+      var d=raw.replace(/[^0-9]/g,'');
+      var len=d.length;
+      if(len>=14&&len<=16){
+        var imei=d.substring(0,15);
+        if(luhnValido(imei)){
+          limpiar();onDetected({type:'imei',imei:imei,raw:raw});return true;
+        }
+        if(len===14){
+          for(var cd=0;cd<=9;cd++){
+            var test=d+cd;
+            if(luhnValido(test)){limpiar();onDetected({type:'imei',imei:test,raw:raw});return true;}
+          }
+        }
+        if(statusEl)statusEl.textContent='Leyendo... '+d;
       }
       return false;
     }
 
-    // ---- Quagga-based barcode scanning (fallback) ----
+    // ---- Quagga (fallback para iOS sin BarcodeDetector) ----
     function escanearQuagga(){
       if(detenido||!window.Quagga)return;
-      if(statusEl)statusEl.textContent='Alineá el código de barras en el recuadro';
+      if(statusEl)statusEl.textContent='Alineá el código de barras';
       usandoQuagga=true;
       video.style.display='none';
       Quagga.init({
         inputStream:{name:"Live",type:"LiveStream",target:overlay,
-          constraints:{width:640,height:480,facingMode:"environment"}
+          constraints:{width:{min:640,ideal:1280},height:{min:480,ideal:720},facingMode:"environment"}
         },
         decoder:{readers:["code_128_reader","code_39_reader","ean_reader"]},
         locator:{patchSize:"medium"},
-        frequency:10
+        frequency:5,
+        debug:false
       },function(err){
         if(detenido)return;
         if(err){
-          if(statusEl)statusEl.textContent='Error al iniciar escáner de barras';
+          if(statusEl)statusEl.textContent='Error al iniciar escáner';
           return;
         }
         Quagga.start();
@@ -2233,9 +2265,10 @@ function showImeiProductModal(existingProductId){
       if(detenido)return;
       if(video.readyState<2){requestAnimationFrame(escanear);return;}
 
-      // Native BarcodeDetector API (Chrome Android — rápido y confiable)
       if(barcodeDetector){
-        if(!detectando){
+        var ahora=Date.now();
+        if(!detectando&&ahora-ultimaDetect>300){
+          ultimaDetect=ahora;
           detectando=true;
           barcodeDetector.detect(video).then(function(barcodes){
             detectando=false;
@@ -2249,7 +2282,6 @@ function showImeiProductModal(existingProductId){
         return;
       }
 
-      // Canvas-based: jsQR for QR codes
       if(!usandoQuagga){
         var ctx=canvas.getContext('2d');
         if(!ctx){requestAnimationFrame(escanear);return;}
@@ -2263,7 +2295,8 @@ function showImeiProductModal(existingProductId){
             var data=code.data.trim();
             var match=data.match(/\/inv\/([A-Za-z0-9-]+)/);
             if(match){limpiar();onDetected({type:'code',code:match[1],raw:data});return;}
-            if(procesarDigitos(data))return;
+            var d=data.replace(/[^0-9]/g,'');
+            if(d.length>=14&&d.length<=16&&procesarDigitos(data))return;
           }
         }catch(e){}
       }
@@ -2271,7 +2304,10 @@ function showImeiProductModal(existingProductId){
     }
 
     function iniciarCamara(){
-      navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}).then(function(s){
+      var constraints=isBarcode
+        ? {video:{width:{min:1280,ideal:1920},height:{min:720,ideal:1080},facingMode:{ideal:'environment'}}}
+        : {video:{facingMode:{ideal:'environment'}}};
+      navigator.mediaDevices.getUserMedia(constraints).then(function(s){
         video.srcObject=s;video.play();escanear();
       }).catch(function(){
         return navigator.mediaDevices.getUserMedia({video:true}).then(function(s){
@@ -2287,12 +2323,13 @@ function showImeiProductModal(existingProductId){
     if(isBarcode){
       var tieneNativo=initBarcodeDetector();
       if(tieneNativo){
-        if(statusEl)statusEl.textContent='Usando escáner nativo...';
+        if(statusEl)statusEl.textContent='Escáner listo';
         iniciarCamara();
       }else if(window.Quagga){
+        if(statusEl)statusEl.textContent='Escáner alternativo listo';
         escanearQuagga();
       }else{
-        if(statusEl)statusEl.textContent='Cargando escáner de barras...';
+        if(statusEl)statusEl.textContent='Cargando escáner...';
         var sc=document.createElement('script');
         sc.src='https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js';
         sc.onload=function(){
