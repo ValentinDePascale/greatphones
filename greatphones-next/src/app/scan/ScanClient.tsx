@@ -47,7 +47,11 @@ export default function ScanClient() {
     setError('')
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      var stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }
+      }).catch(function() {
+        return navigator.mediaDevices.getUserMedia({ video: true })
+      })
       streamRef.current = stream
       const video = videoRef.current
       if (!video) { pararCamara(); return }
@@ -59,14 +63,12 @@ export default function ScanClient() {
     } catch (err: any) {
       if (!jsqrLoaded.current) {
         setError('El escáner no terminó de cargar. Verificá tu conexión a internet.')
-      } else if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setError('Este navegador no soporta la cámara o la página no está en HTTPS.')
       } else if (err.name === 'NotAllowedError') {
-        setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 en la barra → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → Chrome/Safari → activar.')
+        setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → activar.')
       } else if (err.name === 'NotFoundError') {
         setError('No se encontró la cámara en este dispositivo.')
       } else {
-        setError('Error al acceder a la cámara: ' + (err.message || 'desconocido') + '. Probá cerrando otras apps que usen la cámara.')
+        setError('Error al acceder a la cámara: ' + (err.message || 'desconocido'))
       }
       setStatus('error')
     }

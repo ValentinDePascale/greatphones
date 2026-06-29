@@ -257,77 +257,23 @@ function addInvDeviceToSale() {
   showToast(`${device.brand} ${device.modelName} agregado`, 'success')
 }
 
-// =========== QR/BARCODE CAMERA SCANNER ===========
-function processQRImage(file) {
-  showToast('Procesando QR...', 'info')
-  var reader = new FileReader()
-  reader.onload = function(e) {
-    var img = new Image()
-    img.onload = function() {
-      var canvas = document.createElement('canvas')
-      canvas.width = img.width
-      canvas.height = img.height
-      var ctx = canvas.getContext('2d')
-      ctx.drawImage(img, 0, 0)
-      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-      try {
-        var code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' })
-        if (code && code.data) {
-          var url = code.data.trim()
-          var match = url.match(/\/inv\/([A-Za-z0-9-]+)/)
-          if (match) {
-            lookupInvByCode(match[1])
-            return
-          }
-          var digits = url.replace(/[^0-9]/g, '')
-          if (digits.length === 15) {
-            document.getElementById('instore-invImei').value = digits
-            lookupInventoryDevice()
-            return
-          }
-          showToast('QR no corresponde a un dispositivo del inventario', 'error')
-        } else {
-          showToast('No se detectó un QR válido en la imagen', 'error')
-        }
-      } catch(err) {
-        showToast('Error al leer el QR', 'error')
+// =========== QR CAMERA SCANNER ===========
+function openCameraScanner() {
+  if (typeof window.abrirScannerQR !== 'function') {
+    // Fallback if render.js hasn't loaded yet
+    showToast('Cargando escáner...', 'info')
+    return
+  }
+  window.abrirScannerQR({
+    onDetected: function(res) {
+      if (res.type === 'code') {
+        lookupInvByCode(res.code)
+      } else if (res.type === 'imei') {
+        document.getElementById('instore-invImei').value = res.imei
+        lookupInventoryDevice()
       }
     }
-    img.src = e.target.result
-  }
-  reader.readAsDataURL(file)
-}
-
-var cameraInput = null
-
-function openCameraScanner() {
-  if (typeof jsQR === 'undefined') {
-    var script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js'
-    script.onload = function() { triggerCamera() }
-    script.onerror = function() { showToast('Error al cargar escáner', 'error') }
-    document.head.appendChild(script)
-  } else {
-    triggerCamera()
-  }
-}
-
-function triggerCamera() {
-  if (!cameraInput) {
-    cameraInput = document.createElement('input')
-    cameraInput.type = 'file'
-    cameraInput.accept = 'image/*'
-    cameraInput.capture = 'environment'
-    cameraInput.style.display = 'none'
-    cameraInput.addEventListener('change', function(e) {
-      if (e.target.files && e.target.files.length > 0) {
-        processQRImage(e.target.files[0])
-      }
-      cameraInput.value = ''
-    })
-    document.body.appendChild(cameraInput)
-  }
-  cameraInput.click()
+  })
 }
 
 function lookupInvByCode(code) {
