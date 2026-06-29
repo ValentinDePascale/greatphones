@@ -212,8 +212,10 @@ model Order {
   // Shipping info
   clientName     String?
   clientDni      String?
+  clientCuil     String?
   clientEmail    String?
   clientPhone    String?
+  clientAddress  String?
   shippingStreet String?
   shippingNumber String?
   shippingFloor  String?

@@ -9,6 +9,8 @@ var instoreState = {
   invDevice: null  // scanned/looked-up inventory device
 }
 
+var lastInstoreSaleData = null
+
 function renderInStoreSale() {
   var content = document.getElementById('adminContent')
   if (!content) return
@@ -38,17 +40,37 @@ function renderInStoreSale() {
           </button>
         </div>
 
-        <!-- Client Info (compact) -->
+        <!-- Client Info -->
         <div style="background:var(--cream2);padding:1rem;border-radius:12px;border:1px solid var(--border)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
             <div>
-              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Cliente</label>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Apellido y Nombre</label>
               <input type="text" id="instore-clientName" placeholder="Nombre completo" 
                 style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
             </div>
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">DNI</label>
               <input type="text" id="instore-clientDni" placeholder="12345678" 
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">CUIL / CUIT</label>
+              <input type="text" id="instore-clientCuil" placeholder="20-12345678-9" maxlength="14"
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Tel</label>
+              <input type="text" id="instore-clientPhone" placeholder="2914727351"
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Domicilio</label>
+              <input type="text" id="instore-clientAddress" placeholder="Calle 123"
+                style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Email</label>
+              <input type="email" id="instore-clientEmail" placeholder="cliente@email.com"
                 style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;margin-top:4px;box-sizing:border-box">
             </div>
           </div>
@@ -657,6 +679,10 @@ function confirmInStoreSale() {
   var payload = {
     clientName: clientName,
     clientDni: clientDni,
+    clientCuil: (document.getElementById('instore-clientCuil')||{}).value || '',
+    clientPhone: (document.getElementById('instore-clientPhone')||{}).value || '',
+    clientAddress: (document.getElementById('instore-clientAddress')||{}).value || '',
+    clientEmail: (document.getElementById('instore-clientEmail')||{}).value || '',
     items: instoreState.items.map(item => {
       if (item.type === 'catalog') {
         return {
@@ -709,6 +735,15 @@ function confirmInStoreSale() {
       return
     }
 
+    // Save sale data for receipt generation
+    lastInstoreSaleData = {
+      order: data.order,
+      change: data.change || 0,
+      items: instoreState.items.slice(),
+      paymentMethod: instoreState.paymentMethod,
+      cashReceived: instoreState.paymentMethod === 'cash' ? parseInt((document.getElementById('instore-cashReceived')||{}).value || 0) : 0
+    }
+
     if (instoreState.paymentMethod === 'cash') {
       showSaleSuccess(data.order, data.change)
     } else {
@@ -723,6 +758,308 @@ function confirmInStoreSale() {
   })
 }
 
+// =========== RECIBO PDF ===========
+var jsPdfLoaded = false
+
+function loadJsPdf(cb){
+  if(window.jsPDF){jsPdfLoaded=true;cb();return}
+  if(jsPdfLoaded){cb();return}
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js';
+  s.onload=function(){jsPdfLoaded=true;cb()};
+  document.head.appendChild(s);
+}
+
+function numeroALetras(n){
+  var UNIDADES=['','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince','dieciséis','diecisiete','dieciocho','diecinueve','veinte'];
+  var DECENAS=['','diez','veinte','treinta','cuarenta','cincuenta','sesenta','setenta','ochenta','noventa'];
+  var CENTENAS=['','ciento','doscientos','trescientos','cuatrocientos','quinientos','seiscientos','setecientos','ochocientos','novecientos'];
+  var n=Math.round(n);
+  if(n===0)return 'cero pesos';
+  if(n===100)return 'cien pesos';
+  var r='';
+  if(n>=1000){
+    var miles=Math.floor(n/1000);
+    var resto=n%1000;
+    if(miles===1)r+='mil';else r+=numeroALetras(miles)+' mil';
+    if(resto>0)r+=' '+numeroALetras(resto);
+    return r+' pesos';
+  }
+  if(n>=100){
+    var c=Math.floor(n/100);
+    r+=CENTENAS[c];
+    var resto=n%100;
+    if(resto>0)r+=' '+numeroALetras(resto);
+    return r+' pesos';
+  }
+  if(n>=20){
+    var d=Math.floor(n/10);
+    var u=n%10;
+    r=DECENAS[d];
+    if(u>0)r+=' y '+UNIDADES[u];
+    return r+' pesos';
+  }
+  return UNIDADES[n]+' pesos';
+}
+
+function generarReciboPDF(){
+  return new Promise(function(resolve){
+    loadJsPdf(function(){
+      var d=lastInstoreSaleData;
+      if(!d||!d.order){resolve(null);return}
+      var order=d.order;
+      var items=d.items||[];
+      var jsPDF=window.jspdf.jsPDF;
+      var doc=new jsPDF({unit:'mm',format:'a4'});
+      var w=210,h=297;
+      var ml=15,mr=15;
+      var cw=w-ml-mr;
+      var orange=[255,107,44];
+      var dk=[35,31,32];
+      var gray=[120,120,120];
+      var lightGray=[200,200,200];
+      var y=0;
+
+      function ln(s){y+=s||4}
+      function hline(){doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.8);doc.line(ml,y,w-mr,y);y+=2}
+      function field(label,value,lw,vw){
+        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
+        doc.text(label,ml,y);
+        var vx=ml+lw;
+        doc.setFont('helvetica','normal');
+        doc.text(value||'',vx,y);
+        doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.setLineWidth(0.3);
+        doc.line(vx,y+0.5,vx+vw,y+0.5);
+      }
+
+      // ---- HEADER ----
+      doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.text('GreatPhones',ml,10);
+      doc.setFontSize(12);doc.text('RECIBO DE VENTA',w-mr,10,{align:'right'});
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(gray[0],gray[1],gray[2]);
+      doc.text('Zelarrayan 179 · Bahía Blanca · 2914727351',ml,14);
+
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.text('Nº:',w-mr-50,14);doc.text(order.code||'',w-mr-44,14);
+      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.setLineWidth(0.3);
+      doc.line(w-mr-44,14.5,w-mr,14.5);
+      var fecha=new Date(order.createdAt||Date.now());
+      var fechaStr=fecha.getDate()+'/'+(fecha.getMonth()+1)+'/'+fecha.getFullYear();
+      doc.text('Fecha:',w-mr-28,14);doc.text(fechaStr,w-mr-20,14);
+      doc.line(w-mr-20,14.5,w-mr,14.5);
+      y=18;hline();
+
+      // ---- DATOS DEL DISPOSITIVO ----
+      ln(5);
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('DATOS DEL DISPOSITIVO',ml,y);ln(5);
+
+      var invItems=items.filter(function(i){return i.type==='inventory'});
+      var otherItems=items.filter(function(i){return i.type!=='inventory'});
+
+      if(invItems.length>0){
+        invItems.forEach(function(item,idx){
+          field('Marca/Modelo:',item.brand+' '+item.modelName+(item.storage?' '+item.storage:''),35,50);
+          doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
+          doc.text('IMEI:',120,y);doc.setFont('helvetica','normal');doc.text(item.imei||'',129,y);
+          doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(129,y+0.5,195,y+0.5);ln(5);
+          field('Color:',item.color||'',20,50);
+          doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Batería:',120,y);doc.setFont('helvetica','normal');doc.text('',132,y);
+          doc.line(132,y+0.5,195,y+0.5);ln(6);
+        });
+      }else{
+        var firstItem=items[0]||{};
+        field('Marca/Modelo:',firstItem.name||'',35,50);
+        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('IMEI:',120,y);ln(5);
+        field('Color:','',20,50);
+        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Batería:',120,y);ln(6);
+      }
+
+      hline();ln(4);
+
+      // ---- ACCESORIOS INCLUIDOS ----
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('ACCESORIOS INCLUIDOS',ml,y);ln(5);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+      var accesorios=['Cable USB-C / Lightning','Cabezal de cargador','Funda protectora','Vidrio templado'];
+      var accX=ml;
+      accesorios.forEach(function(a){
+        doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);
+        doc.rect(accX,y-3,3,3);
+        doc.setFont('helvetica','normal');doc.setFontSize(7);doc.text(a,accX+4,y-0.5);
+        accX+=doc.getTextWidth(a)+10;
+      });
+      ln(6);
+
+      // ---- PRECIO Y FORMA DE PAGO (orange box) ----
+      var boxY=y;
+      doc.setFillColor(255,249,245);doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.6);
+      doc.roundedRect(ml,boxY-3,cw,38,3,3,'FD');
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.text('PRECIO Y FORMA DE PAGO',w/2,boxY+2,{align:'center'});
+      ln(8);
+
+      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('PRECIO TOTAL',ml,y);
+      doc.setFont('helvetica','normal');doc.text('$',ml+35,y);
+      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.4);
+      doc.line(ml+38,y+0.5,ml+85,y+0.5);
+      doc.text((order.total||0).toLocaleString('es-AR'),ml+40,y);
+      ln(4);
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.text('Son pesos:',ml,y);
+      doc.text(numeroALetras(order.total||0),ml+18,y);
+      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+18,y+0.5,ml+90,y+0.5);ln(7);
+
+      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('DETALLE DEL PAGO (completar solo los que apliquen):',ml,y);ln(5);
+
+      // Efectivo
+      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Efectivo:  $',ml+4,y);
+      if(order.payment==='Efectivo'&&order.cashReceived){
+        doc.text((order.cashReceived||0).toLocaleString('es-AR'),ml+25,y);
+        doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+25,y+0.5,ml+70,y+0.5);
+        doc.text('Vuelto: $'+(d.change||0).toLocaleString('es-AR'),ml+75,y);
+      }else{
+        doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+25,y+0.5,ml+70,y+0.5);
+      }
+      ln(5);
+
+      // Transferencia
+      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Transferencia:  $',ml+4,y);
+      if(order.payment==='Transferencia'){
+        doc.text((order.total||0).toLocaleString('es-AR'),ml+38,y);
+      }
+      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+38,y+0.5,ml+85,y+0.5);ln(5);
+
+      // Dólares
+      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Dólares:  USD ___________',ml+4,y);ln(5);
+
+      // Cuotas
+      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
+      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Cuotas:  _____ x $___________ = $___________',ml+4,y);ln(5);
+
+      // N° ref
+      doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text('N° ref. transferencia / comprobante: _______________________',ml,y);ln(5);
+
+      y=boxY+40;ln(2);
+
+      // ---- DATOS DEL COMPRADOR ----
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.text('DATOS DEL COMPRADOR',ml,y);ln(6);
+
+      var col2x=110;
+      field('Apellido y Nombre:',order.clientName||'',33,55);
+      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Tel:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientPhone||'',col2x+10,y);
+      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+10,y+0.5,195,y+0.5);ln(5);
+
+      field('DNI:',order.clientDni||'',15,55);
+      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Domicilio:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientAddress||'',col2x+22,y);
+      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+22,y+0.5,195,y+0.5);ln(5);
+
+      field('CUIL / CUIT:',order.clientCuil||'',25,55);
+      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Email:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientEmail||'',col2x+14,y);
+      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+14,y+0.5,195,y+0.5);ln(5);
+
+      hline();ln(3);
+
+      // ---- GARANTÍA ----
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.text('GARANTÍA',ml,y);ln(5);
+
+      doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(50,50,50);
+      var garantia=[
+        'El equipo adquirido cuenta con una garantía de 12 (doce) meses desde la fecha de compra.',
+        'La garantía cubre únicamente fallas técnicas de origen no provocadas por el cliente, incluyendo problemas de encendido, fallas internas de pantalla,',
+        'batería defectuosa de origen, fallas de software persistentes, problemas de carga, audio, cámara o conectividad.',
+        'Toda garantía queda sujeta a diagnóstico y verificación técnica por parte del local.',
+        'La garantía NO cubre: Pantallas rotas, fisuradas o con daño físico. Golpes, rayones, deformaciones o daños estéticos. Daño por líquido o humedad.',
+        'Equipos abiertos, manipulados o reparados por terceros. Daños ocasionados por accesorios no originales o uso incorrecto.',
+        'Problemas relacionados con cuentas, contraseñas o bloqueos del usuario. Daños eléctricos externos. Fallas posteriores al vencimiento del plazo de garantía.',
+        'Si el equipo presenta evidencia física de golpe, humedad o manipulación externa, la garantía quedará automáticamente anulada.',
+        'En caso de ingreso por garantía:',
+        '1. El equipo será evaluado técnicamente. El local dispondrá de un plazo de 48 (cuarenta y ocho) horas hábiles desde el ingreso del equipo para',
+        'emitir el diagnóstico correspondiente e informar al cliente si el caso encuadra dentro de las condiciones de garantía.',
+        '2. El local determinará si corresponde garantía según el diagnóstico realizado. Una vez comunicada la aceptación, el local dispondrá de',
+        '96 (noventa y seis) horas hábiles adicionales para llevar a cabo la reparación o brindar una resolución definitiva. Este plazo podrá extenderse',
+        'en casos de fuerza mayor, tales como fallas de placa, demoras en disponibilidad de repuestos u otras situaciones excepcionales debidamente justificadas.',
+        '3. Si corresponde garantía, el local podrá optar por: reparación, reemplazo del equipo, o devolución del dinero abonado.',
+        'La devolución de dinero será siempre la última instancia luego de intentar reparación o reposición.',
+        'El cliente declara haber recibido el equipo en correcto estado de funcionamiento y haber leído y aceptado las presentes condiciones de garantía.'
+      ];
+      garantia.forEach(function(linea){
+        doc.text(linea,ml,y);
+        ln(3.2);
+      });
+      ln(1);
+
+      // ---- FIRMAS ----
+      hline();ln(5);
+
+      var firmY=y+10;
+      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(dk[0],dk[1],dk[2]);
+      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);
+      doc.line(ml,firmY,ml+75,firmY);
+      doc.line(col2x,firmY,195,firmY);
+      ln(4);
+      doc.setFontSize(6.5);
+      doc.text('GreatPhones / Martín de Mendonça — DNI 45821618',ml,firmY+4);
+      doc.text('Comprador — Aclaración y DNI:',col2x,firmY+4);
+
+      ln(8);
+      doc.setFont('helvetica','italic');doc.setFontSize(5.5);doc.setTextColor(gray[0],gray[1],gray[2]);
+      doc.text('Al firmar, el comprador declara recibir el equipo en conformidad con lo descripto. GreatPhones · Zelarrayan 179, Bahía Blanca · 2914727351',w/2,y,{align:'center'});
+
+      resolve(doc);
+    });
+  });
+}
+
+function descargarRecibo(){
+  showToast('Generando recibo...','info');
+  generarReciboPDF().then(function(doc){
+    if(!doc){showToast('Error al generar recibo','error');return}
+    var order=lastInstoreSaleData?lastInstoreSaleData.order:{};
+    doc.save('Recibo_'+(order.code||'venta')+'.pdf');
+    showToast('Recibo descargado','success');
+  });
+}
+
+function imprimirRecibo(){
+  showToast('Generando recibo para imprimir...','info');
+  generarReciboPDF().then(function(doc){
+    if(!doc){showToast('Error al generar recibo','error');return}
+    var blob=doc.output('blob');
+    var url=URL.createObjectURL(blob);
+    var w=window.open(url,'_blank');
+    if(w){
+      w.onload=function(){w.print()};
+    }else{
+      showToast('Abrí el popup para imprimir','warning');
+    }
+  });
+}
+
+function enviarReciboPorEmail(){
+  var email=prompt('Email destino para enviar el recibo:',lastInstoreSaleData&&lastInstoreSaleData.order?(lastInstoreSaleData.order.clientEmail||''):'');
+  if(!email)return;
+  showToast('Generando y enviando recibo...','info');
+  generarReciboPDF().then(function(doc){
+    if(!doc){showToast('Error al generar recibo','error');return}
+    var pdfBase64=doc.output('datauristring');
+    var orderCode=lastInstoreSaleData?lastInstoreSaleData.order.code:'';
+    fetch(API_URL+'/api/admin/instore-sale/send-receipt',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({email:email,pdfBase64:pdfBase64,orderCode:orderCode})
+    })
+    .then(function(r){return r.json()})
+    .then(function(data){
+      if(data.success){showToast('Recibo enviado a '+email,'success')}
+      else{showToast('Error: '+(data.error||'No se pudo enviar'),'error')}
+    })
+    .catch(function(){showToast('Error de conexión al enviar recibo','error')});
+  });
+}
+
 function showSaleSuccess(order, change) {
   var modal = document.createElement('div')
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s'
@@ -735,14 +1072,26 @@ function showSaleSuccess(order, change) {
         </svg>
       </div>
       <h2 style="margin-bottom:0.5rem;font-size:24px;font-weight:700">¡Venta Exitosa!</h2>
-      <p style="margin-bottom:1.5rem;color:var(--gray);font-size:14px">Orden: <strong style="color:var(--dk)">${order.code}</strong></p>
+      <p style="margin-bottom:1rem;color:var(--gray);font-size:14px">Orden: <strong style="color:var(--dk)">${order.code}</strong></p>
       
       ${change > 0 ? `
-        <div style="background:rgba(45,90,39,.1);padding:1rem;border-radius:10px;margin-bottom:1.5rem">
+        <div style="background:rgba(45,90,39,.1);padding:1rem;border-radius:10px;margin-bottom:1rem">
           <div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:4px">Cambio a entregar</div>
           <div style="font-size:28px;font-weight:800;color:var(--green)">$${change.toLocaleString('es-AR')}</div>
         </div>
       ` : ''}
+
+      <div style="display:flex;gap:8px;margin-bottom:0.75rem">
+        <button onclick="imprimirRecibo()" style="flex:1;padding:10px;font-size:12px;font-weight:600;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer">
+          🖨 Imprimir
+        </button>
+        <button onclick="descargarRecibo()" style="flex:1;padding:10px;font-size:12px;font-weight:600;background:var(--dk);color:#fff;border:none;border-radius:8px;cursor:pointer">
+          📥 Descargar PDF
+        </button>
+      </div>
+      <button onclick="enviarReciboPorEmail()" style="width:100%;padding:10px;font-size:12px;font-weight:600;background:#fff;color:var(--dk);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:1rem">
+        📧 Enviar por mail
+      </button>
       
       <button onclick="closeSaleSuccess(this)" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;font-weight:700">
         Nueva Venta
@@ -842,7 +1191,20 @@ function showPaymentSuccess(order) {
         </svg>
       </div>
       <h2 style="margin-bottom:0.5rem;font-size:24px;font-weight:700">¡Pago Confirmado!</h2>
-      <p style="margin-bottom:1.5rem;color:var(--gray);font-size:14px">Orden: <strong style="color:var(--dk)">${order.code}</strong></p>
+      <p style="margin-bottom:1rem;color:var(--gray);font-size:14px">Orden: <strong style="color:var(--dk)">${order.code}</strong></p>
+
+      <div style="display:flex;gap:8px;margin-bottom:0.75rem">
+        <button onclick="imprimirRecibo()" style="flex:1;padding:10px;font-size:12px;font-weight:600;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer">
+          🖨 Imprimir
+        </button>
+        <button onclick="descargarRecibo()" style="flex:1;padding:10px;font-size:12px;font-weight:600;background:var(--dk);color:#fff;border:none;border-radius:8px;cursor:pointer">
+          📥 Descargar PDF
+        </button>
+      </div>
+      <button onclick="enviarReciboPorEmail()" style="width:100%;padding:10px;font-size:12px;font-weight:600;background:#fff;color:var(--dk);border:1px solid var(--border);border-radius:8px;cursor:pointer;margin-bottom:1rem">
+        📧 Enviar por mail
+      </button>
+
       <button onclick="closePaymentSuccess(this)" class="btn btn-primary" style="width:100%;padding:14px;font-size:14px;font-weight:700">
         Nueva Venta
       </button>

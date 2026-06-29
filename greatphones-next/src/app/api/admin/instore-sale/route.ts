@@ -16,7 +16,7 @@ function generateOrderCode() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { clientName, clientDni, items, paymentMethod, cashReceived, adminId } = body
+    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId } = body
 
     if (!clientName || !clientDni || !items || items.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
@@ -147,6 +147,10 @@ export async function POST(request: Request) {
           payment: paymentMethod === 'cash' ? 'Efectivo' : 'Transferencia',
           clientName,
           clientDni,
+          clientCuil: clientCuil || null,
+          clientPhone: clientPhone || null,
+          clientAddress: clientAddress || null,
+          clientEmail: clientEmail || null,
           cashReceived: paymentMethod === 'cash' ? cashReceived : null,
           change: paymentMethod === 'cash' ? change : null,
           saleChannel: 'in-store',
