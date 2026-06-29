@@ -18,6 +18,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId } = body
 
+    console.log('[instore-sale] Body:', JSON.stringify({ clientName, clientDni, paymentMethod, itemCount: items?.length, adminId }))
+
     if (!clientName || !clientDni || !items || items.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
     }
@@ -322,7 +324,13 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error creating in-store sale:', error)
-    return NextResponse.json({ error: 'Error al crear la venta' }, { status: 500 })
+    var msg = 'Error al crear la venta'
+    var details = ''
+    if (error instanceof Error) {
+      msg = error.message
+      details = error.stack || ''
+    }
+    return NextResponse.json({ error: msg, details: details.substring(0,500) }, { status: 500 })
   }
 }
 

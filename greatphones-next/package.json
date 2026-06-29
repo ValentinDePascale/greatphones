@@ -7,7 +7,7 @@
     "dev": "concurrently \"next dev\" \"node socket-server/index.js\"",
     "dev:next": "next dev",
     "dev:chat": "node socket-server/index.js",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "NODE_OPTIONS=\"--max-old-space-size=1024\" node server.js",
     "lint": "eslint",
     "test": "vitest run",
