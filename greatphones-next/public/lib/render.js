@@ -2133,17 +2133,23 @@ function showImeiProductModal(existingProductId){
   window.abrirScannerQR=function(opts){
     opts=opts||{};
     var onDetected=opts.onDetected||function(){};
+    var mode=opts.mode||'qr';
+    var isBarcode=mode==='barcode';
+    var frameW=isBarcode?300:260;
+    var frameH=isBarcode?160:260;
+    var texto=isBarcode?'Apuntá al código de barras del dispositivo':'Apuntá al código QR del dispositivo';
     var overlay=document.createElement('div');
     overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML='<div class="scan-video-wrap" style="position:absolute;inset:0"><video id="qrScannerVideo" playsinline muted style="width:100%;height:100%;object-fit:cover"></video></div>'+
+    overlay.innerHTML=
+      '<video id="qrScannerVideo" playsinline muted style="position:absolute;width:100%;height:100%;object-fit:cover"></video>'+
       '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">'+
-        '<div style="position:relative;width:260px;height:260px">'+
-          '<div style="position:absolute;inset:0;border-radius:20px;border:2px solid rgba(255,107,44,.7);box-shadow:0 0 0 9999px rgba(0,0,0,.55)"></div>'+
+        '<div style="position:relative;width:'+frameW+'px;height:'+frameH+'px">'+
+          '<div style="position:absolute;inset:0;border-radius:'+(isBarcode?12:20)+'px;border:2px solid rgba(255,107,44,.7);box-shadow:0 0 0 9999px rgba(0,0,0,.55)"></div>'+
           '<div class="qrscan-line" style="position:absolute;left:16px;right:16px;height:2px;background:#FF6B2C;box-shadow:0 0 16px #FF6B2C;border-radius:2px;animation:qrscanMove 2s ease-in-out infinite"></div>'+
         '</div>'+
-        '<div style="color:#fff;font-size:14px;margin-top:28px;text-align:center;opacity:.85">Apuntá al código QR del dispositivo</div>'+
+        '<div style="color:#fff;font-size:14px;margin-top:28px;text-align:center;opacity:.85">'+texto+'</div>'+
       '</div>'+
-      '<button id="qrScannerCancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);transition:background .2s;z-index:10">Cancelar</button>'+
+      '<button id="qrScannerCancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);z-index:10">Cancelar</button>'+
       '<button id="qrScannerBack" style="position:absolute;top:16px;left:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;pointer-events:auto;z-index:10;display:flex;align-items:center;justify-content:center">←</button>'+
       '<canvas id="qrScannerCanvas" style="display:none"></canvas>'+
       '<style>@keyframes qrscanMove{0%{top:24px}50%{top:calc(100% - 24px)}100%{top:24px}}</style>';
@@ -2156,6 +2162,7 @@ function showImeiProductModal(existingProductId){
     function limpiar(){
       if(detenido)return;
       detenido=true;
+      if(window.Quagga){try{Quagga.stop();}catch(e){}}
       if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
       overlay.remove();
     }
@@ -2163,9 +2170,36 @@ function showImeiProductModal(existingProductId){
     document.getElementById('qrScannerCancel').onclick=limpiar;
     document.getElementById('qrScannerBack').onclick=limpiar;
 
+    var barcodeDetector=null;
+    if(isBarcode&&window.BarcodeDetector){
+      try{barcodeDetector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a','upc_e']});}catch(e){}
+    }
+
+    function procesarDigitos(raw){
+      var digits=raw.replace(/[^0-9]/g,'');
+      if(digits.length>=14&&digits.length<=16){
+        limpiar();
+        onDetected({type:'imei',imei:digits.substring(0,15),raw:raw});
+        return true;
+      }
+      return false;
+    }
+
     function escanear(){
       if(detenido)return;
       if(video.readyState<2){requestAnimationFrame(escanear);return;}
+
+      if(barcodeDetector){
+        barcodeDetector.detect(video).then(function(barcodes){
+          if(detenido)return;
+          for(var i=0;i<barcodes.length;i++){
+            if(procesarDigitos(barcodes[i].rawValue))return;
+          }
+        }).catch(function(){});
+        requestAnimationFrame(escanear);
+        return;
+      }
+
       var ctx=canvas.getContext('2d');
       if(!ctx){requestAnimationFrame(escanear);return;}
       canvas.width=video.videoWidth;
@@ -2177,32 +2211,40 @@ function showImeiProductModal(existingProductId){
         if(code&&code.data){
           var data=code.data.trim();
           var match=data.match(/\/inv\/([A-Za-z0-9-]+)/);
-          if(match){
-            limpiar();
-            onDetected({type:'code',code:match[1],raw:data});
-            return;
-          }
-          var digits=data.replace(/[^0-9]/g,'');
-          if(digits.length===15){
-            limpiar();
-            onDetected({type:'imei',imei:digits,raw:data});
-            return;
-          }
+          if(match){limpiar();onDetected({type:'code',code:match[1],raw:data});return;}
+          if(procesarDigitos(data))return;
         }
       }catch(e){}
       requestAnimationFrame(escanear);
     }
 
+    function iniciarBarcodeQuagga(){
+      Quagga.init({
+        inputStream:{name:"Live",type:"LiveStream",target:overlay,
+          constraints:{width:640,height:480,facingMode:"environment"}
+        },
+        decoder:{readers:["code_128_reader","code_39_reader","ean_reader"]},
+        locator:{patchSize:"medium"}
+      },function(err){
+        if(err){showErrorToast('Error','Error al iniciar escáner de barras');limpiar();return;}
+        Quagga.start();
+      });
+      Quagga.onDetected(function(result){
+        if(detenido)return;
+        procesarDigitos(result.codeResult.code);
+      });
+    }
+
     function iniciarCamara(){
+      if(isBarcode&&!barcodeDetector&&window.Quagga){
+        iniciarBarcodeQuagga();
+        return;
+      }
       navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}}}).then(function(s){
-        video.srcObject=s;
-        video.play();
-        escanear();
+        video.srcObject=s;video.play();escanear();
       }).catch(function(){
         return navigator.mediaDevices.getUserMedia({video:true}).then(function(s){
-          video.srcObject=s;
-          video.play();
-          escanear();
+          video.srcObject=s;video.play();escanear();
         });
       }).catch(function(err){
         showErrorToast('Error','No se pudo acceder a la cámara: '+(err.message||''));
@@ -2210,11 +2252,17 @@ function showImeiProductModal(existingProductId){
       });
     }
 
-    if(typeof jsQR==='undefined'){
-      var script=document.createElement('script');
-      script.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-      script.onload=iniciarCamara;
-      document.head.appendChild(script);
+    if(isBarcode&&!barcodeDetector&&!window.Quagga){
+      var sc=document.createElement('script');
+      sc.src='https://cdn.jsdelivr.net/npm/quagga2@1.0.0/dist/quagga.min.js';
+      sc.onload=iniciarCamara;
+      sc.onerror=function(){showErrorToast('Error','No se pudo cargar el escáner de barras');limpiar();};
+      document.head.appendChild(sc);
+    }else if(!isBarcode&&typeof jsQR==='undefined'){
+      var sc=document.createElement('script');
+      sc.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
+      sc.onload=iniciarCamara;
+      document.head.appendChild(sc);
     }else{
       iniciarCamara();
     }
@@ -2222,22 +2270,9 @@ function showImeiProductModal(existingProductId){
 
   window.startImeiScanner=function(){
     window.abrirScannerQR({
+      mode:'barcode',
       onDetected:function(res){
-        if(res.type==='code'){
-          fetch(API_URL+'/api/inventory?code='+encodeURIComponent(res.code)).then(function(r){return r.json();}).then(function(resp){
-            var items=resp.data||[];
-            if(items.length>0){
-              var d=items[0];
-              document.getElementById('imeiInput').value=d.imei||'';
-              document.getElementById('imeiInput').disabled=true;
-              window.lookupImei();
-            }else{
-              showErrorToast('Error','No se encontró el dispositivo con código '+res.code);
-            }
-          }).catch(function(){
-            showErrorToast('Error','Error al buscar el dispositivo');
-          });
-        }else if(res.type==='imei'){
+        if(res.type==='imei'){
           document.getElementById('imeiInput').value=res.imei;
           document.getElementById('imeiInput').disabled=true;
           window.lookupImei();
