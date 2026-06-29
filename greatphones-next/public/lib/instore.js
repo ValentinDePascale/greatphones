@@ -10,6 +10,7 @@ var instoreState = {
 }
 
 var lastInstoreSaleData = null
+var instoreHistoryOrders = null
 
 function renderInStoreSale() {
   var content = document.getElementById('adminContent')
@@ -1311,6 +1312,7 @@ function loadInStoreHistory(page, filters) {
   fetch(url)
     .then(r => r.json())
     .then(res => {
+      instoreHistoryOrders = res.data
       renderInStoreHistoryList(res.data)
       renderInStoreHistoryPagination(res.page, res.totalPages)
     })
@@ -1330,7 +1332,7 @@ function renderInStoreHistoryList(orders) {
   }
 
   list.innerHTML = orders.map(order => `
-    <div style="background:white;padding:1rem;border-radius:10px;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);transition:all .2s;flex-wrap:wrap;gap:8px"
+    <div onclick="showInStoreSaleDetail('${order.id}')" style="background:white;padding:1rem;border-radius:10px;margin-bottom:0.75rem;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);transition:all .2s;flex-wrap:wrap;gap:8px;cursor:pointer"
       onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'"
       onmouseout="this.style.boxShadow='none'">
       <div style="flex:1;min-width:200px">
@@ -1374,6 +1376,125 @@ function applyInStoreFilters() {
   var paymentMethod = document.getElementById('filter-paymentMethod').value
 
   loadInStoreHistory(1, { startDate, endDate, paymentMethod })
+}
+
+function showInStoreSaleDetail(orderId) {
+  var order = instoreHistoryOrders ? instoreHistoryOrders.find(function(o){return o.id===orderId}) : null
+  if (!order) return
+
+  var itemsHtml = (order.items||[]).map(function(item){
+    var name = item.customName || 'Producto #'+(item.productId||'')
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+      '<span>'+name+' <span style="color:var(--gray)">x'+item.quantity+'</span></span>'+
+      '<span style="font-weight:600">$'+(item.price*item.quantity).toLocaleString('es-AR')+'</span>'+
+    '</div>'
+  }).join('')
+
+  var modal = document.createElement('div')
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s'
+
+  var isPending = order.status === 'PENDING'
+
+  modal.innerHTML = `
+    <div style="background:var(--cream2);border-radius:16px;max-width:550px;width:100%;padding:2rem;animation:scaleIn .3s;max-height:90vh;overflow-y:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <h2 style="font-size:20px;font-weight:700">${order.code}</h2>
+        <button onclick="this.closest('div[style*=\"fixed\"]').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray)">×</button>
+      </div>
+
+      <div style="font-size:12px;color:var(--gray);margin-bottom:1.5rem">${new Date(order.createdAt).toLocaleString('es-AR')}</div>
+
+      ${isPending ? '<div style="background:rgba(255,107,44,.1);padding:0.75rem 1rem;border-radius:8px;margin-bottom:1rem;font-size:12px;color:var(--orange);font-weight:600">⚠ Pendiente de pago — podés aprobar o cancelar esta venta</div>' : ''}
+
+      <div style="margin-bottom:1rem">
+        <div style="font-size:12px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.5rem">Productos</div>
+        ${itemsHtml}
+        <div style="display:flex;justify-content:space-between;padding:8px 0;font-weight:700;font-size:15px">
+          <span>Total</span>
+          <span style="color:var(--orange)">$${(order.total||0).toLocaleString('es-AR')}</span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;background:white;padding:1rem;border-radius:10px;border:1px solid var(--border)">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.5rem">Datos del Comprador</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Nombre:</strong> ${order.clientName||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>DNI:</strong> ${order.clientDni||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>CUIL:</strong> ${order.clientCuil||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Tel:</strong> ${order.clientPhone||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Domicilio:</strong> ${order.clientAddress||'—'}</div>
+          <div style="font-size:13px"><strong>Email:</strong> ${order.clientEmail||'—'}</div>
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.5rem">Pago</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Método:</strong> ${order.payment||'—'}</div>
+          ${order.payment==='Efectivo' ? '<div style="font-size:13px;margin-bottom:2px"><strong>Recibido:</strong> $'+(order.cashReceived||0).toLocaleString('es-AR')+'</div>' : ''}
+          ${order.cashReceived ? '<div style="font-size:13px;margin-bottom:2px"><strong>Vuelto:</strong> $'+(order.change||0).toLocaleString('es-AR')+'</div>' : ''}
+          <div style="font-size:13px;margin-top:4px"><strong>Estado:</strong> ${order.status==='DELIVERED'?'✅ Entregado':order.status==='PENDING'?'⏳ Pendiente':'❌ Cancelado'}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${isPending ? `
+          <button onclick="confirmApproveSale('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">✅ Aprobar venta</button>
+          <button onclick="confirmCancelSale('${order.id}')" class="btn btn-o" style="flex:1;padding:12px;font-size:13px;color:var(--red);border-color:var(--red)">❌ Cancelar venta</button>
+        ` : order.status==='DELIVERED' ? `
+          <button onclick="showInStoreSaleReceipt('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">🖨 Ver Recibo</button>
+        ` : ''}
+        <button onclick="this.closest('div[style*=\"fixed\"]').remove()" class="btn btn-o" style="flex:1;padding:12px;font-size:13px">Cerrar</button>
+      </div>
+    </div>
+  `
+
+  document.body.appendChild(modal)
+}
+
+function confirmApproveSale(orderId) {
+  if (!confirm('¿Aprobar esta venta? Se marcará como entregada.')) return
+  document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/approve',{method:'POST'})
+  .then(function(r){return r.json()})
+  .then(function(data){
+    if(data.success){
+      showToast('Venta aprobada','success')
+      loadInStoreHistory()
+    }else{
+      showToast('Error: '+(data.error||'Error desconocido'),'error')
+      loadInStoreHistory()
+    }
+  })
+  .catch(function(){showToast('Error al aprobar la venta','error');loadInStoreHistory()})
+}
+
+function confirmCancelSale(orderId) {
+  if (!confirm('¿Cancelar esta venta? Se devolverán los productos al stock.')) return
+  document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/cancel',{method:'POST'})
+  .then(function(r){return r.json()})
+  .then(function(data){
+    if(data.success){
+      showToast('Venta cancelada','success')
+      loadInStoreHistory()
+    }else{
+      showToast('Error: '+(data.error||'Error desconocido'),'error')
+      loadInStoreHistory()
+    }
+  })
+  .catch(function(){showToast('Error al cancelar la venta','error');loadInStoreHistory()})
+}
+
+function showInStoreSaleReceipt(orderId) {
+  var order = instoreHistoryOrders ? instoreHistoryOrders.find(function(o){return o.id===orderId}) : null
+  if(!order) return
+  // Build a minimal lastInstoreSaleData and call descargarRecibo
+  lastInstoreSaleData = {
+    order: order,
+    change: order.change || 0,
+    items: [],
+    paymentMethod: order.payment==='Efectivo'?'cash':'transfer',
+    cashReceived: order.cashReceived || 0
+  }
+  descargarRecibo()
 }
 
 // Keyboard shortcuts
