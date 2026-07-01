@@ -2523,20 +2523,23 @@ function showImeiProductModal(existingProductId){
           var imei=res.imei;
           // Show confirmation before accepting
           var confirmDiv=document.createElement('div');
+          confirmDiv.id='imeiConfirmOverlay';
           confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
           confirmDiv.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2rem;text-align:center">'+
             '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
             '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
             '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">Verificá que el número sea correcto:</p>'+
-            '<div style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+imei+'</div>'+
+            '<div id="imeiConfirmNumber" style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+imei+'</div>'+
             '<div style="display:flex;gap:8px">'+
-              '<button onclick="this.closest(\'div[style*=\\"fixed\\"]\').remove()" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
-              '<button onclick="window._confirmarImei(\''+imei+'\');this.closest(\'div[style*=\\"fixed\\"]\').remove()" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
+              '<button onclick="document.getElementById(\'imeiConfirmOverlay\').remove()" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
+              '<button id="imeiConfirmBtn" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
             '</div>'+
           '</div>';
           document.body.appendChild(confirmDiv);
-          confirmDiv.offsetHeight;
-          confirmDiv.style.opacity='1';
+          document.getElementById('imeiConfirmBtn').onclick=function(){
+            document.getElementById('imeiConfirmOverlay').remove();
+            window._confirmarImei(imei);
+          };
         }
       }
     });
