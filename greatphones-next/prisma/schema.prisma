@@ -263,6 +263,7 @@ model Order {
   cashReceived  Int?
   change        Int?
   saleChannel   String          @default("online")
+  currency      String          @default("ARS")
   adminId       String?
   admin         User?           @relation("AdminSales", fields: [adminId], references: [id])
 

@@ -2,11 +2,14 @@
 var instoreState = {
   items: [],
   paymentMethod: null,
+  paymentType: null,    // 'single' | 'installments' | null
+  installments: 1,
+  currency: 'ARS',
   cashReceived: 0,
   searchQuery: '',
   searchResults: [],
   customModal: null,
-  invDevice: null  // scanned/looked-up inventory device
+  invDevice: null
 }
 
 var lastInstoreSaleData = null
@@ -126,21 +129,93 @@ function renderInStoreSale() {
       <div class="pos-right" style="position:sticky;top:0;height:fit-content">
         <div style="background:var(--cream2);border-radius:12px;border:1px solid var(--border);padding:1.5rem;box-shadow:0 4px 20px rgba(0,0,0,.08)">
           
-          <!-- Payment Method -->
+          <!-- Payment Section -->
           <div style="margin-bottom:1.5rem">
-            <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.75rem">Método de Pago</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
-              <button onclick="selectPaymentMethod('cash')" id="btn-cash" 
-                style="padding:12px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
-                <div style="font-size:20px;margin-bottom:4px">💵</div>
-                <div style="font-size:12px;font-weight:600">Efectivo</div>
+
+            <!-- Step 1: Tipo de pago -->
+            <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">1. Tipo de pago</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem">
+              <button onclick="selectPaymentType('single')" id="btn-type-single"
+                style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
+                <div style="font-size:16px;margin-bottom:2px">💵</div>
+                <div style="font-size:11px;font-weight:600">Un pago</div>
               </button>
-              <button onclick="selectPaymentMethod('transfer')" id="btn-transfer"
-                style="padding:12px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
-                <div style="font-size:20px;margin-bottom:4px">📲</div>
-                <div style="font-size:12px;font-weight:600">Transferencia</div>
+              <button onclick="selectPaymentType('installments')" id="btn-type-installments"
+                style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
+                <div style="font-size:16px;margin-bottom:2px">📆</div>
+                <div style="font-size:11px;font-weight:600">Cuotas</div>
               </button>
             </div>
+
+            <div id="instore-installmentsSection" style="display:none;margin-bottom:0.75rem">
+              <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Cantidad de cuotas</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input type="number" id="instore-installments" min="2" max="36" value="3"
+                  oninput="selectInstallments(this.value)"
+                  style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;outline:none">
+                <span style="font-size:12px;font-weight:600;color:var(--gray);white-space:nowrap">cuotas</span>
+              </div>
+              <div id="instore-installmentsInfo" style="display:none;margin-top:8px;padding:8px 10px;background:rgba(255,107,44,.08);border-radius:8px">
+                <div style="font-size:12px;color:var(--orange);font-weight:600" id="instore-installmentsDetail"></div>
+              </div>
+            </div>
+
+            <!-- Step 2: Método de pago -->
+            <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">2. Método de pago</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem">
+              <button onclick="selectPaymentMethod('cash')" id="btn-cash"
+                style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
+                <div style="font-size:16px;margin-bottom:2px">💵</div>
+                <div style="font-size:11px;font-weight:600">Efectivo</div>
+              </button>
+              <button onclick="selectPaymentMethod('transfer')" id="btn-transfer"
+                style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
+                <div style="font-size:16px;margin-bottom:2px">📲</div>
+                <div style="font-size:11px;font-weight:600">Transferencia</div>
+              </button>
+            </div>
+
+            <!-- Transfer Section -->
+            <div id="instore-transferSection" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem;margin-bottom:0.75rem">
+              <div style="padding:10px 12px;background:rgba(45,90,39,.08);border-radius:8px;margin-bottom:8px">
+                <div style="font-size:11px;color:var(--gray);margin-bottom:4px">Alias</div>
+                <div style="font-size:14px;font-weight:700;letter-spacing:1px;color:var(--dk)">GREATPHONES.MP</div>
+              </div>
+              <div style="padding:10px 12px;background:rgba(45,90,39,.08);border-radius:8px;margin-bottom:8px">
+                <div style="font-size:11px;color:var(--gray);margin-bottom:4px">CBU</div>
+                <div style="font-size:13px;font-weight:600;letter-spacing:1px;color:var(--dk)">0000003100085741097853</div>
+              </div>
+              <button onclick="generateTransferQr()" id="btn-genQr" style="width:100%;padding:10px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">
+                Generar QR de pago
+              </button>
+              <div id="instore-transferQrContainer" style="display:none;margin-top:10px;text-align:center"></div>
+            </div>
+
+            <!-- Cash Section -->
+            <div id="instore-cashSection" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem;margin-bottom:0.75rem">
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Monto Recibido</label>
+              <input type="number" id="instore-cashReceived" placeholder="0"
+                oninput="calculateChange()"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem;box-sizing:border-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(45,90,39,.1);border-radius:8px">
+                <span style="font-size:12px;font-weight:600;color:var(--green)">Cambio</span>
+                <span id="instore-change" style="font-size:16px;font-weight:700;color:var(--green)">$0</span>
+              </div>
+            </div>
+
+            <!-- Step 3: Moneda -->
+            <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">3. Moneda</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem">
+              <button onclick="selectCurrency('ARS')" id="btn-curr-ARS"
+                style="padding:10px;border:2px solid var(--green);border-radius:10px;background:rgba(45,90,39,.1);cursor:pointer;transition:all .2s">
+                <div style="font-size:11px;font-weight:600">$ ARS</div>
+              </button>
+              <button onclick="selectCurrency('USD')" id="btn-curr-USD"
+                style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
+                <div style="font-size:11px;font-weight:600">US$ USD</div>
+              </button>
+            </div>
+
           </div>
 
           <!-- Totals -->
@@ -152,18 +227,6 @@ function renderInStoreSale() {
             <div style="display:flex;justify-content:space-between;font-size:20px;font-weight:800;color:var(--dk);margin-top:0.75rem">
               <span>Total</span>
               <span id="instore-total" style="color:var(--orange)">$0</span>
-            </div>
-          </div>
-
-          <!-- Cash Section -->
-          <div id="instore-cashSection" style="display:none;border-top:1px solid var(--border);padding-top:1rem;margin-bottom:1rem">
-            <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Monto Recibido</label>
-            <input type="number" id="instore-cashReceived" placeholder="0" 
-              oninput="calculateChange()"
-              style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem;box-sizing:border-box">
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(45,90,39,.1);border-radius:8px">
-              <span style="font-size:12px;font-weight:600;color:var(--green)">Cambio</span>
-              <span id="instore-change" style="font-size:16px;font-weight:700;color:var(--green)">$0</span>
             </div>
           </div>
 
@@ -594,28 +657,124 @@ function removeItem(index) {
   showToast(`${item.name} eliminado`, 'info')
 }
 
+function selectPaymentType(type) {
+  instoreState.paymentType = type
+  var singleBtn = document.getElementById('btn-type-single')
+  var instBtn = document.getElementById('btn-type-installments')
+
+  if (type === 'single') {
+    singleBtn.style.borderColor = 'var(--green)'
+    singleBtn.style.background = 'rgba(45,90,39,.1)'
+    instBtn.style.borderColor = 'var(--border)'
+    instBtn.style.background = 'white'
+    document.getElementById('instore-installmentsSection').style.display = 'none'
+    instoreState.installments = 1
+  } else {
+    instBtn.style.borderColor = 'var(--green)'
+    instBtn.style.background = 'rgba(45,90,39,.1)'
+    singleBtn.style.borderColor = 'var(--border)'
+    singleBtn.style.background = 'white'
+    document.getElementById('instore-installmentsSection').style.display = 'block'
+    var input = document.getElementById('instore-installments')
+    selectInstallments(input.value)
+  }
+}
+
+function selectInstallments(n) {
+  var num = parseInt(n) || 1
+  if (num < 1) num = 1
+  if (num > 36) num = 36
+  instoreState.installments = num
+  if (num <= 1) {
+    document.getElementById('instore-installmentsInfo').style.display = 'none'
+    return
+  }
+  var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
+  var porCuota = Math.round(total / num)
+  document.getElementById('instore-installmentsDetail').textContent =
+    num + ' cuota' + (num > 1 ? 's' : '') + ' de ' + formatMoney(porCuota) + ' c/u — Total: ' + formatMoney(total)
+  document.getElementById('instore-installmentsInfo').style.display = 'block'
+}
+
+function selectCurrency(curr) {
+  instoreState.currency = curr
+  var arsBtn = document.getElementById('btn-curr-ARS')
+  var usdBtn = document.getElementById('btn-curr-USD')
+  if (curr === 'ARS') {
+    arsBtn.style.borderColor = 'var(--green)'
+    arsBtn.style.background = 'rgba(45,90,39,.1)'
+    usdBtn.style.borderColor = 'var(--border)'
+    usdBtn.style.background = 'white'
+  } else {
+    usdBtn.style.borderColor = 'var(--green)'
+    usdBtn.style.background = 'rgba(45,90,39,.1)'
+    arsBtn.style.borderColor = 'var(--border)'
+    arsBtn.style.background = 'white'
+  }
+  updateSummary()
+}
+
+function generateTransferQr() {
+  var btn = document.getElementById('btn-genQr')
+  btn.textContent = 'Generando...'
+  btn.disabled = true
+  var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
+  fetch(API_URL + '/api/admin/instore-sale/generate-qr', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      amount: total,
+      currency: instoreState.currency,
+      installments: instoreState.installments
+    })
+  })
+  .then(function(r) { return r.json() })
+  .then(function(data) {
+    btn.textContent = 'Generar QR de pago'
+    btn.disabled = false
+    if (data.qrCodeBase64) {
+      var container = document.getElementById('instore-transferQrContainer')
+      container.innerHTML = '<div style="background:white;padding:1rem;border-radius:10px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,.1)">' +
+        '<img src="data:image/png;base64,' + data.qrCodeBase64 + '" alt="QR" style="width:200px;height:200px;max-width:100%"></div>' +
+        '<div style="font-size:14px;font-weight:700;color:var(--orange);margin-top:8px">' + formatMoney(data.amount) + '</div>'
+      container.style.display = 'block'
+    } else {
+      showToast('Error al generar QR', 'error')
+    }
+  })
+  .catch(function() {
+    btn.textContent = 'Generar QR de pago'
+    btn.disabled = false
+    showToast('Error al generar QR', 'error')
+  })
+}
+
+function formatMoney(n) {
+  var curr = instoreState.currency === 'USD' ? 'US$' : '$'
+  return curr + ' ' + n.toLocaleString('es-AR')
+}
+
 function selectPaymentMethod(method) {
   instoreState.paymentMethod = method
 
   var cashBtn = document.getElementById('btn-cash')
   var transferBtn = document.getElementById('btn-transfer')
-  
+
   if (method === 'cash') {
     cashBtn.style.borderColor = 'var(--green)'
     cashBtn.style.background = 'rgba(45,90,39,.1)'
     transferBtn.style.borderColor = 'var(--border)'
     transferBtn.style.background = 'white'
+    document.getElementById('instore-transferSection').style.display = 'none'
+    document.getElementById('instore-cashSection').style.display = 'block'
+    calculateChange()
   } else {
     transferBtn.style.borderColor = 'var(--green)'
     transferBtn.style.background = 'rgba(45,90,39,.1)'
     cashBtn.style.borderColor = 'var(--border)'
     cashBtn.style.background = 'white'
-  }
-
-  document.getElementById('instore-cashSection').style.display = method === 'cash' ? 'block' : 'none'
-
-  if (method === 'cash') {
-    calculateChange()
+    document.getElementById('instore-cashSection').style.display = 'none'
+    document.getElementById('instore-transferSection').style.display = 'block'
   }
 }
 
@@ -630,10 +789,16 @@ function calculateChange() {
 }
 
 function updateSummary() {
-  var subtotal = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
+  var subtotal = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
 
-  document.getElementById('instore-subtotal').textContent = '$' + subtotal.toLocaleString('es-AR')
-  document.getElementById('instore-total').textContent = '$' + subtotal.toLocaleString('es-AR')
+  document.getElementById('instore-subtotal').textContent = formatMoney(subtotal)
+  document.getElementById('instore-total').textContent = formatMoney(subtotal)
+
+  if (instoreState.installments > 1) {
+    var porCuota = Math.round(subtotal / instoreState.installments)
+    document.getElementById('instore-installmentsDetail').textContent =
+      instoreState.installments + ' cuotas de ' + formatMoney(porCuota) + ' c/u — Total: ' + formatMoney(subtotal)
+  }
 
   if (instoreState.paymentMethod === 'cash') {
     calculateChange()
@@ -647,6 +812,9 @@ function clearInstoreSale() {
     instoreState = {
       items: [],
       paymentMethod: null,
+      paymentType: null,
+      installments: 1,
+      currency: 'ARS',
       cashReceived: 0,
       searchQuery: '',
       searchResults: [],
@@ -673,12 +841,17 @@ function confirmInStoreSale() {
     return
   }
 
+  if (!instoreState.paymentType) {
+    showToast('Seleccioná el tipo de pago (un pago o cuotas)', 'error')
+    return
+  }
+
   if (!instoreState.paymentMethod) {
     showToast('Seleccioná un método de pago', 'error')
     return
   }
 
-  var total = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
+  var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
 
   if (instoreState.paymentMethod === 'cash') {
     var cashReceived = parseInt(document.getElementById('instore-cashReceived').value) || 0
@@ -719,6 +892,8 @@ function confirmInStoreSale() {
       }
     }),
     paymentMethod: instoreState.paymentMethod,
+    currency: instoreState.currency,
+    installments: instoreState.installments,
     adminId: currentUser.id
   }
 
@@ -749,11 +924,13 @@ function confirmInStoreSale() {
 
     // Save sale data for receipt generation
     lastInstoreSaleData = {
-      order: data.order,
+      order: data.order || null,
       change: data.change || 0,
       items: instoreState.items.slice(),
       paymentMethod: instoreState.paymentMethod,
-      cashReceived: instoreState.paymentMethod === 'cash' ? parseInt((document.getElementById('instore-cashReceived')||{}).value || 0) : 0
+      cashReceived: instoreState.paymentMethod === 'cash' ? parseInt((document.getElementById('instore-cashReceived')||{}).value || 0) : 0,
+      currency: data.currency || instoreState.currency,
+      installments: data.installments || instoreState.installments
     }
 
     // Refresh products list so stock reflects the sale
@@ -1003,18 +1180,19 @@ function generarReciboPDF(){
       doc.text('PRECIO TOTAL',leftX,y);
       ln(5);
 
+      var currencySymbol = (order.currency||'ARS') === 'USD' ? 'US$' : '$';
       doc.setFont('helvetica','normal');
       doc.setFontSize(10);
-      doc.text('$',leftX,y);
-      doc.text((order.total||0).toLocaleString('es-AR'),leftX+5,y);
+      doc.text(currencySymbol,leftX,y);
+      doc.text((order.total||0).toLocaleString('es-AR'),leftX+5+((order.currency||'ARS')==='USD'?3:0),y);
       doc.setDrawColor(DK[0],DK[1],DK[2]);
       doc.setLineWidth(0.5);
-      doc.line(leftX+5,y+1,leftX+55,y+1);
+      doc.line(leftX+5+((order.currency||'ARS')==='USD'?3:0),y+1,leftX+55+((order.currency||'ARS')==='USD'?3:0),y+1);
       ln(5);
 
       doc.setFont('helvetica','normal');
       doc.setFontSize(6.5);
-      doc.text('Son pesos:',leftX,y);
+      doc.text((order.currency||'ARS') === 'USD' ? 'Son dólares:' : 'Son pesos:',leftX,y);
       doc.setFont('helvetica','italic');
       doc.text(numeroALetras(order.total||0),leftX+14,y);
       doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
@@ -1029,10 +1207,13 @@ function generarReciboPDF(){
       doc.text('DETALLE DEL PAGO (completar solo los que apliquen):',rightX,y);
       ln(5);
 
+      var currSymbol = (order.currency||'ARS') === 'USD' ? 'US$' : '$';
+      var isUSD = (order.currency||'ARS') === 'USD';
+
       checkbox(rightX,y,'Efectivo:');
       doc.setFont('helvetica','normal');
       doc.setFontSize(7);
-      doc.text('$',rightX+24,y);
+      doc.text(currSymbol,rightX+24,y);
       if(order.payment==='Efectivo'){
         doc.text((order.cashReceived||order.total||0).toLocaleString('es-AR'),rightX+28,y);
       }
@@ -1041,27 +1222,26 @@ function generarReciboPDF(){
       doc.line(rightX+28,y+1,rightX+70,y+1);
       ln(5);
 
-      checkbox(rightX,y,'Dólares:');
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(7);
-      doc.text('USD',rightX+22,y);
-      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
-      doc.line(rightX+28,y+1,rightX+70,y+1);
-      ln(5);
-
       checkbox(rightX,y,'Transferencia:');
       doc.setFont('helvetica','normal');
       doc.setFontSize(7);
-      doc.text('$',rightX+32,y);
+      doc.text(currSymbol,rightX+32,y);
+      if(order.payment==='Transferencia'){
+        doc.text((order.total||0).toLocaleString('es-AR'),rightX+36,y);
+      }
       doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.setLineWidth(0.3);
       doc.line(rightX+36,y+1,rightX+70,y+1);
       ln(5);
 
-      checkbox(rightX,y,'Cuotas:');
-      doc.setFont('helvetica','normal');
-      doc.setFontSize(7);
-      doc.text('___ x $______ = $______',rightX+20,y);
-      ln(5);
+      if ((order.cuotas||1) > 1) {
+        var porCuota = Math.round((order.total||0) / (order.cuotas||1));
+        checkbox(rightX,y,'Cuotas:');
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(7);
+        doc.text(order.cuotas + ' x ' + currSymbol + ' ' + porCuota.toLocaleString('es-AR') + ' = ' + currSymbol + ' ' + (order.total||0).toLocaleString('es-AR'),rightX+20,y);
+        ln(5);
+      }
 
       doc.setFont('helvetica','bold');
       doc.setFontSize(6.5);
@@ -1270,7 +1450,7 @@ function showSaleSuccess(order, change) {
       ${change > 0 ? `
         <div style="background:rgba(45,90,39,.1);padding:1rem;border-radius:10px;margin-bottom:1rem">
           <div style="font-size:12px;color:var(--green);font-weight:600;margin-bottom:4px">Cambio a entregar</div>
-          <div style="font-size:28px;font-weight:800;color:var(--green)">$${change.toLocaleString('es-AR')}</div>
+          <div style="font-size:28px;font-weight:800;color:var(--green)">${(order.currency||'ARS') === 'USD' ? 'US$' : '$'}${change.toLocaleString('es-AR')}</div>
         </div>
       ` : ''}
 
@@ -1300,6 +1480,9 @@ function closeSaleSuccess(btn) {
   instoreState = {
     items: [],
     paymentMethod: null,
+    paymentType: null,
+    installments: 1,
+    currency: 'ARS',
     cashReceived: 0,
     searchQuery: '',
     searchResults: [],
@@ -1323,7 +1506,7 @@ function showQRModal(data) {
         <img src="data:image/png;base64,${data.qrCodeBase64}" alt="QR Code" style="width:250px;height:250px;max-width:100%">
       </div>
       
-      <div style="font-size:24px;font-weight:800;color:var(--orange);margin-bottom:0.5rem">$${data.amount.toLocaleString('es-AR')}</div>
+      <div style="font-size:24px;font-weight:800;color:var(--orange);margin-bottom:0.5rem">${data.currency === 'USD' ? 'US$' : '$'}${data.amount.toLocaleString('es-AR')}</div>
       <div style="font-size:12px;color:var(--gray);margin-bottom:1.5rem">${data.orderCode}</div>
       
       <div id="qr-status" style="margin-bottom:1.5rem">
@@ -1376,6 +1559,13 @@ function showPaymentSuccess(order) {
   var modal = document.getElementById('qr-modal')
   if (!modal) return
 
+  // Update lastInstoreSaleData with the confirmed order (for receipt generation)
+  if (lastInstoreSaleData) {
+    lastInstoreSaleData.order = order
+    lastInstoreSaleData.currency = order.currency || lastInstoreSaleData.currency || 'ARS'
+    lastInstoreSaleData.installments = order.cuotas || lastInstoreSaleData.installments || 1
+  }
+
   modal.innerHTML = `
     <div style="background:var(--cream2);border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;animation:scaleIn .3s">
       <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:bounceIn .5s">
@@ -1410,6 +1600,9 @@ function closePaymentSuccess(btn) {
   instoreState = {
     items: [],
     paymentMethod: null,
+    paymentType: null,
+    installments: 1,
+    currency: 'ARS',
     cashReceived: 0,
     searchQuery: '',
     searchResults: [],

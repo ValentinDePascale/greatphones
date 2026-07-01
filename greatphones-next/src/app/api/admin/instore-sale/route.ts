@@ -17,9 +17,9 @@ function generateOrderCode() {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId } = body
+    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId, currency, installments } = body
 
-    console.log('[instore-sale] Body:', JSON.stringify({ clientName, clientDni, paymentMethod, itemCount: items?.length, adminId }))
+    console.log('[instore-sale] Body:', JSON.stringify({ clientName, clientDni, paymentMethod, itemCount: items?.length, adminId, currency, installments }))
 
     if (!clientName || !clientDni || !items || items.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
@@ -31,6 +31,15 @@ export async function POST(request: Request) {
 
     if (paymentMethod === 'cash' && (!cashReceived || cashReceived <= 0)) {
       return NextResponse.json({ error: 'Monto recibido inválido' }, { status: 400 })
+    }
+
+    if (currency && !['ARS', 'USD'].includes(currency)) {
+      return NextResponse.json({ error: 'Moneda inválida' }, { status: 400 })
+    }
+
+    const installmentsCount = installments ? parseInt(installments) : 1
+    if (installmentsCount < 1) {
+      return NextResponse.json({ error: 'Cantidad de cuotas inválida' }, { status: 400 })
     }
 
     // Validate admin
@@ -156,6 +165,8 @@ export async function POST(request: Request) {
           clientEmail: clientEmail || null,
           cashReceived: paymentMethod === 'cash' ? cashReceived : null,
           change: paymentMethod === 'cash' ? change : null,
+          currency: currency || 'ARS',
+          cuotas: installmentsCount,
           saleChannel: 'in-store',
           adminId,
           items: {
@@ -315,6 +326,8 @@ export async function POST(request: Request) {
         qrCode: mpResponse.point_of_interaction?.transaction_data?.qr_code,
         qrCodeBase64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64,
         amount: total,
+        currency: currency || 'ARS',
+        installments: installmentsCount,
         mpPaymentId: mpResponse.id?.toString()
       })
     }
