@@ -355,13 +355,13 @@ function renderSearchResults(results) {
     return
   }
 
-  container.innerHTML = results.map(item => {
-    var isInCart = instoreState.items.find(i => i.productId === item.id || i.id === item.id)
+  container.innerHTML = results.map(function(item, idx) {
+    var isInCart = instoreState.items.find(function(i) { return i.productId === item.id || i.id === item.id })
     var stockLow = item.stock <= 2
     
     return `
       <div style="display:flex;align-items:center;gap:1rem;padding:1rem;background:white;border-radius:10px;margin-bottom:0.5rem;border:1px solid ${isInCart ? 'var(--orange)' : 'var(--border)'};cursor:pointer;transition:all .2s"
-        onclick="addFromSearch('${item.id}', '${item.name.replace(/'/g, "\\'")}', ${item.price}, ${item.stock}, '${item.itemType}', '${item.imageUrl || ''}')"
+        onclick="addFromSearchResult(${idx})"
         onmouseover="this.style.transform='translateX(4px)';this.style.boxShadow='0 4px 12px rgba(0,0,0,.1)'"
         onmouseout="this.style.transform='none';this.style.boxShadow='none'">
         
@@ -388,7 +388,13 @@ function renderSearchResults(results) {
   container.style.display = 'block'
 }
 
-function addFromSearch(id, name, price, stock, itemType, imageUrl) {
+function addFromSearchResult(idx) {
+  var item = instoreState.searchResults[idx]
+  if (!item) return
+  addFromSearch(item.id, item.name, item.price, item.stock, item.itemType, item.imageUrl, item.brand, item.color, item.battery, item.storage, item.imei)
+}
+
+function addFromSearch(id, name, price, stock, itemType, imageUrl, brand, color, battery, storage, imei) {
   // Check if already in cart
   var existing = instoreState.items.find(i => i.productId === id)
   if (existing) {
@@ -409,7 +415,12 @@ function addFromSearch(id, name, price, stock, itemType, imageUrl) {
       quantity: 1,
       stock: stock,
       imageUrl: imageUrl,
-      itemType: itemType
+      itemType: itemType,
+      brand: brand || '',
+      color: color || '',
+      battery: battery || '',
+      storage: storage || '',
+      imei: imei || ''
     })
     showToast(`${name} agregado`, 'success')
   }
@@ -745,6 +756,9 @@ function confirmInStoreSale() {
       cashReceived: instoreState.paymentMethod === 'cash' ? parseInt((document.getElementById('instore-cashReceived')||{}).value || 0) : 0
     }
 
+    // Refresh products list so stock reflects the sale
+    if (typeof loadProducts === 'function') { window._productsLoaded = false; loadProducts() }
+
     if (instoreState.paymentMethod === 'cash') {
       showSaleSuccess(data.order, data.change)
     } else {
@@ -812,202 +826,380 @@ function generarReciboPDF(){
       var items=d.items||[];
       var jsPDF=window.jspdf.jsPDF;
       var doc=new jsPDF({unit:'mm',format:'a4'});
-      var w=210,h=297;
-      var ml=15,mr=15;
-      var cw=w-ml-mr;
-      var orange=[255,107,44];
-      var dk=[35,31,32];
-      var gray=[120,120,120];
-      var lightGray=[200,200,200];
+      var W=210,H=297;
+      var ML=18,MR=18;
+      var CW=W-ML-MR;
+      var ORANGE=[255,107,44];
+      var GREEN=[76,175,80];
+      var DK=[35,31,32];
+      var GRAY=[120,120,120];
+      var LGRAY=[200,200,200];
       var y=0;
 
-      function ln(s){y+=s||4}
-      function hline(){doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.8);doc.line(ml,y,w-mr,y);y+=2}
-      function field(label,value,lw,vw){
-        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
-        doc.text(label,ml,y);
-        var vx=ml+lw;
-        doc.setFont('helvetica','normal');
-        doc.text(value||'',vx,y);
-        doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.setLineWidth(0.3);
-        doc.line(vx,y+0.5,vx+vw,y+0.5);
+      function pdfBrand(brand){
+        var map={iphone:'Apple'};
+        return map[(brand||'').toLowerCase()]||brand||'';
       }
 
-      // ---- HEADER ----
-      doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.text('GreatPhones',ml,10);
-      doc.setFontSize(12);doc.text('RECIBO DE VENTA',w-mr,10,{align:'right'});
-      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(gray[0],gray[1],gray[2]);
-      doc.text('Zelarrayan 179 · Bahía Blanca · 2914727351',ml,14);
+      function ln(s){y+=s||4}
+      function hline(){
+        doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+        doc.setLineWidth(0.8);
+        doc.line(ML,y,W-MR,y);
+        y+=3;
+      }
+      function sectionTitle(t){
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(9);
+        doc.setTextColor(DK[0],DK[1],DK[2]);
+        doc.text(t,ML,y);
+        ln(5);
+      }
+      function fieldFilled(label,value,lw){
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(DK[0],DK[1],DK[2]);
+        doc.text(label,ML,y);
+        doc.setFont('helvetica','normal');
+        doc.text(value||'',ML+lw,y);
+        doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+        doc.setLineWidth(0.3);
+        doc.line(ML+lw,y+1,ML+lw+50,y+1);
+      }
+      function fieldFilled2(label,value,lw,label2,value2,lw2){
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(DK[0],DK[1],DK[2]);
+        doc.text(label,ML,y);
+        doc.setFont('helvetica','normal');
+        doc.text(value||'',ML+lw,y);
+        doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+        doc.setLineWidth(0.3);
+        doc.line(ML+lw,y+1,ML+lw+50,y+1);
 
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.text('Nº:',w-mr-50,14);doc.text(order.code||'',w-mr-44,14);
-      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.setLineWidth(0.3);
-      doc.line(w-mr-44,14.5,w-mr,14.5);
+        var c2=115;
+        doc.text(label2,c2,y);
+        doc.setFont('helvetica','normal');
+        doc.text(value2||'',c2+lw2,y);
+        doc.line(c2+lw2,y+1,c2+lw2+50,y+1);
+      }
+      function checkbox(x,yPos,label){
+        doc.setDrawColor(DK[0],DK[1],DK[2]);
+        doc.setLineWidth(0.3);
+        doc.rect(x,yPos-3,3,3);
+        doc.setFont('helvetica','normal');
+        doc.setFontSize(7);
+        doc.setTextColor(DK[0],DK[1],DK[2]);
+        doc.text(label,x+4.5,yPos);
+      }
+
+      // ===================== HEADER =====================
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(18);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('GreatPhones',ML,14);
+
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(11);
+      doc.text('RECIBO DE VENTA',W-MR,14,{align:'right'});
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+      doc.text('Zelarrayan 179 · Bahía Blanca · 2914727351',ML,18);
+
       var fecha=new Date(order.createdAt||Date.now());
       var fechaStr=fecha.getDate()+'/'+(fecha.getMonth()+1)+'/'+fecha.getFullYear();
-      doc.text('Fecha:',w-mr-28,14);doc.text(fechaStr,w-mr-20,14);
-      doc.line(w-mr-20,14.5,w-mr,14.5);
-      y=18;hline();
 
-      // ---- DATOS DEL DISPOSITIVO ----
-      ln(5);
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('DATOS DEL DISPOSITIVO',ml,y);ln(5);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('Nº:',W-MR-45,18);
+      doc.text(order.code||'',W-MR-40,18);
+      doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+      doc.setLineWidth(0.3);
+      doc.line(W-MR-40,18.5,W-MR-10,18.5);
+
+      doc.text('Fecha:',W-MR-10,18);
+      doc.text(fechaStr,W-MR-2,18);
+
+      y=23;
+      hline();
+
+      // ===================== DISPOSITIVO =====================
+      ln(4);
+      sectionTitle('DATOS DEL DISPOSITIVO');
 
       var invItems=items.filter(function(i){return i.type==='inventory'});
-      var otherItems=items.filter(function(i){return i.type!=='inventory'});
+      var catItems=items.filter(function(i){return i.type==='catalog'});
 
       if(invItems.length>0){
-        invItems.forEach(function(item,idx){
-          field('Marca/Modelo:',item.brand+' '+item.modelName+(item.storage?' '+item.storage:''),35,50);
-          doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(dk[0],dk[1],dk[2]);
-          doc.text('IMEI:',120,y);doc.setFont('helvetica','normal');doc.text(item.imei||'',129,y);
-          doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(129,y+0.5,195,y+0.5);ln(5);
-          field('Color:',item.color||'',20,50);
-          doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Batería:',120,y);doc.setFont('helvetica','normal');doc.text('',132,y);
-          doc.line(132,y+0.5,195,y+0.5);ln(6);
+        invItems.forEach(function(item){
+          var brandModel=pdfBrand(item.brand)+' '+item.modelName+(item.storage?' '+item.storage:'');
+          fieldFilled2('Marca/Modelo:',brandModel,30,'IMEI:',item.imei||'',12);
+          ln(7);
+          fieldFilled2('Color:',item.color||'',14,'Batería:',item.batteryPct?(item.batteryPct+'%'):'',14);
+          ln(8);
+        });
+      }else if(catItems.length>0){
+        catItems.forEach(function(item){
+          var modelPart=item.name;
+          if(item.brand&&item.name.toLowerCase().indexOf(item.brand.toLowerCase())===0)
+            modelPart=item.name.substring(item.brand.length).trim();
+          var brandModel=pdfBrand(item.brand)+(modelPart?' '+modelPart:'');
+          if(item.storage) brandModel+=' '+item.storage;
+          fieldFilled2('Marca/Modelo:',brandModel,30,'IMEI:',item.imei||'',12);
+          ln(7);
+          fieldFilled2('Color:',item.color||'',14,'Batería:',item.battery?(item.battery+'%'):'',14);
+          ln(8);
         });
       }else{
         var firstItem=items[0]||{};
-        field('Marca/Modelo:',firstItem.name||'',35,50);
-        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('IMEI:',120,y);ln(5);
-        field('Color:','',20,50);
-        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Batería:',120,y);ln(6);
+        fieldFilled2('Marca/Modelo:',firstItem.customName||firstItem.name||'',30,'IMEI:','',12);
+        ln(7);
+        fieldFilled2('Color:','',14,'Batería:','',14);
+        ln(8);
       }
 
-      hline();ln(4);
+      hline();
 
-      // ---- ACCESORIOS INCLUIDOS ----
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text('ACCESORIOS INCLUIDOS',ml,y);ln(5);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);
+      // ===================== ACCESORIOS =====================
+      ln(4);
+      sectionTitle('ACCESORIOS INCLUIDOS');
+
       var accesorios=['Cable USB-C / Lightning','Cabezal de cargador','Funda protectora','Vidrio templado'];
-      var accX=ml;
+      var accX=ML;
       accesorios.forEach(function(a){
-        doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);
-        doc.rect(accX,y-3,3,3);
-        doc.setFont('helvetica','normal');doc.setFontSize(7);doc.text(a,accX+4,y-0.5);
-        accX+=doc.getTextWidth(a)+10;
+        checkbox(accX,y,a);
+        accX+=doc.getTextWidth(a)+12;
       });
-      ln(6);
-
-      // ---- PRECIO Y FORMA DE PAGO (orange box) ----
-      var boxY=y;
-      doc.setFillColor(255,249,245);doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.6);
-      doc.roundedRect(ml,boxY-3,cw,38,3,3,'FD');
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.text('PRECIO Y FORMA DE PAGO',w/2,boxY+2,{align:'center'});
       ln(8);
 
-      doc.setFont('helvetica','bold');doc.setFontSize(8);doc.text('PRECIO TOTAL',ml,y);
-      doc.setFont('helvetica','normal');doc.text('$',ml+35,y);
-      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.setLineWidth(0.4);
-      doc.line(ml+38,y+0.5,ml+85,y+0.5);
-      doc.text((order.total||0).toLocaleString('es-AR'),ml+40,y);
-      ln(4);
-      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.text('Son pesos:',ml,y);
-      doc.text(numeroALetras(order.total||0),ml+18,y);
-      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+18,y+0.5,ml+90,y+0.5);ln(7);
+      // ===================== PRECIO Y FORMA DE PAGO =====================
+      var boxTop=y;
+      var boxH=48;
 
-      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('DETALLE DEL PAGO (completar solo los que apliquen):',ml,y);ln(5);
+      doc.setFillColor(255,249,245);
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.setLineWidth(0.8);
+      doc.roundedRect(ML,boxTop,CW,boxH,3,3,'FD');
 
-      // Efectivo
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Efectivo:  $',ml+4,y);
-      if(order.payment==='Efectivo'&&order.cashReceived){
-        doc.text((order.cashReceived||0).toLocaleString('es-AR'),ml+25,y);
-        doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+25,y+0.5,ml+70,y+0.5);
-        doc.text('Vuelto: $'+(d.change||0).toLocaleString('es-AR'),ml+75,y);
-      }else{
-        doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+25,y+0.5,ml+70,y+0.5);
-      }
+      doc.setFillColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.rect(ML,boxTop,CW,7,'F');
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(255,255,255);
+      doc.text('PRECIO Y FORMA DE PAGO',W/2,boxTop+4.8,{align:'center'});
+
+      y=boxTop+12;
+
+      var leftX=ML+2;
+      var rightX=ML+CW/2+5;
+
+      // LEFT: PRECIO TOTAL
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(8);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('PRECIO TOTAL',leftX,y);
       ln(5);
 
-      // Transferencia
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Transferencia:  $',ml+4,y);
-      if(order.payment==='Transferencia'){
-        doc.text((order.total||0).toLocaleString('es-AR'),ml+38,y);
-      }
-      doc.setDrawColor(orange[0],orange[1],orange[2]);doc.line(ml+38,y+0.5,ml+85,y+0.5);ln(5);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(10);
+      doc.text('$',leftX,y);
+      doc.text((order.total||0).toLocaleString('es-AR'),leftX+5,y);
+      doc.setDrawColor(DK[0],DK[1],DK[2]);
+      doc.setLineWidth(0.5);
+      doc.line(leftX+5,y+1,leftX+55,y+1);
+      ln(5);
 
-      // Dólares
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Dólares:  USD ___________',ml+4,y);ln(5);
-
-      // Cuotas
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);doc.rect(ml,y-3,3,3);
-      doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.text('Cuotas:  _____ x $___________ = $___________',ml+4,y);ln(5);
-
-      // N° ref
-      doc.setFont('helvetica','bold');doc.setFontSize(7);doc.text('N° ref. transferencia / comprobante: _______________________',ml,y);ln(5);
-
-      y=boxY+40;ln(2);
-
-      // ---- DATOS DEL COMPRADOR ----
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.text('DATOS DEL COMPRADOR',ml,y);ln(6);
-
-      var col2x=110;
-      field('Apellido y Nombre:',order.clientName||'',33,55);
-      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Tel:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientPhone||'',col2x+10,y);
-      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+10,y+0.5,195,y+0.5);ln(5);
-
-      field('DNI:',order.clientDni||'',15,55);
-      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Domicilio:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientAddress||'',col2x+22,y);
-      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+22,y+0.5,195,y+0.5);ln(5);
-
-      field('CUIL / CUIT:',order.clientCuil||'',25,55);
-      doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text('Email:',col2x,y);doc.setFont('helvetica','normal');doc.text(order.clientEmail||'',col2x+14,y);
-      doc.setDrawColor(lightGray[0],lightGray[1],lightGray[2]);doc.line(col2x+14,y+0.5,195,y+0.5);ln(5);
-
-      hline();ln(3);
-
-      // ---- GARANTÍA ----
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.text('GARANTÍA',ml,y);ln(5);
-
-      doc.setFont('helvetica','normal');doc.setFontSize(6);doc.setTextColor(50,50,50);
-      var garantia=[
-        'El equipo adquirido cuenta con una garantía de 12 (doce) meses desde la fecha de compra.',
-        'La garantía cubre únicamente fallas técnicas de origen no provocadas por el cliente, incluyendo problemas de encendido, fallas internas de pantalla,',
-        'batería defectuosa de origen, fallas de software persistentes, problemas de carga, audio, cámara o conectividad.',
-        'Toda garantía queda sujeta a diagnóstico y verificación técnica por parte del local.',
-        'La garantía NO cubre: Pantallas rotas, fisuradas o con daño físico. Golpes, rayones, deformaciones o daños estéticos. Daño por líquido o humedad.',
-        'Equipos abiertos, manipulados o reparados por terceros. Daños ocasionados por accesorios no originales o uso incorrecto.',
-        'Problemas relacionados con cuentas, contraseñas o bloqueos del usuario. Daños eléctricos externos. Fallas posteriores al vencimiento del plazo de garantía.',
-        'Si el equipo presenta evidencia física de golpe, humedad o manipulación externa, la garantía quedará automáticamente anulada.',
-        'En caso de ingreso por garantía:',
-        '1. El equipo será evaluado técnicamente. El local dispondrá de un plazo de 48 (cuarenta y ocho) horas hábiles desde el ingreso del equipo para',
-        'emitir el diagnóstico correspondiente e informar al cliente si el caso encuadra dentro de las condiciones de garantía.',
-        '2. El local determinará si corresponde garantía según el diagnóstico realizado. Una vez comunicada la aceptación, el local dispondrá de',
-        '96 (noventa y seis) horas hábiles adicionales para llevar a cabo la reparación o brindar una resolución definitiva. Este plazo podrá extenderse',
-        'en casos de fuerza mayor, tales como fallas de placa, demoras en disponibilidad de repuestos u otras situaciones excepcionales debidamente justificadas.',
-        '3. Si corresponde garantía, el local podrá optar por: reparación, reemplazo del equipo, o devolución del dinero abonado.',
-        'La devolución de dinero será siempre la última instancia luego de intentar reparación o reposición.',
-        'El cliente declara haber recibido el equipo en correcto estado de funcionamiento y haber leído y aceptado las presentes condiciones de garantía.'
-      ];
-      garantia.forEach(function(linea){
-        doc.text(linea,ml,y);
-        ln(3.2);
-      });
-      ln(1);
-
-      // ---- FIRMAS ----
-      hline();ln(5);
-
-      var firmY=y+10;
-      doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(dk[0],dk[1],dk[2]);
-      doc.setDrawColor(dk[0],dk[1],dk[2]);doc.setLineWidth(0.3);
-      doc.line(ml,firmY,ml+75,firmY);
-      doc.line(col2x,firmY,195,firmY);
-      ln(4);
+      doc.setFont('helvetica','normal');
       doc.setFontSize(6.5);
-      doc.text('GreatPhones / Martín de Mendonça — DNI 45821618',ml,firmY+4);
-      doc.text('Comprador — Aclaración y DNI:',col2x,firmY+4);
+      doc.text('Son pesos:',leftX,y);
+      doc.setFont('helvetica','italic');
+      doc.text(numeroALetras(order.total||0),leftX+14,y);
+      doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+      doc.setLineWidth(0.3);
+      doc.line(leftX+14,y+1,leftX+CW/2-4,y+1);
 
+      // RIGHT: DETALLE DEL PAGO
+      y=boxTop+12;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('DETALLE DEL PAGO (completar solo los que apliquen):',rightX,y);
+      ln(5);
+
+      checkbox(rightX,y,'Efectivo:');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.text('$',rightX+24,y);
+      if(order.payment==='Efectivo'){
+        doc.text((order.cashReceived||order.total||0).toLocaleString('es-AR'),rightX+28,y);
+      }
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.setLineWidth(0.3);
+      doc.line(rightX+28,y+1,rightX+70,y+1);
+      ln(5);
+
+      checkbox(rightX,y,'Dólares:');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.text('USD',rightX+22,y);
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.line(rightX+28,y+1,rightX+70,y+1);
+      ln(5);
+
+      checkbox(rightX,y,'Transferencia:');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.text('$',rightX+32,y);
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.line(rightX+36,y+1,rightX+70,y+1);
+      ln(5);
+
+      checkbox(rightX,y,'Cuotas:');
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(7);
+      doc.text('___ x $______ = $______',rightX+20,y);
+      ln(5);
+
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(6.5);
+      doc.text('N° ref. transferencia / comprobante:',rightX,y);
+      doc.setFont('helvetica','normal');
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.line(rightX+40,y+1,rightX+70,y+1);
+
+      y=boxTop+boxH+5;
+
+      // ===================== DATOS DEL COMPRADOR =====================
+      sectionTitle('DATOS DEL COMPRADOR');
+
+      var colLeft=ML;
+      var colRight=115;
+      var buyerStartY=y;
+
+      // Left column
+      fieldFilled('Apellido y Nombre:',order.clientName||'',35);
+      ln(7);
+      fieldFilled('DNI:',order.clientDni||'',10);
+      ln(7);
+      fieldFilled('CUIL / CUIT:',order.clientCuil||'',24);
+
+      var buyerEndY=y;
+
+      // Right column
+      y=buyerStartY;
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('Tel:',colRight,y);
+      doc.setFont('helvetica','normal');
+      doc.text(order.clientPhone||'',colRight+10,y);
+      doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+      doc.setLineWidth(0.3);
+      doc.line(colRight+10,y+1,colRight+60,y+1);
+      y=buyerStartY+7;
+
+      doc.setFont('helvetica','bold');
+      doc.text('Domicilio:',colRight,y);
+      doc.setFont('helvetica','normal');
+      doc.text(order.clientAddress||'',colRight+22,y);
+      doc.line(colRight+22,y+1,colRight+72,y+1);
+      y=buyerStartY+14;
+
+      doc.setFont('helvetica','bold');
+      doc.text('Email:',colRight,y);
+      doc.setFont('helvetica','normal');
+      doc.text(order.clientEmail||'',colRight+14,y);
+      doc.line(colRight+14,y+1,colRight+64,y+1);
+
+      // Vertical separator
+      doc.setDrawColor(GREEN[0],GREEN[1],GREEN[2]);
+      doc.setLineWidth(0.3);
+      doc.line(colRight-3,buyerStartY-2,colRight-3,buyerEndY+5);
+
+      y=buyerEndY+8;
+      hline();
+
+      // ===================== GARANTÍA =====================
+      ln(3);
+      sectionTitle('GARANTÍA');
+
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(6);
+      doc.setTextColor(60,60,60);
+
+      doc.text('El equipo adquirido cuenta con una garantía de 12 (doce) meses desde la fecha de compra.',ML,y);ln(3);
+      doc.text('La garantía cubre únicamente fallas técnicas de origen no provocadas por el cliente, incluyendo problemas de encendido, fallas internas de pantalla, batería',ML,y);ln(3);
+      doc.text('defectuosa de origen, fallas de software persistentes, problemas de carga, audio, cámara o conectividad.',ML,y);ln(3);
+      doc.text('Toda garantía queda sujeta a diagnóstico y verificación técnica por parte del local.',ML,y);ln(3);
+      doc.text('La garantía NO cubre: Pantallas rotas, fisuradas o con daño físico. Golpes, rayones, deformaciones o daños estéticos. Daño por líquido o humedad. Equipos',ML,y);ln(3);
+      doc.text('abiertos, manipulados o reparados por terceros. Daños ocasionados por accesorios no originales o uso incorrecto. Problemas relacionados con cuentas,',ML,y);ln(3);
+      doc.text('contraseñas o bloqueos del usuario. Daños eléctricos externos. Fallas posteriores al vencimiento del plazo de garantía.',ML,y);ln(3);
+      doc.text('Si el equipo presenta evidencia física de golpe, humedad o manipulación externa, la garantía quedará automáticamente anulada.',ML,y);ln(3.5);
+      doc.text('En caso de ingreso por garantía:',ML,y);ln(3.5);
+
+      doc.setFont('helvetica','bold');
+      doc.text('1.',ML,y);
+      doc.setFont('helvetica','normal');
+      doc.text('El equipo será evaluado técnicamente. El local dispondrá de un plazo de 48 (cuarenta y ocho) horas hábiles desde el ingreso del equipo para emitir el',ML+5,y);ln(3);
+      doc.text('diagnóstico correspondiente e informar al cliente si el caso encuadra dentro de las condiciones de garantía.',ML+5,y);
+      ln(3.5);
+
+      doc.setFont('helvetica','bold');
+      doc.text('2.',ML,y);
+      doc.setFont('helvetica','normal');
+      doc.text('El local determinará si corresponde garantía según el diagnóstico realizado. Una vez comunicada la aceptación, el local dispondrá de 96 (noventa y seis)',ML+5,y);ln(3);
+      doc.text('horas hábiles adicionales para llevar a cabo la reparación o brindar una resolución definitiva. Este plazo podrá extenderse en casos de fuerza mayor, tales',ML+5,y);ln(3);
+      doc.text('como fallas de placa, demoras en disponibilidad de repuestos u otras situaciones excepcionales debidamente justificadas, de lo cual se informará al cliente',ML+5,y);ln(3);
+      doc.text('oportunamente.',ML+5,y);
+      ln(3.5);
+
+      doc.setFont('helvetica','bold');
+      doc.text('3.',ML,y);
+      doc.setFont('helvetica','normal');
+      doc.text('Si corresponde garantía, el local podrá optar por:',ML+5,y);
+      ln(3);
+      doc.text('    o    reparación,',ML+5,y);
+      ln(3);
+      doc.text('    o    reemplazo del equipo,',ML+5,y);
+      ln(3);
+      doc.text('    o    o devolución del dinero abonado.',ML+5,y);
+      ln(3.5);
+
+      doc.text('La devolución de dinero será siempre la última instancia luego de intentar reparación o reposición.',ML,y);ln(3);
+      doc.text('El cliente declara haber recibido el equipo en correcto estado de funcionamiento y haber leído y aceptado las presentes condiciones de garantía.',ML,y);
       ln(8);
-      doc.setFont('helvetica','italic');doc.setFontSize(5.5);doc.setTextColor(gray[0],gray[1],gray[2]);
-      doc.text('Al firmar, el comprador declara recibir el equipo en conformidad con lo descripto. GreatPhones · Zelarrayan 179, Bahía Blanca · 2914727351',w/2,y,{align:'center'});
+
+      // ===================== FIRMAS =====================
+      doc.setDrawColor(ORANGE[0],ORANGE[1],ORANGE[2]);
+      doc.setLineWidth(0.8);
+      doc.line(ML,y,W-MR,y);
+      ln(2);
+
+      doc.setDrawColor(LGRAY[0],LGRAY[1],LGRAY[2]);
+      doc.setLineWidth(0.3);
+      doc.line(ML,y,W-MR,y);
+      ln(12);
+
+      var firmY=y;
+      doc.setDrawColor(DK[0],DK[1],DK[2]);
+      doc.setLineWidth(0.3);
+      doc.line(ML,firmY,ML+75,firmY);
+      doc.line(colRight,firmY,W-MR,firmY);
+
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(7.5);
+      doc.setTextColor(DK[0],DK[1],DK[2]);
+      doc.text('GreatPhones / Martín de Mendonça — DNI 45821618',ML,firmY+5);
+      doc.text('Comprador — Aclaración y DNI:',colRight,firmY+5);
+
+      ln(12);
+      doc.setFont('helvetica','italic');
+      doc.setFontSize(5.5);
+      doc.setTextColor(GRAY[0],GRAY[1],GRAY[2]);
+      doc.text('Al firmar, el comprador declara recibir el equipo en conformidad con lo descripto. GreatPhones · Zelarrayan 179, Bahía Blanca · 2914727351',W/2,y,{align:'center'});
 
       resolve(doc);
     });
@@ -1399,7 +1591,7 @@ function showInStoreSaleDetail(orderId) {
     <div style="background:var(--cream2);border-radius:16px;max-width:550px;width:100%;padding:2rem;animation:scaleIn .3s;max-height:90vh;overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
         <h2 style="font-size:20px;font-weight:700">${order.code}</h2>
-        <button onclick="this.closest('div[style*=\"fixed\"]').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray)">×</button>
+        <button onclick="closeModal(this)" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray)">×</button>
       </div>
 
       <div style="font-size:12px;color:var(--gray);margin-bottom:1.5rem">${new Date(order.createdAt).toLocaleString('es-AR')}</div>
@@ -1436,17 +1628,22 @@ function showInStoreSaleDetail(orderId) {
 
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         ${isPending ? `
-          <button onclick="confirmApproveSale('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">✅ Aprobar venta</button>
-          <button onclick="confirmCancelSale('${order.id}')" class="btn btn-o" style="flex:1;padding:12px;font-size:13px;color:var(--red);border-color:var(--red)">❌ Cancelar venta</button>
+          <button onclick="closeModal(this);confirmApproveSale('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">✅ Aprobar venta</button>
+          <button onclick="closeModal(this);confirmCancelSale('${order.id}')" class="btn btn-o" style="flex:1;padding:12px;font-size:13px;color:var(--red);border-color:var(--red)">❌ Cancelar venta</button>
         ` : order.status==='DELIVERED' ? `
-          <button onclick="showInStoreSaleReceipt('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">🖨 Ver Recibo</button>
+          <button onclick="closeModal(this);showInStoreSaleReceipt('${order.id}')" class="btn btn-primary" style="flex:1;padding:12px;font-size:13px">🖨 Ver Recibo</button>
         ` : ''}
-        <button onclick="this.closest('div[style*=\"fixed\"]').remove()" class="btn btn-o" style="flex:1;padding:12px;font-size:13px">Cerrar</button>
+        <button onclick="closeModal(this)" class="btn btn-o" style="flex:1;padding:12px;font-size:13px">Cerrar</button>
       </div>
     </div>
   `
 
   document.body.appendChild(modal)
+}
+
+function closeModal(btn) {
+  var el = btn.closest('div[style*="fixed"]')
+  if (el) el.remove()
 }
 
 function confirmApproveSale(orderId) {
@@ -1486,11 +1683,33 @@ function confirmCancelSale(orderId) {
 function showInStoreSaleReceipt(orderId) {
   var order = instoreHistoryOrders ? instoreHistoryOrders.find(function(o){return o.id===orderId}) : null
   if(!order) return
-  // Build a minimal lastInstoreSaleData and call descargarRecibo
+  var orderItems = (order.items||[]).map(function(oi){
+    if(oi.productId){
+      var p = (typeof PRODUCTS!=='undefined'&&PRODUCTS)?PRODUCTS.find(function(x){return x.id===oi.productId}):null
+      return {
+        type:'catalog',
+        productId:oi.productId,
+        name:p?(p.brand+' '+p.name):oi.customName||'',
+        brand:p?p.brand:'',
+        color:p?p.color:'',
+        battery:p?(p.battery||''):'',
+        storage:p?p.storage:'',
+        imei:p?(p.imei||''):'',
+        quantity:oi.quantity,
+        price:oi.price
+      }
+    }
+    return {
+      type:'custom',
+      name:oi.customName||'',
+      quantity:oi.quantity,
+      price:oi.price
+    }
+  })
   lastInstoreSaleData = {
     order: order,
     change: order.change || 0,
-    items: [],
+    items: orderItems,
     paymentMethod: order.payment==='Efectivo'?'cash':'transfer',
     cashReceived: order.cashReceived || 0
   }

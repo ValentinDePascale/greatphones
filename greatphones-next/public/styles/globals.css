@@ -48,6 +48,7 @@ button,input,select,textarea{font-family:inherit}
 .skeleton-card .skeleton-line-sm{height:10px;margin:6px 20px;border-radius:6px;width:60%}
 .skeleton-card .skeleton-btn{height:36px;margin:12px 20px;border-radius:10px}
 #loadingBar{position:fixed;top:0;left:0;height:3px;background:linear-gradient(90deg,var(--orange),var(--orange2));z-index:99999;transition:width .3s ease;box-shadow:0 0 10px rgba(255,107,44,.4)}
+#detFavBtn{color:var(--gray);transition:all .2s ease}
 #detFavBtn.saved{color:var(--red);border-color:var(--red)}
 .fav-btn{transition:all .2s ease}
 .fav-btn.anim{animation:favPopAnim .4s cubic-bezier(.175,.885,.32,1.275)}

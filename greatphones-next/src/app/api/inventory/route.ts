@@ -74,6 +74,24 @@ async function reuseOrphanedItem(existing: any, data: any, origin: string | null
         }
       })
       productId = newProduct.id
+      await prisma.productLog.create({
+        data: {
+          productId: newProduct.id,
+          name: newProduct.name,
+          brand: newProduct.brand,
+          price: newProduct.price,
+          cost: newProduct.cost,
+          stock: newProduct.stock,
+          condition: newProduct.condition,
+          type: newProduct.type,
+          color: newProduct.color,
+          storage: newProduct.storage,
+          ram: newProduct.ram,
+          battery: newProduct.battery,
+          imei: newProduct.imei,
+          source: 'inventory',
+        },
+      })
     }
   }
   if (productId) {
@@ -270,6 +288,24 @@ export async function POST(request: Request) {
           }
         })
         productId = newProduct.id
+        await prisma.productLog.create({
+          data: {
+            productId: newProduct.id,
+            name: newProduct.name,
+            brand: newProduct.brand,
+            price: newProduct.price,
+            cost: newProduct.cost,
+            stock: newProduct.stock,
+            condition: newProduct.condition,
+            type: newProduct.type,
+            color: newProduct.color,
+            storage: newProduct.storage,
+            ram: newProduct.ram,
+            battery: newProduct.battery,
+            imei: newProduct.imei,
+            source: 'inventory',
+          },
+        })
       }
     }
     // Increment product stock when linking to existing product

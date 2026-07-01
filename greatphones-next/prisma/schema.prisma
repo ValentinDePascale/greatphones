@@ -93,6 +93,27 @@ model Product {
   inventoryItems InventoryItem[]
 }
 
+// ==================== LOG DE PRODUCTOS (Excel export) ====================
+model ProductLog {
+  id        String   @id @default(cuid())
+  productId String?
+  name      String
+  brand     String
+  price     Int
+  cost      Int      @default(0)
+  stock     Int
+  discount  Int      @default(0)
+  condition String
+  type      String
+  color     String?
+  storage   String?
+  ram       String?
+  battery   Int?
+  imei      String?
+  source    String   // "manual" | "inventory" | "duplicate"
+  createdAt DateTime @default(now())
+}
+
 // ==================== INVENTARIO FÍSICO ====================
 enum InventoryStatus {
   IN_STOCK

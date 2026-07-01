@@ -61,10 +61,22 @@ function renderSpecsGrid(specs){
 function renderDetBadges(p,extraCond){
   var el=document.getElementById('detBadges');if(!el)return;
   var type=(p.type||'').toLowerCase();
-  var badges=[{ico:'\u2713',text:'90 Dias Garantia'},{ico:'\u2713',text:'Cable + funda gratis'},{ico:'\u2713',text:'Dev. 7 dias'}];
-  if(type==='celular')badges.splice(1,0,{ico:'\u2713',text:'IMEI Verificado'});
-  if(extraCond)badges.unshift({ico:'\uD83D\uDCF1',text:extraCond});
-  el.innerHTML=badges.map(function(b){return '<div style="display:flex;align-items:center;gap:6px;background:rgba(45,90,39,.1);padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:var(--green)">'+b.ico+' '+b.text+'</div>';}).join('');
+  var badges=[];
+  // Discount badge
+  var isPromo=p.isOffer&&p.discount>0;
+  if(isPromo){
+    badges.push({ico:'\uD83C\uDFF7',text:p.discount+'% OFF',color:'var(--red)',bg:'rgba(192,57,43,.1)'});
+  }
+  badges.push({ico:'\u2713',text:'90 Dias Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'\u2713',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'\u2713',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(type==='celular')badges.splice(2,0,{ico:'\u2713',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(extraCond)badges.unshift({ico:'\uD83D\uDCF1',text:extraCond,color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  el.innerHTML=badges.map(function(b){
+    var c=b.color||'var(--green)';
+    var bg=b.bg||'rgba(45,90,39,.1)';
+    return '<div style="display:flex;align-items:center;gap:6px;background:'+bg+';padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:'+c+'">'+b.ico+' '+b.text+'</div>';
+  }).join('');
 }
 
 function addToCartAcc(id,triggerEl){
@@ -803,7 +815,7 @@ function openAccDetail(id){
   if(mainImg){var ico=currentAcc.ico||'\u{1F4E6}';
     if(_accImages.length){
       var accImgUrl=_accImages[0];
-      mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
+      mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentAcc.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
         '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
           '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
           '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
@@ -811,7 +823,7 @@ function openAccDetail(id){
           '</div>'+
         '</div>';
     }
-    else{mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><span style="font-size:80px">'+ico+'</span>';}
+    else{mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentAcc.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button><span style="font-size:80px">'+ico+'</span>';}
   }
   if(thumbsContainer){
     if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div onclick="switchAccMainImg('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img loading="lazy" src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
@@ -819,13 +831,13 @@ function openAccDetail(id){
   }
   detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
   var fb=document.getElementById('detFavBtn');
-  if(fb){if(isFavorite(currentAcc.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
+  if(fb){if(isFavorite(currentAcc.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
 }
 function switchAccMainImg(idx){
   if(!_accImages||!_accImages[idx])return;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   var accImgUrl=_accImages[idx];
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentAcc.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
     '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
       '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
       '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
@@ -841,6 +853,7 @@ function openDetail(id, variantId){
   window._detailVariants=[];
   window._selectedVariantIdx=-1;
   window._selectedVariant=null;
+  window._variantsLoaded=false;
   // Collect all product IDs sharing the same modelGroup
   var variantProdIds=[id];
   if(currentProd.modelGroup){
@@ -854,19 +867,39 @@ function openDetail(id, variantId){
   if(!window._variantCache)window._variantCache={};
   if(window._variantCache[cacheKey]&&window._variantCache[cacheKey].length>0){
     window._detailVariants=window._variantCache[cacheKey].filter(function(v){return v.status!=='SOLD';});
+    window._variantsLoaded=true;
     renderDetailVariants();
-    var now=new Date();
     var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
-    var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
+    // For variant products, use the minimum variant targetPrice
+    var basePrice=currentProd.price;
+    if(window._detailVariants.length>0){
+      var minTarget=Infinity;
+      for(var mi=0;mi<window._detailVariants.length;mi++){
+        if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
+          minTarget=window._detailVariants[mi].targetPrice;
+        }
+      }
+      if(minTarget<Infinity)basePrice=minTarget;
+    }
+    var finalPrice=isPromoActive?Math.round(basePrice*(1-currentProd.discount/100)):basePrice;
     var cuota12=Math.round(finalPrice/12);
     var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
     var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
-    var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
+    var name2El=document.getElementById('detName2');if(name2El)name2El.textContent=currentProd.name;
+    var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentProd.name;
+    // Show "Desde" if multiple variants
+    var priceLabel=window._detailVariants.length>1?'Desde ':'';
+    var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=priceLabel+fmt(finalPrice);
     var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
+    var oldEl=document.getElementById('detOld');
+    if(isPromoActive&&currentProd.discount){
+      var originalPrice=basePrice;
+      if(oldEl){oldEl.textContent=fmt(originalPrice);oldEl.style.display='inline';}
+    }else{if(oldEl)oldEl.style.display='none';}
     renderDetailImages();updDetTotal();
     renderDetBadges(currentProd);
     var fb=document.getElementById('detFavBtn');
-    if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
+    if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
     // Select variant AFTER base render so it can override specs/name/badges
     if(variantId){
       for(var vi=0;vi<window._detailVariants.length;vi++){
@@ -878,6 +911,8 @@ function openDetail(id, variantId){
     nav('detail');
     return;
   }
+  // Show loading skeleton immediately
+  renderDetailVariants();
   var fetchUrls=variantProdIds.map(function(pid){
     return API_URL+'/api/inventory?productId='+pid+'&limit=50';
   });
@@ -896,7 +931,27 @@ function openDetail(id, variantId){
     });
     if(items.length>0)window._variantCache[cacheKey]=items;
     window._detailVariants=items.filter(function(v){return v.status!=='SOLD';});
+    window._variantsLoaded=true;
     renderDetailVariants();
+    // Update price to show minimum variant price with discount
+    var isPromo=currentProd.isOffer&&currentProd.discount>0;
+    var minTarget=Infinity;
+    for(var mi=0;mi<window._detailVariants.length;mi++){
+      if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
+        minTarget=window._detailVariants[mi].targetPrice;
+      }
+    }
+    if(minTarget<Infinity){
+      var finalP=isPromo?Math.round(minTarget*(1-currentProd.discount/100)):minTarget;
+      var priceLabel=window._detailVariants.length>1?'Desde ':'';
+      var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=priceLabel+fmt(finalP);
+      var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalP);
+      var oldEl=document.getElementById('detOld');
+      if(isPromo&&oldEl){oldEl.textContent=fmt(minTarget);oldEl.style.display='inline';}
+      var cuota12=Math.round(finalP/12);
+      var cuotaText=document.getElementById('detCuotaText');
+      if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+    }
     if(variantId){
       for(var vi=0;vi<window._detailVariants.length;vi++){
         if(window._detailVariants[vi].id===variantId||window._detailVariants[vi].imei===variantId){
@@ -910,6 +965,7 @@ function openDetail(id, variantId){
   }).catch(function(){
     if(currentProd.id!==id)return;
     window._detailVariants=[];
+    window._variantsLoaded=true;
     renderDetailVariants();
   });
 
@@ -944,7 +1000,7 @@ function openDetail(id, variantId){
   renderDetailImages();updDetTotal();
   renderDetailVariants();
   var fb=document.getElementById('detFavBtn');
-  if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.style.color='var(--red)';}else{fb.innerHTML='\u2661';fb.style.color='var(--gray)';}}
+  if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
   nav('detail');
 }
 
@@ -967,7 +1023,7 @@ function renderDetailImages(){
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   if(!mainImg)return;
   var isFav=isFavorite(currentProd.id);
-  var favBtn='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button>';
+  var favBtn='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFav?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFav?'\u2665':'\u2661')+'</button>';
   var prevBtn='<button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>';
   var nextBtn='<button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>';
   if(allImages.length===0){mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
@@ -997,7 +1053,7 @@ function setDetailImage(index){
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   var isFav=isFavorite(currentProd.id);
   var imgUrl=allImages[index];
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>'+
+  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFav?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>'+
     '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
       '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
       '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
@@ -1028,23 +1084,45 @@ function selectDetailVariant(idx){
   window._selectedVariantIdx=idx;
   window._selectedVariant=vars[idx];
   var v=vars[idx];
-  // Override price and condition in the detail view
-  if(v.targetPrice){
-    var now=new Date();
-    var isPromo=currentProd.isOffer&&currentProd.discount>0;
-    var basePrice=v.targetPrice;
-    var finalPrice=isPromo?Math.round(v.targetPrice*(1-currentProd.discount/100)):v.targetPrice;
-    var priceEl=document.getElementById('detPrice');
-    if(priceEl)priceEl.textContent=fmt(finalPrice);
-    var totalEl=document.getElementById('detTotal');
-    if(totalEl)totalEl.textContent=fmt(finalPrice);
-    var oldEl=document.getElementById('detOld');
-    if(isPromo&&oldEl){oldEl.textContent=fmt(basePrice);oldEl.style.display='inline';}
-    else if(oldEl)oldEl.style.display='none';
-    var cuota12=Math.round(finalPrice/12);
-    var cuotaText=document.getElementById('detCuotaText');
-    if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+  
+  // Find the specific product for this variant to check its discount
+  var variantProd=null;
+  if(v.productId){
+    for(var pi=0;pi<PRODUCTS.length;pi++){
+      if(PRODUCTS[pi].id===v.productId){variantProd=PRODUCTS[pi];break;}
+    }
   }
+  // Fallback: search by modelGroup + color/storage match
+  if(!variantProd&&currentProd.modelGroup){
+    for(var gi=0;gi<PRODUCTS.length;gi++){
+      var p=PRODUCTS[gi];
+      if(p.modelGroup===currentProd.modelGroup){
+        var colorMatch=!v.color||p.color===v.color;
+        var storageMatch=!v.storage||p.storage===v.storage;
+        if(colorMatch&&storageMatch){variantProd=p;break;}
+      }
+    }
+  }
+  
+  var isPromo=variantProd&&variantProd.isOffer&&variantProd.discount>0;
+  var bestDiscount=isPromo?variantProd.discount:0;
+  var basePrice=v.targetPrice||currentProd.price;
+  var finalPrice=isPromo?Math.round(basePrice*(1-bestDiscount/100)):basePrice;
+  
+  console.log('[selectDetailVariant] variantProd:',variantProd?variantProd.id:'N/A','v.productId:',v.productId,'isPromo:',isPromo,'discount:',bestDiscount,'basePrice:',basePrice,'finalPrice:',finalPrice);
+
+  // Update price (remove "Desde" when specific variant selected)
+  var priceEl=document.getElementById('detPrice');
+  if(priceEl)priceEl.textContent=fmt(finalPrice);
+  var totalEl=document.getElementById('detTotal');
+  if(totalEl)totalEl.textContent=fmt(finalPrice);
+  var oldEl=document.getElementById('detOld');
+  if(isPromo&&oldEl){oldEl.textContent=fmt(basePrice);oldEl.style.display='inline';}
+  else if(oldEl)oldEl.style.display='none';
+  var cuota12=Math.round(finalPrice/12);
+  var cuotaText=document.getElementById('detCuotaText');
+  if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+
   // Update name to reflect variant details
   var suffixParts=[];
   if(v.color)suffixParts.push(v.color);
@@ -1054,6 +1132,7 @@ function selectDetailVariant(idx){
   if(name2El)name2El.textContent=currentProd.name+variantSuffix;
   var nameEl=document.getElementById('detName');
   if(nameEl)nameEl.textContent=currentProd.name+variantSuffix;
+
   // Rebuild specs grid with variant-specific data
   var mergedProd={
     type:v.deviceType||currentProd.type,
@@ -1066,25 +1145,31 @@ function selectDetailVariant(idx){
     sub:currentProd.sub,
     processor:currentProd.processor,
     screen:currentProd.screen,
-    isOffer:currentProd.isOffer,
-    discount:currentProd.discount
+    isOffer:isPromo,
+    discount:bestDiscount,
+    price:finalPrice
   };
   renderSpecsGrid(buildSpecsForProduct(mergedProd));
-  // Override condition badge
+
+  // Always render badges with promo info
   if(v.cosmeticCondition||v.functionalCondition){
     var condStr=[v.cosmeticCondition,v.functionalCondition].filter(Boolean).join(' - ');
     renderDetBadges(mergedProd,condStr);
+  }else{
+    renderDetBadges(mergedProd);
   }
+
   // Show variant-specific image
   if(v.imageUrl){
     var mainImg=document.getElementById('detImgMain');
     if(mainImg){
-      mainImg.innerHTML='<button onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">'+(isFavorite(currentProd.id)?'\u2665':'\u2661')+'</button>'+
+      mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentProd.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentProd.id)?'\u2665':'\u2661')+'</button>'+
         '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+v.imageUrl+'\')">'+
           '<img loading="lazy" src="'+v.imageUrl+'" style="width:100%;height:100%;object-fit:contain">'+
         '</div>';
     }
   }
+
   // Show condition note
   var descEl=document.getElementById('detDesc');
   if(descEl){
@@ -1099,6 +1184,7 @@ function selectDetailVariant(idx){
     var fullDesc=[currentProd.description||currentProd.sub||'',condNote,note].filter(Boolean).join('<br>');
     if(fullDesc){descEl.innerHTML=fullDesc;descEl.style.display='block';}else{descEl.style.display='none';}
   }
+
   // Highlight the selected pill
   renderDetailVariants();
 }
@@ -1109,6 +1195,15 @@ function renderDetailVariants(){
   if(!container||!list)return;
   var variants=window._detailVariants||[];
   if(variants.length===0){
+    if(!window._variantsLoaded){
+      container.style.display='block';
+      list.innerHTML='<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<div class="skeleton" style="padding:8px 16px;border-radius:10px;min-width:80px;height:36px"></div>'+
+        '<div class="skeleton" style="padding:8px 16px;border-radius:10px;min-width:80px;height:36px"></div>'+
+        '<div class="skeleton" style="padding:8px 16px;border-radius:10px;min-width:80px;height:36px"></div>'+
+        '</div>';
+      return;
+    }
     container.style.display='none';
     return;
   }
@@ -1121,8 +1216,15 @@ function renderDetailVariants(){
     if(v.cosmeticCondition&&!v.color&&!v.storage)parts.push(v.cosmeticCondition);
     var label=parts.join(' \u00B7 ')||'Variante '+(i+1);
     if(v.targetPrice){
-      var isPromo=currentProd&&currentProd.isOffer&&currentProd.discount>0;
-      var pillPrice=isPromo?Math.round(v.targetPrice*(1-currentProd.discount/100)):v.targetPrice;
+      // Find the specific product for this variant to check its discount
+      var variantProd=null;
+      if(v.productId){
+        for(var pi=0;pi<PRODUCTS.length;pi++){
+          if(PRODUCTS[pi].id===v.productId){variantProd=PRODUCTS[pi];break;}
+        }
+      }
+      var isPromo=variantProd&&variantProd.isOffer&&variantProd.discount>0;
+      var pillPrice=isPromo?Math.round(v.targetPrice*(1-variantProd.discount/100)):v.targetPrice;
       if(isPromo)label+=' — <span style="text-decoration:line-through;opacity:.5">'+fmt(v.targetPrice)+'</span> <strong>'+fmt(pillPrice)+'</strong>';
       else label+=' — '+fmt(v.targetPrice);
     }
@@ -2135,8 +2237,8 @@ function showImeiProductModal(existingProductId){
     var onDetected=opts.onDetected||function(){};
     var mode=opts.mode||'qr';
     var isBarcode=mode==='barcode';
-    var frameW=isBarcode?300:260;
-    var frameH=isBarcode?160:260;
+    var frameW=isBarcode?360:260;
+    var frameH=isBarcode?200:260;
     var texto=isBarcode?'Apuntá al código de barras del dispositivo':'Apuntá al código QR del dispositivo';
     var overlay=document.createElement('div');
     overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
@@ -2165,6 +2267,7 @@ function showImeiProductModal(existingProductId){
       if(detenido)return;
       detenido=true;
       if(window.Quagga){try{Quagga.stop();}catch(e){}}
+      if(html5QrCode){try{html5QrCode.stop().catch(function(){});}catch(e){}}
       if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
       overlay.remove();
     }
@@ -2187,6 +2290,8 @@ function showImeiProductModal(existingProductId){
     var usandoQuagga=false;
     var detectando=false;
     var ultimaDetect=0;
+    var ultimoImei='';
+    var imeiCount=0;
 
     function initBarcodeDetector(){
       if(!window.BarcodeDetector)return false;
@@ -2218,6 +2323,16 @@ function showImeiProductModal(existingProductId){
       var len=d.length;
       if(len>=14&&len<=16){
         var imei=d.substring(0,15);
+        if(imei===ultimoImei){
+          imeiCount++;
+          if(imeiCount<3){
+            if(statusEl)statusEl.textContent='Verificando... ('+imeiCount+'/3)';
+            return false;
+          }
+        }else{
+          ultimoImei=imei;
+          imeiCount=1;
+        }
         if(luhnValido(imei)){
           limpiar();onDetected({type:'imei',imei:imei,raw:raw});return true;
         }
@@ -2232,7 +2347,7 @@ function showImeiProductModal(existingProductId){
       return false;
     }
 
-    // ---- Quagga (fallback para iOS sin BarcodeDetector) ----
+    // ---- Quagga (fallback obsoleto, ya no se usa) ----
     function escanearQuagga(){
       if(detenido||!window.Quagga)return;
       if(statusEl)statusEl.textContent='Alineá el código de barras';
@@ -2260,6 +2375,62 @@ function showImeiProductModal(existingProductId){
       });
     }
 
+    // ---- Html5Qrcode (fallback principal para iOS/Safari) ----
+    var html5QrCode=null;
+    function escanearHtml5Qrcode(){
+      if(detenido)return;
+      if(statusEl)statusEl.textContent='Cargando escáner...';
+      if(window.Html5Qrcode){
+        iniciarHtml5Qrcode();
+        return;
+      }
+      var sc=document.createElement('script');
+      sc.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
+      sc.onload=function(){
+        if(detenido)return;
+        iniciarHtml5Qrcode();
+      };
+      sc.onerror=function(){
+        showErrorToast('Error','No se pudo cargar el escáner');
+        limpiar();
+      };
+      document.head.appendChild(sc);
+    }
+    function iniciarHtml5Qrcode(){
+      if(detenido)return;
+      video.style.display='none';
+      var readerDiv=document.createElement('div');
+      readerDiv.id='html5qr-reader';
+      readerDiv.style.cssText='position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+      overlay.insertBefore(readerDiv,overlay.firstChild);
+      html5QrCode=new Html5Qrcode('html5qr-reader');
+      var config={
+        fps:15,
+        qrbox:{width:320,height:180},
+        aspectRatio:1.777,
+        formatsToSupport:[
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.QR_CODE
+        ]
+      };
+      html5QrCode.start(
+        {facingMode:'environment'},
+        config,
+        function(decodedText){
+          if(detenido)return;
+          procesarDigitos(decodedText);
+        },
+        function(errorMessage){}
+      ).catch(function(err){
+        if(statusEl)statusEl.textContent='Error: '+err;
+      });
+    }
+
     // ---- Main scan loop ----
     function escanear(){
       if(detenido)return;
@@ -2267,7 +2438,7 @@ function showImeiProductModal(existingProductId){
 
       if(barcodeDetector){
         var ahora=Date.now();
-        if(!detectando&&ahora-ultimaDetect>300){
+        if(!detectando&&ahora-ultimaDetect>200){
           ultimaDetect=ahora;
           detectando=true;
           barcodeDetector.detect(video).then(function(barcodes){
@@ -2276,6 +2447,7 @@ function showImeiProductModal(existingProductId){
             for(var i=0;i<barcodes.length;i++){
               if(procesarDigitos(barcodes[i].rawValue))return;
             }
+            if(statusEl&&barcodes.length===0)statusEl.textContent='Buscando código de barras...';
           }).catch(function(){detectando=false;});
         }
         requestAnimationFrame(escanear);
@@ -2305,12 +2477,15 @@ function showImeiProductModal(existingProductId){
 
     function iniciarCamara(){
       var constraints=isBarcode
-        ? {video:{width:{min:1280,ideal:1920},height:{min:720,ideal:1080},facingMode:{ideal:'environment'}}}
+        ? {video:{width:{min:1280,ideal:1920,max:2560},height:{min:720,ideal:1080,max:1440},facingMode:{exact:'environment'},focusMode:'continuous'}}
         : {video:{facingMode:{ideal:'environment'}}};
       navigator.mediaDevices.getUserMedia(constraints).then(function(s){
         video.srcObject=s;video.play();escanear();
       }).catch(function(){
-        return navigator.mediaDevices.getUserMedia({video:true}).then(function(s){
+        var fallback=isBarcode
+          ? {video:{width:{min:1280,ideal:1920},height:{min:720,ideal:1080},facingMode:'environment'}}
+          : {video:{facingMode:'environment'}};
+        return navigator.mediaDevices.getUserMedia(fallback).then(function(s){
           video.srcObject=s;video.play();escanear();
         });
       }).catch(function(err){
@@ -2325,23 +2500,8 @@ function showImeiProductModal(existingProductId){
       if(tieneNativo){
         if(statusEl)statusEl.textContent='Escáner listo';
         iniciarCamara();
-      }else if(window.Quagga){
-        if(statusEl)statusEl.textContent='Escáner alternativo listo';
-        escanearQuagga();
       }else{
-        if(statusEl)statusEl.textContent='Cargando escáner...';
-        var sc=document.createElement('script');
-        sc.src='https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js';
-        sc.onload=function(){
-          if(detenido)return;
-          if(statusEl)statusEl.textContent='Iniciando cámara...';
-          escanearQuagga();
-        };
-        sc.onerror=function(){
-          showErrorToast('Error','No se pudo cargar el escáner de barras');
-          limpiar();
-        };
-        document.head.appendChild(sc);
+        escanearHtml5Qrcode();
       }
     }else{
       if(typeof jsQR==='undefined'){
@@ -2620,7 +2780,7 @@ function renderAdminContent(tab){
     return;
   }
   if(tab==='prods'){
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button></div>'+
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><div style="display:flex;gap:8px"><button class="btn btn-g btn-sm" onclick="exportProductLog()">📥 Exportar Excel</button><button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button></div></div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" class="admin-prods-grid">'+
       PRODUCTS.map(function(p){
         var lowStock=p.stock<=0;

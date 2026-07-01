@@ -116,6 +116,26 @@ export async function POST(request: Request) {
 
     productCache.clear()
 
+    await prisma.productLog.create({
+      data: {
+        productId: newProduct.id,
+        name: newProduct.name,
+        brand: newProduct.brand,
+        price: newProduct.price,
+        cost: newProduct.cost,
+        stock: newProduct.stock,
+        discount: newProduct.discount,
+        condition: newProduct.condition,
+        type: newProduct.type,
+        color: newProduct.color,
+        storage: newProduct.storage,
+        ram: newProduct.ram,
+        battery: newProduct.battery,
+        imei: newProduct.imei,
+        source: 'manual',
+      },
+    })
+
     return NextResponse.json(newProduct, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating product:', error)

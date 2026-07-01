@@ -64,10 +64,10 @@ function toggleDetFav(){
   var isNowFav=idx===-1;
   if(isNowFav){
     favorites.push(targetId);
-    if(fb){fb.innerHTML='\u2665';fb.style.color='var(--red)';fb.classList.add('saved');fb.style.animation='none';fb.offsetHeight;fb.style.animation='favPop 0.3s ease';}
+    if(fb){fb.innerHTML='\u2665';fb.classList.add('saved');fb.classList.remove('anim');fb.offsetHeight;fb.classList.add('anim');}
   }else{
     favorites.splice(idx,1);
-    if(fb){fb.innerHTML='\u2661';fb.style.color='var(--gray)';fb.classList.remove('saved');}
+    if(fb){fb.innerHTML='\u2661';fb.classList.remove('saved','anim');}
   }
   saveFavorites();
   updFavBadge();

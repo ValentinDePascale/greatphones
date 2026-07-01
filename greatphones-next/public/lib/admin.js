@@ -31,9 +31,10 @@ function renderAdminContent(tab){
     return;
   }
   if(tab==='prods'){
-    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center">'+
+    content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">'+
       '<input type="text" id="prodSearchInput" placeholder="Buscar por nombre, marca..." oninput="loadAdminProducts(this.value,1)" style="flex:1;max-width:300px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '<button class="btn btn-o" onclick="nav(\'admin-product\')">+ Nuevo Producto</button>'+
+      '<button class="btn btn-g" onclick="exportProductLog()" style="display:inline-flex;align-items:center;gap:6px">📥 Exportar Excel</button>'+
     '</div><div class="adm-list" id="prodList"></div><div id="prodPagination"></div>';
     loadAdminProducts();
   }else if(tab==='acc'){
@@ -1148,6 +1149,28 @@ function closeDeleteProductModal(){
   modal.style.opacity='0';
   modal.querySelector('div:nth-child(2)').style.transform='scale(.95)';
   setTimeout(function(){modal.style.display='none';},300);
+}
+
+function exportProductLog(){
+  var url=API_URL+'/api/products/export';
+  fetch(url)
+    .then(function(r){
+      if(!r.ok)throw new Error('Error al exportar');
+      return r.blob();
+    })
+    .then(function(blob){
+      var link=document.createElement('a');
+      link.href=URL.createObjectURL(blob);
+      link.download='productos_log_'+new Date().toISOString().split('T')[0]+'.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      showSuccessToast('Exportado','Excel descargado correctamente');
+    })
+    .catch(function(e){
+      showErrorToast('Error',e.message);
+    });
 }
 
 function renderDash(){notAvailable();}

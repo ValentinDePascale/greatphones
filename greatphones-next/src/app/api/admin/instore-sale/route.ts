@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
+import { productCache } from '@/lib/cache'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -274,6 +275,9 @@ export async function POST(request: Request) {
 
       return newOrder
     })
+
+    // Clear product cache so stock updates reflect immediately
+    productCache.clear()
 
     // If transfer, generate QR
     if (paymentMethod === 'transfer') {
