@@ -2399,24 +2399,20 @@ function showImeiProductModal(existingProductId){
     function iniciarHtml5Qrcode(){
       if(detenido)return;
       video.style.display='none';
-      var readerDiv=document.createElement('div');
-      readerDiv.id='html5qr-reader';
-      readerDiv.style.cssText='position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
-      overlay.insertBefore(readerDiv,overlay.firstChild);
+      var frame=overlay.querySelector('div[style*="pointer-events:none"]');
+      if(frame)frame.style.display='none';
+      var readerDiv=document.getElementById('html5qr-reader');
+      if(!readerDiv){
+        readerDiv=document.createElement('div');
+        readerDiv.id='html5qr-reader';
+        readerDiv.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
+        overlay.insertBefore(readerDiv,overlay.firstChild);
+      }
       html5QrCode=new Html5Qrcode('html5qr-reader');
       var config={
-        fps:15,
+        fps:20,
         qrbox:{width:320,height:180},
         aspectRatio:1.777,
-        formatsToSupport:[
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.QR_CODE
-        ]
       };
       html5QrCode.start(
         {facingMode:'environment'},
@@ -2428,6 +2424,10 @@ function showImeiProductModal(existingProductId){
         function(errorMessage){}
       ).catch(function(err){
         if(statusEl)statusEl.textContent='Error: '+err;
+        // fallback: intentar sin qrbox
+        html5QrCode.start({facingMode:'environment'},{fps:20},function(t){procesarDigitos(t);},function(){}).catch(function(e2){
+          if(statusEl)statusEl.textContent='Error: '+e2;
+        });
       });
     }
 
@@ -2520,12 +2520,31 @@ function showImeiProductModal(existingProductId){
       mode:'barcode',
       onDetected:function(res){
         if(res.type==='imei'){
-          document.getElementById('imeiInput').value=res.imei;
-          document.getElementById('imeiInput').disabled=true;
-          window.lookupImei();
+          var imei=res.imei;
+          // Show confirmation before accepting
+          var confirmDiv=document.createElement('div');
+          confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
+          confirmDiv.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2rem;text-align:center">'+
+            '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
+            '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
+            '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">Verificá que el número sea correcto:</p>'+
+            '<div style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+imei+'</div>'+
+            '<div style="display:flex;gap:8px">'+
+              '<button onclick="this.closest(\'div[style*=\\"fixed\\"]\').remove()" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
+              '<button onclick="window._confirmarImei(\''+imei+'\');this.closest(\'div[style*=\\"fixed\\"]\').remove()" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
+            '</div>'+
+          '</div>';
+          document.body.appendChild(confirmDiv);
+          confirmDiv.offsetHeight;
+          confirmDiv.style.opacity='1';
         }
       }
     });
+  };
+  window._confirmarImei=function(imei){
+    document.getElementById('imeiInput').value=imei;
+    document.getElementById('imeiInput').disabled=true;
+    window.lookupImei();
   };
 
   window.uploadImeiProductImage=function(input){
