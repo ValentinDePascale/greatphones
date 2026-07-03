@@ -26,3 +26,17 @@
   .topbar,.mainnav,.catnav{padding-left:2rem;padding-right:2rem}
   .shop-grid{grid-template-columns:repeat(4,1fr);gap:16px}
 }
+
+/* --- Admin IMEI modal --- */
+@media(max-width:767px){
+  #imeiModalOverlay > div{padding:16px !important;max-height:85vh !important;border-radius:12px !important}
+  #imeiModalOverlay > div > div:first-child h3{font-size:17px !important}
+  #imeiModalOverlay input,#imeiModalOverlay select{padding:8px 10px !important;font-size:12px !important}
+  #imeiModalOverlay label{font-size:10px !important}
+  #imeiModalOverlay div[style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr !important}
+  #imeiModalOverlay div[style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr !important}
+  #imeiModalOverlay div[style*="display:flex;gap:8px"]{flex-wrap:wrap !important}
+  #imeiModalOverlay div[style*="display:flex;gap:8px"] input{min-width:100% !important}
+  #imeiModalOverlay div[style*="display:flex;gap:12px;align-items:start"]{flex-direction:column !important}
+  #imeiModalOverlay button[style*="width:44px;height:44px"]{width:40px !important;height:40px !important;font-size:18px !important}
+}

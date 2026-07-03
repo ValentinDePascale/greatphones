@@ -1878,8 +1878,9 @@ function showImeiProductModal(existingProductId){
   overlay.onclick=function(e){if(e.target===overlay)closeModal();};
 
   var modal=document.createElement('div');
-  modal.style.cssText='background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative';
+  modal.style.cssText='background:#fff;border-radius:16px;max-width:640px;width:100%;max-height:90vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative';
   modal.onclick=function(e){e.stopPropagation();};
+  if(!existingProductId)modal.scrollTop=0;
 
   var loadingProduct=false, imeiData=null;
 
@@ -2004,6 +2005,7 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiForm').style.display='block';
       document.getElementById('imeiInput').disabled=true;
       btn.style.display='none';
+      var m=document.getElementById('imeiModalOverlay');if(m)m.querySelector('[style*="overflow-y:auto"]').scrollTop=0;
     }).catch(function(){
       btn.textContent='Buscar';
       btn.disabled=false;

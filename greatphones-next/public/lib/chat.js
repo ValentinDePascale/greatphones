@@ -1385,6 +1385,10 @@ function openAdminConv(id){
     if(convSide)convSide.classList.add('hide');
     if(msgArea)msgArea.classList.add('show');
   }
+  setTimeout(function(){
+    var inp=document.getElementById('adminChatInput');
+    if(inp)inp.focus();
+  },100);
 }
 
 function closeMobileChat(){
@@ -1420,6 +1424,7 @@ function useQuickReply(index){
   var input=document.getElementById('adminChatInput');
   if(input){
     input.value=reply.text;
+    autoResizeChatInput(input);
     input.focus();
   }
 }
@@ -1493,11 +1498,17 @@ function closeAdminConv(id){
   .catch(function(e){console.error('Error closing conversation:',e);});
 }
 
+function autoResizeChatInput(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
 function sendAdminMessage(){
   var input=document.getElementById('adminChatInput');
   if(!input||!input.value.trim()||!userConvId)return;
   var text=input.value.trim();
   input.value='';
+  autoResizeChatInput(input);
   if(adminTypingTimeout)clearTimeout(adminTypingTimeout);
   if(chatSocket)chatSocket.emit('stopTyping',{conversationId:userConvId});
   fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
