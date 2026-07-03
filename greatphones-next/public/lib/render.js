@@ -2427,10 +2427,16 @@ function renderAdminContent(tab){
         '<div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:14px"></div>'+
         '<div id="typingIndicator" style="padding:4px 14px;font-size:11px;color:var(--gray);display:none"></div>'+
         '<div id="quickReplies" style="padding:6px 14px;background:#fff;display:none;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)"></div>'+
-        '<div style="padding:10px 14px;background:#fff;border-top:1px solid var(--border);display:flex;gap:6px;align-items:center">'+
-          '<button onclick="openProductSearch()" title="Compartir producto" style="padding:7px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:14px;color:var(--gray);transition:all .15s;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">📦</button>'+
-          '<input id="adminChatInput" type="text" placeholder="Escribí un mensaje... (Ctrl+Enter para enviar)" style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.ctrlKey&&!event.shiftKey)sendAdminMessage();if(event.key===\'Enter\'&&event.ctrlKey)sendAdminMessage()">'+
-          '<button onclick="sendAdminMessage()" style="padding:8px 14px;background:var(--orange);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600">Enviar</button>'+
+        '<div class="wa-chat-input-bar">'+
+          '<button class="wa-attach-btn" onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto">'+
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>'+
+          '</button>'+
+          '<div class="wa-input-wrap">'+
+            '<textarea id="adminChatInput" rows="1" placeholder="Escribí un mensaje..." onkeydown="adminChatKeydown(event)" oninput="autoResizeChatInput(this);handleAdminTyping();toggleSendBtn()"></textarea>'+
+          '</div>'+
+          '<button class="wa-send-btn" id="adminSendBtn" onclick="sendAdminMessage()" title="Enviar">'+
+            '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'+
+          '</button>'+
         '</div>'+
       '</div>'+
     '</div>';
