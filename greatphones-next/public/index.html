@@ -2033,19 +2033,18 @@
         <!-- Typing indicator -->
         <div id="typingIndicator" style="padding:2px 20px 6px;font-size:11px;color:var(--gray);font-style:italic;display:none"></div>
         <!-- Quick replies -->
-        <div id="quickReplies" style="padding:8px 20px;background:#fff;display:none;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)"></div>
-        <!-- Input area -->
-        <div style="padding:12px 20px 14px;background:#fff;border-top:1px solid var(--border)">
-          <div style="display:flex;gap:8px;align-items:flex-end">
-            <button onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto" style="padding:10px;background:var(--cream2);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:16px;color:var(--gray);transition:all .15s;display:flex;align-items:center;justify-content:center;line-height:1;flex-shrink:0" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">📦</button>
-            <div style="flex:1;position:relative">
-              <textarea id="adminChatInput" rows="1" placeholder="Escribí un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAdminMessage();autoResizeChatInput(this)}else{setTimeout(function(){autoResizeChatInput(document.getElementById('adminChatInput'))})}" oninput="autoResizeChatInput(this);handleAdminTyping()" style="width:100%;padding:10px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:var(--cream);transition:border-color .2s,box-shadow .2s;box-sizing:border-box;resize:none;font-family:inherit;line-height:1.5;max-height:120px;overflow-y:auto" onfocus="this.style.borderColor='var(--orange)';this.style.boxShadow='0 0 0 3px rgba(255,107,44,.1)'" onblur="this.style.borderColor='var(--border)';this.style.boxShadow='none'"></textarea>
-            </div>
-            <button onclick="sendAdminMessage()" style="padding:11px 20px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:12px;cursor:pointer;font-size:13px;font-weight:700;transition:transform .15s,box-shadow .15s;box-shadow:0 3px 10px rgba(255,107,44,.25);display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 14px rgba(255,107,44,.35)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 3px 10px rgba(255,107,44,.25)'">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-              Enviar
-            </button>
+        <div id="quickReplies" class="wa-quick-replies" style="padding:6px 16px;display:none;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)"></div>
+        <!-- Input area - WhatsApp style -->
+        <div class="wa-chat-input-bar">
+          <button class="wa-attach-btn" onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <div class="wa-input-wrap">
+            <textarea id="adminChatInput" rows="1" placeholder="Escribí un mensaje..." onkeydown="adminChatKeydown(event)" oninput="autoResizeChatInput(this);handleAdminTyping();toggleSendBtn()"></textarea>
           </div>
+          <button class="wa-send-btn" id="adminSendBtn" onclick="sendAdminMessage()" title="Enviar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
         </div>
       </div>
     </div>
