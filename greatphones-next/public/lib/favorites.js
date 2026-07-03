@@ -72,8 +72,8 @@ function toggleDetFav(){
   saveFavorites();
   updFavBadge();
   syncFavToAPI(targetId,isNowFav);
-  renderHomeRail();renderShopGrid();renderOfertasGrid();renderFeaturedGrid();renderAccGrid();
-  if(document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
+  updateFavHearts(targetId,isNowFav);
+  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
 }
 function isFavorite(id){
   return favorites.indexOf(id)!==-1;
@@ -84,6 +84,11 @@ function toggleFavFromCard(id){
   if(isNowFav){favorites.push(id);}else{favorites.splice(idx,1);}
   saveFavorites();updFavBadge();
   syncFavToAPI(id,isNowFav);
+  updateFavHearts(id,isNowFav);
+  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
+}
+
+function updateFavHearts(id,isNowFav){
   var btns=document.querySelectorAll('.pcard-fav');
   for(var i=0;i<btns.length;i++){
     var btn=btns[i];
@@ -91,11 +96,8 @@ function toggleFavFromCard(id){
     if(onclickAttr&&onclickAttr.indexOf("'"+id+"'")!==-1){
       if(isNowFav){btn.classList.add('on');btn.innerHTML='\u2665';btn.style.animation='none';btn.offsetHeight;btn.style.animation='favPop 0.3s ease';}
       else{btn.classList.remove('on');btn.innerHTML='\u2661';}
-      break;
     }
   }
-  renderHomeRail();renderShopGrid();renderOfertasGrid();renderFeaturedGrid();renderAccGrid();
-  if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
 }
 function renderFavGrid(){
   var grid=document.getElementById('favGrid'),empty=document.getElementById('favEmpty'),cnt=document.getElementById('favCount');
