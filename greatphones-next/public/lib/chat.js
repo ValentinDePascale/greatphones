@@ -1385,6 +1385,10 @@ function openAdminConv(id){
     if(convSide)convSide.classList.add('hide');
     if(msgArea)msgArea.classList.add('show');
   }
+  setTimeout(function(){
+    var inp=document.getElementById('adminChatInput');
+    if(inp)inp.focus();
+  },100);
 }
 
 function closeMobileChat(){
@@ -1406,10 +1410,11 @@ var cannedReplies=[
 function renderQuickReplies(){
   var container=document.getElementById('quickReplies');
   if(!container)return;
-  container.style.display='flex';
   var replies=getCannedReplies();
+  if(!replies||replies.length===0){container.style.display='none';return;}
+  container.style.display='flex';
   container.innerHTML=replies.map(function(r,i){
-    return '<button onclick="useQuickReply('+i+')" title="'+r.text+'" style="padding:5px 12px 5px 10px;font-size:11px;font-weight:500;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.08)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'var(--cream2)\';this.style.color=\'var(--dk)\'"><span style="font-size:13px">⚡</span> '+r.label+'</button>';
+    return '<button onclick="useQuickReply('+i+')" title="'+r.text+'">⚡ '+r.label+'</button>';
   }).join('');
 }
 
@@ -1420,6 +1425,8 @@ function useQuickReply(index){
   var input=document.getElementById('adminChatInput');
   if(input){
     input.value=reply.text;
+    autoResizeChatInput(input);
+    toggleSendBtn();
     input.focus();
   }
 }
@@ -1493,11 +1500,33 @@ function closeAdminConv(id){
   .catch(function(e){console.error('Error closing conversation:',e);});
 }
 
+function autoResizeChatInput(el){
+  el.style.height='auto';
+  el.style.height=Math.min(el.scrollHeight,120)+'px';
+}
+
+function adminChatKeydown(e){
+  if(e.key==='Enter'&&!e.shiftKey){
+    e.preventDefault();
+    sendAdminMessage();
+  }
+}
+
+function toggleSendBtn(){
+  var input=document.getElementById('adminChatInput');
+  var btn=document.getElementById('adminSendBtn');
+  if(!input||!btn)return;
+  btn.style.opacity=input.value.trim()?1:.5;
+  btn.style.pointerEvents=input.value.trim()?'auto':'none';
+}
+
 function sendAdminMessage(){
   var input=document.getElementById('adminChatInput');
   if(!input||!input.value.trim()||!userConvId)return;
   var text=input.value.trim();
   input.value='';
+  autoResizeChatInput(input);
+  toggleSendBtn();
   if(adminTypingTimeout)clearTimeout(adminTypingTimeout);
   if(chatSocket)chatSocket.emit('stopTyping',{conversationId:userConvId});
   fetch(API_URL+'/api/conversations/'+userConvId+'/messages',{
