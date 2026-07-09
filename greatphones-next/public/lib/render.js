@@ -615,7 +615,7 @@ function renderShopGrid(){
   if(!grid)return;
   var prods=PRODUCTS.slice();
   if(!window.shopFilter)window.shopFilter='todos';
-  if(window.shopFilter!=='todos')prods=prods.filter(function(p){return p.brand===window.shopFilter;});
+  if(window.shopFilter!=='todos')prods=prods.filter(function(p){return p.brand&&p.brand.toLowerCase()===window.shopFilter.toLowerCase();});
   if(window.shopFilter==='fav'){
     prods=prods.filter(function(p){return favorites.indexOf(p.id)!==-1;});
   }
