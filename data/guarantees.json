@@ -1,8 +1,0 @@
-[
-  {"client":"Martina Garcia","equipo":"iPhone 15 Pro 256GB","tipo":"90 dias","vence":"2025-06-15","estado":"Activa"},
-  {"client":"Carlos Ruiz","equipo":"MacBook Air M2","tipo":"12 meses","vence":"2026-03-18","estado":"Activa"},
-  {"client":"Ana Gomez","equipo":"Galaxy S24 Ultra","tipo":"90 dias","vence":"2025-06-20","estado":"Activa"},
-  {"client":"Luis Perez","equipo":"iPhone 14 128GB","tipo":"24 meses","vence":"2027-03-22","estado":"Activa"},
-  {"client":"Maria Lopez","equipo":"iPad Pro M4","tipo":"90 dias","vence":"2025-04-10","estado":"Por vencer"},
-  {"client":"Pedro Ramirez","equipo":"iPhone 12 Pro","tipo":"90 dias","vence":"2025-01-31","estado":"Vencida"}
-]

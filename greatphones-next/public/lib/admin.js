@@ -403,11 +403,11 @@ function showOrderModal(order){
             '<div style="font-size:12px;color:var(--gray);margin-top:4px">'+warrantyLabel+'</div>'+
           '</div>'+
         '</div>'+
-        (order.arrepStatus==='ARREP_OK'?'<div style="margin-top:1rem;padding:12px;background:#f0fdf4;border-radius:10px;border-left:4px solid var(--green)">'+
+        (order.arrepStatus==='ARREP_OK'?'<div style="margin-top:1rem;padding:12px;background:#f0fdf4;border-radius:10px">'+
           '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:4px">Arrepentimiento aceptado</div>'+
           '<div style="font-size:11px;color:#6b7280">Devolucion procesada segun Ley 24.240. Reembolso total incluido.</div>'+
         '</div>':'')+
-        (order.arrepStatus==='ARREP_RECHAZADO'?'<div style="margin-top:1rem;padding:12px;background:#fef2f2;border-radius:10px;border-left:4px solid var(--red)">'+
+        (order.arrepStatus==='ARREP_RECHAZADO'?'<div style="margin-top:1rem;padding:12px;background:#fef2f2;border-radius:10px">'+
           '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:6px">Arrepentimiento rechazado</div>'+
           '<div style="display:flex;flex-wrap:wrap;gap:4px">'+
             ((order.arrepReason||'').split(';').filter(Boolean).map(function(r){
@@ -648,7 +648,7 @@ function renderArrepList(list,tab){
         '<button class="ord-btn" onclick="rejectArrep(\''+a.id+'\')" style="flex:1;border-color:var(--red);color:var(--red)">Rechazar</button>'+
       '</div>';
     }else if(tab==='aceptados'){
-      html+='<div style="padding:10px;background:#f0fdf4;border-radius:8px;border-left:4px solid var(--green)">'+
+      html+='<div style="padding:10px;background:#f0fdf4;border-radius:8px">'+
         '<div style="font-size:12px;font-weight:600;color:#059669">Arrepentimiento aceptado - Devolucion procesada</div>'+
         '<div style="font-size:11px;color:var(--gray);margin-top:4px">Reembolso total segun Ley 24.240</div>'+
       '</div>';
@@ -664,7 +664,7 @@ function renderArrepList(list,tab){
       var reasonsHtml=reasonsParts.map(function(r){
         return'<span style="display:inline-block;padding:4px 10px;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;font-weight:500;margin:2px">'+r.trim()+'</span>';
       }).join('');
-      html+='<div style="padding:10px;background:#fef2f2;border-radius:8px;border-left:4px solid var(--red)">'+
+      html+='<div style="padding:10px;background:#fef2f2;border-radius:8px">'+
         '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:8px">Arrepentimiento rechazado</div>'+
         '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+reasonsHtml+'</div>'+
         (comment?'<div style="font-size:11px;color:var(--gray);padding-top:6px;border-top:1px solid #fecaca"><strong>Comentario:</strong> '+comment+'</div>':'')+

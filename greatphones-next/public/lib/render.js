@@ -2941,9 +2941,36 @@ function renderAdminContent(tab){
     '<div class="adm-list" id="arrepList">Cargando...</div>';
     loadArrepPendientes();
   }else if(tab==='users'){
-    el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p>Usuarios</p><p style="font-size:12px">Proximamente podras gestionar usuarios</p></div>';
+    el.innerHTML='<div style="padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><h3 style="font-size:16px">Usuarios</h3><span id="usersCount" style="font-size:12px;color:var(--gray)">Cargando...</span></div><div id="usersTableWrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:500px"><thead><tr style="background:var(--admin-surface);color:var(--admin-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px"><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Nombre</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Email</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Rol</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Teléfono</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Registro</th></tr></thead><tbody id="usersTbody"><tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--gray)">Cargando usuarios...</td></tr></tbody></table></div></div>';
+    fetch(API_URL+'/api/admin/users',{headers:{'X-User-Id':currentUser.id}}).then(function(r){return r.json();}).then(function(users){
+      var tbody=document.getElementById('usersTbody');
+      var count=document.getElementById('usersCount');
+      if(!tbody)return;
+      if(!Array.isArray(users)||users.length===0){
+        tbody.innerHTML='<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--gray)">No hay usuarios registrados</td></tr>';
+        if(count)count.textContent='0 usuarios';
+        return;
+      }
+      if(count)count.textContent=users.length+' usuarios';
+      tbody.innerHTML=users.map(function(u){
+        var roleColor=u.role==='ADMIN'?'var(--orange)':'var(--green)';
+        var roleLabel=u.role==='ADMIN'?'Admin':'Cliente';
+        var date=u.createdAt?new Date(u.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'-';
+        var name=u.name||u.email.split('@')[0];
+        return '<tr style="border-bottom:1px solid var(--admin-border);transition:background .15s" onmouseover="this.style.background=\'var(--admin-surface-hover)\'" onmouseout="this.style.background=\'transparent\'">'+
+          '<td style="padding:10px 12px;color:var(--admin-text)">'+name+'</td>'+
+          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+u.email+'</td>'+
+          '<td style="padding:10px 12px"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;color:'+roleColor+';background:'+roleColor+'15">'+roleLabel+'</span></td>'+
+          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+(u.phone||'-')+'</td>'+
+          '<td style="padding:10px 12px;color:var(--admin-text-muted);white-space:nowrap">'+date+'</td>'+
+          '</tr>';
+      }).join('');
+    }).catch(function(err){
+      var tbody=document.getElementById('usersTbody');
+      if(tbody)tbody.innerHTML='<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--red)">Error al cargar usuarios</td></tr>';
+    });
   }else if(tab==='chat'){
-    el.innerHTML='<div style="display:flex;gap:0;height:600px;background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
+    el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
       '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto" class="chat-conv-side">'+
         '<div style="padding:14px;border-bottom:1px solid var(--border)"><h3 style="font-size:15px;font-weight:700">Conversaciones</h3></div>'+
         '<div id="adminConvList"></div>'+

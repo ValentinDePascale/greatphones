@@ -202,7 +202,7 @@ function cartTotal(){
       var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
       return sum+(price*item.qty);
     }
-    var a=getById(window.ACCS,item.id);
+    var a=getById(window.ACCS,item.productId||item.id);
     if(a){
       var now=new Date();
       var isPromo=a.isOffer&&a.discount>0;
@@ -276,7 +276,7 @@ function renderCartBody(){
         '</div>'+
       '</div>';
     }
-    var a=getById(window.ACCS,item.id);
+    var a=getById(window.ACCS,item.productId||item.id);
     if(!a)return '';
     var now2=new Date();
     var isPromo2=a.isOffer&&a.discount>0;

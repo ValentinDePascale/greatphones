@@ -125,16 +125,6 @@
 .pr-row .af-inp{flex:1}
 /* SHOP v7 - uses .pgrid from components.css */
 .sort-bar{display:none}
-  flex:1;
-  padding:7px 10px;
-  border:1px solid var(--border);
-  border-radius:7px;
-  background:#fff;
-  font-size:11px;
-  appearance:none;
-  cursor:pointer;
-  outline:none
-}
 .sort-count{font-size:11px;color:var(--gray);white-space:nowrap}
 .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:.875rem 1rem 2rem;background:var(--cream)}
 @media(min-width:580px){.shop-grid{grid-template-columns:repeat(3,1fr)}}
@@ -934,7 +924,7 @@
   transition:background .15s
 }
 .conv-item:hover{background:var(--cream2)}
-.conv-item.act-conv{background:rgba(255,107,44,.05);border-left:3px solid var(--orange)}
+.conv-item.act-conv{background:rgba(255,107,44,.08);border-left:none}
 .conv-av{
   width:40px;
   height:40px;
@@ -1111,7 +1101,7 @@
   transition:background .15s
 }
 .notif-item:hover{background:var(--cream2)}
-.notif-item.unread{border-left:3px solid var(--orange)}
+.notif-item.unread{background:rgba(255,107,44,.05);border-left:none}
 .ni-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .ni-offer{background:rgba(255,107,44,.1)}.ni-order{background:rgba(31,61,43,.08)}
 .ni-loyalty{background:rgba(123,47,190,.08)}.ni-msg{background:rgba(26,111,181,.08)}
@@ -1327,12 +1317,12 @@
 .typing-dot{
   width:6px;height:6px;border-radius:50%;
   background:var(--gray);
-  animation:typingBounce 1.4s ease-in-out infinite
+  animation:typingPulse 1.4s ease-in-out infinite
 }
 .typing-dot:nth-child(1){animation-delay:0s}
 .typing-dot:nth-child(2){animation-delay:.2s}
 .typing-dot:nth-child(3){animation-delay:.4s}
-@keyframes typingBounce{
+@keyframes typingPulse{
   0%,60%,100%{transform:translateY(0);opacity:.4}
   30%{transform:translateY(-6px);opacity:1}
 }
@@ -1364,7 +1354,7 @@
   background:var(--orange);color:#fff;
   font-size:9px;font-weight:700;
   display:none;align-items:center;justify-content:center;padding:0 4px;
-  animation:fabBadgePop .3s cubic-bezier(.175,.885,.32,1.275)
+  animation:fabBadgePop .3s cubic-bezier(.2,.8,.2,1)
 }
 @keyframes fabBadgePop{
   0%{transform:scale(0)}

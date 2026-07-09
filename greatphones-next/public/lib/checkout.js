@@ -331,12 +331,13 @@ function submitOrder(){
   }
 
   var items=Cart.map(function(item){
-    var p=getById(PRODUCTS,item.id);
+    var lookupId=item.productId||item.id;
+    var p=getById(PRODUCTS,lookupId);
     if(p){
       var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
       return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty};
     }
-    var a=getById(window.ACCS,item.id);
+    var a=getById(window.ACCS,lookupId);
     if(a){
       return{id:a.id,name:a.name,sub:(a.brand||'')+' '+(a.color||''),imageUrl:a.imageUrl,price:a.price,quantity:item.qty};
     }
@@ -406,7 +407,8 @@ function renderCheckoutSummaryStep(){
     return;
   }
   container.innerHTML=Cart.map(function(item){
-    var p=getById(PRODUCTS,item.id);
+    var lookupId=item.productId||item.id;
+    var p=getById(PRODUCTS,lookupId);
     if(p){
       var isPromo=p.isOffer&&p.discount>0;
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
@@ -479,8 +481,9 @@ function renderCheckoutSummary(){
   }
 
   var validItems=Cart.filter(function(item){
-    var p=getById(PRODUCTS,item.id);
-    var a=getById(window.ACCS,item.id);
+    var lookupId=item.productId||item.id;
+    var p=getById(PRODUCTS,lookupId);
+    var a=getById(window.ACCS,lookupId);
     return p||a;
   });
 
@@ -511,7 +514,8 @@ function renderCheckoutItems(items){
   var subtotal=cartTotal();
 
   itemsContainer.innerHTML=items.map(function(item){
-    var p=getById(PRODUCTS,item.id);
+    var lookupId=item.productId||item.id;
+    var p=getById(PRODUCTS,lookupId);
     if(p){
       var isPromo=p.isOffer&&p.discount>0;
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
@@ -530,7 +534,7 @@ function renderCheckoutItems(items){
         '<div style="text-align:right">'+priceHtml+'</div>'+
       '</div>';
     }
-    var a=getById(window.ACCS,item.id);
+    var a=getById(window.ACCS,lookupId);
     if(!a)return '';
     var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📦</span>';
     return'<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+

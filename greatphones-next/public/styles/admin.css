@@ -61,12 +61,12 @@
   font-family:'Playfair Display',Georgia,serif;
   font-size:16px;
   font-weight:700;
-  color:var(--admin-text);
+  color:var(--admin-text,#1a1208);
   line-height:1.2
 }
 .admin-sidebar-subtitle{
   font-size:11px;
-  color:var(--admin-text-muted);
+  color:var(--admin-text-muted,#6b6259);
   margin-top:2px
 }
 .admin-sidebar-nav{
@@ -84,7 +84,7 @@
   border-radius:8px;
   font-size:13px;
   font-weight:500;
-  color:var(--admin-text-muted);
+  color:var(--admin-text-muted,#6b6259);
   cursor:pointer;
   transition:all .15s;
   border:none;
@@ -160,7 +160,7 @@
   font-family:'Playfair Display',Georgia,serif;
   font-size:20px;
   font-weight:700;
-  color:var(--admin-text);
+  color:var(--admin-text,#1a1208);
   margin:0
 }
 .admin-topbar-actions{
@@ -185,7 +185,7 @@
   transition:all .15s;
   border:1px solid var(--admin-border);
   background:var(--admin-surface);
-  color:var(--admin-text);
+  color:var(--admin-text,#1a1208);
   display:inline-flex;
   align-items:center;
   gap:6px
@@ -729,7 +729,6 @@
   position:fixed;
   inset:0;
   background:rgba(0,0,0,.6);
-  backdrop-filter:blur(4px);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -743,8 +742,8 @@
   visibility:visible
 }
 .admin-modal{
-  background:var(--admin-surface);
-  border:1px solid var(--admin-border);
+  background:var(--admin-surface,#fff);
+  border:1px solid var(--admin-border,rgba(0,0,0,.09));
   border-radius:16px;
   padding:24px;
   max-width:420px;
@@ -775,13 +774,13 @@
   font-family:'Playfair Display',Georgia,serif;
   font-size:20px;
   font-weight:700;
-  color:var(--admin-text);
+  color:var(--admin-text,#1a1208);
   text-align:center;
   margin-bottom:8px
 }
 .admin-modal-message{
   font-size:14px;
-  color:var(--admin-text-muted);
+  color:var(--admin-text-muted,#6b6259);
   text-align:center;
   line-height:1.5;
   margin-bottom:24px
@@ -798,9 +797,9 @@
   font-weight:600;
   cursor:pointer;
   transition:all .15s ease;
-  border:1px solid var(--admin-border);
-  background:var(--admin-surface-hover);
-  color:var(--admin-text);
+  border:1px solid var(--admin-border,rgba(0,0,0,.09));
+  background:var(--admin-surface-hover,#f0ebe3);
+  color:var(--admin-text,#1a1208);
   min-width:100px
 }
 .admin-modal-btn:hover{
@@ -878,18 +877,18 @@
 .admin-toast-title{
   font-size:14px;
   font-weight:600;
-  color:var(--admin-text);
+  color:var(--admin-text,#1a1208);
   margin-bottom:4px
 }
 .admin-toast-message{
   font-size:13px;
-  color:var(--admin-text-muted);
+  color:var(--admin-text-muted,#6b6259);
   line-height:1.4
 }
 .admin-toast-close{
   background:none;
   border:none;
-  color:var(--admin-text-muted);
+  color:var(--admin-text-muted,#6b6259);
   cursor:pointer;
   padding:4px;
   font-size:18px;

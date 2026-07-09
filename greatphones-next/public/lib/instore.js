@@ -1439,7 +1439,7 @@ function showSaleSuccess(order, change) {
 
   modal.innerHTML = `
     <div style="background:var(--cream2);border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;animation:scaleIn .3s">
-      <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:bounceIn .5s">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:scaleIn .35s">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
@@ -1568,7 +1568,7 @@ function showPaymentSuccess(order) {
 
   modal.innerHTML = `
     <div style="background:var(--cream2);border-radius:16px;max-width:450px;width:100%;padding:2.5rem;text-align:center;animation:scaleIn .3s">
-      <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:bounceIn .5s">
+      <div style="width:80px;height:80px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;animation:scaleIn .35s">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
           <polyline points="20 6 9 17 4 12"></polyline>
         </svg>
