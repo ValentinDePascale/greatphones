@@ -755,10 +755,14 @@ function renderProductCard(product){
   var price=product.price||0;
   var pid=product.id||'';
   var priceStr='$'+Number(price).toLocaleString('es-AR');
+  var variantInfo=product.variant||'';
+  var storageInfo=product.storage?'<div class="msg-product-card-detail">💾 '+escapeHtml(product.storage)+'</div>':'';
+  var colorInfo=product.color?'<div class="msg-product-card-detail">🎨 '+escapeHtml(product.color)+'</div>':'';
   return '<div class="msg-product-card" onclick="event.stopPropagation();openDetail(\''+pid+'\')" style="cursor:pointer">'+
     (img?'<img src="'+img+'" class="msg-product-card-img" onerror="this.style.display=\'none\'">':'<div class="msg-product-card-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>')+
     '<div class="msg-product-card-info">'+
       '<div class="msg-product-card-name">'+escapeHtml(name)+'</div>'+
+      storageInfo+colorInfo+
       '<div class="msg-product-card-price">'+priceStr+'</div>'+
       '<div class="msg-product-card-link">🔗 Ver producto</div>'+
     '</div>'+
@@ -862,12 +866,18 @@ function consultarProducto(){
   if(!currentUser){openLogin();return;}
   if(!window.currentProd)return;
   var p=window.currentProd;
+  var v=window._selectedVariant;
+  var variantLabel=v&&(v.storage||v.color)?' ('+[v.storage,v.color].filter(Boolean).join(' / ')+')':'';
   var productData={
     id:p.id,
-    name:p.name,
-    price:p.price,
+    name:p.name+(variantLabel||''),
+    price:v&&v.targetPrice?v.targetPrice:p.price,
     image:p.imageUrl||(p.images&&p.images[0])||'',
-    slug:p.slug||''
+    slug:p.slug||'',
+    variant:v?variantLabel.trim():'',
+    storage:v?v.storage:null,
+    color:v?v.color:null,
+    imei:v?v.imei:null
   };
   var encodedText=PRODUCT_PREFIX+JSON.stringify(productData);
 

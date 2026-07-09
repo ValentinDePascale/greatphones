@@ -1205,6 +1205,7 @@
   color:var(--orange);
   margin-top:2px
 }
+.msg-product-card-detail{font-size:10px;color:var(--gray);margin-top:1px}
 .msg-product-card-link{
   font-size:9px;
   color:var(--gray);
@@ -1216,6 +1217,7 @@
 .mine .msg-product-card{border-color:rgba(255,255,255,.2);background:rgba(255,255,255,.1)}
 .mine .msg-product-card-name{color:#fff}
 .mine .msg-product-card-price{color:#fff}
+.mine .msg-product-card-detail{color:rgba(255,255,255,.5)}
 .mine .msg-product-card-link{color:rgba(255,255,255,.6)}
 
 /* PRODUCT SEARCH MODAL */
