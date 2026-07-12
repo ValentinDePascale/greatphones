@@ -269,6 +269,7 @@ model Order {
 
   items           OrderItem[]
   arrepentimientos Arrepentimiento[]
+  warrantyExtends WarrantyExtend[]
 }
 
 enum OrderStatus {
@@ -667,4 +668,25 @@ enum ArrepEstado {
   APROBADO
   RECHAZADO
   COMPLETADO
+}
+
+// ==================== EXTENSIÓN DE GARANTÍA ====================
+model WarrantyExtend {
+  id        String              @id @default(cuid())
+  orderId   String
+  order     Order               @relation(fields: [orderId], references: [id])
+  imei      String
+  plan      String              // "12m" or "24m"
+  months    Int
+  price     Int
+  status    WarrantyExtendStatus @default(ACTIVE)
+  startDate DateTime            @default(now())
+  endDate   DateTime
+  createdAt DateTime            @default(now())
+}
+
+enum WarrantyExtendStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
 }
