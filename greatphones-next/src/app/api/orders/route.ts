@@ -6,9 +6,11 @@ import {
   formatZodError 
 } from '@/lib/validations'
 import { sendOrderStatusEmail } from '@/lib/email'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(request: Request) {
   try {
+    const user = await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') || undefined
     const userId = searchParams.get('userId') || undefined
@@ -141,6 +143,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin(request)
     const body = await request.json()
     
     // Validar body
@@ -220,6 +223,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     
@@ -322,6 +326,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     

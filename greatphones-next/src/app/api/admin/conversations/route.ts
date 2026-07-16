@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-async function requireAdmin(request: Request) {
-  const userId = request.headers.get('x-user-id')
-  if (!userId) return { error: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-  if (!user || user.role !== 'ADMIN') return { error: NextResponse.json({ error: 'Acceso denegado' }, { status: 403 }) }
-  return { userId }
-}
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -21,9 +14,8 @@ export async function OPTIONS() {
 }
 
 export async function GET(request: Request) {
-  const auth = await requireAdmin(request)
-  if (auth.error) return auth.error
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const adminId = searchParams.get('adminId')
@@ -61,9 +53,8 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await requireAdmin(request)
-  if (auth.error) return auth.error
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const { conversationId, adminId, action } = body
 

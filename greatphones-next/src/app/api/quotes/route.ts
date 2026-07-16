@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendNewQuoteEmail } from '@/lib/email'
+import { requireSession, requireAdmin } from '@/lib/auth-guard'
 
 export async function GET(request: Request) {
   try {
+    const user = await requireSession(request)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
-    const userId = searchParams.get('userId')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     const search = searchParams.get('search') || ''
@@ -17,8 +18,10 @@ export async function GET(request: Request) {
       where.status = status
     }
     
-    if (userId) {
-      where.userId = userId
+    if (user.role !== 'ADMIN') {
+      where.userId = user.id
+    } else if (searchParams.get('userId')) {
+      where.userId = searchParams.get('userId')
     }
 
     if (search) {
@@ -57,8 +60,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     
+    const user = await requireSession(request)
     const {
-      userId,
       device,
       storage,
       condition,
@@ -78,16 +81,18 @@ export async function POST(request: Request) {
       extras,
     } = body
 
-    if (!userId || !device || !storage || !condition || !finalPrice) {
+    if (!device || !storage || !condition || !finalPrice) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
     }
+
+    const quoteUserId = user.role === 'ADMIN' && body.userId ? body.userId : user.id
     
     const code = `QT-${Date.now()}`
     
     const quote = await prisma.quote.create({
       data: {
         code,
-        userId,
+        userId: quoteUserId,
         device,
         storage,
         condition,
@@ -132,6 +137,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const { id, status, rejectReason } = body
 
@@ -161,6 +167,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 

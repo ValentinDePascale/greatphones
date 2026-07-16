@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSelfOrAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -20,6 +21,8 @@ export async function PUT(request: Request) {
     if (!userId) {
       return NextResponse.json({ error: 'User ID requerido' }, { status: 400 })
     }
+
+    await requireSelfOrAdmin(userId, request)
 
     const updateData: any = {}
     if (name) updateData.name = name

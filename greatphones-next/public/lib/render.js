@@ -3246,7 +3246,7 @@ function applyPromo(){
     if(isAcc)accCount++;else prodCount++;
     promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({discount:discount,isOffer:discount>0})
     }));
   });
@@ -3339,7 +3339,7 @@ function removePromo(id){
   var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
   fetch(API_URL+endpoint,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({discount:0,isOffer:false})
   }).then(function(){
     loadProducts();
@@ -3366,7 +3366,7 @@ function deleteSelectedPromos(){
       var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
       promises.push(fetch(API_URL+endpoint,{
         method:'PUT',
-        headers:{'Content-Type':'application/json'},
+        headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
         body:JSON.stringify({discount:0,isOffer:false})
       }));
     });

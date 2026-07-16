@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { emitUnreadUpdate } from '@/lib/socket'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -16,10 +17,9 @@ export async function OPTIONS() {
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
-    const body = await request.json().catch(() => ({}))
-    const readerId = body.readerId
+    const user = await requireSession(request)
+    const readerId = user.id
 
-    // Mark all unread messages as read
     await prisma.message.updateMany({
       where: {
         conversationId: id,
@@ -31,7 +31,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
     })
 
-    // Determine which counter to reset based on who is reading
     const conversation = await prisma.conversation.findUnique({
       where: { id },
       select: { userId: true, adminId: true }
@@ -41,13 +40,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     if (conversation) {
       if (readerId === conversation.userId) {
-        // User is reading -> reset unreadByUser
         updateData.unreadByUser = 0
-      } else if (readerId === conversation.adminId || readerId === 'admin') {
-        // Admin is reading -> reset unreadByAdmin
+      } else if (readerId === conversation.adminId || user.role === 'ADMIN') {
         updateData.unreadByAdmin = 0
       } else {
-        // Fallback: reset both
         updateData.unreadByUser = 0
         updateData.unreadByAdmin = 0
       }
@@ -58,10 +54,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       data: updateData
     })
 
-    // Emit unreadUpdate so badges update instantly
-    if (readerId) {
-      emitUnreadUpdate(readerId)
-    }
+    emitUnreadUpdate(readerId)
 
     return NextResponse.json({ success: true })
   } catch (error) {

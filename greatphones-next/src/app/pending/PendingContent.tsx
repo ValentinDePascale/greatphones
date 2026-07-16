@@ -6,6 +6,7 @@ export function PendingContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orderCode = searchParams.get('order')
+  const wextId = searchParams.get('wext')
 
   return (
     <div style={{
@@ -50,7 +51,9 @@ export function PendingContent() {
           Pago pendiente
         </h1>
         <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '1.5rem' }}>
-          Tu pago esta siendo procesado. Una vez confirmado, te enviaremos un email con los detalles.
+          {wextId
+            ? 'El pago de la extensión de garantía está siendo procesado. Una vez confirmado, se activará automáticamente.'
+            : 'Tu pago está siendo procesado. Una vez confirmado, te enviaremos un email con los detalles.'}
         </p>
         {orderCode && (
           <div style={{
@@ -60,7 +63,7 @@ export function PendingContent() {
             borderLeft: '4px solid #d97706',
             marginBottom: '2rem'
           }}>
-            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Numero de orden</p>
+            <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Número de orden</p>
             <p style={{ fontSize: '20px', fontWeight: 700, color: '#d97706', fontFamily: 'monospace' }}>
               {orderCode}
             </p>
@@ -77,13 +80,13 @@ export function PendingContent() {
             Si elegiste pagar con:
           </p>
           <ul style={{ fontSize: '13px', color: '#374151', paddingLeft: '1.5rem', lineHeight: 1.8 }}>
-            <li><strong>Rapipago / Pago Facil:</strong> Presenta el cupon de pago en cualquier sucursal</li>
-            <li><strong>Transferencia:</strong> Realiza la transferencia dentro de las 24 horas</li>
-            <li><strong>Tarjeta de debito:</strong> El pago se procesa automaticamente</li>
+            <li><strong>Rapipago / Pago Fácil:</strong> Presentá el cupón de pago en cualquier sucursal</li>
+            <li><strong>Transferencia:</strong> Realizá la transferencia dentro de las 24 horas</li>
+            <li><strong>Tarjeta de débito:</strong> El pago se procesa automáticamente</li>
           </ul>
         </div>
         <p style={{ fontSize: '12px', color: '#9ca3af', marginBottom: '1.5rem' }}>
-          El tiempo de confirmacion puede variar entre 1 y 48 horas segun el metodo de pago elegido.
+          El tiempo de confirmación puede variar entre 1 y 48 horas según el método de pago elegido.
         </p>
         <button
           onClick={() => router.push('/')}

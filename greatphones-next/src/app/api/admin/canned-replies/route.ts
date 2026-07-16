@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const DATA_DIR = path.join(process.cwd(), 'data')
 const DATA_FILE = path.join(DATA_DIR, 'canned-replies.json')
@@ -33,8 +34,9 @@ function writeReplies(replies: any[]) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(replies, null, 2), 'utf-8')
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await requireAdmin(request)
     const replies = readReplies()
     if (!replies) {
       return NextResponse.json({ replies: getDefaultReplies() })
@@ -48,6 +50,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const { replies } = body
     if (!Array.isArray(replies)) {

@@ -194,25 +194,18 @@ function garConfirmExtend(planId){
   var imei=document.getElementById('garImei');
   if(!code||!imei)return;
 
-  var btn=document.querySelector('#garResult .btn-full');
-  if(btn){btn.disabled=true;btn.textContent='Procesando...';}
-
-  fetch('/api/warranty/extend',{
+  fetch('/api/warranty/preference',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
       code:code.value.trim(),
       imei:imei.value.trim(),
-      plan:planId,
-      price:plan.price
+      plan:planId
     })
   }).then(function(r){return r.json();}).then(function(data){
-    if(data.error)throw new Error(data.error);
-    renderGarSuccess('¡Garantía extendida '+plan.label+' activada! Tu cobertura vence el '+data.expiresAt);
-    // Re-verify to show updated status
-    setTimeout(garVerificar,2000);
+    if(data.error||!data.initPoint)throw new Error(data.error||'Error al crear el pago');
+    window.location.href=data.initPoint;
   }).catch(function(e){
-    renderGarError(e.message||'Error al procesar la extensión');
-    if(btn){btn.disabled=false;btn.textContent='Extender mi garantía';}
+    renderGarError(e.message||'Error al procesar el pago. Intentá nuevamente.');
   });
 }

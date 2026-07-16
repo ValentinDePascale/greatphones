@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireSession } from '@/lib/auth-guard'
 
 // Andreani API Configuration
 const ANDREANI_API_URL = process.env.ANDREANI_API_URL || 'https://api.andreani.com'
@@ -63,6 +64,7 @@ const BASE_COSTS: Record<number, number> = {
 
 export async function POST(request: NextRequest) {
   try {
+    await requireSession(request)
     const body = await request.json()
     const { destProvince, destZip, weight = 1 } = body
 

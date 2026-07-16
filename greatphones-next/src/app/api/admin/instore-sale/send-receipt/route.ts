@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import nodemailer from 'nodemailer'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const transporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
   ? nodemailer.createTransport({
@@ -13,6 +14,7 @@ const transporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin(request)
     const { email, pdfBase64, orderCode } = await request.json()
 
     if (!email || !pdfBase64) {

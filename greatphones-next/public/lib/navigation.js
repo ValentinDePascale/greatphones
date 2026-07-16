@@ -1,6 +1,15 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
+var _origFetch=window.fetch;
+window.fetch=function(url,opts){
+  opts=opts||{};
+  opts.headers=opts.headers||{};
+  if(currentUser&&currentUser.id&&typeof url==='string'&&url.indexOf(API_URL)===0&&!opts.headers['X-User-Id']){
+    opts.headers['X-User-Id']=currentUser.id;
+  }
+  return _origFetch.call(window,url,opts);
+};
 function nav(id){
   ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
   var _cf=document.querySelector('.cat-flex');if(_cf)_cf.classList.remove('cat-reveal');
@@ -82,6 +91,9 @@ function nav(id){
     renderOrderHistory();
     renderQuotHistory();
     loadClientQuotes();
+    if(typeof updateWalletUI==='function')updateWalletUI();
+    if(typeof renderWalletTransactions==='function')renderWalletTransactions(1);
+    if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
   }
   if(id==='admin'){
     window.currentAdminTab='prods';

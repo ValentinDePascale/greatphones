@@ -8,6 +8,7 @@ import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { productCache } from '@/lib/cache'
 import QRCode from 'qrcode'
 import { Prisma } from '@prisma/client'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const API_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
@@ -229,6 +230,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const validation = InventoryCreateSchema.safeParse(body)
     if (!validation.success) {

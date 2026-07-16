@@ -193,13 +193,27 @@ function renderInStoreSale() {
 
             <!-- Cash Section -->
             <div id="instore-cashSection" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem;margin-bottom:0.75rem">
-              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Monto Recibido</label>
+              <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">
+                Monto Recibido <span id="instore-expectedLabel" style="font-weight:400;text-transform:none;color:var(--orange)"></span>
+              </div>
               <input type="number" id="instore-cashReceived" placeholder="0"
                 oninput="calculateChange()"
                 style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem;box-sizing:border-box">
               <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(45,90,39,.1);border-radius:8px">
                 <span style="font-size:12px;font-weight:600;color:var(--green)">Cambio</span>
                 <span id="instore-change" style="font-size:16px;font-weight:700;color:var(--green)">$0</span>
+              </div>
+            </div>
+
+            <!-- USD Exchange Rate Section -->
+            <div id="instore-usdSection" style="display:none;border-top:1px solid var(--border);padding-top:0.75rem;margin-bottom:0.75rem">
+              <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">Cotización del Dólar</label>
+              <input type="number" id="instore-usdRate" placeholder="Ej: 1200"
+                oninput="updateUsdTotal()"
+                style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:0.5rem;box-sizing:border-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,107,44,.08);border-radius:8px">
+                <span style="font-size:12px;font-weight:600;color:var(--orange)">Total en USD</span>
+                <span id="instore-usdTotal" style="font-size:16px;font-weight:700;color:var(--orange)">US$ 0</span>
               </div>
             </div>
 
@@ -705,11 +719,14 @@ function selectCurrency(curr) {
     arsBtn.style.background = 'rgba(45,90,39,.1)'
     usdBtn.style.borderColor = 'var(--border)'
     usdBtn.style.background = 'white'
+    document.getElementById('instore-usdSection').style.display = 'none'
   } else {
     usdBtn.style.borderColor = 'var(--green)'
     usdBtn.style.background = 'rgba(45,90,39,.1)'
     arsBtn.style.borderColor = 'var(--border)'
     arsBtn.style.background = 'white'
+    document.getElementById('instore-usdSection').style.display = 'block'
+    updateUsdTotal()
   }
   updateSummary()
 }
@@ -721,7 +738,7 @@ function generateTransferQr() {
   var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
   fetch(API_URL + '/api/admin/instore-sale/generate-qr', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
     body: JSON.stringify({
       amount: total,
       currency: instoreState.currency,
@@ -747,6 +764,21 @@ function generateTransferQr() {
     btn.disabled = false
     showToast('Error al generar QR', 'error')
   })
+}
+
+function getExpectedAmount() {
+  var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
+  if (instoreState.installments > 1) {
+    return Math.round(total / instoreState.installments)
+  }
+  return total
+}
+
+function updateUsdTotal() {
+  var rate = parseFloat(document.getElementById('instore-usdRate').value) || 0
+  var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
+  var usdTotal = rate > 0 ? Math.round(total / rate) : 0
+  document.getElementById('instore-usdTotal').textContent = 'US$ ' + usdTotal.toLocaleString('es-AR')
 }
 
 function formatMoney(n) {
@@ -780,8 +812,15 @@ function selectPaymentMethod(method) {
 
 function calculateChange() {
   var cashReceived = parseInt(document.getElementById('instore-cashReceived').value) || 0
-  var total = instoreState.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0)
-  var change = cashReceived - total
+  var expected = getExpectedAmount()
+  var change = cashReceived - expected
+
+  var labelEl = document.getElementById('instore-expectedLabel')
+  if (instoreState.installments > 1) {
+    labelEl.textContent = '(1° cuota: ' + formatMoney(expected) + ')'
+  } else {
+    labelEl.textContent = ''
+  }
 
   var changeEl = document.getElementById('instore-change')
   changeEl.textContent = '$' + change.toLocaleString('es-AR')
@@ -791,13 +830,20 @@ function calculateChange() {
 function updateSummary() {
   var subtotal = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
 
-  document.getElementById('instore-subtotal').textContent = formatMoney(subtotal)
-  document.getElementById('instore-total').textContent = formatMoney(subtotal)
+  if (instoreState.currency === 'USD') {
+    var rate = parseFloat(document.getElementById('instore-usdRate')?.value) || 0
+    var usdTotal = rate > 0 ? Math.round(subtotal / rate) : 0
+    document.getElementById('instore-subtotal').textContent = 'AR$ ' + subtotal.toLocaleString('es-AR')
+    document.getElementById('instore-total').textContent = 'US$ ' + usdTotal.toLocaleString('es-AR')
+  } else {
+    document.getElementById('instore-subtotal').textContent = formatMoney(subtotal)
+    document.getElementById('instore-total').textContent = formatMoney(subtotal)
+  }
 
   if (instoreState.installments > 1) {
     var porCuota = Math.round(subtotal / instoreState.installments)
     document.getElementById('instore-installmentsDetail').textContent =
-      instoreState.installments + ' cuotas de ' + formatMoney(porCuota) + ' c/u — Total: ' + formatMoney(subtotal)
+      instoreState.installments + ' cuotas de ' + (instoreState.currency === 'USD' ? 'US$ ' : '$ ') + porCuota.toLocaleString('es-AR') + ' c/u — Total: ' + (instoreState.currency === 'USD' ? 'US$ ' : '$ ') + subtotal.toLocaleString('es-AR')
   }
 
   if (instoreState.paymentMethod === 'cash') {
@@ -855,7 +901,8 @@ function confirmInStoreSale() {
 
   if (instoreState.paymentMethod === 'cash') {
     var cashReceived = parseInt(document.getElementById('instore-cashReceived').value) || 0
-    if (cashReceived < total) {
+    var expected = getExpectedAmount()
+    if (cashReceived < expected) {
       showToast('Monto recibido insuficiente', 'error')
       return
     }
@@ -894,6 +941,7 @@ function confirmInStoreSale() {
     paymentMethod: instoreState.paymentMethod,
     currency: instoreState.currency,
     installments: instoreState.installments,
+    usdRate: instoreState.currency === 'USD' ? (parseFloat(document.getElementById('instore-usdRate').value) || 0) : 0,
     adminId: currentUser.id
   }
 
@@ -909,7 +957,7 @@ function confirmInStoreSale() {
 
   fetch(API_URL + '/api/admin/instore-sale', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
     body: JSON.stringify(payload)
   })
   .then(r => r.json())
@@ -1421,7 +1469,7 @@ function enviarReciboPorEmail(){
     var orderCode=lastInstoreSaleData?lastInstoreSaleData.order.code:'';
     fetch(API_URL+'/api/admin/instore-sale/send-receipt',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({email:email,pdfBase64:pdfBase64,orderCode:orderCode})
     })
     .then(function(r){return r.json()})
@@ -1532,7 +1580,7 @@ function startPaymentPolling(orderId, mpPaymentId) {
   paymentPollingInterval = setInterval(() => {
     fetch(API_URL + '/api/admin/instore-sale/verify-payment', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
       body: JSON.stringify({ orderId, mpPaymentId })
     })
     .then(r => r.json())
@@ -1694,7 +1742,7 @@ function loadInStoreHistory(page, filters) {
     </div>
   `
 
-  fetch(url)
+  fetch(url, { headers: { 'X-User-Id': currentUser.id } })
     .then(r => r.json())
     .then(res => {
       instoreHistoryOrders = res.data
@@ -1842,7 +1890,7 @@ function closeModal(btn) {
 function confirmApproveSale(orderId) {
   if (!confirm('¿Aprobar esta venta? Se marcará como entregada.')) return
   document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
-  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/approve',{method:'POST'})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/approve',{method:'POST',headers:{'X-User-Id':currentUser.id}})
   .then(function(r){return r.json()})
   .then(function(data){
     if(data.success){
@@ -1859,7 +1907,7 @@ function confirmApproveSale(orderId) {
 function confirmCancelSale(orderId) {
   if (!confirm('¿Cancelar esta venta? Se devolverán los productos al stock.')) return
   document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
-  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/cancel',{method:'POST'})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/cancel',{method:'POST',headers:{'X-User-Id':currentUser.id}})
   .then(function(r){return r.json()})
   .then(function(data){
     if(data.success){

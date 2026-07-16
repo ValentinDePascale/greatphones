@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -15,6 +16,7 @@ export async function OPTIONS() {
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
+    await requireSession(request)
     const notification = await prisma.notification.update({
       where: { id },
       data: { read: true }

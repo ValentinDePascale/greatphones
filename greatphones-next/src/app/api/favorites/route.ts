@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -14,9 +15,10 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   try {
+    const user = await requireSession(request)
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
+    const userId = searchParams.get('userId') || user.id
+    
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
     }
@@ -51,15 +53,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const user = await requireSession(request)
     const body = await request.json()
-    const { userId, productId } = body
+    const { productId } = body
 
-    if (!userId || !productId) {
-      return NextResponse.json({ error: 'userId y productId requeridos' }, { status: 400 })
+    if (!productId) {
+      return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
     }
 
     const favorite = await prisma.favorite.create({
-      data: { userId, productId }
+      data: { userId: user.id, productId }
     })
 
     return NextResponse.json({ success: true, favorite })
@@ -74,15 +77,16 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const user = await requireSession(request)
     const body = await request.json()
-    const { userId, productId } = body
+    const { productId } = body
 
-    if (!userId || !productId) {
-      return NextResponse.json({ error: 'userId y productId requeridos' }, { status: 400 })
+    if (!productId) {
+      return NextResponse.json({ error: 'productId requerido' }, { status: 400 })
     }
 
     await prisma.favorite.deleteMany({
-      where: { userId, productId }
+      where: { userId: user.id, productId }
     })
 
     return NextResponse.json({ success: true })

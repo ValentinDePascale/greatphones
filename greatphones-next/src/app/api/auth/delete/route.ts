@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSelfOrAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -17,14 +18,11 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
-    console.log('[DELETE API] Received request for userId:', userId)
-
     if (!userId) {
-      console.log('[DELETE API] No userId provided')
       return NextResponse.json({ error: 'User ID requerido' }, { status: 400 })
     }
 
-    console.log('[DELETE API] Attempting to delete user:', userId)
+    await requireSelfOrAdmin(userId, request)
     await prisma.user.delete({
       where: { id: userId }
     })

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -14,18 +15,14 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   try {
+    const user = await requireSession(request)
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
     const unreadOnly = searchParams.get('unread') === 'true'
     const type = searchParams.get('type')
     const limit = parseInt(searchParams.get('limit') || '50')
     const countOnly = searchParams.get('countOnly') === 'true'
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-    }
-
-    const where: any = { userId }
+    const where: any = { userId: user.id }
 
     if (unreadOnly) {
       where.read = false

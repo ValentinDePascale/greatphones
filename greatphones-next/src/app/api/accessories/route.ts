@@ -7,6 +7,7 @@ import {
 } from '@/lib/validations'
 import { accessoryCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin')
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const body = await request.json()
     
     // Validar body
@@ -138,6 +140,7 @@ export async function PUT(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     
@@ -196,6 +199,7 @@ export async function DELETE(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     

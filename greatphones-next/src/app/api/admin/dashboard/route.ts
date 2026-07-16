@@ -1,20 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-async function requireAdmin(request: Request) {
-  const userId = request.headers.get('x-user-id')
-  if (!userId) return { error: NextResponse.json({ error: 'No autorizado' }, { status: 401 }) }
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } })
-  if (!user || user.role !== 'ADMIN') return { error: NextResponse.json({ error: 'Acceso denegado' }, { status: 403 }) }
-  return { userId }
-}
-
 export async function GET(request: Request) {
-  const auth = await requireAdmin(request)
-  if (auth.error) return auth.error
   try {
+    await requireAdmin(request)
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentMonth = new Date(currentYear, now.getMonth(), 1)

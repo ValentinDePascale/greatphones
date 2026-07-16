@@ -70,6 +70,51 @@ export async function POST(request: NextRequest) {
       const paymentMethod = pd.payment_method_id;
       const installments = pd.installments || 1;
 
+      // Handle gift card payments
+      if (externalReference && externalReference.startsWith('gc::')) {
+        const gcId = externalReference.replace('gc::', '');
+        const gc = await prisma.giftCard.findUnique({ where: { id: gcId } });
+        if (gc && gc.status === 'ACTIVE') {
+          const newStatus = status === 'approved' ? 'ACTIVE' : status === 'rejected' || status === 'cancelled' ? 'CANCELLED' : 'ACTIVE';
+          if (status === 'approved') {
+            await prisma.giftCard.update({
+              where: { id: gc.id },
+              data: {
+                mpPaymentId: paymentId.toString(),
+                mpStatus: status,
+              }
+            });
+            console.log('[MP Webhook] GiftCard', gcId, 'payment approved');
+          } else if (status === 'rejected' || status === 'cancelled') {
+            await prisma.giftCard.update({
+              where: { id: gc.id },
+              data: { status: 'CANCELLED', mpPaymentId: paymentId.toString(), mpStatus: status }
+            });
+            console.log('[MP Webhook] GiftCard', gcId, 'cancelled');
+          }
+        }
+        return NextResponse.json({ received: true });
+      }
+
+      // Handle warranty extension payments
+      if (externalReference && externalReference.startsWith('wext::')) {
+        const wextId = externalReference.replace('wext::', '');
+        const wext = await prisma.warrantyExtend.findUnique({ where: { id: wextId } });
+        if (wext && wext.status === 'PENDING_PAYMENT') {
+          const newStatus = status === 'approved' ? 'ACTIVE' : status === 'rejected' || status === 'cancelled' ? 'CANCELLED' : 'PENDING_PAYMENT';
+          await prisma.warrantyExtend.update({
+            where: { id: wext.id },
+            data: {
+              status: newStatus as any,
+              mpPaymentId: paymentId.toString(),
+              mpStatus: status,
+            }
+          });
+          console.log('[MP Webhook] WarrantyExtend', wextId, '->', newStatus, 'payment:', status);
+        }
+        return NextResponse.json({ received: true });
+      }
+
       // Find order by preference_id or external_reference (for in-store sales)
       let order = await prisma.order.findFirst({
         where: { mpPreferenceId: preferenceId },

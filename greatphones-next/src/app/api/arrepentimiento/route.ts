@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendArrepentimientoEmail, sendArrepAcceptEmail, sendArrepRejectEmail } from '@/lib/email'
+import { requireSession, requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -13,8 +14,9 @@ export async function OPTIONS() {
   })
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    await requireAdmin(request)
     const list = await prisma.arrepentimiento.findMany({
       include: {
         order: {
@@ -58,6 +60,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     const body = await request.json()
@@ -162,6 +165,7 @@ export async function PUT(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await requireSession(request)
     const body = await request.json()
     
     const { orderId, orden, email, telefono, motivo } = body

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import ExcelJS from 'exceljs'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin')
@@ -12,6 +13,7 @@ export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const logs = await prisma.productLog.findMany({
       orderBy: { createdAt: 'asc' },
     })

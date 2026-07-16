@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { z } from 'zod'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin')
@@ -12,6 +13,7 @@ export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
@@ -56,6 +58,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const validation = SupplierCreateSchema.safeParse(body)
     if (!validation.success) {

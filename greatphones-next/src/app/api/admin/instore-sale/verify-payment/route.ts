@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -8,6 +9,7 @@ const client = new MercadoPagoConfig({
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const { orderId, mpPaymentId } = body
 

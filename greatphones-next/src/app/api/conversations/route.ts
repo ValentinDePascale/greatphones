@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CreateConversationSchema, formatZodError } from '@/lib/validations'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -15,15 +16,9 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId')
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-    }
-
+    const user = await requireSession(request)
     const conversations = await prisma.conversation.findMany({
-      where: { userId },
+      where: { userId: user.id },
       include: {
         messages: {
           orderBy: { createdAt: 'desc' },
@@ -54,23 +49,19 @@ export async function POST(request: Request) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
 
+    const user = await requireSession(request)
     const { type, subject, firstMessage } = validation.data
-    const userId = body.userId
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-    }
 
     const conversation = await prisma.conversation.create({
       data: {
-        userId,
+        userId: user.id,
         type,
         subject,
         ...(firstMessage && {
           messages: {
             create: {
-              from: userId,
-              fromUserId: userId,
+              from: user.id,
+              fromUserId: user.id,
               text: firstMessage
             }
           }

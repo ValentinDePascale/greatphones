@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 import { rateLimit } from '@/lib/rate-limit'
+import { requireAdmin } from '@/lib/auth-guard'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,13 +25,7 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
-    const limit = rateLimit(`upload:${ip}`, 10, 60 * 60 * 1000)
-    if (!limit.allowed) {
-      const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
-      return NextResponse.json({ error: `Demasiados uploads. Espera ${mins} minutos` }, { status: 429 })
-    }
-
+    await requireAdmin(request)
     const formData = await request.formData()
     const file = formData.get('file') as File
     

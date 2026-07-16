@@ -7,6 +7,24 @@ const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
 });
 
+const WARRANTY_COST_MAP: Record<string, number> = {
+  '90 días': 0,
+  '+12 meses': 85000,
+  '+24 meses': 150000,
+};
+
+function getEffectivePrice(product: any): number {
+  if (product.isOffer && product.discount && product.discount > 0) {
+    const now = new Date();
+    const start = product.offerStart ? new Date(product.offerStart) : null;
+    const end = product.offerEnd ? new Date(product.offerEnd) : null;
+    if ((!start || start <= now) && (!end || end >= now)) {
+      return Math.round(product.price * (1 - product.discount / 100));
+    }
+  }
+  return product.price;
+}
+
 function generateOrderCode() {
   const prefix = 'GP';
   const timestamp = Date.now().toString(36).toUpperCase();
@@ -33,7 +51,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-    // Validar body con Zod
     const validation = CheckoutSchema.safeParse(body);
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
@@ -53,62 +70,67 @@ export async function POST(request: NextRequest) {
       warranty,
       delivery,
       cuotas,
-      subtotal,
-      warrantyCost,
-      deliveryCost,
-      total 
     } = body;
 
-    // Find or create user from email
     const user = await findOrCreateUser(email, phone, document);
     const userId = user.id;
 
     const orderCode = generateOrderCode();
 
+    // Fetch products from DB
     const productIds = items.map((item: any) => item.id);
     const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
     const productMap = new Map(products.map((p: any) => [p.id, p]));
-    for (const item of items) {
+
+    // Build enriched items with server-side prices
+    const enrichedItems = items.map((item: any) => {
       const product = productMap.get(item.id);
-      if (!product) {
-        return NextResponse.json({ error: `Producto no encontrado: ${item.name}` }, { status: 400 });
-      }
+      if (!product) throw { status: 400, message: `Producto no encontrado: ${item.name}` };
       if (product.stock < item.quantity) {
-        return NextResponse.json({ error: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` }, { status: 400 });
+        throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` };
       }
+      const unitPrice = getEffectivePrice(product);
+      return { ...item, product, unitPrice };
+    });
+
+    // Recalculate totals server-side — never trust frontend amounts
+    const calculatedSubtotal = enrichedItems.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0);
+    const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0;
+    const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + (body.deliveryCost || 0);
+
+    // Cross-check: reject if frontend total doesn't match (detects price tampering)
+    if (body.total !== calculatedTotal) {
+      return NextResponse.json({ error: 'Error de validación: el total no coincide. Reintente.' }, { status: 400 });
     }
 
-    // Build MP preference items with proper descriptions
-    const mpItems = items.map((item: any) => ({
-      title: item.name,
-      unit_price: item.price,
+    // Build MP preference items with server-side prices
+    const mpItems = enrichedItems.map((item: any) => ({
+      title: item.product.name,
+      unit_price: item.unitPrice,
       quantity: item.quantity,
       currency_id: 'ARS',
-      picture_url: item.imageUrl || undefined,
-      description: `${item.brand || ''} ${item.sub || ''}`.trim() || item.name
+      picture_url: item.product.imageUrl || undefined,
+      description: `${item.product.brand || ''} ${item.product.sub || ''}`.trim() || item.product.name
     }));
 
-    // Add warranty as separate item if applicable
-    if (warrantyCost && warrantyCost > 0) {
+    if (calculatedWarrantyCost > 0) {
       mpItems.push({
-        title: 'Garantia extendida 90 dias',
-        unit_price: warrantyCost,
+        title: 'Garantía extendida',
+        unit_price: calculatedWarrantyCost,
         quantity: 1,
         currency_id: 'ARS',
       });
     }
 
-    // Add shipping as separate item if applicable
-    if (deliveryCost && deliveryCost > 0) {
+    if (body.deliveryCost > 0) {
       mpItems.push({
-        title: `Envio - ${delivery || 'Estándar'}`,
-        unit_price: deliveryCost,
+        title: `Envío - ${delivery || 'Estándar'}`,
+        unit_price: body.deliveryCost,
         quantity: 1,
         currency_id: 'ARS',
       });
     }
 
-    // Determine identification type for Argentina
     const cleanDoc = document.replace(/[^0-9]/g, '');
     const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
 
@@ -118,13 +140,8 @@ export async function POST(request: NextRequest) {
         email: email,
         name: user.name || 'Cliente',
         surname: '',
-        phone: {
-          number: phone || '0000000000'
-        },
-        identification: {
-          type: idType,
-          number: cleanDoc
-        },
+        phone: { number: phone || '0000000000' },
+        identification: { type: idType, number: cleanDoc },
         address: {
           street_name: street,
           street_number: number,
@@ -142,9 +159,7 @@ export async function POST(request: NextRequest) {
       notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
       external_reference: orderCode,
       auto_return: 'approved' as const,
-      payment_types: {
-        excluded_types: []
-      }
+      payment_types: { excluded_types: [] }
     };
 
     const mpPreference = new Preference(client);
@@ -153,19 +168,17 @@ export async function POST(request: NextRequest) {
     if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
     const initPoint = mpResponse.init_point;
 
-    // Create order with proper userId and mpPreferenceId, and deduct stock atomically
     const order = await prisma.$transaction(async (tx) => {
-      // Reserve stock atomically
-      for (const item of items) {
+      for (const item of enrichedItems) {
         const updated = await tx.product.update({
-          where: { id: item.id },
+          where: { id: item.product.id },
           data: {
             stock: { decrement: item.quantity },
             reserved: { increment: item.quantity }
           }
         });
         if (updated.stock < 0) {
-          throw new Error(`Stock insuficiente para ${item.name}`);
+          throw new Error(`Stock insuficiente para ${item.product.name}`);
         }
       }
 
@@ -176,10 +189,10 @@ export async function POST(request: NextRequest) {
           status: 'PENDING',
           warranty: warranty || '90 dias',
           cuotas: cuotas || 1,
-          subtotal: subtotal,
-          total: total,
-          warrantyCost: warrantyCost || 0,
-          deliveryCost: deliveryCost || 0,
+          subtotal: calculatedSubtotal,
+          total: calculatedTotal,
+          warrantyCost: calculatedWarrantyCost,
+          deliveryCost: body.deliveryCost || 0,
           clientEmail: email,
           clientPhone: phone,
           clientDni: document,
@@ -191,10 +204,10 @@ export async function POST(request: NextRequest) {
           shippingProvince: province,
           mpPreferenceId: preferenceId,
           items: {
-            create: items.map((item: any) => ({
-              productId: item.id,
+            create: enrichedItems.map((item: any) => ({
+              productId: item.product.id,
               quantity: item.quantity,
-              price: item.price
+              price: item.unitPrice
             }))
           }
         }
@@ -210,6 +223,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
+    if (error.status && error.message) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
     console.error('Checkout error:', error);
     return NextResponse.json(
       { error: 'Error al procesar el pago. Intenta novamente.' },

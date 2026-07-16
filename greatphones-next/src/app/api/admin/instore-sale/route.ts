@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { productCache } from '@/lib/cache'
+import { requireAdmin } from '@/lib/auth-guard'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -16,8 +17,9 @@ function generateOrderCode() {
 
 export async function POST(request: Request) {
   try {
+    await requireAdmin(request)
     const body = await request.json()
-    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId, currency, installments } = body
+    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId, currency, installments, usdRate } = body
 
     console.log('[instore-sale] Body:', JSON.stringify({ clientName, clientDni, paymentMethod, itemCount: items?.length, adminId, currency, installments }))
 
@@ -115,16 +117,17 @@ export async function POST(request: Request) {
     })
 
     const total = subtotal
+    const expectedAmount = installmentsCount > 1 ? Math.round(total / installmentsCount) : total
 
     // Validate cash payment
     let change = 0
     if (paymentMethod === 'cash') {
-      if (cashReceived < total) {
+      if (cashReceived < expectedAmount) {
         return NextResponse.json({
           error: 'Monto recibido insuficiente'
         }, { status: 400 })
       }
-      change = cashReceived - total
+      change = cashReceived - expectedAmount
     }
 
     // Generate order code
@@ -354,6 +357,7 @@ export async function POST(request: Request) {
 // GET - In-store sales history
 export async function GET(request: Request) {
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')

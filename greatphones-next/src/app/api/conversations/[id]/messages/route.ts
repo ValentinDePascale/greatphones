@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { SendMessageSchema, formatZodError } from '@/lib/validations'
 import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
 import { getIO } from '@/lib/socket'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -18,6 +19,7 @@ export async function OPTIONS() {
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
+    await requireSession(request)
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50')
     const cursor = searchParams.get('cursor')
@@ -69,39 +71,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
 
+    const user = await requireSession(request)
     const { text, imageUrl, imageCaption } = validation.data
-    const userId = body.userId
     const isAutoReply = body.isAutoReply === true
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-    }
-
-    // Get conversation with user and admin details, and check sender role - in parallel
-    const [conversation, senderUser] = await Promise.all([
-      prisma.conversation.findUnique({
-        where: { id },
-        include: {
-          user: {
-            select: { id: true, name: true, email: true }
-          },
-          admin: {
-            select: { id: true, name: true, email: true }
-          }
-        }
-      }),
-      prisma.user.findUnique({
-        where: { id: userId },
-        select: { role: true }
-      }),
-    ])
+    // Get conversation
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        admin: { select: { id: true, name: true, email: true } }
+      }
+    })
 
     if (!conversation) {
       return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
     }
 
-    // Determine if sender is admin or user
-    const isAdminSender = senderUser?.role === 'ADMIN' || userId === 'admin';
+    // Determine if sender is admin or the conversation owner
+    const isAdminSender = user.role === 'ADMIN';
+    const userId = user.id;
     const isUserSender = conversation.userId === userId;
 
     const message = await prisma.message.create({

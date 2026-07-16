@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -33,6 +34,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
+    await requireAdmin(request)
     const body = await request.json()
     console.log('Updating product:', id)
     console.log('Body:', JSON.stringify(body))
@@ -82,6 +84,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
+    await requireAdmin(request)
     // Unlink all inventory items before deleting the product
     await prisma.inventoryItem.updateMany({
       where: { productId: id },

@@ -287,8 +287,13 @@ function createDefaultConversation(){
 }
 
 function loadMessages(convId,scrollBottom,scrollToMsgId){
-  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50')
-    .then(function(r){return r.json();})
+  var headers={};
+  if(currentUser)headers['X-User-Id']=currentUser.id;
+  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50',{headers:headers})
+    .then(function(r){
+      if(!r.ok)throw new Error('Error al cargar mensajes');
+      return r.json();
+    })
     .then(function(msgs){
       renderMsgs(msgs);
       if(scrollToMsgId){
@@ -307,7 +312,7 @@ function renderMsgs(msgs){
   var list=document.getElementById('chatMsgList');
   if(!list)return;
   _lastMsgDate=null;
-  if(!msgs||msgs.length===0){
+  if(!Array.isArray(msgs)||msgs.length===0){
     list.innerHTML='<div class="empty-state-chat"><svg viewBox="0 0 72 72" fill="none"><circle cx="36" cy="36" r="35" stroke="#E4DDD4" stroke-width="1.5" opacity="0.4"/><path d="M20 26c0-4 3-7 7-7h18c4 0 7 3 7 7v14c0 4-3 7-7 7h-4l-7 6-7-6h-4c-4 0-7-3-7-7V26z" fill="#F0EBE3"/><path d="M27 32h18M27 39h12" stroke="#D4CCC2" stroke-width="2" stroke-linecap="round"/><circle cx="56" cy="20" r="5" fill="#FF6B2C" opacity="0.12" class="fb-dot"/><circle cx="58" cy="18" r="2" fill="#FF6B2C" opacity="0.25"/></svg><h3>Hola! C\u00F3mo podemos ayudarte?</h3><p>Escrib\u00ED tu consulta y te responderemos a la brevedad.</p></div>';
     return;
   }
@@ -900,7 +905,7 @@ function consultarProducto(){
     userConvId=convId;
     fetch(API_URL+'/api/conversations/'+convId+'/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({userId:currentUser.id,text:encodedText})
     })
     .then(function(r){return r.json();})
@@ -1666,8 +1671,13 @@ function handlePanelTyping(){
 }
 
 function loadPanelMessages(convId,scrollBottom){
-  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50')
-    .then(function(r){return r.json();})
+  var headers={};
+  if(currentUser)headers['X-User-Id']=currentUser.id;
+  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50',{headers:headers})
+    .then(function(r){
+      if(!r.ok)throw new Error('Error al cargar mensajes');
+      return r.json();
+    })
     .then(function(msgs){
       renderPanelMsgs(msgs);
       if(scrollBottom)setTimeout(scrollPanelBottom,100);

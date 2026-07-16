@@ -15,8 +15,7 @@ function resetImageZoom(container){
   var img=container.querySelector('img');
   if(img){img.style.transform='scale(1)';}
 }
-function showGiftCard(){notAvailable();}
-function buyGiftCard(monto){notAvailable();}
+
 
 // =========== DRAG TO SCROLL (CAROUSEL) ===========
 var _dragState={isDown:false,startX:0,scrollLeft:0};

@@ -68,7 +68,7 @@ function loadAdminProducts(search,page){
   if(!list)return;
   var url=API_URL+'/api/products?page='+(page||1)+'&limit=20';
   if(search)url+='&search='+encodeURIComponent(search);
-  fetch(url).then(function(r){return r.json();}).then(function(res){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(res){
     var prods=res.data||res;
     list.innerHTML=prods.map(function(p){
       return'<div class="adm-item"><div class="adm-item-img">'+(p.imageUrl?'<img src="'+p.imageUrl+'">':'<span>📱</span>')+'</div><div class="adm-item-info"><div class="adm-item-name">'+p.name+'</div><div class="adm-item-sub">'+p.brand+' '+p.sub+'</div><div class="adm-item-price">$'+p.price.toLocaleString('es-AR')+'</div></div><div class="adm-item-actions"><button onclick="editProduct(\''+p.id+'\')">✏️</button><button onclick="deleteProduct(\''+p.id+'\')">🗑️</button></div></div>';
@@ -82,7 +82,7 @@ function loadAdminAccessories(search,page){
   if(!list)return;
   var url=API_URL+'/api/accessories?page='+(page||1)+'&limit=20';
   if(search)url+='&search='+encodeURIComponent(search);
-  fetch(url).then(function(r){return r.json();}).then(function(res){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(res){
     var accs=res.data||res;
     list.innerHTML=accs.map(function(a){
       return'<div class="adm-item"><div class="adm-item-img">'+(a.imageUrl?'<img src="'+a.imageUrl+'">':'<span>📦</span>')+'</div><div class="adm-item-info"><div class="adm-item-name">'+a.name+'</div><div class="adm-item-sub">'+a.category+'</div><div class="adm-item-price">$'+a.price.toLocaleString('es-AR')+'</div></div><div class="adm-item-actions"><button onclick="editAccessory(\''+a.id+'\')">✏️</button><button onclick="deleteAccessory(\''+a.id+'\')">🗑️</button></div></div>';
@@ -116,7 +116,7 @@ function loadPendingOrders(page){
   window._currentOrderTab='pending';
   
   var url=API_URL+'/api/orders?admin=true&status=PENDING&page='+(page||1)+'&limit=20';
-  fetch(url).then(function(r){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.json();
   }).then(function(res){
@@ -137,7 +137,7 @@ function loadAcceptedOrders(page){
   window._currentOrderTab='accepted';
   
   var url=API_URL+'/api/orders?admin=true&status=PROCESSING,SHIPPED&page='+(page||1)+'&limit=20';
-  fetch(url).then(function(r){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.json();
   }).then(function(res){
@@ -158,7 +158,7 @@ function loadOrderHistory(page){
   window._currentOrderTab='history';
   
   var url=API_URL+'/api/orders?admin=true&status=DELIVERED,CANCELLED&page='+(page||1)+'&limit=20';
-  fetch(url).then(function(r){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.json();
   }).then(function(res){
@@ -182,14 +182,14 @@ function searchOrders(query){
     return;
   }
   var url=API_URL+'/api/orders?admin=true&search='+encodeURIComponent(query.trim())+'&page=1&limit=20';
-  fetch(url).then(function(r){return r.json();}).then(function(res){
+  fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(res){
     var ords=res.data||res;
     window._currentOrders=ords;
     window._currentOrderPage=res.page||1;
     window._currentOrderTotalPages=res.totalPages||1;
     renderOrdersList(ords);
     renderPagination('orderList',res.page,res.totalPages,function(p){
-      fetch(API_URL+'/api/orders?admin=true&search='+encodeURIComponent(query.trim())+'&page='+p+'&limit=20')
+      fetch(API_URL+'/api/orders?admin=true&search='+encodeURIComponent(query.trim())+'&page='+p+'&limit=20',{headers:{'X-User-Id': currentUser.id}})
         .then(function(r2){return r2.json();}).then(function(res2){
           window._currentOrders=res2.data||res2;
           renderOrdersList(res2.data||res2);
@@ -283,7 +283,7 @@ function renderOrdersList(ords){
 }
 
 function openOrderDetail(orderId){
-  fetch(API_URL+'/api/orders?admin=true&page=1&limit=100').then(function(r){return r.json();}).then(function(res){
+  fetch(API_URL+'/api/orders?admin=true&page=1&limit=100',{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(res){
     var ords=res.data||res;
     var order=ords.find(function(o){return o.id===orderId;});
     if(!order){showToast('Pedido no encontrado');return;}
@@ -448,7 +448,7 @@ function acceptOrder(orderId){
     
     fetch(API_URL+'/api/orders?id='+orderId,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({status:'PROCESSING'})
     }).then(function(r){return r.json();}).then(function(){
       showSuccessToast('Pedido aceptado', 'El pedido ha sido procesado correctamente');
@@ -468,7 +468,7 @@ function finalizeOrder(orderId){
     
     fetch(API_URL+'/api/orders?id='+orderId,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({status:'DELIVERED'})
     }).then(function(r){return r.json();}).then(function(){
       showSuccessToast('Pedido finalizado', 'El pedido ha sido marcado como entregado');
@@ -528,7 +528,7 @@ function confirmShipOrder(orderId){
   
   fetch(API_URL+'/api/orders?id='+orderId,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({status:'SHIPPED',trackingNumber:tracking})
   }).then(function(r){return r.json();}).then(function(){
     showSuccessToast('Pedido enviado', 'El pedido ha sido marcado como enviado');
@@ -541,7 +541,7 @@ function confirmShipOrder(orderId){
 function updateOrderStatus(orderId,status){
   fetch(API_URL+'/api/orders?id='+orderId,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({status:status})
   }).then(function(r){return r.json();}).then(function(){
     showToast('Estado actualizado a '+status);
@@ -574,7 +574,7 @@ function setArrepBtnActive(activeId){
 
 function loadArrepPendientes(){
   setArrepBtnActive('arrepBtnPendientes');
-  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+  fetch(API_URL+'/api/arrepentimiento',{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(list){
     window._allArreps=list;
     var pendientes=list.filter(function(a){return a.estado==='PENDIENTE';});
     renderArrepList(pendientes,'pendientes');
@@ -583,7 +583,7 @@ function loadArrepPendientes(){
 
 function loadArrepAceptados(){
   setArrepBtnActive('arrepBtnAceptados');
-  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+  fetch(API_URL+'/api/arrepentimiento',{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(list){
     window._allArreps=list;
     var aceptados=list.filter(function(a){return a.estado==='APROBADO';});
     renderArrepList(aceptados,'aceptados');
@@ -592,7 +592,7 @@ function loadArrepAceptados(){
 
 function loadArrepRechazados(){
   setArrepBtnActive('arrepBtnRechazados');
-  fetch(API_URL+'/api/arrepentimiento').then(function(r){return r.json();}).then(function(list){
+  fetch(API_URL+'/api/arrepentimiento',{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(list){
     window._allArreps=list;
     var rechazados=list.filter(function(a){return a.estado==='RECHAZADO';});
     renderArrepList(rechazados,'rechazados');
@@ -686,7 +686,7 @@ function acceptArrep(id){
     
     fetch(API_URL+'/api/arrepentimiento?id='+id,{
       method:'PUT',
-      headers:{'Content-Type':'application/json'},
+      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
       body:JSON.stringify({estado:'APROBADO'})
     }).then(function(r){return r.json();}).then(function(data){
       if(data.success){
@@ -786,7 +786,7 @@ function confirmRejectArrep(id){
   
   fetch(API_URL+'/api/arrepentimiento?id='+id,{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({estado:'RECHAZADO',rejectReason:reasonText})
   }).then(function(r){return r.json();}).then(function(data){
     if(data.success){
@@ -876,7 +876,7 @@ function saveAccessory(){
   
   fetch(API_URL+endpoint,{
     method:method,
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify(data)
   }).then(function(r){
     if(!r.ok)throw new Error('Error '+r.status);
@@ -894,7 +894,7 @@ function saveAccessory(){
 function editAccessory(id){
   window.isEditingAcc=true;
   var accFromMemory=getById(window.ACCS||[],id);
-  fetch(API_URL+'/api/accessories?id='+id).then(function(r){
+  fetch(API_URL+'/api/accessories?id='+id,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('Network error');
     return r.json();
   }).then(function(a){
@@ -977,13 +977,13 @@ function deleteAccessory(id){
   document.getElementById('deleteAccessoryName').textContent=aname;
   document.getElementById('btnConfirmDeleteAccessory').onclick=function(){
     closeDeleteAccessoryModal();
-    fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE'}).then(function(r){return r.json();}).then(function(){
+    fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE',headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(){
       showUndoToast('Accesorio eliminado', aname, function(){
         // Undo: restore accessory con datos originales
         if(accessoryBackup){
           fetch(API_URL+'/api/accessories',{
             method:'POST',
-            headers:{'Content-Type':'application/json'},
+            headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
             body:JSON.stringify(accessoryBackup)
           }).then(function(){
             loadAccessories();
@@ -1035,7 +1035,7 @@ function resetAccessoryForm(){
 
 // =========== PRODUCT FUNCTIONS ===========
 function editProduct(id){
-  fetch(API_URL+'/api/products?id='+id).then(function(r){return r.json();}).then(function(p){
+  fetch(API_URL+'/api/products?id='+id,{headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(p){
     if(p){
       document.getElementById('prodId').value=p.id;
       document.getElementById('prodName').value=p.name;
@@ -1063,7 +1063,7 @@ function duplicateProduct(id){
   var dupName=p.name+' (copia)';
   fetch(API_URL+'/api/products',{
     method:'POST',
-    headers:{'Content-Type':'application/json'},
+    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({
       name:dupName,
       price:p.price,
@@ -1112,7 +1112,7 @@ function deleteProduct(id){
   document.getElementById('deleteProductName').textContent=pname;
   document.getElementById('btnConfirmDeleteProduct').onclick=function(){
     closeDeleteProductModal();
-    fetch(API_URL+'/api/products?id='+id,{method:'DELETE'}).then(function(r){
+    fetch(API_URL+'/api/products?id='+id,{method:'DELETE',headers:{'X-User-Id': currentUser.id}}).then(function(r){
       if(!r.ok)throw new Error('Error '+r.status);
       return r.json();
     }).then(function(){
@@ -1121,7 +1121,7 @@ function deleteProduct(id){
         if(productBackup){
           fetch(API_URL+'/api/products',{
             method:'POST',
-            headers:{'Content-Type':'application/json'},
+            headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
             body:JSON.stringify(productBackup)
           }).then(function(){
             loadProducts();
@@ -1153,7 +1153,7 @@ function closeDeleteProductModal(){
 
 function exportProductLog(){
   var url=API_URL+'/api/products/export';
-  fetch(url)
+  fetch(url,{headers:{'X-User-Id': currentUser.id}})
     .then(function(r){
       if(!r.ok)throw new Error('Error al exportar');
       return r.blob();

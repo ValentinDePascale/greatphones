@@ -3,6 +3,7 @@ import { ImeiLookupSchema, formatZodError } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin')
@@ -45,6 +46,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const body = await request.json()
     const validation = ImeiLookupSchema.safeParse(body)
     if (!validation.success) {

@@ -42,6 +42,7 @@ model User {
   sentMessages          Message[]
   createdInventoryItems InventoryItem[]    @relation("CreatedBy")
   soldInventoryItems    InventoryItem[]    @relation("SoldBy")
+  redeemedGiftCards     GiftCard[]
 }
 
 enum Role {
@@ -520,9 +521,70 @@ model Wallet {
   balance     Int      @default(0)
   totalEarned Int      @default(0)
   totalSpent  Int      @default(0)
+  version     Int      @default(0)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id            String          @id @default(cuid())
+  walletId      String
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type          TransactionType
+  amount        Int
+  balanceBefore Int
+  balanceAfter  Int
+  referenceId   String?
+  description   String?
+  createdAt     DateTime        @default(now())
+
+  giftCard  GiftCard?
+
+  @@index([walletId, createdAt])
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  REFUND
+  GIFT_CARD_REDEEM
+  ADMIN_ADJUST
+}
+
+model GiftCard {
+  id               String        @id @default(cuid())
+  code             String        @unique
+  originalAmount   Int
+  remainingAmount  Int
+  status           GiftCardStatus @default(ACTIVE)
+  buyerEmail       String?
+  recipientEmail   String?
+  message          String?
+  mpPreferenceId   String?
+  mpPaymentId      String?
+  mpStatus         String?
+  expiresAt        DateTime?
+  purchasedAt      DateTime      @default(now())
+  redeemedAt       DateTime?
+  redeemedByUserId String?
+  redeemedBy       User?         @relation(fields: [redeemedByUserId], references: [id])
+  transactionId    String?       @unique
+  transaction      WalletTransaction? @relation(fields: [transactionId], references: [id])
+  version          Int           @default(0)
+
+  @@index([code])
+  @@index([status])
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  CANCELLED
 }
 
 // ==================== FAVORITOS ====================
@@ -679,13 +741,18 @@ model WarrantyExtend {
   plan      String              // "12m" or "24m"
   months    Int
   price     Int
-  status    WarrantyExtendStatus @default(ACTIVE)
+  status    WarrantyExtendStatus @default(PENDING_PAYMENT)
   startDate DateTime            @default(now())
   endDate   DateTime
   createdAt DateTime            @default(now())
+
+  mpPreferenceId String?
+  mpPaymentId    String?
+  mpStatus       String?
 }
 
 enum WarrantyExtendStatus {
+  PENDING_PAYMENT
   ACTIVE
   EXPIRED
   CANCELLED

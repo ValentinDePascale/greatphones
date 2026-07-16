@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { requireSession } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -14,16 +15,11 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { userId } = body
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId requerido' }, { status: 400 })
-    }
+    const user = await requireSession(request)
 
     await prisma.notification.updateMany({
       where: {
-        userId,
+        userId: user.id,
         read: false
       },
       data: {

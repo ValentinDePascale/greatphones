@@ -260,7 +260,17 @@ function showCheckoutStep(step){
     c.style.display=s===step?'block':'none';
   });
   if(step===3)renderCheckoutSummaryStep();
-  if(step===4)updateCuotaDetail();
+  if(step===4){
+    updateCuotaDetail();
+    var balEl=document.getElementById('walletBalanceCheckout');
+    if(balEl&&balEl.textContent==='Cargando...'){
+      getWallet().then(function(w){
+        if(balEl)balEl.textContent='$'+w.balance.toLocaleString('es-AR');
+      }).catch(function(){
+        if(balEl)balEl.textContent='Saldo: $0';
+      });
+    }
+  }
 }
 
 function validateStep1(){
@@ -308,15 +318,27 @@ function checkoutPrevStep(targetStep){
   showCheckoutStep(targetStep);
 }
 
-function selectPaymentMethod(method){
+function selectPaymentMethod(method, el){
   _selectedPaymentMethod=method;
   var cards=document.querySelectorAll('.payment-method-card');
   cards.forEach(function(card,i){
     card.style.borderColor='var(--border)';
     card.style.background='none';
   });
-  event.currentTarget.style.borderColor='var(--orange)';
-  event.currentTarget.style.background='rgba(255,107,44,.05)';
+  var target=el||(window.event?window.event.currentTarget:null);
+  if(target){
+    target.style.borderColor='var(--orange)';
+    target.style.background='rgba(255,107,44,.05)';
+  }
+  if(method==='wallet'){
+    var balEl=document.getElementById('walletBalanceCheckout');
+    if(balEl)balEl.textContent='Cargando...';
+    getWallet().then(function(w){
+      if(balEl)balEl.textContent='$'+w.balance.toLocaleString('es-AR');
+    }).catch(function(){
+      if(balEl)balEl.textContent='Saldo: $0';
+    });
+  }
 }
 
 function submitOrder(){
@@ -371,7 +393,9 @@ function submitOrder(){
     paymentMethod:_selectedPaymentMethod||'mercadopago'
   };
 
-  fetch(API_URL+'/api/checkout',{
+  var endpoint = _selectedPaymentMethod === 'wallet' ? API_URL + '/api/wallet/pay' : API_URL + '/api/checkout';
+
+  fetch(endpoint,{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
@@ -380,10 +404,12 @@ function submitOrder(){
   .then(function(data){
     console.log('Checkout response:', data);
     if(data.error)throw new Error(data.error);
-    if(data.initPoint){
-      Cart=[];
-      saveCart();
-      updCartBadge();
+    Cart=[];
+    saveCart();
+    updCartBadge();
+    if(data.redirectUrl){
+      window.location.href=data.redirectUrl;
+    }else if(data.initPoint){
       window.location.href=data.initPoint;
     }else{
       throw new Error('No se recibió link de pago');

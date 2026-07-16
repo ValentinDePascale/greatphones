@@ -6,6 +6,7 @@ export function FailureContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const orderCode = searchParams.get('order')
+  const wextId = searchParams.get('wext')
 
   return (
     <div style={{
@@ -50,7 +51,9 @@ export function FailureContent() {
           Pago no procesado
         </h1>
         <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '1.5rem' }}>
-          No pudimos procesar tu pago. No te preocupes, no se ha realizado ningun cargo.
+          {wextId
+            ? 'No pudimos procesar el pago de la extensión de garantía. No se ha realizado ningún cargo.'
+            : 'No pudimos procesar tu pago. No te preocupes, no se ha realizado ningún cargo.'}
         </p>
         {orderCode && (
           <div style={{
@@ -100,7 +103,7 @@ export function FailureContent() {
             Volver al inicio
           </button>
           <button
-            onClick={() => router.push('/checkout')}
+            onClick={() => router.push(wextId ? '/garantias' : '/checkout')}
             style={{
               flex: 1,
               padding: '14px',
@@ -113,7 +116,7 @@ export function FailureContent() {
               cursor: 'pointer'
             }}
           >
-            Reintentar
+            {wextId ? 'Volver a Garantías' : 'Reintentar'}
           </button>
         </div>
       </div>

@@ -34,6 +34,7 @@
   <link rel="stylesheet" href="/styles/admin.css">
   <link rel="stylesheet" href="/styles/responsive.css">
   <link rel="stylesheet" href="/styles/cookies.css">
+  <link rel="stylesheet" href="/styles/wallet.css">
 </head>
 <body>
 <a href="#main-content" style="position:absolute;top:-100%;left:0;background:var(--orange);color:#fff;padding:12px 24px;z-index:99999;font-weight:700;text-decoration:none;border-radius:0 0 8px 0" onfocus="this.style.top='0'" onblur="this.style.top='-100%'">Saltar al contenido</a>
@@ -450,10 +451,11 @@
             <h3 class="gift-card-new-title">Great Phones Gift Card</h3>
             <p class="gift-card-new-desc">Elegi el monto, generamos el codigo. Canjeable en cualquier producto o servicio.</p>
             <div class="gift-card-new-btns">
-              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(5000)">$5.000</button>
-              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(10000)">$10.000</button>
-              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(25000)">$25.000</button>
               <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(50000)">$50.000</button>
+              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(100000)">$100.000</button>
+              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(500000)">$500.000</button>
+              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(1000000)">$1.000.000</button>
+              <button class="gift-amt" onclick="event.stopPropagation();buyGiftCard(2000000)">$2.000.000</button>
               <button class="gift-amt gift-amt-fill" onclick="event.stopPropagation();buyGiftCard(0)">Monto libre</button>
             </div>
           </div>
@@ -1364,6 +1366,15 @@
           </div>
           <div class="cu-card-body"><div id="clientQuoteList" class="cu-quote-list"></div></div>
         </div>
+      </div>
+
+      <!-- Wallet: Redeem Gift Card -->
+      <div class="wallet-section" id="walletRedeemSection"></div>
+
+      <!-- Wallet: Transactions -->
+      <div class="wallet-section">
+        <h3 class="wallet-section-title">Movimientos de saldo</h3>
+        <div class="wallet-transactions-container" id="walletTransactions"></div>
       </div>
     </div>
 
@@ -2455,7 +2466,7 @@
               <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Método de pago</h2>
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
-              <div onclick="selectPaymentMethod('mercadopago')" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+              <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
                 <div style="width:48px;height:48px;border-radius:12px;background:#009EE3;display:flex;align-items:center;justify-content:center;flex-shrink:0">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                 </div>
@@ -2465,7 +2476,17 @@
                 </div>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
               </div>
-              <div onclick="selectPaymentMethod('tarjeta')" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+              <div onclick="selectPaymentMethod('wallet',this)" class="payment-method-card" id="walletPaymentMethod" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:600;color:var(--dk)">Saldo Great Phones</div>
+                  <div style="font-size:12px;color:var(--gray)">Pagá con el saldo de tu billetera</div>
+                </div>
+                <div id="walletBalanceCheckout" style="font-size:11px;color:var(--gray)">Cargando...</div>
+              </div>
+              <div onclick="selectPaymentMethod('tarjeta',this)" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
                 <div style="width:48px;height:48px;border-radius:12px;background:var(--dk);display:flex;align-items:center;justify-content:center;flex-shrink:0">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 </div>
@@ -2782,6 +2803,8 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/favorites.js"></script>
 <script defer src="/lib/cart.js"></script>
 <script defer src="/lib/checkout.js"></script>
+<script defer src="/lib/wallet.js"></script>
+<script defer src="/lib/giftcard.js"></script>
 <script defer src="/lib/notifications.js"></script>
 <script defer src="/lib/cookies.js"></script>
 <script defer src="/lib/sell.js"></script>
@@ -2790,7 +2813,7 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/instore.js"></script>
 <script defer src="/lib/render.js"></script>
 <script defer src="/lib/search.js"></script>
-<script defer src="/lib/warranty.js?v=2"></script>
+<script defer src="/lib/warranty.js?v=3"></script>
 <script defer src="/lib/compare.js"></script>
 <script defer src="https://cdn.socket.io/4.8.3/socket.io.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>

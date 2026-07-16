@@ -7,6 +7,7 @@ import {
 } from '@/lib/validations'
 import { productCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
+import { requireAdmin } from '@/lib/auth-guard'
 
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get('origin')
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const body = await request.json()
     
     // Validar body
@@ -137,9 +139,11 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(newProduct, { status: 201, headers: corsHeaders })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating product:', error)
-    return NextResponse.json({ error: 'Failed to create product' }, { status: 500, headers: corsHeaders })
+    const status = error.status || 500
+    const message = error.message || 'Error al crear producto'
+    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
   }
 }
 
@@ -147,6 +151,7 @@ export async function PUT(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     
@@ -156,7 +161,6 @@ export async function PUT(request: Request) {
     
     const body = await request.json()
     
-    // Validar body (partial para updates)
     const validation = ProductUpdateSchema.safeParse(body)
     if (!validation.success) {
       return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
@@ -192,9 +196,11 @@ export async function PUT(request: Request) {
     productCache.clear()
 
     return NextResponse.json(updatedProduct, { headers: corsHeaders })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500, headers: corsHeaders })
+    const status = error.status || 500
+    const message = error.message || 'Error al actualizar producto'
+    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
   }
 }
 
@@ -202,6 +208,7 @@ export async function DELETE(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
     
@@ -218,8 +225,10 @@ export async function DELETE(request: Request) {
     productCache.clear()
 
     return NextResponse.json({ success: true }, { headers: corsHeaders })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Failed to delete product', details: (error as Error).message }, { status: 500, headers: corsHeaders })
+    const status = error.status || 500
+    const message = error.message || 'Error al eliminar producto'
+    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
   }
 }
