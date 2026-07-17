@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Generar Barcode</title>
+<style>
+  body{font-family:system-ui;background:#f5f5f5;display:flex;flex-direction:column;align-items:center;padding:2rem;gap:1rem}
+  input{padding:10px 16px;font-size:18px;border:2px solid #ddd;border-radius:10px;text-align:center;width:300px}
+  canvas{background:#fff;padding:1rem;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.1)}
+  .btn{padding:10px 24px;background:#FF6B2C;color:#fff;border:none;border-radius:10px;font-size:16px;cursor:pointer}
+  .btn:hover{background:#e55a1f}
+  .info{font-size:13px;color:#666;text-align:center;max-width:400px}
+</style>
+</head><body>
+<h2>Generar código de barras</h2>
+<input id="code" value="356735111111110" autofocus>
+<button class="btn" onclick="generate()">Generar</button>
+<div id="output"></div>
+<div class="info">Escaneá con el lector del admin. Cualquier IMEI de prueba sirve.</div>
+<script>
+// Code128B encoder + canvas renderer (self-contained, no CDN)
+var CODE128B = {
+  start: [2,1,1,2,4,2],
+  stop: [2,3,3,1,1,1,2],
+  chars: {
+    ' ':212222,'!':222122,'"':222221,'#':121223,'$':121322,'%':131222,'&':122213,'\'':122312,
+    '(':132212,')':221213,'*':221312,'+':231212,',':112232,'-':122132,'.':122231,'/':113222,
+    '0':123122,'1':123221,'2':223211,'3':221132,'4':221231,'5':213212,'6':223112,'7':312131,
+    '8':311222,'9':321122,':':321221,';':312212,'<':322112,'=':322211,'>':212123,'?':212321,
+    '@':232121,'A':111323,'B':131123,'C':131321,'D':112313,'E':132113,'F':132311,'G':211313,
+    'H':231113,'I':231311,'J':112133,'K':112331,'L':132131,'M':113123,'N':113321,'O':133121,
+    'P':313121,'Q':211331,'R':231131,'S':213113,'T':213311,'U':213131,'V':311123,'W':311321,
+    'X':331121,'Y':312113,'Z':312311,'[':332111,'\\':314111,']':221411,'^':431111,'_':111224,
+    '`':111422,'a':121124,'b':121421,'c':141122,'d':141221,'e':112214,'f':112412,'g':122114,
+    'h':122411,'i':142112,'j':142211,'k':241211,'l':221114,'m':413111,'n':241112,'o':134111,
+    'p':111242,'q':121142,'r':121241,'s':114212,'t':124112,'u':124211,'v':411212,'w':421112,
+    'x':421211,'y':212141,'z':214121,'{':412121,'|':111143,'}':111341,'~':131141
+  }
+};
+
+function encode128B(text){
+  var patterns = [CODE128B.start];
+  var sum = 104;
+  for(var i=0;i<text.length;i++){
+    var c = text[i];
+    var code = CODE128B.chars[c];
+    if(!code) throw new Error('Caracter invalido: '+c);
+    patterns.push(String(code).split('').map(Number));
+    sum += (c.charCodeAt(0)-32) * (i+1);
+  }
+  var check = sum % 103;
+  var checkChar = String.fromCharCode(check+32);
+  patterns.push(String(CODE128B.chars[checkChar]).split('').map(Number));
+  patterns.push(CODE128B.stop);
+  return patterns;
+}
+
+function generate(){
+  var val = document.getElementById('code').value.trim();
+  if(!val) return;
+  var output = document.getElementById('output');
+  output.innerHTML = '';
+
+  var patterns = encode128B(val);
+  var segW = 2;
+  var h = 80;
+  var totalW = patterns.reduce(function(s,p){return s + p.reduce(function(a,b){return a+b;},0)*segW;},0);
+
+  var canvas = document.createElement('canvas');
+  canvas.width = totalW;
+  canvas.height = h + 40;
+  var ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  var x = 0;
+  ctx.fillStyle = '#000';
+  patterns.forEach(function(pattern){
+    pattern.forEach(function(seg,i){
+      if(i%2===0){ // bar (odd = black)
+        ctx.fillRect(x, 0, seg*segW, h);
+      }
+      x += seg*segW;
+    });
+  });
+
+  ctx.fillStyle = '#000';
+  ctx.font = '14px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(val, canvas.width/2, h + 24);
+
+  output.appendChild(canvas);
+}
+generate();
+</script>
+</body></html>

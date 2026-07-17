@@ -2282,16 +2282,6 @@ function showImeiProductModal(existingProductId){
     document.getElementById('qrScannerCancel').onclick=limpiar;
     document.getElementById('qrScannerBack').onclick=limpiar;
 
-    function procesarDigitos(raw){
-      var digits=raw.replace(/[^0-9]/g,'');
-      if(digits.length>=14&&digits.length<=16){
-        limpiar();
-        onDetected({type:'imei',imei:digits.substring(0,15),raw:raw});
-        return true;
-      }
-      return false;
-    }
-
     // ---- Barcode detection setup ----
     var barcodeDetector=null;
     var usandoQuagga=false;
@@ -2314,7 +2304,7 @@ function showImeiProductModal(existingProductId){
       }
     }
 
-    // ---- Luhn validation para IMEI (evita falsos positivos) ----
+    // ---- Luhn validation para IMEI ----
     function luhnValido(n){
       var s=0,a=false;
       for(var i=n.length-1;i>=0;i--){
@@ -2332,8 +2322,8 @@ function showImeiProductModal(existingProductId){
         var imei=d.substring(0,15);
         if(imei===ultimoImei){
           imeiCount++;
-          if(imeiCount<3){
-            if(statusEl)statusEl.textContent='Verificando... ('+imeiCount+'/3)';
+          if(imeiCount<2){
+            if(statusEl)statusEl.textContent='Verificando... ('+imeiCount+'/2)';
             return false;
           }
         }else{
