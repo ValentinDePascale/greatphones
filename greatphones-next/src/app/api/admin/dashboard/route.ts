@@ -43,11 +43,24 @@ export async function GET(request: Request) {
       prisma.user.count({ where: { createdAt: { gte: lastMonth, lt: currentMonth } } }),
     ])
 
-    // Monthly stats - fetch orders and users for the year in parallel
+    // Monthly stats - fetch orders (with items+cost) and users for the year in parallel
     const [yearOrders, yearUsers] = await Promise.all([
       prisma.order.findMany({
         where: { createdAt: { gte: startOfYear } },
-        select: { total: true, createdAt: true },
+        select: {
+          total: true,
+          createdAt: true,
+          payment: true,
+          items: {
+            select: {
+              price: true,
+              quantity: true,
+              customPrice: true,
+              productId: true,
+              product: { select: { cost: true } },
+            },
+          },
+        },
       }),
       prisma.user.findMany({
         where: { createdAt: { gte: startOfYear } },
@@ -55,14 +68,34 @@ export async function GET(request: Request) {
       }),
     ])
 
-    // Index orders by month using Map for O(1) lookups
-    const ordersByMonth = new Map<number, { revenue: number; orders: number }>()
+    // Compute profit per order and index by month
+    const ordersByMonth = new Map<number, { revenue: number; orders: number; profit: number }>()
+    const paymentMap = new Map<string, { count: number; revenue: number; profit: number }>()
+
     yearOrders.forEach((o) => {
       const monthIndex = new Date(o.createdAt).getMonth()
-      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0 }
+      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0, profit: 0 }
       existing.revenue += o.total || 0
       existing.orders++
+
+      // Compute profit for this order: sum(item.price*qty - cost*qty)
+      let orderProfit = 0
+      o.items.forEach((item) => {
+        const qty = item.quantity || 1
+        const cost = item.product?.cost || 0
+        orderProfit += (item.price * qty) - (cost * qty)
+      })
+      existing.profit += orderProfit
+
       ordersByMonth.set(monthIndex, existing)
+
+      // Payment breakdown
+      const method = o.payment || 'Sin especificar'
+      const pm = paymentMap.get(method) || { count: 0, revenue: 0, profit: 0 }
+      pm.count++
+      pm.revenue += o.total || 0
+      pm.profit += orderProfit
+      paymentMap.set(method, pm)
     })
 
     // Index users by month using Map for O(1) lookups
@@ -74,13 +107,14 @@ export async function GET(request: Request) {
 
     // Build monthly stats with O(1) lookups instead of O(n) iterations
     const monthlyStats = MONTHS.map((month, i) => {
-      const orderData = ordersByMonth.get(i) || { revenue: 0, orders: 0 }
+      const orderData = ordersByMonth.get(i) || { revenue: 0, orders: 0, profit: 0 }
       const userCount = usersByMonth.get(i) || 0
       return {
         month,
         monthIndex: i,
         revenue: orderData.revenue,
         orders: orderData.orders,
+        profit: orderData.profit,
         avgTicket: orderData.orders > 0 ? Math.round(orderData.revenue / orderData.orders) : 0,
         newUsers: userCount,
       }
@@ -89,8 +123,14 @@ export async function GET(request: Request) {
     // Annual totals
     const annualRevenue = monthlyStats.reduce((sum, m) => sum + m.revenue, 0)
     const annualOrders = monthlyStats.reduce((sum, m) => sum + m.orders, 0)
+    const annualProfit = monthlyStats.reduce((sum, m) => sum + m.profit, 0)
     const annualAvgTicket = annualOrders > 0 ? Math.round(annualRevenue / annualOrders) : 0
     const annualUsers = monthlyStats.reduce((sum, m) => sum + m.newUsers, 0)
+
+    // Payment breakdown
+    const paymentBreakdown = Array.from(paymentMap.entries())
+      .map(([method, data]) => ({ method, ...data }))
+      .sort((a, b) => b.revenue - a.revenue)
 
     // Recent orders, top products, and low stock - all independent, run in parallel
     const [recentOrders, topProducts, lowStockProducts, lowStockAccessories] = await Promise.all([
@@ -104,7 +144,16 @@ export async function GET(request: Request) {
           clientEmail: true,
           total: true,
           status: true,
+          payment: true,
           createdAt: true,
+          items: {
+            select: {
+              price: true,
+              quantity: true,
+              productId: true,
+              product: { select: { cost: true } },
+            },
+          },
         },
       }),
       prisma.product.findMany({
@@ -202,16 +251,28 @@ export async function GET(request: Request) {
       annualStats: {
         revenue: annualRevenue,
         orders: annualOrders,
+        profit: annualProfit,
         avgTicket: annualAvgTicket,
         newUsers: annualUsers,
       },
-      recentOrders: recentOrders.map((o) => ({
-        id: o.code,
-        client: o.clientName || o.clientEmail || 'N/A',
-        total: o.total,
-        status: o.status,
-        date: o.createdAt.toISOString(),
-      })),
+      paymentBreakdown,
+      recentOrders: recentOrders.map((o) => {
+        let profit = 0
+        o.items.forEach((item) => {
+          const qty = item.quantity || 1
+          const cost = item.product?.cost || 0
+          profit += (item.price * qty) - (cost * qty)
+        })
+        return {
+          id: o.code,
+          client: o.clientName || o.clientEmail || 'N/A',
+          total: o.total,
+          status: o.status,
+          payment: o.payment || null,
+          profit,
+          date: o.createdAt.toISOString(),
+        }
+      }),
       topProducts: topProducts.map((p) => ({
         id: p.id,
         name: p.name,

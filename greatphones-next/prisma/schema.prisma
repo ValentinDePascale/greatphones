@@ -90,6 +90,7 @@ model Product {
   supplierId  String?
   supplier    Supplier?       @relation(fields: [supplierId], references: [id])
   orderItems  OrderItem[]
+  preOrders   PreOrder[]
   favorites   Favorite[]
   inventoryItems InventoryItem[]
 }
@@ -296,6 +297,25 @@ model OrderItem {
   
   quantity    Int      @default(1)
   price       Int
+}
+
+// ==================== PREEVENTAS ====================
+model PreOrder {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  clientName   String
+  clientDni    String?
+  clientPhone  String?
+  clientEmail  String?
+  productId    String?
+  product      Product? @relation(fields: [productId], references: [id])
+  customName   String?
+  customPrice  Int?
+  notes        String?
+  status       String   @default("PENDING") // PENDING | CONFIRMED | SOLD | CANCELLED
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 // ==================== COTIZACIONES ====================
