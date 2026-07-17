@@ -68,7 +68,7 @@ function uploadSvPhoto(file){
       svPhotos.push(data.url);
       renderSvPhotoPreview();
     }
-  }).catch(function(){});
+  }).catch(function(e){console.error('Error uploading photo:',e);});
 }
 
 function removeSvPhoto(url){
@@ -347,7 +347,7 @@ function svSubmit(){
 function svRenderConfirm(quote){
   var msg=document.getElementById('svConfMsg');
   if(msg){
-    msg.innerHTML='<strong>Codigo: '+quote.code+'</strong><br>Tu cotizacion fue enviada correctamente.<br>Un asesor la revisara y te contactara para coordinar la inspeccion del dispositivo.<br><br><em>El precio estimado es orientativo. Hasta no comprobar fisicamente el estado del dispositivo, no se realizara ningun pago.</em>';
+    msg.innerHTML='<strong>Codigo: '+escapeHtml(quote.code)+'</strong><br>Tu cotizacion fue enviada correctamente.<br>Un asesor la revisara y te contactara para coordinar la inspeccion del dispositivo.<br><br><em>El precio estimado es orientativo. Hasta no comprobar fisicamente el estado del dispositivo, no se realizara ningun pago.</em>';
   }
   var track=document.getElementById('svTrack');
   if(track){

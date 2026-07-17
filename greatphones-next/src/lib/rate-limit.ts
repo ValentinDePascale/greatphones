@@ -1,53 +1,64 @@
-const store = new Map<string, { count: number; resetTime: number }>()
+import { prisma } from './prisma'
 
-const CLEANUP_INTERVAL = 60000
-
-function cleanup() {
+export async function rateLimit(
+  key: string,
+  max: number,
+  windowMs: number
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
   const now = Date.now()
-  for (const [key, val] of store) {
-    if (val.resetTime < now) store.delete(key)
-  }
-}
+  const expiresAt = new Date(now + windowMs)
 
-let cleanupInterval: ReturnType<typeof setInterval> | null = null
+  const result = await prisma.$queryRawUnsafe<
+    Array<{ count: bigint; resetAt: Date }>
+  >(
+    `INSERT INTO "RateLimit" (key, count, "expiresAt", "createdAt", "updatedAt")
+     VALUES ($1, 1, $2, NOW(), NOW())
+     ON CONFLICT (key) DO UPDATE SET
+       count = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN 1 ELSE "RateLimit"."count" + 1 END,
+       "expiresAt" = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN $2 ELSE "RateLimit"."expiresAt" END,
+       "updatedAt" = NOW()
+     RETURNING count, "expiresAt" AS "resetAt"`,
+    key,
+    expiresAt
+  )
 
-export function startCleanup() {
-  if (cleanupInterval) return
-  cleanupInterval = setInterval(cleanup, CLEANUP_INTERVAL)
-  cleanupInterval.unref()
-}
-
-export function stopCleanup() {
-  if (cleanupInterval) {
-    clearInterval(cleanupInterval)
-    cleanupInterval = null
-  }
-}
-
-startCleanup()
-
-export function rateLimit(key: string, max: number, windowMs: number): { allowed: boolean; remaining: number; resetAt: number } {
-  const now = Date.now()
-  const entry = store.get(key)
-
-  if (!entry || entry.resetTime < now) {
-    store.set(key, { count: 1, resetTime: now + windowMs })
+  const row = result?.[0]
+  if (!row) {
     return { allowed: true, remaining: max - 1, resetAt: now + windowMs }
   }
 
-  if (entry.count >= max) {
-    return { allowed: false, remaining: 0, resetAt: entry.resetTime }
+  const count = Number(row.count)
+  return {
+    allowed: count <= max,
+    remaining: Math.max(0, max - count),
+    resetAt: row.resetAt.getTime(),
   }
-
-  entry.count++
-  return { allowed: true, remaining: max - entry.count, resetAt: entry.resetTime }
 }
 
-export function getRateLimitInfo(key: string, max: number, windowMs: number) {
+export async function getRateLimitInfo(
+  key: string,
+  max: number,
+  windowMs: number
+): Promise<{ count: number; remaining: number; resetAt: number }> {
   const now = Date.now()
-  const entry = store.get(key)
-  if (!entry || entry.resetTime < now) {
+  const nowDate = new Date(now)
+
+  const result = await prisma.$queryRawUnsafe<
+    Array<{ count: bigint; expiresAt: Date }>
+  >(
+    `SELECT count, "expiresAt" FROM "RateLimit" WHERE key = $1`,
+    key
+  )
+
+  const row = result?.[0]
+  if (!row || row.expiresAt < nowDate) {
     return { count: 0, remaining: max, resetAt: now + windowMs }
   }
-  return { count: entry.count, remaining: Math.max(0, max - entry.count), resetAt: entry.resetTime }
+
+  const count = Number(row.count)
+  return {
+    count,
+    remaining: Math.max(0, max - count),
+    resetAt: row.expiresAt.getTime(),
+  }
 }

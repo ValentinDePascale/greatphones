@@ -216,7 +216,7 @@ window.fetch = function(url, options) {
   if (method !== 'GET' && typeof url === 'string' && url.indexOf('/api/') !== -1) {
     result.then(function() {
       FetchCache.invalidateOnMutation(url);
-    }).catch(function() {});
+    }).catch(function(e) {console.error('Cache invalidation error:',e);});
   }
 
   return result;

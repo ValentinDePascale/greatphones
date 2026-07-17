@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
       }
 
-      const limit = rateLimit(`verify:${email}`, 5, 60 * 60 * 1000)
+      const limit = await rateLimit(`verify:${email}`, 5, 60 * 60 * 1000)
       if (!limit.allowed) {
         const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
         return NextResponse.json({ error: `Demasiados codigos. Espera ${mins} minutos` }, { status: 429 })

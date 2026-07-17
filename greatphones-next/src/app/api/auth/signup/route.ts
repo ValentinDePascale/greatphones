@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     
     const { email, name, phone, dni, provincia, ciudad, password, verified } = body
 
-    const limit = rateLimit(`signup:${email}`, 3, 60 * 60 * 1000)
+    const limit = await rateLimit(`signup:${email}`, 3, 60 * 60 * 1000)
     if (!limit.allowed) {
       const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
       return NextResponse.json({ error: `Demasiados registros. Espera ${mins} minutos` }, { status: 429 })

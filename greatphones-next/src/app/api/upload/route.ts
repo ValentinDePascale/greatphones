@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
-import { rateLimit } from '@/lib/rate-limit'
 import { requireAdmin } from '@/lib/auth-guard'
 
 cloudinary.config({

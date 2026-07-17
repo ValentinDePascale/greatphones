@@ -1,20 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
-
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
-
-function checkRateLimit(key: string, maxAttempts = 5, windowMs = 60000): boolean {
-  const now = Date.now()
-  const entry = rateLimitMap.get(key)
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(key, { count: 1, resetAt: now + windowMs })
-    return true
-  }
-  if (entry.count >= maxAttempts) return false
-  entry.count++
-  return true
-}
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +19,8 @@ export async function POST(request: Request) {
     }
 
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
-    if (!checkRateLimit(`redeem:${ip}`)) {
+    const rl = await rateLimit(`redeem:${ip}`, 5, 60000)
+    if (!rl.allowed) {
       return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto.' }, { status: 429 })
     }
 

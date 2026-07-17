@@ -18,6 +18,29 @@ const nextConfig: NextConfig = {
   },
   turbopack: {},
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || [],
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              "font-src 'self' https://fonts.gstatic.com",
+              "img-src 'self' data: https://res.cloudinary.com https://http2.mlstatic.com",
+              "connect-src 'self' https://api.mercadopago.com https://greatphones.onrender.com https://*.neon.tech wss://*.neon.tech",
+              "frame-src https://www.mercadopago.com",
+              "base-uri 'self'",
+              "form-action 'self'",
+            ].join('; '),
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

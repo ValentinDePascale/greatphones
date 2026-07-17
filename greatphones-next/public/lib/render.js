@@ -148,7 +148,7 @@ function loadProducts(){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
     }
-  }).catch(function(){hideLoadingBar();console.log('Error loading products');});
+  }).catch(function(e){hideLoadingBar();console.error('Error loading products:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los productos');});
 }
 
 function loadAccessories(){
@@ -165,7 +165,7 @@ function loadAccessories(){
       var currentTab=window.currentAdminTab||'prods';
       renderAdminContent(currentTab);
     }
-  }).catch(function(){console.log('Error loading accessories');});
+  }).catch(function(e){console.error('Error loading accessories:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los accesorios');});
 }
 
 function loadDashboard(){
@@ -184,7 +184,7 @@ function loadDashboard(){
     renderDashStockAlerts(d);
     renderDashCharts();
   }).catch(function(e){
-    console.log('Dashboard error:',e);
+    console.error('Dashboard error:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudo cargar el dashboard');
   });
   window._dashRefreshInterval=setInterval(function(){
     fetch(API_URL+'/api/admin/dashboard',{
@@ -196,7 +196,7 @@ function loadDashboard(){
       renderDashTopProducts(d);
       renderDashStockAlerts(d);
       renderDashCharts();
-    }).catch(function(){});
+    }).catch(function(e){console.error('Dashboard refresh error:',e);});
   },300000);
 }
 
@@ -1181,7 +1181,7 @@ function selectDetailVariant(idx){
       if(v.batteryHealth!=null)parts.push('Batería: '+v.batteryHealth+'%');
       condNote=parts.join(' | ');
     }
-    var fullDesc=[currentProd.description||currentProd.sub||'',condNote,note].filter(Boolean).join('<br>');
+    var fullDesc=[escapeHtml(currentProd.description||currentProd.sub||''),escapeHtml(condNote),escapeHtml(note)].filter(Boolean).join('<br>');
     if(fullDesc){descEl.innerHTML=fullDesc;descEl.style.display='block';}else{descEl.style.display='none';}
   }
 
@@ -2027,7 +2027,7 @@ function uploadAdditionalImages(input){
         document.getElementById('prodImages').value=JSON.stringify(additionalImages);
         renderAdditionalImage(data.url,additionalImages.length-1);
       }
-    }).catch(function(){console.log('Error uploading image');});
+    }).catch(function(e){console.error('Error uploading image:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudo subir la imagen');});
   });
   input.value='';
 }
@@ -2269,7 +2269,7 @@ function showImeiProductModal(existingProductId){
       if(detenido)return;
       detenido=true;
       if(window.Quagga){try{Quagga.stop();}catch(e){}}
-      if(html5QrCode){try{html5QrCode.stop().catch(function(){});}catch(e){}}
+      if(html5QrCode){try{html5QrCode.stop().catch(function(){/* cleanup, ignore errors */});}catch(e){}}
       if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
       overlay.remove();
     }
@@ -2956,12 +2956,14 @@ function renderAdminContent(tab){
         var roleColor=u.role==='ADMIN'?'var(--orange)':'var(--green)';
         var roleLabel=u.role==='ADMIN'?'Admin':'Cliente';
         var date=u.createdAt?new Date(u.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'-';
-        var name=u.name||u.email.split('@')[0];
+        var name=escapeHtml(u.name||u.email.split('@')[0]);
+        var email=escapeHtml(u.email);
+        var phone=escapeHtml(u.phone||'-');
         return '<tr style="border-bottom:1px solid var(--admin-border);transition:background .15s" onmouseover="this.style.background=\'var(--admin-surface-hover)\'" onmouseout="this.style.background=\'transparent\'">'+
           '<td style="padding:10px 12px;color:var(--admin-text)">'+name+'</td>'+
-          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+u.email+'</td>'+
+          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+email+'</td>'+
           '<td style="padding:10px 12px"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;color:'+roleColor+';background:'+roleColor+'15">'+roleLabel+'</span></td>'+
-          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+(u.phone||'-')+'</td>'+
+          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+phone+'</td>'+
           '<td style="padding:10px 12px;color:var(--admin-text-muted);white-space:nowrap">'+date+'</td>'+
           '</tr>';
       }).join('');

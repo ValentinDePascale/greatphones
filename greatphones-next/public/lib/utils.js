@@ -1,4 +1,9 @@
 // =========== UTILS ===========
+function escapeHtml(text){
+  var div=document.createElement('div');
+  div.textContent=text;
+  return div.innerHTML;
+}
 function getById(arr,id){for(var i=0;i<arr.length;i++){if(arr[i].id==id)return arr[i];if(String(arr[i].id)===String(id))return arr[i];}return null;}
 function autoGrow(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 function promptLocation(){var v=prompt('A que ciudad enviamos?',document.getElementById('locVal').textContent);if(v&&v.trim())document.getElementById('locVal').textContent=v.trim();}

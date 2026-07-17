@@ -1,7 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+let queryRawCallCount = 0
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $queryRawUnsafe: vi.fn().mockImplementation(() => {
+      queryRawCallCount++
+      const count = queryRawCallCount
+      return Promise.resolve([{ count, resetAt: new Date(Date.now() + 60000) }])
+    }),
     user: { findUnique: vi.fn() },
     passwordReset: { create: vi.fn() },
   },
@@ -13,6 +20,7 @@ vi.mock('@/lib/email', () => ({
 
 describe('POST /api/auth/forgot-password', () => {
   beforeEach(() => {
+    queryRawCallCount = 0
     vi.resetModules()
   })
 

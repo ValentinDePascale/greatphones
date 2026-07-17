@@ -91,7 +91,7 @@ function markNotifAsRead(notifId){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({})
-  }).catch(function(){});
+  }).catch(function(e){console.error('Error marking notification as read:',e);});
 }
 
 function clearNotifs(){
@@ -103,7 +103,7 @@ function clearNotifs(){
   }).then(function(){
     renderNotifPanel();
     updateNotifBadge();
-  }).catch(function(){});
+  }).catch(function(e){console.error('Error clearing notifications:',e);});
 }
 
 function deleteAllNotifs(){
@@ -142,7 +142,7 @@ function updateNotifBadge(){
         }
       }
     })
-    .catch(function(){});
+    .catch(function(e){console.error('Error updating notification badge:',e);});
 }
 
 function startNotifPolling(){

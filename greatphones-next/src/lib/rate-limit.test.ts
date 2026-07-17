@@ -1,54 +1,89 @@
-import { describe, it, expect, beforeEach } from 'vitest'
-import { rateLimit, getRateLimitInfo } from './rate-limit'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { prisma } from './prisma'
+
+vi.mock('./prisma', () => ({
+  prisma: {
+    $queryRawUnsafe: vi.fn(),
+  },
+}))
+
+const { rateLimit, getRateLimitInfo } = await import('./rate-limit')
 
 describe('rateLimit', () => {
   beforeEach(() => {
-    ;(global as any).__RATE_LIMIT_STORE__?.clear?.()
+    vi.clearAllMocks()
   })
 
-  it('allows requests within the limit', () => {
-    const r1 = rateLimit('test:user1', 3, 60000)
-    expect(r1.allowed).toBe(true)
-    expect(r1.remaining).toBe(2)
+  it('allows first request and returns remaining', async () => {
+    const mockResetAt = new Date(Date.now() + 60000)
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
+      { count: 1, resetAt: mockResetAt },
+    ])
 
-    const r2 = rateLimit('test:user1', 3, 60000)
-    expect(r2.allowed).toBe(true)
-    expect(r2.remaining).toBe(1)
-
-    const r3 = rateLimit('test:user1', 3, 60000)
-    expect(r3.allowed).toBe(true)
-    expect(r3.remaining).toBe(0)
+    const result = await rateLimit('test:user1', 3, 60000)
+    expect(result.allowed).toBe(true)
+    expect(result.remaining).toBe(2)
   })
 
-  it('blocks requests after exceeding the limit', () => {
-    rateLimit('test:user2', 2, 60000)
-    rateLimit('test:user2', 2, 60000)
-    const blocked = rateLimit('test:user2', 2, 60000)
-    expect(blocked.allowed).toBe(false)
-    expect(blocked.remaining).toBe(0)
+  it('blocks after exceeding limit', async () => {
+    const mockResetAt = new Date(Date.now() + 60000)
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
+      { count: 4, resetAt: mockResetAt },
+    ])
+
+    const result = await rateLimit('test:user2', 3, 60000)
+    expect(result.allowed).toBe(false)
+    expect(result.remaining).toBe(0)
   })
 
-  it('tracks different keys independently', () => {
-    rateLimit('test:userA', 1, 60000)
-    const rA = rateLimit('test:userA', 1, 60000)
+  it('allows when exactly at limit', async () => {
+    const mockResetAt = new Date(Date.now() + 60000)
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
+      { count: 3, resetAt: mockResetAt },
+    ])
+
+    const result = await rateLimit('test:user3', 3, 60000)
+    expect(result.allowed).toBe(true)
+    expect(result.remaining).toBe(0)
+  })
+
+  it('tracks different keys independently', async () => {
+    vi.mocked(prisma.$queryRawUnsafe)
+      .mockResolvedValueOnce([{ count: 4, resetAt: new Date(Date.now() + 60000) }])
+      .mockResolvedValueOnce([{ count: 1, resetAt: new Date(Date.now() + 60000) }])
+
+    const rA = await rateLimit('test:userA', 3, 60000)
+    const rB = await rateLimit('test:userB', 3, 60000)
     expect(rA.allowed).toBe(false)
-
-    const rB = rateLimit('test:userB', 1, 60000)
     expect(rB.allowed).toBe(true)
   })
 })
 
 describe('getRateLimitInfo', () => {
-  it('returns correct info for untouched key', () => {
-    const info = getRateLimitInfo('fresh:key', 5, 60000)
+  it('returns fresh info for untouched key', async () => {
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([])
+
+    const info = await getRateLimitInfo('fresh:key', 5, 60000)
     expect(info.count).toBe(0)
     expect(info.remaining).toBe(5)
   })
 
-  it('returns correct info after some requests', () => {
-    rateLimit('info:key', 5, 60000)
-    rateLimit('info:key', 5, 60000)
-    const info = getRateLimitInfo('info:key', 5, 60000)
+  it('returns info for expired key as fresh', async () => {
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
+      { count: 3, expiresAt: new Date(Date.now() - 1000) },
+    ])
+
+    const info = await getRateLimitInfo('expired:key', 5, 60000)
+    expect(info.count).toBe(0)
+    expect(info.remaining).toBe(5)
+  })
+
+  it('returns current count for active key', async () => {
+    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
+      { count: 2, expiresAt: new Date(Date.now() + 30000) },
+    ])
+
+    const info = await getRateLimitInfo('active:key', 5, 60000)
     expect(info.count).toBe(2)
     expect(info.remaining).toBe(3)
   })

@@ -260,7 +260,7 @@ function getUserConversation(){
         createDefaultConversation();
       }
     })
-    .catch(function(e){console.error('Error loading conversation:',e);});
+    .catch(function(e){console.error('Error loading conversation:',e);showErrorToast('Error','No se pudo cargar la conversación');});
 }
 
 function createDefaultConversation(){
@@ -283,7 +283,7 @@ function createDefaultConversation(){
     }
     if(chatSocket)chatSocket.emit('joinConversation',userConvId);
   })
-  .catch(function(e){console.error('Error creating conversation:',e);});
+  .catch(function(e){console.error('Error creating conversation:',e);showErrorToast('Error','No se pudo crear el chat');});
 }
 
 function loadMessages(convId,scrollBottom,scrollToMsgId){
@@ -332,8 +332,8 @@ function renderMsgs(msgs){
     if(productData){
       content=renderProductCard(productData);
     }else if(m.imageUrl){
-      content='<img src="'+m.imageUrl+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+m.imageUrl+'\')">';
-      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+m.imageCaption+'</p>';
+      content='<img src="'+escapeHtml(m.imageUrl)+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
+      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
     }else{
       content='<p style="margin:0;line-height:1.5">'+escapeHtml(m.text||'')+'</p>';
     }
@@ -369,8 +369,8 @@ function appendMessageToChat(msg){
   if(productData){
     content=renderProductCard(productData);
   }else if(msg.imageUrl){
-    content='<img src="'+msg.imageUrl+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+msg.imageUrl+'\')">';
-    if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+msg.imageCaption+'</p>';
+    content='<img src="'+escapeHtml(msg.imageUrl)+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+escapeHtml(msg.imageUrl)+'\')">';
+    if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(msg.imageCaption)+'</p>';
   }else{
     content='<p style="margin:0;line-height:1.5">'+escapeHtml(msg.text||'')+'</p>';
   }
@@ -404,7 +404,7 @@ function sendMessage(){
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
     checkAndShowAutoReply(text);
   })
-  .catch(function(e){console.error('Error sending message:',e);});
+  .catch(function(e){console.error('Error sending message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
 }
 
 var autoReplyKeywords=[
@@ -590,7 +590,7 @@ function sendChatImg(input){
       });
     }
   })
-  .catch(function(e){console.error('Error uploading image:',e);});
+  .catch(function(e){console.error('Error uploading image:',e);showErrorToast('Error','No se pudo subir la imagen');});
   input.value='';
 }
 
@@ -600,14 +600,14 @@ function markAsRead(convId){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({readerId:currentUser.id})
-  }).catch(function(e){});
+  }).catch(function(e){console.error('Error marking conversation as read:',e);});
   if(chatSocket)chatSocket.emit('markRead',{conversationId:convId});
 }
 
 function showTypingIndicator(userName){
   var el=document.getElementById('typingIndicator');
   if(el){
-    el.innerHTML='<span class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span><span style="font-size:12px;color:var(--gray)">'+(userName||'Great Phones')+' est\u00E1 escribiendo...</span>';
+    el.innerHTML='<span class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span><span style="font-size:12px;color:var(--gray)">'+escapeHtml(userName||'Great Phones')+' est\u00E1 escribiendo...</span>';
     el.style.display='block';
   }
 }
@@ -659,12 +659,6 @@ function timeAgo(d){
   if(diff<3600)return Math.floor(diff/60)+'min';
   if(diff<86400)return Math.floor(diff/3600)+'h';
   return Math.floor(diff/86400)+'d';
-}
-
-function escapeHtml(text){
-  var div=document.createElement('div');
-  div.textContent=text;
-  return div.innerHTML;
 }
 
 // =========== SCROLL FAB ===========
@@ -763,8 +757,8 @@ function renderProductCard(product){
   var variantInfo=product.variant||'';
   var storageInfo=product.storage?'<div class="msg-product-card-detail">💾 '+escapeHtml(product.storage)+'</div>':'';
   var colorInfo=product.color?'<div class="msg-product-card-detail">🎨 '+escapeHtml(product.color)+'</div>':'';
-  return '<div class="msg-product-card" onclick="event.stopPropagation();openDetail(\''+pid+'\')" style="cursor:pointer">'+
-    (img?'<img src="'+img+'" class="msg-product-card-img" onerror="this.style.display=\'none\'">':'<div class="msg-product-card-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>')+
+  return '<div class="msg-product-card" onclick="event.stopPropagation();openDetail(\''+escapeHtml(pid)+'\')" style="cursor:pointer">'+
+    (img?'<img src="'+escapeHtml(img)+'" class="msg-product-card-img" onerror="this.style.display=\'none\'">':'<div class="msg-product-card-img" style="display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>')+
     '<div class="msg-product-card-info">'+
       '<div class="msg-product-card-name">'+escapeHtml(name)+'</div>'+
       storageInfo+colorInfo+
@@ -810,8 +804,8 @@ function searchAdminProducts(query){
         results.innerHTML=products.map(function(p){
           var img=p.imageUrl||p.images&&p.images[0]||'';
           var priceStr='$'+Number(p.price).toLocaleString('es-AR');
-          return '<div class="product-search-item" onclick="selectAdminProduct(\''+p.id+'\')">'+
-            (img?'<img src="'+img+'" class="product-search-item-img" onerror="this.style.display=\'none\'">':'<div class="product-search-item-img" style="display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--cream)">📦</div>')+
+          return '<div class="product-search-item" onclick="selectAdminProduct(\''+escapeHtml(p.id)+'\')">'+
+            (img?'<img src="'+escapeHtml(img)+'" class="product-search-item-img" onerror="this.style.display=\'none\'">':'<div class="product-search-item-img" style="display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--cream)">📦</div>')+
             '<div class="product-search-item-info">'+
               '<div class="product-search-item-name">'+escapeHtml(p.name)+'</div>'+
               '<div class="product-search-item-price">'+priceStr+'</div>'+
@@ -917,7 +911,7 @@ function consultarProducto(){
       // Load messages to show history
       if(typeof loadPanelMessages==='function')loadPanelMessages(convId,true);
     })
-    .catch(function(e){console.error('Error sending product from detail:',e);});
+    .catch(function(e){console.error('Error sending product from detail:',e);showErrorToast('Error','No se pudo enviar el producto');});
   });
 }
 
@@ -986,7 +980,7 @@ function searchInMessages(query){
       _msgSearchIdx=0;
       renderMsgSearchResults(msgs);
     })
-    .catch(function(e){console.error('Error searching messages:',e);});
+    .catch(function(e){console.error('Error searching messages:',e);showErrorToast('Error','Error al buscar mensajes');});
 }
 function renderMsgSearchResults(msgs){
   var list=document.getElementById('chatMsgList');
@@ -1223,7 +1217,7 @@ function submitQuoteFromChat(){
         scrollToBottom();
         if(chatSocket)chatSocket.emit('messageSent',{conversationId:adminActiveConvId,message:msg});
       })
-      .catch(function(e){console.error('Error sending quote message:',e);});
+      .catch(function(e){console.error('Error sending quote message:',e);showErrorToast('Error','Error al enviar cotización');});
     }else{
       showErrorToast('Error','No se pudo crear la cotización');
     }
@@ -1512,7 +1506,7 @@ function closeAdminConv(id){
     var list=document.getElementById('chatMsgList');
     if(list)list.innerHTML='';
   })
-  .catch(function(e){console.error('Error closing conversation:',e);});
+  .catch(function(e){console.error('Error closing conversation:',e);showErrorToast('Error','No se pudo cerrar la conversación');});
 }
 
 function autoResizeChatInput(el){
@@ -1555,7 +1549,7 @@ function sendAdminMessage(){
     scrollToBottom();
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
   })
-  .catch(function(e){console.error('Error sending admin message:',e);});
+  .catch(function(e){console.error('Error sending admin message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
 }
 
 // =========== PANEL CHAT ===========
@@ -1579,7 +1573,7 @@ function sendPanelMessage(){
     if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
     checkAndShowAutoReply(text);
   })
-  .catch(function(e){console.error('Error sending panel message:',e);});
+  .catch(function(e){console.error('Error sending panel message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
 }
 
 function sendPanelImg(input){
@@ -1610,7 +1604,7 @@ function sendPanelImg(input){
       });
     }
   })
-  .catch(function(e){console.error('Error uploading panel image:',e);});
+  .catch(function(e){console.error('Error uploading panel image:',e);showErrorToast('Error','No se pudo subir la imagen');});
   input.value='';
 }
 
@@ -1651,7 +1645,7 @@ function scrollPanelBottom(){
 function showPanelTyping(userName){
   var el=document.getElementById('panelTyping');
   if(el){
-    el.innerHTML='<span class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span><span style="font-size:11px;color:var(--gray)">'+(userName||'Great Phones')+' est\u00E1 escribiendo...</span>';
+    el.innerHTML='<span class="typing-dots"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></span><span style="font-size:11px;color:var(--gray)">'+escapeHtml(userName||'Great Phones')+' est\u00E1 escribiendo...</span>';
     el.style.display='block';
   }
 }
@@ -1700,8 +1694,8 @@ function renderPanelMsgs(msgs){
     if(productData){
       content=renderProductCard(productData);
     }else if(m.imageUrl){
-      content='<img src="'+m.imageUrl+'" class="msg-img" onclick="openLightbox(\''+m.imageUrl+'\')">';
-      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+m.imageCaption+'</p>';
+      content='<img src="'+escapeHtml(m.imageUrl)+'" class="msg-img" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
+      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
     }else{
       content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
     }
@@ -1736,7 +1730,7 @@ function updateMsgBadge(){
         }
       }
     })
-    .catch(function(e){});
+    .catch(function(e){console.error('Error loading conversation badge:',e);});
 }
 
 // =========== KEYBOARD SHORTCUTS ===========

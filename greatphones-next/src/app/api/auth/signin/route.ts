@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     }
 
     if (!_googleSession) {
-      const limit = rateLimit(`signin:${email}`, 5, 15 * 60 * 1000)
+      const limit = await rateLimit(`signin:${email}`, 5, 15 * 60 * 1000)
       if (!limit.allowed) {
         const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
         return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })

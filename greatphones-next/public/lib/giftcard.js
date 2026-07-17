@@ -228,7 +228,14 @@ function checkGiftCode(code) {
         statusEl.style.display = 'block'
       }
     })
-    .catch(function() {})
+    .catch(function(e) {
+      console.error('Error checking gift card:',e);
+      if (statusEl) {
+        statusEl.textContent = 'Error al verificar la Gift Card. Intentá nuevamente.';
+        statusEl.className = 'redeem-status redeem-status-error';
+        statusEl.style.display = 'block';
+      }
+    });
 }
 
 function redeemGiftCard() {
@@ -261,7 +268,7 @@ function redeemGiftCard() {
 
     // Success
     if (statusEl) {
-      statusEl.innerHTML = '✅ ¡Gift card canjeada! Se acreditaron <strong>$' + data.amount.toLocaleString('es-AR') + '</strong> a tu saldo.'
+      statusEl.textContent = '✅ ¡Gift card canjeada! Se acreditaron $' + data.amount.toLocaleString('es-AR') + ' a tu saldo.'
       statusEl.className = 'redeem-status redeem-status-ok'
       statusEl.style.display = 'block'
     }

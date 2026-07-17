@@ -433,7 +433,7 @@ function checkGoogleSession(){
         }
       });
     }
-  }).catch(function(){});
+  }).catch(function(e){console.error('Error loading checkout:',e);});
 }
 function notAvailable(){
   console.log('Funcionalidad no disponible - requiere conexion al backend');
