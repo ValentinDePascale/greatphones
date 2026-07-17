@@ -1,4 +1,41 @@
 // =========== UTILS ===========
+var IMG_MAX_SIZE = 5 * 1024 * 1024
+var IMG_MAX_DIM = 2000
+
+function validateImageFile(file, cb) {
+  if (!file.type.startsWith('image/')) {
+    if (typeof showErrorToast === 'function') showErrorToast('Error', 'Solo se permiten imágenes')
+    else alert('Solo se permiten imágenes')
+    if (cb) cb(false)
+    return false
+  }
+  if (file.size > IMG_MAX_SIZE) {
+    if (typeof showErrorToast === 'function') showErrorToast('Error', 'La imagen es muy grande. Máximo 5MB')
+    else alert('La imagen es muy grande. Máximo 5MB')
+    if (cb) cb(false)
+    return false
+  }
+  var img = new Image()
+  var url = URL.createObjectURL(file)
+  img.onload = function() {
+    URL.revokeObjectURL(url)
+    if (img.width > IMG_MAX_DIM || img.height > IMG_MAX_DIM) {
+      if (typeof showErrorToast === 'function') showErrorToast('Error', 'La imagen es demasiado grande. Máximo ' + IMG_MAX_DIM + 'x' + IMG_MAX_DIM + 'px')
+      else alert('La imagen es demasiado grande. Máximo ' + IMG_MAX_DIM + 'x' + IMG_MAX_DIM + 'px')
+      if (cb) cb(false)
+      return
+    }
+    if (cb) cb(true)
+  }
+  img.onerror = function() {
+    URL.revokeObjectURL(url)
+    if (typeof showErrorToast === 'function') showErrorToast('Error', 'No se pudo leer la imagen')
+    if (cb) cb(false)
+  }
+  img.src = url
+  return true
+}
+
 function escapeHtml(text){
   var div=document.createElement('div');
   div.textContent=text;

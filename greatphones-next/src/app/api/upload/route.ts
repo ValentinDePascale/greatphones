@@ -10,6 +10,7 @@ cloudinary.config({
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_DIM = 2000 // max 2000px en cualquier lado
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
       cloudinary.uploader.upload(base64, {
         folder: 'greatphones',
         resource_type: 'auto',
+        width: MAX_DIM, height: MAX_DIM, crop: 'limit', quality: 'auto', fetch_format: 'auto',
       }, (error, result) => {
         if (error) reject(error)
         else resolve(result)

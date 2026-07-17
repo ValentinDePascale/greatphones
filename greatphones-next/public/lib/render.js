@@ -1961,11 +1961,13 @@ function getUniqueBrands(){
 function uploadProductImage(input){
   var file=input.files[0];
   if(!file)return;
-  var preview=document.getElementById('prodImagePreview');
-  preview.innerHTML='<span style="font-size:12px">Subiendo...</span>';
-  var formData=new FormData();
-  formData.append('file',file);
-  fetch(API_URL+'/api/upload',{
+  validateImageFile(file, function(ok){
+    if(!ok)return;
+    var preview=document.getElementById('prodImagePreview');
+    preview.innerHTML='<span style="font-size:12px">Subiendo...</span>';
+    var formData=new FormData();
+    formData.append('file',file);
+    fetch(API_URL+'/api/upload',{
     method:'POST',
     body:formData
   }).then(function(r){return r.json();}).then(function(data){
@@ -1979,6 +1981,7 @@ function uploadProductImage(input){
   }).catch(function(){
     preview.innerHTML='📷';
     showErrorToast('Error', 'No se pudo subir la imagen');
+  });
   });
 }
 function handleImageDrop(event){
@@ -2012,13 +2015,14 @@ function uploadAdditionalImages(input){
   var files=input.files;
   if(!files||files.length===0)return;
   Array.from(files).forEach(function(file){
-    if(!file.type.startsWith('image/'))return;
-    var container=document.getElementById('prodAdditionalImages');
-    var placeholder=document.getElementById('addImgPlaceholder');
-    if(placeholder)placeholder.remove();
-    var formData=new FormData();
-    formData.append('file',file);
-    fetch(API_URL+'/api/upload',{
+    validateImageFile(file, function(ok){
+      if(!ok)return;
+      var container=document.getElementById('prodAdditionalImages');
+      var placeholder=document.getElementById('addImgPlaceholder');
+      if(placeholder)placeholder.remove();
+      var formData=new FormData();
+      formData.append('file',file);
+      fetch(API_URL+'/api/upload',{
       method:'POST',
       body:formData
     }).then(function(r){return r.json();}).then(function(data){
@@ -2028,6 +2032,7 @@ function uploadAdditionalImages(input){
         renderAdditionalImage(data.url,additionalImages.length-1);
       }
     }).catch(function(e){console.error('Error uploading image:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudo subir la imagen');});
+    });
   });
   input.value='';
 }

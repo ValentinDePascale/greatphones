@@ -813,26 +813,32 @@ function uploadAccImage(input){
 }
 
 function uploadAccImageFile(file){
-  var formData=new FormData();
-  formData.append('file',file);
-  fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
-    if(data.url){
-      document.getElementById('accImageUrl').value=data.url;
-      document.getElementById('accImagePreview').innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover">';
-    }
-  }).catch(function(){alert('Error uploading image');});
+  validateImageFile(file, function(ok){
+    if(!ok)return;
+    var formData=new FormData();
+    formData.append('file',file);
+    fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
+      if(data.url){
+        document.getElementById('accImageUrl').value=data.url;
+        document.getElementById('accImagePreview').innerHTML='<img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover">';
+      }
+    }).catch(function(){alert('Error uploading image');});
+  });
 }
 
 function uploadAccAdditionalImages(input){
   if(input.files){
     Array.from(input.files).forEach(function(file){
-      var formData=new FormData();
-      formData.append('file',file);
-      fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
-        if(data.url){
-          window.accAdditionalImages.push(data.url);
-          renderAccAdditionalImagesList();
-        }
+      validateImageFile(file, function(ok){
+        if(!ok)return;
+        var formData=new FormData();
+        formData.append('file',file);
+        fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
+          if(data.url){
+            window.accAdditionalImages.push(data.url);
+            renderAccAdditionalImagesList();
+          }
+        });
       });
     });
   }

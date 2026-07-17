@@ -565,11 +565,13 @@ function handleFaqClick(faqId){
 function sendChatImg(input){
   var file=input.files[0];
   if(!file||!userConvId)return;
-  var formData=new FormData();
-  formData.append('file',file);
-  formData.append('upload_preset','greatphones');
-  
-  fetch('https://api.cloudinary.com/v1_1/dck24mtpw/image/upload',{
+  validateImageFile(file, function(ok){
+    if(!ok)return;
+    var formData=new FormData();
+    formData.append('file',file);
+    formData.append('upload_preset','greatphones');
+    
+    fetch('https://api.cloudinary.com/v1_1/dck24mtpw/image/upload',{
     method:'POST',
     body:formData
   })
@@ -591,7 +593,8 @@ function sendChatImg(input){
     }
   })
   .catch(function(e){console.error('Error uploading image:',e);showErrorToast('Error','No se pudo subir la imagen');});
-  input.value='';
+    input.value='';
+  });
 }
 
 function markAsRead(convId){
@@ -1579,11 +1582,13 @@ function sendPanelMessage(){
 function sendPanelImg(input){
   var file=input.files[0];
   if(!file||!userConvId)return;
-  var formData=new FormData();
-  formData.append('file',file);
-  formData.append('upload_preset','greatphones');
+  validateImageFile(file, function(ok){
+    if(!ok)return;
+    var formData=new FormData();
+    formData.append('file',file);
+    formData.append('upload_preset','greatphones');
 
-  fetch('https://api.cloudinary.com/v1_1/dck24mtpw/image/upload',{
+    fetch('https://api.cloudinary.com/v1_1/dck24mtpw/image/upload',{
     method:'POST',
     body:formData
   })
@@ -1605,7 +1610,8 @@ function sendPanelImg(input){
     }
   })
   .catch(function(e){console.error('Error uploading panel image:',e);showErrorToast('Error','No se pudo subir la imagen');});
-  input.value='';
+    input.value='';
+  });
 }
 
 function appendPanelMessage(msg){

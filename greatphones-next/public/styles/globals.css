@@ -27,6 +27,7 @@ input[type=number]{-moz-appearance:textfield}
 *{box-sizing:border-box;margin:0;padding:0}
 @keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
 @keyframes fadeOutDown{from{opacity:1;transform:translateX(-50%) translateY(0)}to{opacity:0;transform:translateX(-50%) translateY(10px)}}
+img{max-width:100%}
 html{scroll-behavior:smooth}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--dk);overflow-x:hidden;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:inherit}
