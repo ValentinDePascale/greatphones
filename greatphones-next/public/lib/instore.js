@@ -15,6 +15,102 @@ var instoreState = {
 var lastInstoreSaleData = null
 var instoreHistoryOrders = null
 
+// =========== CALCULADORA DE CUOTAS ===========
+function openCuotasCalculator() {
+  var existing = document.getElementById('cuotasCalcModal')
+  if (existing) existing.remove()
+  var modal = document.createElement('div')
+  modal.id = 'cuotasCalcModal'
+  modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(26,18,8,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px'
+  var rateVal = window.dolarRate || ''
+  modal.innerHTML =
+    '<div style="background:#fff;border-radius:18px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--border)">' +
+        '<h2 style="font-size:20px;font-weight:700;color:var(--dk)">Calculadora de Cuotas</h2>' +
+        '<button onclick="closeCuotasCalculator()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">✕</button>' +
+      '</div>' +
+      '<div style="padding:24px;display:flex;flex-direction:column;gap:18px">' +
+        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Monto total</label>' +
+          '<input type="number" id="calcAmount" placeholder="0" oninput="calcCuotasRender()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:18px;font-weight:700;outline:none"></div>' +
+        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Cantidad de cuotas</label>' +
+          '<div style="display:flex;gap:8px;align-items:center">' +
+            '<input type="number" id="calcCuotas" min="1" max="36" value="3" oninput="calcCuotasRender()" style="flex:1;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:16px;outline:none">' +
+            '<span style="font-size:13px;font-weight:600;color:var(--gray)">cuotas</span>' +
+          '</div></div>' +
+        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Cotización USD (opcional)</label>' +
+          '<input type="number" id="calcUsdRate" value="' + rateVal + '" placeholder="Ej: 1200" oninput="calcCuotasRender()" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none"></div>' +
+        '<div id="calcResult"></div>' +
+        '<div style="display:flex;gap:8px;margin-top:4px">' +
+          '<button onclick="closeCuotasCalculator()" class="btn btn-o" style="flex:1;padding:12px">Cerrar</button>' +
+          '<button onclick="calcCuotasUseInSale()" class="btn btn-primary" style="flex:1;padding:12px;font-weight:700">Usar en venta</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  modal.onclick = function (e) { if (e.target === modal) closeCuotasCalculator() }
+  document.body.appendChild(modal)
+  setTimeout(function () { var inp = document.getElementById('calcAmount'); if (inp) inp.focus() }, 50)
+}
+
+function closeCuotasCalculator() {
+  var m = document.getElementById('cuotasCalcModal')
+  if (m) m.remove()
+}
+
+function calcCuotasRender() {
+  var box = document.getElementById('calcResult')
+  if (!box) return
+  var amount = parseFloat(document.getElementById('calcAmount').value) || 0
+  var cuotas = parseInt(document.getElementById('calcCuotas').value) || 1
+  var rate = parseFloat(document.getElementById('calcUsdRate').value) || 0
+  if (cuotas < 1) cuotas = 1
+  if (amount <= 0) {
+    box.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--gray);font-size:13px">Ingresá un monto para ver el detalle de las cuotas.</div>'
+    return
+  }
+  var porCuota = Math.round(amount / cuotas)
+  var usdTotal = rate > 0 ? Math.round(amount / rate) : 0
+  var usdPorCuota = rate > 0 ? Math.round(porCuota / rate) : 0
+  var rows = ''
+  for (var i = 1; i <= cuotas; i++) {
+    rows += '<div style="display:flex;justify-content:space-between;padding:9px 12px;border-bottom:1px solid var(--border);font-size:13px">' +
+      '<span style="color:var(--gray)">Cuota ' + i + '</span>' +
+      '<span style="font-weight:700;color:var(--dk)">$' + porCuota.toLocaleString('es-AR') +
+      (rate > 0 ? (' <span style="color:var(--orange);font-weight:600">/ US$ ' + usdPorCuota.toLocaleString('es-AR') + '</span>') : '') + '</span>' +
+    '</div>'
+  }
+  box.innerHTML =
+    '<div style="background:var(--cream2);border-radius:12px;overflow:hidden;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;padding:14px 12px;background:rgba(255,107,44,.08);border-bottom:1px solid var(--border);flex-wrap:wrap;gap:4px">' +
+        '<div><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Por cuota</div>' +
+          '<div style="font-size:18px;font-weight:800;color:var(--orange)">$' + porCuota.toLocaleString('es-AR') + '</div></div>' +
+        '<div style="text-align:right"><div style="font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Total</div>' +
+          '<div style="font-size:18px;font-weight:800;color:var(--dk)">$' + amount.toLocaleString('es-AR') +
+          (rate > 0 ? (' <span style="color:var(--orange);font-size:13px">/ US$ ' + usdTotal.toLocaleString('es-AR') + '</span>') : '') + '</div></div>' +
+      '</div>' +
+      rows +
+    '</div>'
+}
+
+function calcCuotasUseInSale() {
+  var amount = parseFloat(document.getElementById('calcAmount').value) || 0
+  var cuotas = parseInt(document.getElementById('calcCuotas').value) || 1
+  if (amount <= 0) { showToast('Ingresá un monto válido', 'error'); return }
+  // Pre-carga el estado de venta en tienda
+  instoreState.installments = cuotas
+  instoreState.paymentType = cuotas > 1 ? 'installments' : 'single'
+  // Si ya hay items, ajusta el total; si no, deja registrado para usar al agregar
+  window._calcPendingAmount = amount
+  // Navega a la venta si no estamos ahí
+  if (typeof renderInStoreSale === 'function') {
+    var btn = document.getElementById('adm-instore')
+    if (btn && !btn.classList.contains('act')) adminTab('instore', btn)
+  }
+  selectPaymentType(cuotas > 1 ? 'installments' : 'single')
+  if (cuotas > 1 && typeof selectInstallments === 'function') selectInstallments(cuotas)
+  closeCuotasCalculator()
+  showToast('Cuotas cargadas: ' + cuotas + ' de $' + Math.round(amount / cuotas).toLocaleString('es-AR'), 'success')
+}
+
 function renderInStoreSale() {
   var content = document.getElementById('adminContent')
   if (!content) return
@@ -38,10 +134,16 @@ function renderInStoreSale() {
         <!-- Header -->
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <h2 style="font-size:24px;font-weight:700;color:var(--dk)">Nueva Venta</h2>
-          <button onclick="loadInStoreHistory()" class="btn btn-o" style="padding:8px 16px">
-            <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">history</span>
-            Historial
-          </button>
+          <div style="display:flex;gap:8px">
+            <button onclick="openCuotasCalculator()" class="btn btn-o" style="padding:8px 16px">
+              <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">calculate</span>
+              Calculadora de cuotas
+            </button>
+            <button onclick="loadInStoreHistory()" class="btn btn-o" style="padding:8px 16px">
+              <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">history</span>
+              Historial
+            </button>
+          </div>
         </div>
 
         <!-- Client Info -->
@@ -1955,6 +2057,225 @@ function showInStoreSaleReceipt(orderId) {
     cashReceived: order.cashReceived || 0
   }
   descargarRecibo()
+}
+
+// =========== PREEVENTAS ===========
+function renderPreOrders() {
+  var sub = document.getElementById('instore-subview')
+  if (!sub) return
+  document.querySelectorAll('.instore-tabs .ord-btn').forEach(function(b){ b.classList.remove('ord-btn-act'); })
+  var t = document.getElementById('instoreTabPre')
+  if (t) t.classList.add('ord-btn-act')
+
+  sub.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px">' +
+      '<h2 style="font-size:24px;font-weight:700;color:var(--dk)">Preeventas</h2>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="preOrderFilter(\'PENDING\')" class="ord-btn" id="preFilterPENDING">Pendientes</button>' +
+        '<button onclick="preOrderFilter(\'CONFIRMED\')" class="ord-btn" id="preFilterCONFIRMED">Confirmadas</button>' +
+        '<button onclick="preOrderFilter(\'all\')" class="ord-btn" id="preFilterAll">Todas</button>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:var(--cream2);padding:1.25rem;border-radius:12px;margin-bottom:1.5rem;border:1px solid var(--border)">' +
+      '<h3 style="font-size:15px;font-weight:700;margin-bottom:1rem">Nueva Preeventa</h3>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Apellido y Nombre *</label>' +
+          '<input type="text" id="pre-clientName" placeholder="Nombre completo" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">DNI</label>' +
+          '<input type="text" id="pre-clientDni" placeholder="12345678" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Teléfono</label>' +
+          '<input type="text" id="pre-clientPhone" placeholder="2914727351" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Email</label>' +
+          '<input type="email" id="pre-clientEmail" placeholder="cliente@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Producto del catálogo</label>' +
+          '<input type="text" id="pre-productSearch" placeholder="Buscar producto..." oninput="preProductSearch(this.value)" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box">' +
+          '<div id="pre-productResults" style="margin-top:6px;display:none"></div></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">O producto custom</label>' +
+          '<input type="text" id="pre-customName" placeholder="Nombre del producto" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Precio acordado</label>' +
+          '<input type="number" id="pre-customPrice" placeholder="0" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
+      '</div>' +
+      '<div style="margin-top:10px"><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Notas</label>' +
+        '<textarea id="pre-notes" placeholder="Detalles de la preeventa..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;min-height:60px;box-sizing:border-box"></textarea></div>' +
+      '<div style="margin-top:12px"><button onclick="createPreOrder()" class="btn btn-primary" style="padding:12px 24px;font-weight:700">Guardar Preeventa</button></div>' +
+    '</div>' +
+    '<div id="preOrdersList"></div>'
+
+  window._preOrderFilter = 'PENDING'
+  setPreFilterActive('PENDING')
+  loadPreOrders()
+}
+
+function setPreFilterActive(f) {
+  ['PENDING','CONFIRMED','all'].forEach(function(k){
+    var b = document.getElementById('preFilter'+k)
+    if (b) b.classList.toggle('ord-btn-act', k===f)
+  })
+}
+
+function preOrderFilter(f) {
+  window._preOrderFilter = f
+  setPreFilterActive(f)
+  loadPreOrders()
+}
+
+function preProductSearch(q) {
+  var box = document.getElementById('pre-productResults')
+  if (!box) return
+  q = (q||'').toLowerCase().trim()
+  if (!q) { box.style.display='none'; box.innerHTML=''; return }
+  var matches = (window.PRODUCTS||[]).filter(function(p){
+    return (p.name||'').toLowerCase().indexOf(q)>=0 || (p.sub||'').toLowerCase().indexOf(q)>=0
+  }).slice(0,6)
+  if (!matches.length) { box.style.display='none'; box.innerHTML=''; return }
+  box.style.display='block'
+  box.innerHTML = matches.map(function(p){
+    return '<div onclick="selectPreProduct(\''+p.id+'\',\''+(p.name||'').replace(/'/g,"\\'")+'\')" style="padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;cursor:pointer;font-size:12px" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
+      '<span style="font-weight:600">'+(p.name||'')+'</span> <span style="color:var(--gray)">'+fmt(p.price)+'</span></div>'
+  }).join('')
+}
+
+function selectPreProduct(id, name) {
+  window._preSelectedProductId = id
+  var search = document.getElementById('pre-productSearch')
+  var box = document.getElementById('pre-productResults')
+  var custom = document.getElementById('pre-customName')
+  if (search) search.value = name
+  if (box) { box.style.display='none'; box.innerHTML=''; }
+  if (custom) custom.value = ''
+  showToast('Producto seleccionado: '+name, 'success')
+}
+
+function createPreOrder() {
+  var name = document.getElementById('pre-clientName').value.trim()
+  var dni = document.getElementById('pre-clientDni').value.trim()
+  var phone = document.getElementById('pre-clientPhone').value.trim()
+  var email = document.getElementById('pre-clientEmail').value.trim()
+  var productId = window._preSelectedProductId || null
+  var customName = document.getElementById('pre-customName').value.trim()
+  var customPrice = document.getElementById('pre-customPrice').value.trim()
+  var notes = document.getElementById('pre-notes').value.trim()
+
+  if (!name) { showToast('El nombre del cliente es obligatorio', 'error'); return }
+  if (!productId && !customName) { showToast('Seleccioná un producto o ingresá un nombre', 'error'); return }
+
+  var body = { clientName: name, clientDni: dni, clientPhone: phone, clientEmail: email, productId: productId, customName: customName, customPrice: customPrice?parseInt(customPrice):null, notes: notes }
+  fetch(API_URL+'/api/admin/preorders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    body: JSON.stringify(body)
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if (res.error) { showToast(res.error, 'error'); return }
+    showToast('Preeventa creada: '+res.code, 'success')
+    // reset
+    document.getElementById('pre-clientName').value=''
+    document.getElementById('pre-clientDni').value=''
+    document.getElementById('pre-clientPhone').value=''
+    document.getElementById('pre-clientEmail').value=''
+    document.getElementById('pre-productSearch').value=''
+    document.getElementById('pre-customName').value=''
+    document.getElementById('pre-customPrice').value=''
+    document.getElementById('pre-notes').value=''
+    window._preSelectedProductId = null
+    loadPreOrders()
+  }).catch(function(err){
+    console.error('Error creating preorder:', err)
+    showToast('Error al crear preeventa', 'error')
+  })
+}
+
+function loadPreOrders() {
+  var list = document.getElementById('preOrdersList')
+  if (!list) return
+  var f = window._preOrderFilter || 'PENDING'
+  var url = API_URL + '/api/admin/preorders' + (f!=='all' ? '?status='+f : '')
+  list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>'
+  fetch(url, { headers: { 'X-User-Id': currentUser.id } }).then(function(r){ return r.json(); }).then(function(data){
+    if (!Array.isArray(data) || !data.length) {
+      list.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:44px;margin-bottom:.5rem">📝</div><p>No hay preeventas'+(f!=='all'?' en este estado':'')+'</p></div>'
+      return
+    }
+    list.innerHTML = data.map(function(o){
+      var prodName = o.product ? o.product.name : (o.customName||'Producto custom')
+      var prodImg = o.product && o.product.imageUrl ? '<img src="'+o.product.imageUrl+'" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:26px">'+(o.product&&o.product.ico||'📦')+'</span>'
+      var price = o.customPrice || (o.product ? o.product.price : 0)
+      var statusColor = o.status==='PENDING'?'var(--orange)':o.status==='CONFIRMED'?'var(--green)':o.status==='SOLD'?'#009ee3':'var(--red)'
+      var statusLabel = { PENDING:'Pendiente', CONFIRMED:'Confirmada', SOLD:'Vendida', CANCELLED:'Cancelada' }[o.status]||o.status
+      return '<div style="background:#fff;border-radius:12px;padding:1rem;margin-bottom:.75rem;border:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
+        '<div style="width:54px;height:54px;border-radius:10px;background:var(--cream2);overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center">'+prodImg+'</div>'+
+        '<div style="flex:1;min-width:200px">'+
+          '<div style="font-weight:700;font-size:14px">'+escapeHtml(prodName)+'</div>'+
+          '<div style="font-size:12px;color:var(--gray)">'+escapeHtml(o.clientName||'')+(o.clientDni?' · DNI: '+escapeHtml(o.clientDni):'')+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">'+o.code+' · '+(o.clientPhone||o.clientEmail||'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;margin-right:1rem">'+
+          '<div style="font-size:16px;font-weight:800;color:var(--orange)">'+(price>0?fmt(price):'—')+'</div>'+
+          '<span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:'+statusColor+'15;color:'+statusColor+'">'+statusLabel+'</span>'+
+        '</div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">'+
+          (o.status==='PENDING'?'<button onclick="updatePreOrderStatus(\''+o.id+'\',\'CONFIRMED\')" class="btn btn-g btn-sm">Confirmar</button>':'')+
+          (o.status!=='SOLD'&&o.status!=='CANCELLED'?'<button onclick="convertPreOrderToSale(\''+o.id+'\')" class="btn btn-o btn-sm">Convertir a venta</button>':'')+
+          (o.status!=='CANCELLED'&&o.status!=='SOLD'?'<button onclick="updatePreOrderStatus(\''+o.id+'\',\'CANCELLED\')" class="btn btn-sm" style="background:var(--red);color:#fff">Cancelar</button>':'')+
+        '</div>'+
+      '</div>'
+    }).join('')
+  }).catch(function(err){
+    console.error('Error loading preorders:', err)
+    list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--red)">Error al cargar preeventas</div>'
+  })
+}
+
+function updatePreOrderStatus(id, status) {
+  fetch(API_URL+'/api/admin/preorders/'+id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    body: JSON.stringify({ status: status })
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if (res.error) { showToast(res.error, 'error'); return }
+    showToast('Preeventa actualizada', 'success')
+    loadPreOrders()
+  }).catch(function(err){
+    console.error('Error updating preorder:', err)
+    showToast('Error al actualizar', 'error')
+  })
+}
+
+function convertPreOrderToSale(id) {
+  fetch(API_URL+'/api/admin/preorders/'+id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    body: JSON.stringify({ status: 'SOLD' })
+  }).then(function(r){ return r.json(); }).then(function(res){
+    if (res.error) { showToast(res.error, 'error'); return }
+    // Pre-carga datos en la venta en tienda
+    if (res.product) {
+      instoreState.items = [{
+        id: res.product.id,
+        name: res.product.name,
+        price: res.product.price,
+        cost: res.product.cost || 0,
+        quantity: 1,
+        ico: res.product.ico,
+        imageUrl: res.product.imageUrl
+      }]
+    }
+    if (res.clientName) {
+      var cn = document.getElementById('instore-clientName')
+      if (cn) cn.value = res.clientName
+      var cd = document.getElementById('instore-clientDni')
+      if (cd && res.clientDni) cd.value = res.clientDni
+      var cp = document.getElementById('instore-clientPhone')
+      if (cp && res.clientPhone) cp.value = res.clientPhone
+      var ce = document.getElementById('instore-clientEmail')
+      if (ce && res.clientEmail) ce.value = res.clientEmail
+    }
+    showToast('Preeventa convertida — completá la venta', 'success')
+    renderInStoreSale()
+    window.scrollTo(0,0)
+  }).catch(function(err){
+    console.error('Error converting preorder:', err)
+    showToast('Error al convertir', 'error')
+  })
 }
 
 // Keyboard shortcuts

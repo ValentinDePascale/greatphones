@@ -182,6 +182,7 @@ function loadDashboard(){
     renderDashRecentOrders(d);
     renderDashTopProducts(d);
     renderDashStockAlerts(d);
+    renderDashPaymentBreakdown(d);
     renderDashCharts();
   }).catch(function(e){
     console.error('Dashboard error:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudo cargar el dashboard');
@@ -195,6 +196,7 @@ function loadDashboard(){
       renderDashRecentOrders(d);
       renderDashTopProducts(d);
       renderDashStockAlerts(d);
+      renderDashPaymentBreakdown(d);
       renderDashCharts();
     }).catch(function(e){console.error('Dashboard refresh error:',e);});
   },300000);
@@ -237,6 +239,7 @@ function renderDashStats(){
     document.getElementById('kpi-orders-label').textContent='Pedidos ('+months[window.dashMonth]+')';
     document.getElementById('kpi-ticket-label').textContent='Ticket Promedio ('+months[window.dashMonth]+')';
     document.getElementById('kpi-users-label').textContent='Nuevos Usuarios ('+months[window.dashMonth]+')';
+    document.getElementById('kpi-profit-label').textContent='Ganancia ('+months[window.dashMonth]+')';
     
     // Show change indicators for mensual
     document.getElementById('kpi-revenue-change-container').style.display='';
@@ -263,6 +266,7 @@ function renderDashStats(){
     document.getElementById('kpi-orders-label').textContent='Pedidos Totales ('+year+')';
     document.getElementById('kpi-ticket-label').textContent='Ticket Promedio ('+year+')';
     document.getElementById('kpi-users-label').textContent='Nuevos Usuarios ('+year+')';
+    document.getElementById('kpi-profit-label').textContent='Ganancia Total ('+year+')';
     
     // Hide change indicators for anual
     document.getElementById('kpi-revenue-change-container').style.display='none';
@@ -276,6 +280,10 @@ function renderDashStats(){
   document.getElementById('kpi-orders').textContent=stats.orders;
   document.getElementById('kpi-ticket').textContent=fmt(stats.avgTicket);
   document.getElementById('kpi-users').textContent=stats.newUsers;
+  var profit=stats.profit||0;
+  document.getElementById('kpi-profit').textContent=fmt(profit);
+  var profitUsd=window.dolarRate>0?Math.round(profit/window.dolarRate):0;
+  document.getElementById('kpi-profit-usd').textContent=profitUsd>0?('US$ '+profitUsd.toLocaleString('es-AR')):'US$ 0';
 }
 
 function renderDashRecentOrders(d){
@@ -286,13 +294,20 @@ function renderDashRecentOrders(d){
     if(!d.recentOrders.length){
       ordersTbody.innerHTML='<tr><td colspan="4" style="padding:24px;text-align:center;color:var(--gray)">No hay pedidos</td></tr>';
     }else{
-      ordersTbody.innerHTML=d.recentOrders.map(function(o){
+       ordersTbody.innerHTML=d.recentOrders.map(function(o){
         var sc=statusColors[o.status]||'var(--gray)';
         var sl=statusLabels[o.status]||o.status;
+        var profit=o.profit||0;
+        var methodColor='var(--gray)';
+        if(o.payment==='Efectivo')methodColor='var(--green)';
+        else if(o.payment==='Transferencia')methodColor='var(--orange)';
+        else if(o.payment==='wallet')methodColor='#8b5cf6';
         return'<tr style="border-bottom:1px solid var(--border)">'+
           '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+o.id+'</td>'+
-          '<td style="padding:10px 14px;font-size:12px">'+o.client+'</td>'+
+          '<td style="padding:10px 14px;font-size:12px">'+escapeHtml(o.client||'')+'</td>'+
           '<td style="padding:10px 14px;font-size:12px;font-weight:600">'+fmt(o.total)+'</td>'+
+          '<td style="padding:10px 14px;font-size:12px;font-weight:700;color:var(--green)">'+fmt(profit)+'</td>'+
+          '<td style="padding:10px 14px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:'+methodColor+'15;color:'+methodColor+'">'+escapeHtml(o.payment||'—')+'</span></td>'+
           '<td style="padding:10px 14px"><span style="font-size:10px;font-weight:600;padding:3px 8px;border-radius:10px;background:'+sc+';color:#fff">'+sl+'</span></td>'+
         '</tr>';
       }).join('');
@@ -322,6 +337,39 @@ function renderDashTopProducts(d){
       }).join('');
     }
   }
+}
+
+function renderDashPaymentBreakdown(d){
+  var box=document.getElementById('dashboard-payment-breakdown');
+  if(!box)return;
+  var data=d.paymentBreakdown||[];
+  if(!data.length){
+    box.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--gray);font-size:13px">Sin datos de pagos este año</div>';
+    return;
+  }
+  var maxRev=Math.max.apply(null,data.map(function(x){return x.revenue||0;}).concat([1]));
+  var colors={'Efectivo':'var(--green)','Transferencia':'var(--orange)','wallet':'#8b5cf6','Mercado Pago':'#009ee3','Sin especificar':'var(--gray)'};
+  box.innerHTML=data.map(function(x){
+    var color=colors[x.method]||'var(--orange)';
+    var pct=Math.round(((x.revenue||0)/maxRev)*100);
+    var usd=window.dolarRate>0?Math.round((x.revenue||0)/window.dolarRate):0;
+    return '<div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+        '<div style="display:flex;align-items:center;gap:8px">'+
+          '<span style="font-size:12px;font-weight:600;color:var(--dk)">'+escapeHtml(x.method)+'</span>'+
+          '<span style="font-size:10px;color:var(--gray);background:var(--cream2);padding:2px 8px;border-radius:10px">'+x.count+' ventas</span>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:13px;font-weight:800;color:'+color+'">'+fmt(x.revenue||0)+'</div>'+
+          '<div style="font-size:10px;color:var(--green)">Ganancia: '+fmt(x.profit||0)+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="height:8px;background:var(--cream2);border-radius:6px;overflow:hidden">'+
+        '<div style="height:100%;border-radius:6px;background:'+color+';width:'+pct+'%"></div>'+
+      '</div>'+
+      (usd>0?'<div style="font-size:10px;color:var(--orange);margin-top:3px">US$ '+usd.toLocaleString('es-AR')+'</div>':'')+
+    '</div>';
+  }).join('');
 }
 
 function renderDashStockAlerts(d){
@@ -2745,6 +2793,14 @@ function renderAdminContent(tab){
           '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
           '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-users-change-container"><span id="kpi-users-change">--</span></div>'+
         '</div>'+
+        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-profit-label">Ganancia</h3>'+
+            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCC8</div>'+
+          '</div>'+
+          '<div style="font-size:28px;font-weight:800;color:var(--green);margin-bottom:6px" id="kpi-profit">$0</div>'+
+          '<div style="font-size:12px;font-weight:600;color:var(--gray);display:inline-flex;align-items:center;gap:4px" id="kpi-profit-usd">US$ 0</div>'+
+        '</div>'+
       '</section>'+
       
       '<!-- Recent Orders & Top Products -->'+
@@ -2758,6 +2814,8 @@ function renderAdminContent(tab){
               '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">ID</th>'+
               '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Cliente</th>'+
               '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Monto</th>'+
+              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Ganancia</th>'+
+              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Método</th>'+
               '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Estado</th>'+
             '</tr></thead>'+
             '<tbody id="dashboard-recent-orders"></tbody>'+
@@ -2766,6 +2824,14 @@ function renderAdminContent(tab){
         '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
           '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ingresos Mensuales</h2>'+
           '<div style="position:relative;height:280px"><canvas id="revenueChart"></canvas></div>'+
+        '</div>'+
+      '</section>'+
+      
+      '<!-- Payment breakdown -->'+
+      '<section style="margin-bottom:2rem">'+
+        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Ventas por Método de Pago</h2>'+
+          '<div id="dashboard-payment-breakdown" style="display:flex;flex-direction:column;gap:12px"></div>'+
         '</div>'+
       '</section>'+
       
@@ -2799,31 +2865,35 @@ function renderAdminContent(tab){
     return;
   }
   if(tab==='prods'){
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><h3 style="font-size:16px">Productos ('+PRODUCTS.length+')</h3><div style="display:flex;gap:8px"><button class="btn btn-g btn-sm" onclick="exportProductLog()">📥 Exportar Excel</button><button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button></div></div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" class="admin-prods-grid">'+
-      PRODUCTS.map(function(p){
-        var lowStock=p.stock<=0;
-        var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
-        return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid '+(lowStock?'var(--red)':'var(--border)')+';transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\''+(lowStock?'var(--red)':'var(--border)')+'\'">'+
-          '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden">'+imgHtml+'</div>'+
-'<div style="padding:10px;display:flex;flex-direction:column;min-height:150px">'+
-             '<div style="font-weight:600;font-size:12px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
-             '<div style="font-size:10px;color:var(--gray);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.sub||'')+'</div>'+
-             '<div style="display:flex;justify-content:space-between;align-items:center">'+
-               '<span style="font-weight:700;color:var(--orange);font-size:13px">'+fmt(p.price)+'</span>'+
-               '<span style="font-size:10px;color:'+(lowStock?'var(--red)':'var(--gray)')+'">'+(lowStock?'Sin stock':p.stock+' en stock')+'</span>'+
-              '</div>'+
-              (p.isOffer?'<div style="font-size:10px;color:var(--red);margin-top:4px">Oferta: -'+p.discount+'%</div>':'')+
-               '<div style="display:flex;gap:4px;margin-top:auto;padding-top:8px;flex-wrap:wrap">'+
-                  '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
-                  '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
-                  '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
-                  '<button class="btn btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px;background:#1A1A2E;color:#fff" onclick="downloadProductQr(\''+p.id+'\')">⬇ QR</button>'+
-                '</div>'+
-            '</div>'+
-         '</div>';
-       }).join('')+
-      '</div>';
+    var dolarVal=window.dolarRate||'';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
+        '<h3 style="font-size:16px" id="adm-prods-title">Productos ('+PRODUCTS.length+')</h3>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          '<input type="text" id="adminProdSearch" placeholder="🔍 Buscar por nombre..." oninput="renderAdminProductsFiltered(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:200px">'+
+          '<button class="btn btn-g btn-sm" onclick="exportProductLog()">📥 Exportar Excel</button>'+
+          '<button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-prods-quickfilters">'+
+          '<button class="ord-btn" onclick="setAdmProdFilter(\'all\',this)">Todos</button>'+
+          '<button class="ord-btn" onclick="setAdmProdFilter(\'offer\',this)">Ofertas</button>'+
+          '<button class="ord-btn" onclick="setAdmProdFilter(\'nostock\',this)">Sin stock</button>'+
+          '<button class="ord-btn" onclick="setAdmProdFilter(\'low\',this)">Stock bajo</button>'+
+        '</div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Ordenar por</label>'+
+          '<select id="admProdsSort" onchange="renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff">'+
+            '<option value="name">Nombre</option>'+
+            '<option value="price">Precio venta</option>'+
+            '<option value="cost">Costo</option>'+
+            '<option value="profit">Ganancia</option>'+
+            '<option value="stock">Stock</option>'+
+          '</select></div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Cotización USD</label>'+
+          '<input type="number" id="adminDolarRate" value="'+dolarVal+'" placeholder="Ej: 1200" oninput="window.dolarRate=parseFloat(this.value)||0;localStorage.setItem(\'dolarRate\',this.value);renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:120px;outline:none"></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" class="admin-prods-grid" id="admin-prods-grid"></div>'+
+      '<script>renderAdminProductsFiltered("");</'+'script>';
   }else if(tab==='stock'){
     var allBrands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
     var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
@@ -2906,27 +2976,29 @@ function renderAdminContent(tab){
     }
   }else if(tab==='acc'){
     var accs=window.ACCS||[];
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><h3 style="font-size:16px">Accesorios ('+accs.length+')</h3><button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;nav(\'admin-acc\')">+ Agregar accesorio</button></div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px" class="admin-prods-grid">'+
-      accs.map(function(a){
-        var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">'+(a.ico||'📦')+'</span>';
-        return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:all .2s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
-          '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden">'+imgHtml+'</div>'+
-          '<div style="padding:10px;display:flex;flex-direction:column;min-height:120px">'+
-            '<div style="font-weight:600;font-size:12px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
-            '<div style="font-size:10px;color:var(--gray);margin-bottom:8px">'+a.category+'</div>'+
-            '<div style="display:flex;justify-content:space-between;align-items:center">'+
-              '<span style="font-weight:700;color:var(--orange);font-size:13px">'+fmt(a.price)+'</span>'+
-              '<span style="font-size:10px;color:var(--gray)">'+a.stock+' en stock</span>'+
-            '</div>'+
-            '<div style="display:flex;gap:6px;margin-top:auto;padding-top:8px">'+
-              '<button class="btn btn-g btn-sm" style="flex:1" onclick="editAccessory(\''+a.id+'\')">Editar</button>'+
-              '<button class="btn btn-o btn-sm" style="flex:1" onclick="deleteAccessory(\''+a.id+'\')">Eliminar</button>'+
-            '</div>'+
-          '</div>'+
-        '</div>';
-      }).join('')+
-      '</div>';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
+        '<h3 style="font-size:16px" id="adm-acc-title">Accesorios ('+accs.length+')</h3>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+          '<input type="text" id="adminAccSearch" placeholder="🔍 Buscar accesorio..." oninput="renderAdminAccFiltered(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:200px">'+
+          '<button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;nav(\'admin-acc\')">+ Agregar accesorio</button>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-acc-quickfilters">'+
+          '<button class="ord-btn" onclick="setAdmAccFilter(\'all\',this)">Todos</button>'+
+          '<button class="ord-btn" onclick="setAdmAccFilter(\'offer\',this)">Ofertas</button>'+
+          '<button class="ord-btn" onclick="setAdmAccFilter(\'nostock\',this)">Sin stock</button>'+
+          '<button class="ord-btn" onclick="setAdmAccFilter(\'low\',this)">Stock bajo</button>'+
+        '</div>'+
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Ordenar por</label>'+
+          '<select id="admAccSort" onchange="renderAdminAccFiltered(document.getElementById(\'adminAccSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff">'+
+            '<option value="name">Nombre</option>'+
+            '<option value="price">Precio venta</option>'+
+            '<option value="stock">Stock</option>'+
+          '</select></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" class="admin-prods-grid" id="admin-acc-grid"></div>'+
+      '<script>renderAdminAccFiltered("");</'+'script>';
   }else if(tab==='arrep'){
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
       '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="loadArrepPendientes()">Pendientes</button>'+
@@ -3026,13 +3098,175 @@ function renderAdminContent(tab){
   }else if(tab==='inventory'){
     el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1.5rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
   }else if(tab==='instore'){
-    if(typeof loadInStoreHistory==='function'){
-      loadInStoreHistory();
-    }else{
-      el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando módulo de ventas...</div>';
-    }
+    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="instore-tabs">'+
+      '<button class="ord-btn" id="instoreTabVenta" onclick="renderInStoreSale()">Nueva Venta</button>'+
+      '<button class="ord-btn" id="instoreTabPre" onclick="renderPreOrders()">Preeventas</button>'+
+      '<button class="ord-btn" id="instoreTabHist" onclick="loadInStoreHistory()">Historial</button>'+
+    '</div>'+
+    '<div id="instore-subview"></div>';
+    renderInStoreSale();
   }
 }
+
+// =========== ADMIN PRODUCT CARDS (search + filters + full info) ===========
+window.admProdFilter='all';
+function setAdmProdFilter(type,btn){
+  window.admProdFilter=type;
+  document.querySelectorAll('#adm-prods-quickfilters .ord-btn').forEach(function(b){b.classList.remove('ord-btn-act');});
+  if(btn)btn.classList.add('ord-btn-act');
+  renderAdminProductsFiltered(document.getElementById('adminProdSearch').value);
+}
+function renderAdminProductsFiltered(q){
+  var grid=document.getElementById('admin-prods-grid');
+  if(!grid)return;
+  q=(q||'').toLowerCase().trim();
+  var sort=document.getElementById('admProdsSort')?document.getElementById('admProdsSort').value:'name';
+  var list=PRODUCTS.filter(function(p){
+    var matchesQ=!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.sub||'').toLowerCase().indexOf(q)>=0||(p.brand||'').toLowerCase().indexOf(q)>=0;
+    if(!matchesQ)return false;
+    if(window.admProdFilter==='offer')return !!p.isOffer;
+    if(window.admProdFilter==='nostock')return p.stock<=0;
+    if(window.admProdFilter==='low')return p.stock>0&&p.stock<=3;
+    return true;
+  });
+  list.sort(function(a,b){
+    if(sort==='price')return a.price-b.price;
+    if(sort==='cost')return a.cost-b.cost;
+    if(sort==='profit')return (a.price-a.cost)-(b.price-b.cost);
+    if(sort==='stock')return a.stock-b.stock;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+  var title=document.getElementById('adm-prods-title');
+  if(title)title.textContent='Productos ('+list.length+(q?' / '+PRODUCTS.length:'')+')';
+  if(!list.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:40px;margin-bottom:.5rem">🔍</div><p>No se encontraron productos</p></div>';
+    return;
+  }
+  grid.innerHTML=list.map(function(p){return renderAdminProductCard(p);}).join('');
+}
+
+function renderAdminProductCard(p){
+  var lowStock=p.stock<=0;
+  var stockColor=lowStock?'var(--red)':(p.stock<=3?'var(--orange)':'var(--green)');
+  var profit=p.price-(p.cost||0);
+  var usd=window.dolarRate>0?Math.round(p.price/window.dolarRate):0;
+  var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
+  var badgeHtml='';
+  if(p.isOffer){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">OFERTA'+(p.discount?(' -'+p.discount+'%'):'')+'</span>';}
+  if(lowStock){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">SIN STOCK</span>';}
+  else if(p.stock<=3){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,107,44,.12);color:var(--orange)">STOCK BAJO</span>';}
+  return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid '+(lowStock?'var(--red)':'var(--border)')+';transition:all .2s" onmouseover="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'none\'">'+
+    '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">'+imgHtml+
+      (badgeHtml?'<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;max-width:90%">'+badgeHtml+'</div>':'')+
+    '</div>'+
+    '<div style="padding:11px;display:flex;flex-direction:column">'+
+      '<div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(p.name||'')+'</div>'+
+      '<div style="font-size:10px;color:var(--gray);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.sub||'')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Venta</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+fmt(p.price)+'</div>'+
+        '</div>'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Costo</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--dk)">'+fmt(p.cost||0)+'</div>'+
+        '</div>'+
+        '<div style="background:rgba(45,90,39,.08);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Ganancia</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--green)">'+fmt(profit)+'</div>'+
+        '</div>'+
+        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">USD</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:10px">'+
+        '<span style="font-size:10px;color:var(--gray)">Stock:</span>'+
+        '<span style="font-size:13px;font-weight:800;color:'+stockColor+'">'+p.stock+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:4px;margin-top:auto;flex-wrap:wrap">'+
+        '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
+        '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
+        '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
+        '<button class="btn btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px;background:#1A1A2E;color:#fff" onclick="downloadProductQr(\''+p.id+'\')">⬇ QR</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
+// =========== ADMIN ACCESSORY CARDS (search + filters + full info) ===========
+window.admAccFilter='all';
+function setAdmAccFilter(type,btn){
+  window.admAccFilter=type;
+  document.querySelectorAll('#adm-acc-quickfilters .ord-btn').forEach(function(b){b.classList.remove('ord-btn-act');});
+  if(btn)btn.classList.add('ord-btn-act');
+  renderAdminAccFiltered(document.getElementById('adminAccSearch').value);
+}
+function renderAdminAccFiltered(q){
+  var grid=document.getElementById('admin-acc-grid');
+  if(!grid)return;
+  q=(q||'').toLowerCase().trim();
+  var sort=document.getElementById('admAccSort')?document.getElementById('admAccSort').value:'name';
+  var list=(window.ACCS||[]).filter(function(a){
+    var matchesQ=!q||(a.name||'').toLowerCase().indexOf(q)>=0||(a.category||'').toLowerCase().indexOf(q)>=0||(a.brand||'').toLowerCase().indexOf(q)>=0;
+    if(!matchesQ)return false;
+    if(window.admAccFilter==='offer')return !!a.isOffer;
+    if(window.admAccFilter==='nostock')return a.stock<=0;
+    if(window.admAccFilter==='low')return a.stock>0&&a.stock<=3;
+    return true;
+  });
+  list.sort(function(a,b){
+    if(sort==='price')return a.price-b.price;
+    if(sort==='stock')return a.stock-b.stock;
+    return (a.name||'').localeCompare(b.name||'');
+  });
+  var title=document.getElementById('adm-acc-title');
+  if(title)title.textContent='Accesorios ('+list.length+(q?' / '+(window.ACCS||[]).length:'')+')';
+  if(!list.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:40px;margin-bottom:.5rem">🔍</div><p>No se encontraron accesorios</p></div>';
+    return;
+  }
+  grid.innerHTML=list.map(function(a){return renderAdminAccCard(a);}).join('');
+}
+
+function renderAdminAccCard(a){
+  var lowStock=a.stock<=0;
+  var stockColor=lowStock?'var(--red)':(a.stock<=3?'var(--orange)':'var(--green)');
+  var usd=window.dolarRate>0?Math.round(a.price/window.dolarRate):0;
+  var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">'+(a.ico||'📦')+'</span>';
+  var badgeHtml='';
+  if(a.isOffer){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">OFERTA'+(a.discount?(' -'+a.discount+'%'):'')+'</span>';}
+  if(lowStock){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">SIN STOCK</span>';}
+  else if(a.stock<=3){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,107,44,.12);color:var(--orange)">STOCK BAJO</span>';}
+  return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid '+(lowStock?'var(--red)':'var(--border)')+';transition:all .2s" onmouseover="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'none\'">'+
+    '<div style="height:120px;background:var(--cream2);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative">'+imgHtml+
+      (badgeHtml?'<div style="position:absolute;top:8px;left:8px;display:flex;gap:4px;flex-wrap:wrap;max-width:90%">'+badgeHtml+'</div>':'')+
+    '</div>'+
+    '<div style="padding:11px;display:flex;flex-direction:column">'+
+      '<div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(a.name||'')+'</div>'+
+      '<div style="font-size:10px;color:var(--gray);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(a.category||'')+'</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Venta</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+fmt(a.price)+'</div>'+
+        '</div>'+
+        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px">'+
+          '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">USD</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:10px">'+
+        '<span style="font-size:10px;color:var(--gray)">Stock:</span>'+
+        '<span style="font-size:13px;font-weight:800;color:'+stockColor+'">'+a.stock+'</span>'+
+      '</div>'+
+      '<div style="display:flex;gap:6px;margin-top:auto">'+
+        '<button class="btn btn-g btn-sm" style="flex:1" onclick="editAccessory(\''+a.id+'\')">Editar</button>'+
+        '<button class="btn btn-o btn-sm" style="flex:1" onclick="deleteAccessory(\''+a.id+'\')">Eliminar</button>'+
+      '</div>'+
+    '</div>'+
+  '</div>';
+}
+
 function updateStock(id){
   var newStock=parseInt(document.getElementById('stock-'+id).value)||0;
   var p=getById(PRODUCTS,id);
