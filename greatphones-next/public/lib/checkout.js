@@ -38,17 +38,24 @@ function selCheckoutWarranty(btn,amount){
 }
 
 function selCheckoutDelivery(btn,amount){
-  checkoutState.delivery=amount==='andreani'?'andreani':amount;
+  checkoutState.delivery=amount==='enviopack'?'enviopack':amount;
+  checkoutState.selectedCarrier=null;
+  checkoutState.selectedService=null;
   document.querySelectorAll('#checkout-delivery .delivery-btn').forEach(function(b){
     b.style.border='2px solid var(--border)';
   });
   btn.style.border='2px solid var(--green)';
+  if(amount!=='enviopack'){
+    var optBox=document.getElementById('enviopack-options');
+    if(optBox)optBox.style.display='none';
+  }
   updateCheckoutTotal();
 }
 
-function calcAndreaniShipping(){
+function calcEnvioPackShipping(){
   var btn=document.getElementById('btn-calc-shipping');
-  var priceEl=document.getElementById('andreani-price');
+  var priceEl=document.getElementById('enviopack-price');
+  var optBox=document.getElementById('enviopack-options');
   var province=document.getElementById('checkout-province').value;
   var zip=document.getElementById('checkout-zip').value;
 
@@ -62,28 +69,28 @@ function calcAndreaniShipping(){
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Calculando...';
   }
 
-  fetch(API_URL+'/api/shipping/andreani',{
+  fetch(API_URL+'/api/shipping/enviopack',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
-      originZip:'8000',
-      originCity:'Bahia Blanca',
-      originProvince:'Buenos Aires',
-      destZip:zip||'',
-      destCity:document.getElementById('checkout-city').value||'',
-      destProvince:province,
-      weight:1
+      cpOrigen:'8000',
+      cpDestino:zip||'',
+      peso:1,
+      largo:20,
+      ancho:20,
+      alto:20,
+      valor:50000
     })
   })
   .then(function(r){return r.json();})
   .then(function(data){
     if(data.error)throw new Error(data.error);
-    var cost=data.cost||0;
-    checkoutState.delivery=cost;
-    checkoutState.shippingCalculated=true;
-    if(priceEl)priceEl.textContent='+$'+cost.toLocaleString('es-AR');
+    var options=data.options||[];
+    if(options.length===0)throw new Error('No hay opciones de envío disponibles');
+    renderEnvioPackOptions(options);
+    if(priceEl)priceEl.textContent=options.length+' opciones';
     if(btn){
-      btn.innerHTML='✓ Actualizado';
+      btn.innerHTML='✓ '+options.length+' opciones';
       btn.style.background='rgba(45,90,39,.1)';
       btn.style.borderColor='var(--green)';
       btn.style.color='var(--green)';
@@ -94,10 +101,9 @@ function calcAndreaniShipping(){
       provSelect.style.opacity='0.6';
       provSelect.style.cursor='not-allowed';
     }
-    updateCheckoutTotal();
   })
   .catch(function(e){
-    console.error('Andreani error:',e);
+    console.error('Envío Pack error:',e);
     if(priceEl)priceEl.textContent='Error';
     if(btn){
       btn.disabled=false;
@@ -107,9 +113,72 @@ function calcAndreaniShipping(){
   });
 }
 
+function getCarrierLogo(carrier){
+  var c=carrier.toLowerCase();
+  if(c.indexOf('andreani')!==-1)return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#003DA5"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="DM Sans,sans-serif">A</text></svg>';
+  if(c.indexOf('oca')!==-1)return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#E31937"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="11" font-weight="700" font-family="DM Sans,sans-serif">OCA</text></svg>';
+  if(c.indexOf('correo')!==-1)return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#004B87"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="DM Sans,sans-serif">CA</text></svg>';
+  if(c.indexOf('moto')!==-1)return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#FF6B00"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="DM Sans,sans-serif">M</text></svg>';
+  return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="var(--gray)"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="DM Sans,sans-serif">📦</text></svg>';
+}
+
+function renderEnvioPackOptions(options){
+  var optBox=document.getElementById('enviopack-options');
+  if(!optBox)return;
+
+  var cheapest=options.reduce(function(min,o){return o.costo<min.costo?o:min;},options[0]);
+  var fastest=options.reduce(function(min,o){
+    var d1=parseInt(o.diasEstimados)||5;
+    var d2=parseInt(min.diasEstimados)||5;
+    return d1<d2?o:min;
+  },options[0]);
+
+  optBox.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Elige una opción de envío:</div>'+
+    options.map(function(opt){
+      var badge='';
+      if(opt===cheapest&&opt===fastest)badge='<span style="background:var(--green);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Mejor opción</span>';
+      else if(opt===cheapest)badge='<span style="background:rgba(45,90,39,.1);color:var(--green);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más económico</span>';
+      else if(opt===fastest)badge='<span style="background:rgba(255,107,44,.1);color:var(--orange);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más rápido</span>';
+
+      return'<div class="ep-option" onclick="selectEnvioPackOption(this,'+JSON.stringify(opt).replace(/"/g,'&quot;')+
+        ')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s;margin-bottom:6px">'+
+        getCarrierLogo(opt.carrier)+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--dk)">'+opt.carrier+'</span><span style="font-size:11px;color:var(--gray)">· '+opt.service+'</span></div>'+
+          '<div style="font-size:11px;color:var(--gray);margin-top:2px">'+opt.diasEstimados+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          '<div style="font-size:15px;font-weight:700;color:var(--orange)">$'+opt.costo.toLocaleString('es-AR')+'</div>'+
+          badge+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+  optBox.style.display='block';
+}
+
+function selectEnvioPackOption(el,opt){
+  document.querySelectorAll('.ep-option').forEach(function(o){
+    o.style.border='2px solid var(--border)';
+    o.style.background='#fff';
+  });
+  el.style.border='2px solid var(--orange)';
+  el.style.background='rgba(255,107,44,.04)';
+
+  checkoutState.delivery=opt.costo;
+  checkoutState.shippingCalculated=true;
+  checkoutState.selectedCarrier=opt.carrier;
+  checkoutState.selectedService=opt.service;
+
+  var priceEl=document.getElementById('enviopack-price');
+  if(priceEl)priceEl.textContent='+$'+opt.costo.toLocaleString('es-AR');
+
+  updateCheckoutTotal();
+}
+
 function updateCheckoutTotal(){
   var subtotal=cartTotal();
-  var deliveryCost=checkoutState.delivery==='andreani'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+  var deliveryCost=checkoutState.delivery==='enviopack'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
   var total=subtotal+checkoutState.warranty+deliveryCost;
   var subtotalEl=document.getElementById('checkout-subtotal');
   var totalEl=document.getElementById('checkout-total');
@@ -130,7 +199,7 @@ function updateCheckoutTotal(){
     var showDelivery=deliveryCost>0;
     deliveryLine.style.display=showDelivery?'flex':'none';
     if(deliveryCostEl){
-      if(checkoutState.delivery==='andreani'){deliveryCostEl.textContent='A calcular';}
+      if(checkoutState.delivery==='enviopack'){deliveryCostEl.textContent='A calcular';}
       else{deliveryCostEl.textContent='+$'+deliveryCost.toLocaleString('es-AR');}
     }
   }
@@ -156,7 +225,7 @@ function updateCheckoutTotal(){
 }
 
 function resetCheckoutSelections(){
-  checkoutState={cuotas:1,warranty:0,delivery:0,shippingCalculated:false};
+  checkoutState={cuotas:1,warranty:0,delivery:0,shippingCalculated:false,selectedCarrier:null,selectedService:null};
   document.querySelectorAll('#checkout-cuotas .cuota-btn').forEach(function(b,i){
     if(i===0){b.style.background='var(--green)';b.style.color='#fff';b.style.border='2px solid var(--green)';}
     else{b.style.background='var(--cream2)';b.style.color='var(--dk)';b.style.border='2px solid var(--border)';}
@@ -172,6 +241,18 @@ function resetCheckoutSelections(){
     provSelect.disabled=false;
     provSelect.style.opacity='1';
     provSelect.style.cursor='pointer';
+  }
+  var optBox=document.getElementById('enviopack-options');
+  if(optBox)optBox.style.display='none';
+  var priceEl=document.getElementById('enviopack-price');
+  if(priceEl)priceEl.textContent='Calcular';
+  var btn=document.getElementById('btn-calc-shipping');
+  if(btn){
+    btn.disabled=false;
+    btn.style.background='var(--cream)';
+    btn.style.borderColor='var(--border)';
+    btn.style.color='var(--dk)';
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> Calcular envío';
   }
   updateCheckoutTotal();
 }
@@ -370,7 +451,8 @@ function submitOrder(){
   var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
   var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses':'+24 meses'):'90 días';
   var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envío 24-48hs');
-  if(checkoutState.delivery==='andreani')deliveryLabel='Andreani';
+  if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
+  if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
 
   var payload={
     items:items,
@@ -390,7 +472,9 @@ function submitOrder(){
     warrantyCost:checkoutState.warranty,
     deliveryCost:typeof checkoutState.delivery==='number'?checkoutState.delivery:0,
     total:total,
-    paymentMethod:_selectedPaymentMethod||'mercadopago'
+    paymentMethod:_selectedPaymentMethod||'mercadopago',
+    carrier:checkoutState.selectedCarrier||null,
+    carrierService:checkoutState.selectedService||null
   };
 
   var endpoint = _selectedPaymentMethod === 'wallet' ? API_URL + '/api/wallet/pay' : API_URL + '/api/checkout';
@@ -452,11 +536,12 @@ function renderCheckoutSummaryStep(){
   }).join('');
 
   var subtotal=cartTotal();
-  var deliveryCost=checkoutState.delivery==='andreani'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+  var deliveryCost=checkoutState.delivery==='enviopack'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
   var total=subtotal+checkoutState.warranty+deliveryCost;
   var warrantyLabel=checkoutState.warranty===0?'90 días (incluida)':checkoutState.warranty===85000?'+12 meses':'+24 meses';
   var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':checkoutState.delivery===5000?'Express':'Envío 24-48hs';
-  if(checkoutState.delivery==='andreani')deliveryLabel='Andreani';
+  if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
+  if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
 
   var sumWarranty=document.getElementById('sum-warranty');
   if(sumWarranty)sumWarranty.textContent=warrantyLabel;
