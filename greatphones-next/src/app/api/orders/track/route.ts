@@ -62,6 +62,10 @@ export async function GET(request: Request) {
       total: order.total,
       createdAt: order.createdAt.toISOString(),
       shippingAddress: [order.shippingStreet, order.shippingNumber, order.shippingFloor, order.shippingCity, order.shippingProvince, order.shippingZip].filter(Boolean).join(', '),
+      trackingNumber: order.trackingNumber || null,
+      trackingUrl: order.trackingUrl || null,
+      carrier: order.carrier || null,
+      carrierService: order.carrierService || null,
       items: order.items.map(item => ({
         name: item.product?.name || 'Producto',
         quantity: item.quantity,

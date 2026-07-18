@@ -218,6 +218,48 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Create Envío Pack shipment if carrier selected (not store pickup)
+      if (status === 'approved' && order.carrier && order.deliveryCost > 0 && !order.enviopackId) {
+        try {
+          const epRes = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/shipping/enviopack/crear`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              orderCode: order.code,
+              carrier: order.carrier,
+              service: order.carrierService || 'Estándar',
+              destino: {
+                nombre: order.clientName || order.clientEmail?.split('@')[0] || 'Cliente',
+                email: order.clientEmail || '',
+                telefono: order.clientPhone || '',
+                dni: order.clientDni || '',
+                domicilio: [order.shippingStreet, order.shippingNumber].filter(Boolean).join(' '),
+                cp: order.shippingZip || '',
+                localidad: order.shippingCity || '',
+                provincia: order.shippingProvince || '',
+              },
+            }),
+          });
+
+          if (epRes.ok) {
+            const epData = await epRes.json()
+            await prisma.order.update({
+              where: { id: order.id },
+              data: {
+                trackingNumber: epData.trackingNumber || null,
+                enviopackId: epData.enviopackId || null,
+                status: 'SHIPPED',
+              },
+            })
+            order.trackingNumber = epData.trackingNumber || order.trackingNumber
+            order.status = 'SHIPPED' as any
+            console.log('[MP Webhook] Envío Pack shipment created for order:', order.code, 'tracking:', epData.trackingNumber)
+          }
+        } catch (epError) {
+          console.error('[MP Webhook] Envío Pack shipment error:', epError)
+        }
+      }
+
       // Send confirmation email if payment approved
       if (status === 'approved' && order.clientEmail) {
         try {
@@ -233,7 +275,9 @@ export async function POST(request: NextRequest) {
             })),
             shippingAddress: [order.shippingStreet, order.shippingNumber, order.shippingFloor, order.shippingCity, order.shippingProvince, order.shippingZip].filter(Boolean).join(', '),
             paymentMethod: paymentMethod || 'Mercado Pago',
-            installments: installments
+            installments: installments,
+            trackingNumber: order.trackingNumber || undefined,
+            carrier: order.carrier || undefined,
           });
         } catch (emailError) {
           console.error('[MP Webhook] Error sending confirmation email:', emailError);

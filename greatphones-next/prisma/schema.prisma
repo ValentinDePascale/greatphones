@@ -258,7 +258,13 @@ model Order {
   
   // Tracking
   trackingNumber String?
+  trackingUrl    String?
   shippedAt      DateTime?
+
+  // Carrier / Envío Pack
+  carrier        String?
+  carrierService String?
+  enviopackId    String?
 
   // Ventas presenciales
   cashReceived  Int?

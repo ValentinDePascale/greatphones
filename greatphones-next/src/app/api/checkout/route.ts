@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
       warranty,
       delivery,
       cuotas,
+      carrier,
+      carrierService,
     } = body;
 
     const user = await findOrCreateUser(email, phone, document);
@@ -202,6 +204,8 @@ export async function POST(request: NextRequest) {
           shippingZip: zip,
           shippingCity: city,
           shippingProvince: province,
+          carrier: carrier || null,
+          carrierService: carrierService || null,
           mpPreferenceId: preferenceId,
           items: {
             create: enrichedItems.map((item: any) => ({
