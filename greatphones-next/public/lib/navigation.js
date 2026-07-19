@@ -992,6 +992,17 @@ async function loadOrderTracking(){
     }).join('');
     document.getElementById('trackShipping').textContent=data.shippingAddress||'Retiro en tienda';
     document.getElementById('trackTotal').textContent='$'+data.total.toLocaleString('es-AR');
+
+    if(data.carrier||data.trackingNumber){
+      var shipEl=document.getElementById('trackShipping');
+      var carrierHtml='<div style="margin-top:8px;padding:10px 12px;background:var(--cream);border-radius:8px;border-left:3px solid var(--orange)">';
+      if(data.carrier)carrierHtml+='<div style="font-size:12px;color:var(--gray)">Correo: <strong style="color:var(--dk)">'+data.carrier+'</strong>'+(data.carrierService?' · '+data.carrierService:'')+'</div>';
+      if(data.trackingNumber)carrierHtml+='<div style="font-size:12px;color:var(--gray);margin-top:4px">Tracking: <strong style="color:var(--dk)">'+data.trackingNumber+'</strong></div>';
+      if(data.trackingUrl)carrierHtml+='<a href="'+data.trackingUrl+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px;font-size:11px;color:var(--orange);font-weight:600;text-decoration:none">Seguir en el sitio del correo →</a>';
+      carrierHtml+='</div>';
+      shipEl.insertAdjacentHTML('afterend',carrierHtml);
+    }
+
     resultEl.style.display='block';
   }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }

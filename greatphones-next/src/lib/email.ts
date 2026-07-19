@@ -225,6 +225,8 @@ export async function sendOrderConfirmationEmail(data: {
   shippingAddress: string;
   paymentMethod: string;
   installments: number;
+  trackingNumber?: string;
+  carrier?: string;
 }) {
   const itemsHtml = data.items.map(item => `
     <tr>
@@ -270,6 +272,15 @@ export async function sendOrderConfirmationEmail(data: {
 
         <h3 style="margin-top: 24px;">Direccion de envio:</h3>
         <p style="background: #f5f5f5; padding: 12px; border-radius: 8px;">${data.shippingAddress || 'Retiro en tienda'}</p>
+
+        ${data.trackingNumber ? `
+        <div style="background: #fff7ed; padding: 16px; border-radius: 8px; border-left: 4px solid #f97316; margin: 20px 0;">
+          <strong>Datos de envio:</strong><br>
+          <strong>Correo:</strong> ${data.carrier || 'Envio'}<br>
+          <strong>Numero de seguimiento:</strong> ${data.trackingNumber}<br>
+          <p style="margin: 8px 0 0; font-size: 13px; color: #666;">Segui tu envio en la seccion "Seguir mi pedido" de nuestra web.</p>
+        </div>
+        ` : ''}
 
         <h3 style="margin-top: 24px;">Proximos pasos:</h3>
         <ol style="line-height: 1.8;">

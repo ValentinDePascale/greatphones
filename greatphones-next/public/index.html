@@ -213,7 +213,7 @@
         <div class="cat-flex">
           <button class="cat-card cat-card-iphone" onclick="navShop('iPhone')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="smartphone">smartphone</span>
+              <img src="/icons/apple-logo-svgrepo-com.svg" alt="Apple" style="width:32px;height:32px;filter:invert(1)">
             </div>
             <span class="cat-label">iPhone</span>
           </button>
@@ -231,7 +231,7 @@
           </button>
           <button class="cat-card cat-card-samsung" onclick="navShop('Samsung')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="ad_units">phone_android</span>
+              <img src="/icons/samsung-svgrepo-com.svg" alt="Samsung" style="width:40px;height:auto;filter:invert(1)">
             </div>
             <span class="cat-label">Samsung</span>
           </button>
@@ -2377,14 +2377,15 @@
                 <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$5.000</span></div>
                 <div style="font-size:12px;color:var(--gray);margin-top:3px">Dentro de Bahía Blanca · 24-48hs hábiles</div>
               </div>
-              <div class="delivery-btn" data-d="andreani" onclick="selCheckoutDelivery(this,'andreani')" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Envío Argentina</span><span id="andreani-price" style="color:var(--orange);font-weight:700;font-size:14px">Calcular</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Andreani a todo el país</div>
-                <button id="btn-calc-shipping" onclick="event.stopPropagation();calcAndreaniShipping()" style="margin-top:10px;width:100%;padding:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='var(--cream)'">
+              <div class="delivery-btn" data-d="enviopack" onclick="selCheckoutDelivery(this,'enviopack')" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Envío a todo el país</span><span id="enviopack-price" style="color:var(--orange);font-weight:700;font-size:14px">Calcular</span></div>
+                <div style="font-size:12px;color:var(--gray);margin-top:3px">Múltiples opciones de correo</div>
+                <button id="btn-calc-shipping" onclick="event.stopPropagation();calcEnvioPackShipping()" style="margin-top:10px;width:100%;padding:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='var(--cream)'">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   Calcular envío
                 </button>
               </div>
+              <div id="enviopack-options" style="display:none;margin-top:4px"></div>
             </div>
           </section>
           <div style="display:flex;justify-content:space-between;margin-top:16px">
