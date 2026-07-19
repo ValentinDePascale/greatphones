@@ -1724,7 +1724,6 @@ function adminTab(tab,btn){
     promos:'Promociones',
     orders:'Pedidos',
     arrep:'Arrepentimientos',
-    users:'Usuarios',
     chat:'Chat',
     quotes:'Cotizaciones',
     instore:'Venta en Tienda'
@@ -2742,7 +2741,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-users,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -3007,37 +3006,6 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="arrepList">Cargando...</div>';
     loadArrepPendientes();
-  }else if(tab==='users'){
-    el.innerHTML='<div style="padding:1rem"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px"><h3 style="font-size:16px">Usuarios</h3><span id="usersCount" style="font-size:12px;color:var(--gray)">Cargando...</span></div><div id="usersTableWrap" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px;min-width:500px"><thead><tr style="background:var(--admin-surface);color:var(--admin-text-muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px"><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Nombre</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Email</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Rol</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Teléfono</th><th style="padding:10px 12px;text-align:left;border-bottom:1px solid var(--admin-border)">Registro</th></tr></thead><tbody id="usersTbody"><tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--gray)">Cargando usuarios...</td></tr></tbody></table></div></div>';
-    fetch(API_URL+'/api/admin/users',{headers:{'X-User-Id':currentUser.id}}).then(function(r){return r.json();}).then(function(users){
-      var tbody=document.getElementById('usersTbody');
-      var count=document.getElementById('usersCount');
-      if(!tbody)return;
-      if(!Array.isArray(users)||users.length===0){
-        tbody.innerHTML='<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--gray)">No hay usuarios registrados</td></tr>';
-        if(count)count.textContent='0 usuarios';
-        return;
-      }
-      if(count)count.textContent=users.length+' usuarios';
-      tbody.innerHTML=users.map(function(u){
-        var roleColor=u.role==='ADMIN'?'var(--orange)':'var(--green)';
-        var roleLabel=u.role==='ADMIN'?'Admin':'Cliente';
-        var date=u.createdAt?new Date(u.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric'}):'-';
-        var name=escapeHtml(u.name||u.email.split('@')[0]);
-        var email=escapeHtml(u.email);
-        var phone=escapeHtml(u.phone||'-');
-        return '<tr style="border-bottom:1px solid var(--admin-border);transition:background .15s" onmouseover="this.style.background=\'var(--admin-surface-hover)\'" onmouseout="this.style.background=\'transparent\'">'+
-          '<td style="padding:10px 12px;color:var(--admin-text)">'+name+'</td>'+
-          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+email+'</td>'+
-          '<td style="padding:10px 12px"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;color:'+roleColor+';background:'+roleColor+'15">'+roleLabel+'</span></td>'+
-          '<td style="padding:10px 12px;color:var(--admin-text-muted)">'+phone+'</td>'+
-          '<td style="padding:10px 12px;color:var(--admin-text-muted);white-space:nowrap">'+date+'</td>'+
-          '</tr>';
-      }).join('');
-    }).catch(function(err){
-      var tbody=document.getElementById('usersTbody');
-      if(tbody)tbody.innerHTML='<tr><td colspan="5" style="padding:2rem;text-align:center;color:var(--red)">Error al cargar usuarios</td></tr>';
-    });
   }else if(tab==='chat'){
     el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
       '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto" class="chat-conv-side">'+
@@ -3683,27 +3651,35 @@ function renderQuotesList(res){
   }
   
   var statusColors={PENDING:'var(--orange)',APPROVED:'var(--green)',REJECTED:'var(--red)',REVIEWING:'#8b5cf6',COMPLETED:'var(--blue)'};
-  var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revision',COMPLETED:'Completada'};
-  var statusIcons={PENDING:'&#9203;',APPROVED:'&#9989;',REJECTED:'&#10060;',REVIEWING:'&#128269;',COMPLETED:'&#128184;'};
+  var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',REJECTED:'Rechazada',REVIEWING:'En revisión',COMPLETED:'Completada'};
   
   var html=_allQuotes.map(function(q){
     var sc=statusColors[q.status]||'var(--gray)';
     var sl=statusLabels[q.status]||q.status;
-    var si=statusIcons[q.status]||'&#128203;';
     var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'});
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--admin-surface);border-radius:8px;border:1px solid var(--admin-border);margin-bottom:8px;transition:all .2s">'+
-      '<div style="width:40px;height:40px;border-radius:8px;background:'+sc+'15;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;cursor:pointer" onclick="openQuoteDetail(\''+q.id+'\')">'+si+'</div>'+
-      '<div style="flex:1;min-width:0;cursor:pointer" onclick="openQuoteDetail(\''+q.id+'\')">'+
-        '<div style="font-weight:600;font-size:13px;color:var(--admin-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+q.device+'</div>'+
-        '<div style="font-size:11px;color:var(--admin-text-muted)">'+(q.clientName||'Sin nombre')+' &middot; '+date+'</div>'+
+    var phone=q.clientPhone||'';
+    return '<div class="gp-card" style="--gp-accent:'+sc+'">'+
+      '<div class="gp-card-head">'+
+        '<div style="min-width:0">'+
+          '<div class="gp-card-title" style="font-family:inherit;font-size:15px">'+q.device+'</div>'+
+          '<div class="gp-card-sub">'+(q.clientName||'Sin nombre')+' · '+date+'</div>'+
+        '</div>'+
+        '<span class="gp-pill" style="--gp-pill-bg:'+sc+';--gp-pill-fg:#fff"><span class="gp-dot"></span>'+sl+'</span>'+
       '</div>'+
-      '<div style="text-align:right;flex-shrink:0;margin-right:12px">'+
-        '<div style="font-weight:700;font-size:14px;color:var(--orange)">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</div>'+
-        '<div style="font-size:10px;font-weight:600;color:'+sc+';background:'+sc+'15;padding:2px 8px;border-radius:10px;display:inline-block">'+sl+'</div>'+
+      '<div class="gp-fields">'+
+        (q.clientDni?'<div class="gp-field"><div class="gp-field-label">DNI</div><div class="gp-field-value">'+q.clientDni+'</div></div>':'')+
+        (phone?'<div class="gp-field"><div class="gp-field-label">Teléfono</div><div class="gp-field-value">'+phone+'</div></div>':'')+
+        (q.clientCity?'<div class="gp-field"><div class="gp-field-label">Ciudad</div><div class="gp-field-value">'+q.clientCity+'</div></div>':'')+
+        (q.storage?'<div class="gp-field"><div class="gp-field-label">Almacenamiento</div><div class="gp-field-value">'+q.storage+'</div></div>':'')+
+        (q.condition?'<div class="gp-field"><div class="gp-field-label">Estado</div><div class="gp-field-value">'+q.condition+'</div></div>':'')+
       '</div>'+
-      '<button onclick="deleteQuote(\''+q.id+'\')" style="width:32px;height:32px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background=\'var(--red)\';this.style.color=\'white\'" onmouseout="this.style.background=\'rgba(239,68,68,.1)\';this.style.color=\'var(--red)\'" title="Eliminar cotización">'+
-        '<span class="material-symbols-outlined" style="font-size:18px">delete</span>'+
-      '</button>'+
+      '<div class="gp-card-foot">'+
+        '<div><span class="gp-total-label">Precio cotizado</span><span class="gp-total-value">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</span></div>'+
+        '<div class="gp-actions">'+
+          '<button class="gp-btn gp-btn-ghost" onclick="openQuoteDetail(\''+q.id+'\')">Ver cotización →</button>'+
+          '<button class="gp-btn gp-btn-danger" onclick="deleteQuote(\''+q.id+'\')" title="Eliminar">🗑</button>'+
+        '</div>'+
+      '</div>'+
     '</div>';
   }).join('');
   

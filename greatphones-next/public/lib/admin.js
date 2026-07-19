@@ -223,25 +223,26 @@ function renderPagination(containerId,currentPage,totalPages,onPageChange){
 function renderOrdersList(ords){
   var list=document.getElementById('orderList');
   if(!list)return;
-  
+
   if(!ords||ords.length===0){
     var emptyMsg='No hay pedidos';
     var emptyIcon='📦';
-    if(window._currentOrderTab==='pending'){
-      emptyMsg='No hay pedidos en espera';
-      emptyIcon='📦';
-    }else if(window._currentOrderTab==='accepted'){
-      emptyMsg='No hay pedidos aceptados';
-      emptyIcon='🚚';
-    }else if(window._currentOrderTab==='history'){
-      emptyMsg='No hay pedidos en el historial';
-      emptyIcon='📜';
-    }
-    list.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">'+emptyIcon+'</p><p style="font-size:16px;font-weight:600;margin-bottom:.5rem">'+emptyMsg+'</p><p style="font-size:13px">Los pedidos apareceran aqui cuando los usuarios compren</p></div>';
+    if(window._currentOrderTab==='pending'){emptyMsg='No hay pedidos en espera';emptyIcon='📦';}
+    else if(window._currentOrderTab==='accepted'){emptyMsg='No hay pedidos aceptados';emptyIcon='🚚';}
+    else if(window._currentOrderTab==='history'){emptyMsg='No hay pedidos en el historial';emptyIcon='📜';}
+    list.innerHTML='<div class="gp-empty"><div class="gp-empty-ico">'+emptyIcon+'</div><div class="gp-empty-title">'+emptyMsg+'</div><div class="gp-empty-sub">Los pedidos aparecerán aquí cuando los usuarios compren</div></div>';
     return;
   }
-  
-  list.innerHTML=ords.map(function(o){
+
+  var STATUS={
+    PENDING:{label:'Esperando',bg:'var(--orange)',fg:'#fff'},
+    PROCESSING:{label:'En preparación',bg:'#3b82f6',fg:'#fff'},
+    SHIPPED:{label:'En camino',bg:'#8b5cf6',fg:'#fff'},
+    DELIVERED:{label:'Entregado',bg:'var(--green)',fg:'#fff'},
+    CANCELLED:{label:'Cancelado',bg:'var(--red)',fg:'#fff'}
+  };
+
+  list.innerHTML='<div class="gp-list">'+ords.map(function(o){
     var date=new Date(o.createdAt);
     var dateStr=date.toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     var timeStr=date.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
@@ -249,37 +250,37 @@ function renderOrdersList(ords){
     var userEmail=o.user?o.user.email:(o.clientEmail||'');
     var itemsCount=o.items?o.items.length:0;
     var itemsSummary=o.items?o.items.map(function(i){return i.productName||i.name;}).join(', '):'';
+    if(itemsSummary.length>42)itemsSummary=itemsSummary.substring(0,42)+'…';
     var deliveryLabel='Retiro en tienda';
-    if(o.shippingProvince&&o.shippingProvince!=='Buenos Aires'){
-      deliveryLabel='Envio al pais';
-    }else if(o.shippingCity==='Bahia Blanca'||o.shippingProvince==='Buenos Aires'){
-      deliveryLabel='Envio en Bahia Blanca';
-    }
-    var statusColor=o.status==='PENDING'?'var(--orange)':o.status==='PROCESSING'?'#3b82f6':o.status==='SHIPPED'?'#8b5cf6':o.status==='DELIVERED'?'var(--green)':'var(--red)';
-    var arrepBadge='';
-    if(o.arrepStatus==='ARREP_OK'){
-      arrepBadge='<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:#dcfce7;color:#059669;font-weight:600">ArrepentimientoOk</span>';
-    }else if(o.arrepStatus==='ARREP_RECHAZADO'){
-      arrepBadge='<span style="font-size:9px;padding:2px 6px;border-radius:4px;background:#fef2f2;color:#dc2626;font-weight:600">Arrepentimiento Rechazado</span>';
-    }
-    return'<div class="adm-item" onclick="openOrderDetail(\''+o.id+'\')" style="cursor:pointer" onmouseover="this.style.background=\'rgba(255,107,44,.03)\'" onmouseout="this.style.background=\'\'">'+
-      '<div class="adm-item-info">'+
-        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">'+
-          '<span class="adm-item-name">'+o.code+'</span>'+
-          '<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+statusColor+'20;color:'+statusColor+';font-weight:600">'+o.status+'</span>'+
-          (arrepBadge?arrepBadge:'')+
+    var deliveryIco='🏪';
+    if(o.shippingProvince&&o.shippingProvince!=='Buenos Aires'){deliveryLabel='Envío al interior';deliveryIco='🚚';}
+    else if(o.shippingCity==='Bahia Blanca'||o.shippingProvince==='Buenos Aires'){deliveryLabel='Envío en Bahía Blanca';deliveryIco='🛵';}
+    var st=STATUS[o.status]||{label:o.status,bg:'var(--gray)',fg:'#fff'};
+    var arrepNote='';
+    if(o.arrepStatus==='ARREP_OK')arrepNote='<div class="gp-field-value muted" style="color:#059669">↩ Con arrepentimiento aprobado</div>';
+    else if(o.arrepStatus==='ARREP_RECHAZADO')arrepNote='<div class="gp-field-value muted" style="color:#dc2626">↩ Arrepentimiento rechazado</div>';
+    return'<div class="gp-card" style="--gp-accent:'+st.bg+'" onclick="openOrderDetail(\''+o.id+'\')">'+
+      '<div class="gp-card-head">'+
+        '<div style="min-width:0">'+
+          '<div class="gp-card-title">'+o.code+'</div>'+
+          '<div class="gp-card-sub">'+userName+'</div>'+
         '</div>'+
-        '<div class="adm-item-sub">'+userName+' · '+userEmail+'</div>'+
-        (o.clientDni?'<div class="adm-item-sub">DNI: '+o.clientDni+'</div>':'')+
-        '<div class="adm-item-sub">'+itemsCount+' producto(s): '+itemsSummary.substring(0,60)+(itemsSummary.length>60?'...':'')+'</div>'+
-        '<div class="adm-item-sub">'+deliveryLabel+' · '+dateStr+' '+timeStr+'</div>'+
+        '<span class="gp-pill" style="--gp-pill-bg:'+st.bg+';--gp-pill-fg:'+st.fg+'"><span class="gp-dot"></span>'+st.label+'</span>'+
       '</div>'+
-      '<div style="text-align:right">'+
-        '<div class="adm-item-price">$'+o.total.toLocaleString('es-AR')+'</div>'+
-        '<div style="font-size:11px;color:var(--gray);margin-top:2px">Click para ver detalle</div>'+
+      '<div class="gp-fields">'+
+        '<div class="gp-field"><div class="gp-field-label">Cliente</div><div class="gp-field-value">'+(userEmail||'—')+'</div></div>'+
+        (o.clientDni?'<div class="gp-field"><div class="gp-field-label">DNI</div><div class="gp-field-value">'+o.clientDni+'</div></div>':'')+
+        '<div class="gp-field"><div class="gp-field-label">Productos</div><div class="gp-field-value">'+itemsCount+' · '+(itemsSummary||'—')+'</div></div>'+
+        '<div class="gp-field"><div class="gp-field-label">Entrega</div><div class="gp-field-value">'+deliveryIco+' '+deliveryLabel+'</div></div>'+
+        '<div class="gp-field"><div class="gp-field-label">Fecha</div><div class="gp-field-value">'+dateStr+' '+timeStr+'</div></div>'+
+        arrepNote+
+      '</div>'+
+      '<div class="gp-card-foot">'+
+        '<div><span class="gp-total-label">Total del pedido</span><span class="gp-total-value">$'+o.total.toLocaleString('es-AR')+'</span></div>'+
+        '<div class="gp-actions"><button class="gp-btn gp-btn-ghost" onclick="event.stopPropagation();openOrderDetail(\''+o.id+'\')">Ver detalle →</button></div>'+
       '</div>'+
     '</div>';
-  }).join('');
+  }).join('')+'</div>';
 }
 
 function openOrderDetail(orderId){
@@ -602,56 +603,63 @@ function loadArrepRechazados(){
 function renderArrepList(list,tab){
   var el=document.getElementById('arrepList');
   if(!el)return;
-  
+
   if(!list||list.length===0){
     var msgs={
-      pendientes:{icon:'📋',title:'No hay arrepentimientos pendientes',sub:'Las solicitudes apareceran aqui cuando los clientes las envien'},
-      aceptados:{icon:'✅',title:'No hay arrepentimientos aceptados',sub:'Los arrepentimientos aceptados apareceran aqui'},
-      rechazados:{icon:'❌',title:'No hay arrepentimientos rechazados',sub:'Los arrepentimientos rechazados apareceran aqui'}
+      pendientes:{icon:'📋',title:'No hay arrepentimientos pendientes',sub:'Las solicitudes aparecerán aquí cuando los clientes las envíen'},
+      aceptados:{icon:'✅',title:'No hay arrepentimientos aceptados',sub:'Los arrepentimientos aceptados aparecerán aquí'},
+      rechazados:{icon:'❌',title:'No hay arrepentimientos rechazados',sub:'Los arrepentimientos rechazados aparecerán aquí'}
     };
     var m=msgs[tab]||{icon:'📋',title:'No hay datos',sub:''};
-    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">'+m.icon+'</p><p style="font-size:16px;font-weight:600;margin-bottom:.5rem">'+m.title+'</p><p style="font-size:13px">'+m.sub+'</p></div>';
+    el.innerHTML='<div class="gp-empty"><div class="gp-empty-ico">'+m.icon+'</div><div class="gp-empty-title">'+m.title+'</div><div class="gp-empty-sub">'+m.sub+'</div></div>';
     return;
   }
-  
-  el.innerHTML=list.map(function(a){
+
+  var PILL={
+    PENDIENTE:{bg:'var(--orange)',fg:'#fff'},
+    APROBADO:{bg:'var(--green)',fg:'#fff'},
+    RECHAZADO:{bg:'var(--red)',fg:'#fff'}
+  };
+
+  el.innerHTML='<div class="gp-list">'+list.map(function(a){
     var dateStr=new Date(a.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'});
     var addr='';
     if(a.orderShipping){
       var parts=[a.orderShipping.street,a.orderShipping.number,a.orderShipping.city,a.orderShipping.province].filter(Boolean);
       addr=parts.join(', ');
     }
-    
-    var html='<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border);margin-bottom:10px">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
-        '<div>'+
-          '<div style="font-size:14px;font-weight:700">'+a.email+'</div>'+
-          '<div style="font-size:12px;color:var(--gray)">DNI: '+(a.orderDni||'-')+' · Tel: '+(a.telefono||a.orderPhone||'-')+'</div>'+
+    var pill=PILL[a.estado]||{bg:'var(--gray)',fg:'#fff'};
+    var estadoLabel=(a.estado||'').charAt(0)+(a.estado||'').slice(1).toLowerCase();
+
+    var head='<div class="gp-card-head">'+
+        '<div style="min-width:0">'+
+          '<div class="gp-card-title" style="font-family:inherit;font-size:14px">'+a.email+'</div>'+
+          '<div class="gp-card-sub">Solicitado el '+dateStr+'</div>'+
         '</div>'+
-        '<span style="padding:4px 12px;border-radius:12px;background:var(--orange);color:#fff;font-size:11px;font-weight:600">'+a.estado+'</span>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px" class="arrep-detail-grid">'+
-        '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
-          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Orden</div>'
-        '</div>'+
-        '<div style="background:var(--cream2);border-radius:8px;padding:10px">'+
-          '<div style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;margin-bottom:4px">Direccion de devolucion</div>'+
-          '<div style="font-size:12px">'+(addr||'Retiro en tienda')+'</div>'+
-        '</div>'+
-      '</div>'+
-      (a.motivo?'<div style="font-size:12px;margin-bottom:10px;padding:10px;background:var(--cream2);border-radius:8px"><strong>Motivo:</strong> '+a.motivo+'</div>':'')+
-      '<div style="font-size:11px;color:var(--gray);margin-bottom:10px">Solicitado: '+dateStr+'</div>';
-    
+        '<span class="gp-pill" style="--gp-pill-bg:'+pill.bg+';--gp-pill-fg:'+pill.fg+'"><span class="gp-dot"></span>'+estadoLabel+'</span>'+
+      '</div>';
+
+    var fields='<div class="gp-fields">'+
+        '<div class="gp-field"><div class="gp-field-label">DNI</div><div class="gp-field-value">'+(a.orderDni||'-')+'</div></div>'+
+        '<div class="gp-field"><div class="gp-field-label">Teléfono</div><div class="gp-field-value">'+(a.telefono||a.orderPhone||'-')+'</div></div>'+
+        '<div class="gp-field"><div class="gp-field-label">Devolución</div><div class="gp-field-value">'+(addr||'Retiro en tienda')+'</div></div>'+
+      '</div>';
+
+    var body=head+fields;
+
+    if(a.motivo){
+      body+='<div style="margin-bottom:12px;font-size:13px;color:var(--admin-text,#1a1208)"><span style="color:var(--admin-text-muted,#6b6259);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:2px">Motivo</span>'+a.motivo+'</div>';
+    }
+
+    var foot='';
     if(tab==='pendientes'){
-      html+='<div style="display:flex;gap:8px" class="arrep-actions">'+
-        '<button class="ord-btn ord-btn-act" onclick="acceptArrep(\''+a.id+'\')" style="flex:1">Aceptar arrepentimiento</button>'+
-        '<button class="ord-btn" onclick="rejectArrep(\''+a.id+'\')" style="flex:1;border-color:var(--red);color:var(--red)">Rechazar</button>'+
-      '</div>';
+      foot='<div class="gp-card-foot"><div class="gp-card-sub" style="margin:0">Decidí si aceptás la devolución</div>'+
+        '<div class="gp-actions">'+
+          '<button class="gp-btn gp-btn-ok" onclick="acceptArrep(\''+a.id+'\')">✓ Aceptar devolución</button>'+
+          '<button class="gp-btn gp-btn-no" onclick="rejectArrep(\''+a.id+'\')">✕ Rechazar</button>'+
+        '</div></div>';
     }else if(tab==='aceptados'){
-      html+='<div style="padding:10px;background:#f0fdf4;border-radius:8px">'+
-        '<div style="font-size:12px;font-weight:600;color:#059669">Arrepentimiento aceptado - Devolucion procesada</div>'+
-        '<div style="font-size:11px;color:var(--gray);margin-top:4px">Reembolso total segun Ley 24.240</div>'+
-      '</div>';
+      foot='<div class="gp-card-foot"><div class="gp-infobox ok" style="flex:1;margin:0"><span>✓</span><div>Devolución aceptada · Reembolso total según Ley 24.240</div></div></div>';
     }else if(tab==='rechazados'){
       var reasonsText=a.reason||'';
       var reasonsParts=reasonsText.split(';').filter(Boolean);
@@ -661,19 +669,12 @@ function renderArrepList(list,tab){
         comment=lastPart.split('Comentario:')[1].trim();
         reasonsParts.pop();
       }
-      var reasonsHtml=reasonsParts.map(function(r){
-        return'<span style="display:inline-block;padding:4px 10px;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;font-weight:500;margin:2px">'+r.trim()+'</span>';
-      }).join('');
-      html+='<div style="padding:10px;background:#fef2f2;border-radius:8px">'+
-        '<div style="font-size:12px;font-weight:600;color:#dc2626;margin-bottom:8px">Arrepentimiento rechazado</div>'+
-        '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">'+reasonsHtml+'</div>'+
-        (comment?'<div style="font-size:11px;color:var(--gray);padding-top:6px;border-top:1px solid #fecaca"><strong>Comentario:</strong> '+comment+'</div>':'')+
-      '</div>';
+      var reasonsHtml=reasonsParts.length?'<div class="gp-reasons">'+reasonsParts.map(function(r){return'<span class="gp-reason">'+r.trim()+'</span>';}).join('')+'</div>':'';
+      foot='<div class="gp-card-foot"><div class="gp-infobox no" style="flex:1;margin:0"><span>✕</span><div><div>Devolución rechazada</div>'+reasonsHtml+(comment?'<div style="font-weight:400;margin-top:4px">'+comment+'</div>':'')+'</div></div></div>';
     }
-    
-    html+='</div>';
-    return html;
-  }).join('');
+
+    return'<div class="gp-card" style="--gp-accent:'+pill.bg+'">'+body+foot+'</div>';
+  }).join('')+'</div>';
 }
 
 function acceptArrep(id){

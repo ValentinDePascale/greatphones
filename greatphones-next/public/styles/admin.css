@@ -971,3 +971,207 @@
   transition:all .15s;white-space:nowrap;font-weight:500
 }
 .wa-quick-replies button:hover{background:var(--orange);color:#fff}
+
+/* ============================================================
+   ADMIN LIST CARDS — Pedidos / Arrepentimientos / Cotizaciones
+   Diseño simple, claro y escaneable para uso no técnico
+   ============================================================ */
+.gp-list{display:flex;flex-direction:column;gap:10px}
+
+.gp-card{
+  position:relative;
+  background:var(--admin-surface,#fff);
+  border:1px solid var(--admin-border,rgba(0,0,0,.09));
+  border-left:4px solid var(--gp-accent,var(--orange));
+  border-radius:12px;
+  padding:14px 16px;
+  cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
+  overflow:hidden
+}
+.gp-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px rgba(0,0,0,.12);
+  border-color:var(--gp-accent,var(--orange))
+}
+.gp-card:active{transform:translateY(0)}
+
+/* Cabecera: título + estado */
+.gp-card-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px
+}
+.gp-card-title{
+  font-size:15px;
+  font-weight:700;
+  color:var(--admin-text,#1a1208);
+  font-family:'Playfair Display',Georgia,serif;
+  letter-spacing:.2px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  flex:1;
+  min-width:0
+}
+.gp-card-sub{
+  font-size:11px;
+  color:var(--admin-text-muted,#6b6259);
+  margin-top:2px
+}
+
+/* Píldora de estado */
+.gp-pill{
+  flex-shrink:0;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px 11px;
+  border-radius:20px;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.3px;
+  white-space:nowrap;
+  background:var(--gp-pill-bg,var(--orange));
+  color:var(--gp-pill-fg,#fff)
+}
+.gp-pill .gp-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:currentColor;flex-shrink:0
+}
+
+/* Cuerpo: campos clave en grid */
+.gp-fields{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:8px 16px;
+  margin-bottom:12px
+}
+.gp-field{}
+.gp-field-label{
+  font-size:9px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:var(--admin-text-muted,#6b6259);
+  margin-bottom:2px
+}
+.gp-field-value{
+  font-size:13px;
+  color:var(--admin-text,#1a1208);
+  font-weight:500;
+  line-height:1.35;
+  word-break:break-word
+}
+.gp-field-value.muted{color:var(--admin-text-muted,#6b6259);font-weight:400}
+
+/* Pie: total + acciones */
+.gp-card-foot{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  padding-top:11px;
+  border-top:1px solid var(--admin-border,rgba(0,0,0,.09))
+}
+.gp-total-label{
+  font-size:9px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  color:var(--admin-text-muted,#6b6259);
+  display:block
+}
+.gp-total-value{
+  font-size:18px;
+  font-weight:700;
+  color:var(--orange);
+  font-family:'Playfair Display',Georgia,serif
+}
+
+.gp-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-left:auto
+}
+.gp-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:9px 16px;
+  border-radius:9px;
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  border:1px solid transparent;
+  transition:all .15s ease;
+  white-space:nowrap
+}
+.gp-btn-ok{
+  background:var(--green,#2d5a27);
+  color:#fff
+}
+.gp-btn-ok:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.gp-btn-no{
+  background:transparent;
+  border-color:var(--red,#dc2626);
+  color:var(--red,#dc2626)
+}
+.gp-btn-no:hover{background:var(--red,#dc2626);color:#fff}
+.gp-btn-ghost{
+  background:var(--admin-surface-hover,#f0ebe3);
+  border-color:var(--admin-border,rgba(0,0,0,.09));
+  color:var(--admin-text,#1a1208)
+}
+.gp-btn-ghost:hover{border-color:var(--orange);color:var(--orange)}
+.gp-btn-danger{
+  background:transparent;
+  border-color:rgba(239,68,68,.3);
+  color:var(--red,#dc2626);
+  padding:9px 12px
+}
+.gp-btn-danger:hover{background:var(--red,#dc2626);color:#fff}
+
+/* Estado info-box (aceptados/rechazados arrep) */
+.gp-infobox{
+  padding:10px 12px;
+  border-radius:9px;
+  font-size:12px;
+  font-weight:600;
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  line-height:1.4
+}
+.gp-infobox.ok{background:#f0fdf4;color:#059669}
+.gp-infobox.no{background:#fef2f2;color:#dc2626}
+.gp-infobox .gp-reasons{
+  display:flex;flex-wrap:wrap;gap:4px;margin-top:6px
+}
+.gp-infobox .gp-reason{
+  display:inline-block;padding:3px 9px;background:rgba(220,38,38,.12);
+  color:#dc2626;border-radius:6px;font-size:11px;font-weight:600
+}
+
+/* Empty state */
+.gp-empty{
+  text-align:center;
+  padding:3rem 1rem;
+  color:var(--admin-text-muted,#6b6259)
+}
+.gp-empty-ico{font-size:46px;margin-bottom:1rem;opacity:.7}
+.gp-empty-title{font-size:16px;font-weight:700;color:var(--admin-text,#1a1208);margin-bottom:.4rem}
+.gp-empty-sub{font-size:13px}
+
+/* Mobile tweaks */
+@media(max-width:768px){
+  .gp-fields{grid-template-columns:1fr 1fr;gap:8px}
+  .gp-card-foot{flex-direction:column;align-items:stretch}
+  .gp-actions{margin-left:0;justify-content:stretch}
+  .gp-actions .gp-btn{flex:1;justify-content:center}
+  .gp-total-value{font-size:16px}
+}
