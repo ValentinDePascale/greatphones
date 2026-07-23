@@ -3068,7 +3068,8 @@ function renderAdminContent(tab){
     loadAdminConversations();
     initChatSocket();
   }else if(tab==='quotes'){
-    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
+    el.innerHTML='<div class="dash-kpis" id="quotesKpis" style="margin-bottom:1rem"></div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
       '<button class="ord-btn ord-btn-act" id="quoteBtnAll" onclick="loadQuotes(\'all\')">Todas</button>'+
       '<button class="ord-btn" id="quoteBtnPending" onclick="loadQuotes(\'PENDING\')">Pendientes</button>'+
       '<button class="ord-btn" id="quoteBtnApproved" onclick="loadQuotes(\'APPROVED\')">Aceptadas</button>'+
@@ -3077,6 +3078,7 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
     loadQuotes('all');
+    loadQuotesStats();
   }else if(tab==='inventory'){
     el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1.5rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
   }else if(tab==='instore'){
@@ -3688,6 +3690,33 @@ function searchQuotes(val){
   _quoteSearch=val;
   _quotePage=1;
   loadQuotes(_quoteStatus);
+}
+
+function loadQuotesStats(){
+  var kpis=document.getElementById('quotesKpis');
+  if(!kpis)return;
+  kpis.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--gray)">Cargando estadísticas...</div>';
+  fetch(API_URL+'/api/admin/quotes-stats').then(function(r){return r.json();}).then(function(d){
+    if(d.error){kpis.innerHTML='';return;}
+    var cards=[
+      {lbl:'Totales',val:d.total,sub:'Cotizaciones recibidas',clr:'var(--blue)'},
+      {lbl:'Pendientes',val:d.pending,sub:'Esperando revisión',clr:'var(--orange)'},
+      {lbl:'Aceptadas',val:d.approved,sub:'Tasa: '+d.approvalRate+'%',clr:'var(--green)'},
+      {lbl:'Rechazadas',val:d.rejected,sub:'',clr:'var(--red)'},
+      {lbl:'Pago estimado total',val:'$'+(d.totalRevenue||0).toLocaleString('es-AR'),sub:'Cotizaciones aceptadas',clr:'var(--orange)'},
+      {lbl:'Este mes',val:'$'+(d.monthlyRevenue||0).toLocaleString('es-AR'),sub:'Aceptadas en '+new Date().toLocaleString('es-AR',{month:'long'}),clr:'var(--green)'},
+      {lbl:'Más cotizado',val:d.mostQuotedDevice||'—',sub:d.mostQuotedCount>0?d.mostQuotedCount+' veces':'',clr:'var(--gray)'},
+    ];
+    kpis.innerHTML=cards.map(function(c){
+      return '<div class="stat-card" style="border-left:3px solid '+c.clr+'">'+
+        '<div class="stat-lbl">'+c.lbl+'</div>'+
+        '<div class="stat-val">'+c.val+'</div>'+
+        (c.sub?'<div class="stat-sub">'+c.sub+'</div>':'')+
+      '</div>';
+    }).join('');
+  }).catch(function(){
+    kpis.innerHTML='';
+  });
 }
 
 function renderQuotesList(res){
