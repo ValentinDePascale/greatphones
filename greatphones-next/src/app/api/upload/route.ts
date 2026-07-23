@@ -65,7 +65,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Upload error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Error subiendo imagen'
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    return NextResponse.json({ error: 'Error subiendo imagen' }, { status: 500 })
   }
 }

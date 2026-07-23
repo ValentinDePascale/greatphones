@@ -189,9 +189,7 @@ export async function PUT(request: Request) {
     return NextResponse.json(updatedAccessory, { headers: corsHeaders })
   } catch (error: any) {
     console.error('Error updating accessory:', error)
-    console.error('Error code:', error?.code)
-    console.error('Error meta:', error?.meta)
-    return NextResponse.json({ error: 'Failed to update accessory', details: error?.message }, { status: 500, headers: corsHeaders })
+    return NextResponse.json({ error: 'Failed to update accessory' }, { status: 500, headers: corsHeaders })
   }
 }
 

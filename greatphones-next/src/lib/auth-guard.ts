@@ -3,17 +3,13 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 async function getAuthenticatedUser(request?: Request) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (session?.user?.email) {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { id: true, email: true, role: true }
-      })
-      if (user) return user
-    }
-  } catch {
-    // getServerSession may fail (e.g. adapter error), fall through to x-user-id
+  const session = await getServerSession(authOptions)
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, email: true, role: true }
+    })
+    if (user) return user
   }
 
   if (request) {

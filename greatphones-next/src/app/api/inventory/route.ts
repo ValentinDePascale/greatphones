@@ -406,6 +406,6 @@ export async function POST(request: Request) {
     return NextResponse.json(item, { status: 201, headers: corsHeaders })
   } catch (error) {
     console.error('Error creating inventory item:', error)
-    return NextResponse.json({ error: 'Error al crear item de inventario', details: (error as Error).message }, { status: 500, headers: corsHeaders })
+    return NextResponse.json({ error: 'Error al crear item de inventario' }, { status: 500, headers: corsHeaders })
   }
 }

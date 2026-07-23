@@ -4,16 +4,6 @@ var PRODUCTS=[];
 var currentProd=null;
 var currentAcc=null;
 
-// Magnetic hover for category cards
-window.svMagnetic=function(e,el){
-  var r=el.getBoundingClientRect();
-  var x=e.clientX-r.left-r.width/2;
-  var y=e.clientY-r.top-r.height/2;
-  el.style.transform='translate('+(x*0.2)+'px,'+(y*0.2)+'px)';
-};
-window.svMagneticReset=function(el){
-  el.style.transform='';
-};
 var detWMult=0,detDExtra=0,selCuotas=1;
 
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
@@ -299,7 +289,7 @@ function renderDashRecentOrders(d){
         var sl=statusLabels[o.status]||o.status;
         var profit=o.profit||0;
         var methodColor='var(--gray)';
-        if(o.payment==='Efectivo')methodColor='var(--green)';
+        if(o.payment==='Efectivo'||o.payment==='efectivo')methodColor='var(--green)';
         else if(o.payment==='Transferencia')methodColor='var(--orange)';
         else if(o.payment==='wallet')methodColor='#8b5cf6';
         return'<tr style="border-bottom:1px solid var(--border)">'+
@@ -1638,6 +1628,7 @@ function goSlide(idx){
   var track=document.getElementById('sliderTrack');
   if(track)track.style.transform='translateX(-'+(sliderIdx*25)+'%)';
   document.querySelectorAll('.sdot').forEach(function(d,i){d.className='sdot'+(i===sliderIdx?' act':'');});
+  startSliderTimer();
 }
 function sliderNext(){goSlide(sliderIdx+1);}
 function sliderPrev(){goSlide(sliderIdx-1);}
@@ -2875,7 +2866,7 @@ function renderAdminContent(tab){
       '</div>'+
       '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-prods-quickfilters">'+
-          '<button class="ord-btn" onclick="setAdmProdFilter(\'all\',this)">Todos</button>'+
+          '<button class="ord-btn ord-btn-act" onclick="setAdmProdFilter(\'all\',this)">Todos</button>'+
           '<button class="ord-btn" onclick="setAdmProdFilter(\'offer\',this)">Ofertas</button>'+
           '<button class="ord-btn" onclick="setAdmProdFilter(\'nostock\',this)">Sin stock</button>'+
           '<button class="ord-btn" onclick="setAdmProdFilter(\'low\',this)">Stock bajo</button>'+
@@ -2891,25 +2882,45 @@ function renderAdminContent(tab){
         '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Cotización USD</label>'+
           '<input type="number" id="adminDolarRate" value="'+dolarVal+'" placeholder="Ej: 1200" oninput="window.dolarRate=parseFloat(this.value)||0;localStorage.setItem(\'dolarRate\',this.value);renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:120px;outline:none"></div>'+
       '</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" class="admin-prods-grid" id="admin-prods-grid"></div>'+
-      '<script>renderAdminProductsFiltered("");</'+'script>';
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px" class="admin-prods-grid" id="admin-prods-grid"></div>';
+    renderAdminProductsFiltered("");
   }else if(tab==='stock'){
     var allBrands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
     var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
     var allBrandsSet=new Set(allBrands.concat(accBrands));
     var brandsHtml=Array.from(allBrandsSet).map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:12px" class="stock-filters">'+
-      '<h3 style="font-size:16px">Gestion de Stock</h3>'+
-      '<div style="display:flex;gap:12px;align-items:center" class="stock-actions">'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Tipo</label><select id="stockFilterType" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><select id="stockFilterBrand" onchange="window._stockPage=1;renderStockList()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff"><option value="">Todas</option>'+brandsHtml+'</select></div>'+
-        '<div style="display:flex;gap:8px;align-items:flex-end"><button onclick="undoAllStock()" class="btn btn-g btn-sm">Deshacer</button><button onclick="saveAllStock()" class="btn btn-o btn-sm">Guardar</button></div>'+
+    el.innerHTML='<div style="margin-bottom:1.5rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">'+
+        '<h3 style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',Georgia,serif;margin:0">Gestión de Stock</h3>'+
+        '<span style="font-size:12px;color:var(--gray)" id="stockTotalLabel">Cargando...</span>'+
+      '</div>'+
+      '<div id="stockStatsRow" style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap"></div>'+
+    '</div>'+
+    '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1.25rem">'+
+      '<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">'+
+        '<div style="flex:1;min-width:140px">'+
+          '<label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Tipo</label>'+
+          '<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
+            '<button class="stock-type-btn" data-type="todos" onclick="window._stockPage=1;window._stockType=\'todos\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:var(--orange);color:#fff;cursor:pointer;transition:all .15s">Todos</button>'+
+            '<button class="stock-type-btn" data-type="productos" onclick="window._stockPage=1;window._stockType=\'productos\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--dk);cursor:pointer;transition:all .15s">Productos</button>'+
+            '<button class="stock-type-btn" data-type="accesorios" onclick="window._stockPage=1;window._stockType=\'accesorios\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--dk);cursor:pointer;transition:all .15s">Accesorios</button>'+
+          '</div>'+
+        '</div>'+
+        '<div style="min-width:140px">'+
+          '<label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Marca</label>'+
+          '<select id="stockFilterBrand" onchange="window._stockPage=1;renderStockList()" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;outline:none"><option value="">Todas</option>'+brandsHtml+'</select>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;align-items:flex-end;margin-left:auto">'+
+          '<button onclick="undoAllStock()" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--dk);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--gray)\'" onmouseout="this.style.borderColor=\'var(--border)\'">↩ Deshacer</button>'+
+          '<button onclick="saveAllStock()" style="padding:8px 16px;border:none;border-radius:8px;background:var(--orange);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.opacity=\'.9\'" onmouseout="this.style.opacity=\'1\'">✔ Guardar</button>'+
+        '</div>'+
       '</div>'+
     '</div>'+
-    '<div style="display:grid;gap:8px" id="stockList"></div>'+
+    '<div style="display:grid;gap:10px" id="stockList"></div>'+
     '<div id="stockPagination"></div>';
     window._stockPage=1;
     window._stockLimit=20;
+    window._stockType='todos';
     renderStockList();
   }else if(tab==='promos'){
     var brands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
@@ -2926,6 +2937,9 @@ function renderAdminContent(tab){
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brandsHtml+'</select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Categoría</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas</option></select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
+      '</div>'+
+      '<div style="margin-bottom:1rem">'+
+        '<input type="text" id="promoSearch" placeholder="🔍 Buscar por nombre..." oninput="renderPromoProducts()" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'">'+
       '</div>'+
       
       '<div style="margin-bottom:1rem">'+
@@ -2984,7 +2998,7 @@ function renderAdminContent(tab){
       '</div>'+
       '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-acc-quickfilters">'+
-          '<button class="ord-btn" onclick="setAdmAccFilter(\'all\',this)">Todos</button>'+
+          '<button class="ord-btn ord-btn-act" onclick="setAdmAccFilter(\'all\',this)">Todos</button>'+
           '<button class="ord-btn" onclick="setAdmAccFilter(\'offer\',this)">Ofertas</button>'+
           '<button class="ord-btn" onclick="setAdmAccFilter(\'nostock\',this)">Sin stock</button>'+
           '<button class="ord-btn" onclick="setAdmAccFilter(\'low\',this)">Stock bajo</button>'+
@@ -2996,8 +3010,8 @@ function renderAdminContent(tab){
             '<option value="stock">Stock</option>'+
           '</select></div>'+
       '</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" class="admin-prods-grid" id="admin-acc-grid"></div>'+
-      '<script>renderAdminAccFiltered("");</'+'script>';
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px" class="admin-prods-grid" id="admin-acc-grid"></div>';
+    renderAdminAccFiltered("");
   }else if(tab==='arrep'){
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
       '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="loadArrepPendientes()">Pendientes</button>'+
@@ -3131,21 +3145,21 @@ function renderAdminProductCard(p){
       '<div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(p.name||'')+'</div>'+
       '<div style="font-size:10px;color:var(--gray);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(p.sub||'')+'</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
-        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Venta</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+fmt(p.price)+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmt(p.price)+'</div>'+
         '</div>'+
-        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Costo</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--dk)">'+fmt(p.cost||0)+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--dk);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmt(p.cost||0)+'</div>'+
         '</div>'+
-        '<div style="background:rgba(45,90,39,.08);border-radius:8px;padding:7px">'+
+        '<div style="background:rgba(45,90,39,.08);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Ganancia</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--green)">'+fmt(profit)+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--green);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmt(profit)+'</div>'+
         '</div>'+
-        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px">'+
+        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">USD</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
         '</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:10px">'+
@@ -3214,13 +3228,13 @@ function renderAdminAccCard(a){
       '<div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+escapeHtml(a.name||'')+'</div>'+
       '<div style="font-size:10px;color:var(--gray);margin-bottom:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(a.category||'')+'</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">'+
-        '<div style="background:var(--cream2);border-radius:8px;padding:7px">'+
+        '<div style="background:var(--cream2);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">Venta</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+fmt(a.price)+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+fmt(a.price)+'</div>'+
         '</div>'+
-        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px">'+
+        '<div style="background:rgba(255,107,44,.08);border-radius:8px;padding:7px;min-width:0">'+
           '<div style="font-size:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray);margin-bottom:2px">USD</div>'+
-          '<div style="font-size:14px;font-weight:800;color:var(--orange)">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
+          '<div style="font-size:14px;font-weight:800;color:var(--orange);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(usd>0?('US$ '+usd.toLocaleString('es-AR')):'—')+'</div>'+
         '</div>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(0,0,0,.03);border-radius:8px;margin-bottom:10px">'+
@@ -3296,7 +3310,7 @@ function undoAllStock(){
 function renderStockList(){
   var list=document.getElementById('stockList');
   if(!list)return;
-  var filterType=document.getElementById('stockFilterType')?document.getElementById('stockFilterType').value:'todos';
+  var filterType=window._stockType||'todos';
   var filterBrand=document.getElementById('stockFilterBrand')?document.getElementById('stockFilterBrand').value:'';
   var items=[];
   if(filterType==='todos'||filterType==='productos'){
@@ -3311,6 +3325,28 @@ function renderStockList(){
       items.push({id:a.id,name:a.name,sub:a.category||'',stock:a.stock,type:'accesorio',ico:a.ico||'📦',brand:a.brand});
     });
   }
+  // Update stats
+  var totalLabel=document.getElementById('stockTotalLabel');
+  if(totalLabel)totalLabel.textContent=items.length+' items';
+  var statsRow=document.getElementById('stockStatsRow');
+  if(statsRow){
+    var crit=items.filter(function(i){return i.stock<=0;}).length;
+    var low=items.filter(function(i){return i.stock>0&&i.stock<=3;}).length;
+    var ok=items.length-crit-low;
+    statsRow.innerHTML=
+      '<div style="flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;font-size:16px">✔</div>'+
+        '<div><div style="font-size:18px;font-weight:800;color:var(--green)">'+ok+'</div><div style="font-size:10px;color:var(--gray);margin-top:1px">En stock</div></div>'+
+      '</div>'+
+      '<div style="flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:16px">⚠</div>'+
+        '<div><div style="font-size:18px;font-weight:800;color:var(--orange)">'+low+'</div><div style="font-size:10px;color:var(--gray);margin-top:1px">Stock bajo</div></div>'+
+      '</div>'+
+      '<div style="flex:1;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">'+
+        '<div style="width:36px;height:36px;border-radius:10px;background:rgba(192,57,43,.1);display:flex;align-items:center;justify-content:center;font-size:16px">✕</div>'+
+        '<div><div style="font-size:18px;font-weight:800;color:var(--red)">'+crit+'</div><div style="font-size:10px;color:var(--gray);margin-top:1px">Sin stock</div></div>'+
+      '</div>';
+  }
   var page=window._stockPage||1;
   var limit=window._stockLimit||20;
   var totalPages=Math.ceil(items.length/limit);
@@ -3318,41 +3354,51 @@ function renderStockList(){
   var end=start+limit;
   var pageItems=items.slice(start,end);
   list.innerHTML=pageItems.map(function(item){
-    var lowStock=item.stock<=2;
-    var medStock=item.stock>2&&item.stock<=5;
-    var statusText=lowStock?'⚠ Stock critico':medStock?'⚠ Stock bajo':'';
+    var lowStock=item.stock<=0;
+    var medStock=item.stock>0&&item.stock<=3;
+    var warning=item.stock>3&&item.stock<=5;
+    var borderColor=lowStock?'var(--red)':medStock?'var(--red)':warning?'var(--orange)':'var(--border)';
+    var barColor=lowStock?'var(--red)':medStock?'var(--red)':warning?'var(--orange)':'var(--green)';
+    var barPct=Math.min(100,Math.round((item.stock/15)*100));
+    var statusLabel=lowStock?'Sin stock':medStock?'Crítico':warning?'Bajo':'Normal';
     var stockId=item.type==='accesorio'?'acc-'+item.id:item.id;
-    return'<div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:8px;border:1px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+'">'+
-      '<div style="font-size:24px">'+item.ico+'</div>'+
-      '<div style="flex:1">'+
-        '<div style="font-weight:600">'+item.name+'</div>'+
-        '<div style="font-size:11px;color:var(--gray)">'+item.sub+' <span style="color:var(--orange);font-weight:500">['+item.type+']</span></div>'+
+    return '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:12px;border:1px solid '+borderColor+';transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.06)\'" onmouseout="this.style.boxShadow=\'none\'">'+
+      '<div style="width:44px;height:44px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+item.ico+'</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.name+'</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
+          '<span style="font-size:10px;color:var(--gray)">'+item.sub+'</span>'+
+          '<span style="font-size:8px;font-weight:600;padding:1px 6px;border-radius:3px;background:var(--cream2);color:var(--gray)">'+item.type+'</span>'+
+        '</div>'+
+        '<div style="margin-top:6px;display:flex;align-items:center;gap:8px">'+
+          '<div style="flex:1;height:5px;background:var(--cream2);border-radius:3px;overflow:hidden;max-width:100px">'+
+            '<div style="height:100%;width:'+barPct+'%;background:'+barColor+';border-radius:3px;transition:width .3s"></div>'+
+          '</div>'+
+          '<span style="font-size:10px;font-weight:600;color:'+barColor+'">'+statusLabel+'</span>'+
+        '</div>'+
       '</div>'+
-      '<div style="display:flex;align-items:center;gap:6px;min-width:120px">'+
-        '<button onclick="adjustStock(\''+stockId+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">-</button>'+
-        '<input type="number" id="stock-'+stockId+'" data-original="'+item.stock+'" value="'+item.stock+'" min="0" style="width:50px;padding:6px;border:1.5px solid '+(lowStock?'var(--red)':medStock?'var(--orange)':'var(--border)')+';border-radius:var(--rsm);font-size:14px;text-align:center;font-weight:600'+(lowStock?';color:var(--red)':medStock?';color:var(--orange)':'')+'">'+
-        '<button onclick="adjustStock(\''+stockId+'\',1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer">+</button>'+
+      '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'+
+        '<button onclick="adjustStock(\''+stockId+'\',-1)" style="width:30px;height:30px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;color:var(--dk);line-height:1" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--dk)\'">−</button>'+
+        '<input type="number" id="stock-'+stockId+'" data-original="'+item.stock+'" value="'+item.stock+'" min="0" style="width:52px;padding:7px 4px;border:1.5px solid '+borderColor+';border-radius:8px;font-size:15px;text-align:center;font-weight:700;outline:none;background:#fff;color:'+barColor+';transition:border-color .15s" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\''+borderColor+'\'">'+
+        '<button onclick="adjustStock(\''+stockId+'\',1)" style="width:30px;height:30px;border:1.5px solid var(--border);border-radius:8px;background:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .12s;display:flex;align-items:center;justify-content:center;color:var(--dk);line-height:1" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--dk)\'">+</button>'+
       '</div>'+
-      '<div style="font-size:11px;font-weight:600;color:'+(lowStock?'var(--red)':medStock?'var(--orange)':'transparent')+'">'+statusText+'</div>'+
     '</div>';
   }).join('');
   var pagContainer=document.getElementById('stockPagination');
   if(pagContainer){
     if(totalPages<=1){pagContainer.innerHTML='';return;}
-    var html='<div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:1rem;padding:1rem" class="admin-pagination">';
-    html+='<button onclick="window._stockPage=Math.max(1,window._stockPage-1);renderStockList();"'+(page===1?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">←</button>';
+    var html='<div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:1.25rem;padding:.75rem;border-top:1px solid var(--border)">'+
+      '<button onclick="window._stockPage=Math.max(1,window._stockPage-1);renderStockList();"'+(page===1?' disabled':'')+
+        ' style="padding:8px 14px;border:1px solid '+(page===1?'var(--border)':'var(--border)')+';border-radius:8px;background:'+(page===1?'var(--cream2)':'#fff')+';font-size:13px;cursor:'+(page===1?'not-allowed':'pointer')+';opacity:'+(page===1?'.4':'1')+'">← Anterior</button>';
     var s=Math.max(1,page-2);
     var e=Math.min(totalPages,page+2);
-    if(s>1)html+='<button onclick="window._stockPage=1;renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">1</button>';
-    if(s>2)html+='<span style="padding:6px;color:var(--gray)">...</span>';
     for(var i=s;i<=e;i++){
-      if(i===page)html+='<span style="padding:6px 12px;border-radius:6px;background:var(--orange);color:#fff;font-size:13px;font-weight:600">'+i+'</span>';
-      else html+='<button onclick="window._stockPage='+i+';renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+i+'</button>';
+      if(i===page)html+='<span style="padding:8px 14px;border-radius:8px;background:var(--orange);color:#fff;font-size:13px;font-weight:700">'+i+'</span>';
+      else html+='<button onclick="window._stockPage='+i+';renderStockList();" style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+i+'</button>';
     }
-    if(e<totalPages-1)html+='<span style="padding:6px;color:var(--gray)">...</span>';
-    if(e<totalPages)html+='<button onclick="window._stockPage='+totalPages+';renderStockList();" style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">'+totalPages+'</button>';
-    html+='<button onclick="window._stockPage=Math.min('+totalPages+',window._stockPage+1);renderStockList();"'+(page===totalPages?' disabled style="opacity:.4;cursor:not-allowed"':'')+' style="padding:6px 12px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:13px;cursor:pointer">→</button>';
-    html+='</div>';
+    html+='<button onclick="window._stockPage=Math.min('+totalPages+',window._stockPage+1);renderStockList();"'+(page===totalPages?' disabled':'')+
+      ' style="padding:8px 14px;border:1px solid '+(page===totalPages?'var(--border)':'var(--border)')+';border-radius:8px;background:'+(page===totalPages?'var(--cream2)':'#fff')+';font-size:13px;cursor:'+(page===totalPages?'not-allowed':'pointer')+';opacity:'+(page===totalPages?'.4':'1')+'">Siguiente →</button>'+
+    '</div>';
     pagContainer.innerHTML=html;
   }
 }
@@ -3360,6 +3406,7 @@ function renderPromoProducts(){
   var brand=document.getElementById('promoBrand').value;
   var typeFilter=document.getElementById('promoType').value;
   var itemType=document.getElementById('promoItemType')?document.getElementById('promoItemType').value:'todos';
+  var searchQ=(document.getElementById('promoSearch')?document.getElementById('promoSearch').value:'').toLowerCase().trim();
   var list=document.getElementById('promoProductList');
   if(!list)return;
   var items=[];
@@ -3367,6 +3414,7 @@ function renderPromoProducts(){
     PRODUCTS.forEach(function(p){
       if(brand&&p.brand!==brand)return;
       if(typeFilter&&p.type!==typeFilter)return;
+      if(searchQ&&(p.name||'').toLowerCase().indexOf(searchQ)<0)return;
       items.push({id:p.id,name:p.name,brand:p.brand,price:p.price,isOffer:p.isOffer,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱'});
     });
   }
@@ -3374,6 +3422,7 @@ function renderPromoProducts(){
     (window.ACCS||[]).forEach(function(a){
       if(brand&&a.brand!==brand)return;
       if(typeFilter&&a.category!==typeFilter)return;
+      if(searchQ&&(a.name||'').toLowerCase().indexOf(searchQ)<0)return;
       items.push({id:a.id,name:a.name,brand:a.brand,price:a.price,isOffer:a.isOffer,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦'});
     });
   }
@@ -3716,6 +3765,8 @@ function openQuoteDetail(id){
   var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
   
   var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+p+'" onclick="openLightbox(\''+p+'\')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
+
+  var dniPhotosHtml=(q.dniPhotos||[]).length>0?q.dniPhotos.map(function(p,i){var label=i===0?'Frente':'Dorso';return'<div><div style="font-size:10px;color:var(--admin-text-muted);margin-bottom:4px">'+label+'</div><img loading="lazy" src="'+p+'" onclick="openLightbox(\''+p+'\')" style="width:100px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer"></div>';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos del DNI</span>';
   
   var modal=document.createElement('div');
   modal.id='quoteDetailModal';
@@ -3759,7 +3810,12 @@ function openQuoteDetail(id){
           '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Fotos del dispositivo</div>'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap">'+photosHtml+'</div>'+
         '</div>'+
-        
+
+        '<div style="margin-bottom:20px">'+
+          '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Fotos del DNI</div>'+
+          '<div style="display:flex;gap:12px;flex-wrap:wrap">'+dniPhotosHtml+'</div>'+
+        '</div>'+
+
         '<div style="margin-bottom:20px">'+
           '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Envio y cobro</div>'+
           '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+

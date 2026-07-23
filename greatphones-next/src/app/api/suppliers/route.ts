@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validation = SupplierCreateSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json({ error: 'Datos inválidos', details: validation.error.issues }, { status: 400, headers: corsHeaders })
+      return NextResponse.json({ error: 'Datos inválidos' }, { status: 400, headers: corsHeaders })
     }
 
     const supplier = await prisma.supplier.create({

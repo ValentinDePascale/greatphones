@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       clientProvince,
       signature,
       photos,
+      dniPhotos,
       extras,
     } = body
 
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
         clientProvince,
         signature,
         photos: photos || [],
+        dniPhotos: dniPhotos || [],
         extras: extras || [],
       },
     })

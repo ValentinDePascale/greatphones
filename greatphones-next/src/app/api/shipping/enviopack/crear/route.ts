@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Envío Pack crear error:', error)
-    return NextResponse.json({ error: error.message || 'Error al crear envío' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al crear envío' }, { status: 500 })
   }
 }
 

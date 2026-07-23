@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Andreani shipping error:', error)
     return NextResponse.json(
-      { error: error.message || 'Error al calcular envío' },
+      { error: 'Error al calcular envío' },
       { status: 500 }
     )
   }

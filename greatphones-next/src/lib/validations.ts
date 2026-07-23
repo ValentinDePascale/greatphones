@@ -138,6 +138,7 @@ export const CheckoutSchema = z.object({
   warrantyCost: z.number().int().min(0).optional().default(0),
   deliveryCost: z.number().int().min(0).optional().default(0),
   total: z.number().int().positive(),
+  paymentMethod: z.string().optional().default('mercadopago'),
 })
 
 // === AUTH ===

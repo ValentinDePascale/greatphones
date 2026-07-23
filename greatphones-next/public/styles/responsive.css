@@ -487,19 +487,18 @@
   }
   #p-checkout input,#p-checkout select{padding:10px 14px !important;font-size:12px !important}
   #p-checkout label{font-size:10px !important}
-  /* Cuotas grid */
-  #p-checkout div[style*="grid-template-columns:repeat(4,1fr)"]{
-    grid-template-columns:repeat(2,1fr) !important
-  }
-  .cuota-btn{padding:12px 8px !important}
-  .cuota-btn span:first-child{font-size:16px !important}
-  .cuota-btn span:last-child{font-size:9px !important}
+  /* Cuotas list */
+  .cuota-btn{padding:14px 16px !important;gap:12px !important}
+  .cuota-btn div:first-child{width:40px !important;height:40px !important}
+  .cuota-btn div:first-child span{font-size:18px !important}
+  .cuota-btn div:nth-child(2) div:first-child{font-size:14px !important}
   /* Payment methods */
   #p-checkout .payment-method-card{padding:14px 16px !important;gap:12px !important}
   #p-checkout .payment-method-card > div:first-child{width:40px !important;height:40px !important;border-radius:10px !important}
   #p-checkout .payment-method-card > div:first-child svg{width:20px !important;height:20px !important}
   #p-checkout .payment-method-card > div:nth-child(2) div:first-child{font-size:14px !important}
   #p-checkout .payment-method-card > div:nth-child(2) div:last-child{font-size:11px !important}
+  #p-checkout .payment-method-card > div:last-child{display:none !important}
   /* Nav buttons */
   #p-checkout div[style*="justify-content:flex-end"]{justify-content:stretch !important}
   #p-checkout div[style*="justify-content:flex-end"] button,#p-checkout div[style*="justify-content:space-between"] button{
@@ -527,9 +526,9 @@
   #p-checkout section{padding:1rem !important;border-radius:12px !important}
   #p-checkout section h2{font-size:15px !important}
   #p-checkout section > div:first-child{margin-bottom:1rem !important}
-  #checkout-cuotas div[style*="grid-template-columns:repeat(4,1fr)"]{gap:6px !important}
-  .cuota-btn{padding:10px 6px !important}
-  .cuota-btn span:first-child{font-size:14px !important}
+  #checkout-cuotas .cuota-btn{gap:10px !important}
+  .cuota-btn div:first-child{width:36px !important;height:36px !important}
+  .cuota-btn div:first-child span{font-size:16px !important}
   #checkout-warranty .warranty-btn{padding:12px 14px !important}
   #checkout-warranty .warranty-btn span:first-child{font-size:13px !important}
   #checkout-delivery .delivery-btn{padding:12px 14px !important}
@@ -543,14 +542,17 @@
 @media(max-width:480px){
   #p-checkout > div{padding:.75rem .5rem}
   #p-checkout section{padding:.875rem !important}
-  #p-checkout div[style*="grid-template-columns:repeat(4,1fr)"]{gap:4px !important}
-  .cuota-btn{padding:8px 4px !important}
-  .cuota-btn span:first-child{font-size:13px !important}
-  .cuota-btn span:last-child{font-size:8px !important}
+  .cuota-btn{padding:12px 14px !important;gap:8px !important}
+  .cuota-btn div:first-child{width:32px !important;height:32px !important;border-radius:8px !important}
+  .cuota-btn div:first-child span{font-size:14px !important}
+  .cuota-btn div:nth-child(2) div:first-child{font-size:13px !important}
+  .cuota-btn div:nth-child(2) div:first-child span{font-size:8px !important;padding:1px 4px !important}
+  .cuota-btn div:nth-child(2) div:last-child{font-size:11px !important}
   #p-checkout .payment-method-card{padding:12px 14px !important;gap:10px !important}
   #p-checkout .payment-method-card > div:first-child{width:36px !important;height:36px !important}
   #p-checkout .payment-method-card > div:nth-child(2) div:first-child{font-size:13px !important}
   #p-checkout .payment-method-card > div:nth-child(2) div:last-child{font-size:10px !important}
+  #p-checkout .payment-method-card > div:last-child{display:none !important}
   #p-checkout div[style*="justify-content:flex-end"] button,
   #p-checkout div[style*="justify-content:space-between"] button{
     padding:10px 16px !important;font-size:12px !important

@@ -58,6 +58,10 @@ function openCart(){
     overlay.querySelectorAll('div')[1].style.transform='none';
   }
   renderCartBody();
+  setTimeout(function(){
+    var items=document.querySelectorAll('#cartBody .cart-item');
+    for(var i=0;i<items.length;i++)items[i].classList.add('ci-enter');
+  },30);
 }
 function closeCart(){
   var overlay=document.getElementById('cartOverlay');
@@ -111,16 +115,27 @@ function addToCart(id,triggerEl,variant){
 function addProdCart(id, variant){
   addToCart(id, null, variant);
 }
-function removeFromCart(id){
+function removeFromCart(id, animate){
   var item=Cart.find(function(i){return i.id===id;});
   if(!item)return;
   _lastRemovedItem={id:id,item:JSON.parse(JSON.stringify(item)),index:Cart.indexOf(item)};
-  Cart=Cart.filter(function(i){return i.id!==id;});
-  saveCart();
-  updCartBadge();
-  renderCartBody();
-  if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
-    renderCheckoutSummary();
+  var el=document.querySelector('[data-cart-id="'+id+'"]');
+  if(el&&animate!==false){
+    el.classList.add('ci-leave');
+    var self=this;
+    setTimeout(function(){
+      Cart=Cart.filter(function(i){return i.id!==id;});
+      saveCart();
+      updCartBadge();
+      renderCartBody();
+      if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act'))renderCheckoutSummary();
+    },230);
+  }else{
+    Cart=Cart.filter(function(i){return i.id!==id;});
+    saveCart();
+    updCartBadge();
+    renderCartBody();
+    if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act'))renderCheckoutSummary();
   }
   showUndoRemove();
 }
@@ -180,12 +195,15 @@ function updateCartQty(id,delta){
     saveCart();
     renderCartBody();
     updCartBadge();
-    var qtySpan=document.querySelector('.cart-qty-'+id.replace(/::/g,'\\:\\:'));
+    var qtyId=id.replace(/::/g,'_');
+    var qtySpan=document.querySelector('.cart-qty-'+qtyId);
     if(qtySpan){
       qtySpan.style.transition='transform .15s ease';
       qtySpan.style.transform='scale(1.3)';
       setTimeout(function(){qtySpan.style.transform='scale(1)';},150);
     }
+    var totalEl=document.getElementById('cartTotalVal');
+    if(totalEl)totalEl.classList.add('cart-total-pop');
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
       renderCheckoutSummary();
     }
@@ -221,6 +239,34 @@ function updCartBadge(){
   if(b){b.textContent=n;if(n>0)b.classList.remove('hidden');else b.classList.add('hidden');}
 }
 function fmt(n){return'$'+n.toLocaleString('es-AR');}
+function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
+  var qtyId=(aid||item.id).replace(/::/g,'_');
+  var priceHtml=isPromo?
+    '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>'+
+    '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(((a||p).price)*item.qty)+'</div>'+
+    '<div style="font-size:10px;color:var(--red);font-weight:600">-'+(a||p).discount+'%</div>':
+    '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
+  var maxReached=(p||a).stock>0&&item.qty>=(p||a).stock;
+  var stockWarning=(p||a).stock<=5&&(p||a).stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+(p||a).stock+' disp.</div>':'';
+  return '<div data-cart-id="'+aid+'" class="cart-item">'+
+    '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
+    '<div style="flex:1;min-width:0">'+
+      '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+displayName+'</div>'+
+      '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(sub||'')+'</div>'+
+      '<div style="display:flex;align-items:center;gap:8px">'+
+        '<button onclick="updateCartQty(\''+aid+'\',-1)" class="cart-qty-btn">−</button>'+
+        '<span class="cart-qty-'+qtyId+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
+        '<button onclick="updateCartQty(\''+aid+'\',1)" class="cart-qty-btn'+(maxReached?' maxed':'')+'">+</button>'+
+      '</div>'+
+      stockWarning+
+    '</div>'+
+    '<div style="text-align:right">'+
+      priceHtml+
+      '<button onclick="removeFromCart(\''+aid+'\')" class="cart-remove-btn">Eliminar</button>'+
+    '</div>'+
+  '</div>';
+}
+
 function renderCartBody(){
   var body=document.getElementById('cartBody');
   if(!body)return;
@@ -254,67 +300,27 @@ function renderCartBody(){
       var img=variant&&variant.image?'<img src="'+variant.image+'" style="width:100%;height:100%;object-fit:cover">':(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>');
       var sub=variant?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · '):p.sub;
       var displayName=variant&&variant.name?variant.name:p.name;
-      var priceHtml=
-        '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
-      var stockWarning=p.stock<=5&&p.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+p.stock+' disp.</div>':'';
-      var maxReached=p.stock>0&&item.qty>=p.stock?'opacity:.5;cursor:not-allowed;':'';
-      return'<div data-testid="cart-item-'+item.id+'" style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
-        '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+displayName+'</div>'+
-          '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(sub||'')+'</div>'+
-          '<div style="display:flex;align-items:center;gap:8px">'+
-            '<button onclick="updateCartQty(\''+item.id+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
-            '<span class="cart-qty-'+item.id+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
-            '<button onclick="updateCartQty(\''+item.id+'\',1)" style="'+maxReached+'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
-          '</div>'+
-          stockWarning+
-        '</div>'+
-        '<div style="text-align:right">'+
-          priceHtml+
-          '<button onclick="removeFromCart(\''+item.id+'\')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px">Eliminar</button>'+
-        '</div>'+
-      '</div>';
+      return ciHtml(item, item.id, p, null, img, sub, displayName, finalPrice, isPromo);
     }
     var a=getById(window.ACCS,item.productId||item.id);
     if(!a)return '';
-    var now2=new Date();
     var isPromo2=a.isOffer&&a.discount>0;
     var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
     var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
-    var priceHtml2=isPromo2?
-      '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>'+
-      '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(a.price*item.qty)+'</div>'+
-      '<div style="font-size:10px;color:var(--red);font-weight:600">-'+a.discount+'%</div>':
-      '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice2*item.qty)+'</div>';
-    var stockWarning2=a.stock<=5&&a.stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+a.stock+' disp.</div>':'';
-    var maxReached2=item.qty>=a.stock?'opacity:.5;cursor:not-allowed;':'';
-    return'<div data-testid="cart-item-'+a.id+'" style="display:flex;gap:12px;padding:12px;border-bottom:1px solid var(--border);align-items:center">'+
-      '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
-      '<div style="flex:1;min-width:0">'+
-        '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
-        '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(a.brand||'')+' '+(a.color||'')+'</div>'+
-        '<div style="display:flex;align-items:center;gap:8px">'+
-          '<button onclick="updateCartQty(\''+a.id+'\',-1)" style="width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">−</button>'+
-          '<span class="cart-qty-'+a.id+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
-          '<button onclick="updateCartQty(\''+a.id+'\',1)" style="'+maxReached2+'width:28px;height:28px;border:1px solid var(--border);border-radius:6px;background:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>'+
-        '</div>'+
-        stockWarning2+
-      '</div>'+
-      '<div style="text-align:right">'+
-        priceHtml2+
-        '<button onclick="removeFromCart(\''+a.id+'\')" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;margin-top:4px">Eliminar</button>'+
-      '</div>'+
-    '</div>';
+    return ciHtml(item, a.id, null, a, img2, (a.brand||'')+' '+(a.color||''), a.name, finalPrice2, isPromo2);
   }).join('')+
   '<div style="padding:16px;border-top:1px solid var(--border);background:var(--cream2)">'+
     '<div style="display:flex;justify-content:space-between;margin-bottom:12px">'+
-      '<span style="font-size:14px;color:var(--gray)">Total ('+cartItemCount()+' productos)</span>'+
-      '<span style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',serif">'+fmt(cartTotal())+'</span>'+
+      '<span id="cartTotalLabel" style="font-size:14px;color:var(--gray)">Total ('+cartItemCount()+' productos)</span>'+
+      '<span id="cartTotalVal" style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',serif">'+fmt(cartTotal())+'</span>'+
     '</div>'+
     '<button onclick="checkout()" data-testid="btn-cart-checkout" style="width:100%;padding:14px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Finalizar compra</button>'+
     '<button onclick="closeCart()" style="width:100%;margin-top:8px;padding:12px;background:none;color:var(--gray);border:1px solid var(--border);border-radius:12px;font-size:13px;cursor:pointer">Seguir comprando</button>'+
   '</div>';
+  setTimeout(function(){
+    var items=document.querySelectorAll('#cartBody .cart-item');
+    for(var i=0;i<items.length;i++)items[i].classList.add('ci-enter');
+  },30);
 }
 function checkout(){
   openCheckout();
