@@ -1049,6 +1049,22 @@
                   </div>
                   <div id="svPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem"></div>
                 </div>
+                <div style="margin-top:1.25rem">
+                  <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Fotos del DNI (requerido)</div>
+                  <div style="font-size:11px;color:var(--gray);margin-bottom:8px">Subi una foto del <strong>frente</strong> y otra del <strong>dorso</strong> de tu DNI</div>
+                  <div style="display:flex;gap:8px">
+                    <div id="svDniFrenteArea" style="flex:1;border:2px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)" onclick="document.getElementById('svDniFrenteInput').click()">
+                      <div id="svDniFrenteLabel" style="font-size:11px;color:var(--gray);line-height:1.6">&#128195;<br>Frente</div>
+                      <div id="svDniFrentePreview" style="display:none;margin-top:4px"></div>
+                      <input type="file" id="svDniFrenteInput" accept="image/*" style="display:none" onchange="handleSvDniPhotoSelect(this,'frente')">
+                    </div>
+                    <div id="svDniDorsoArea" style="flex:1;border:2px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)" onclick="document.getElementById('svDniDorsoInput').click()">
+                      <div id="svDniDorsoLabel" style="font-size:11px;color:var(--gray);line-height:1.6">&#128196;<br>Dorso</div>
+                      <div id="svDniDorsoPreview" style="display:none;margin-top:4px"></div>
+                      <input type="file" id="svDniDorsoInput" accept="image/*" style="display:none" onchange="handleSvDniPhotoSelect(this,'dorso')">
+                    </div>
+                  </div>
+                </div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(2)">&#8592;</button><button class="btn-nx" id="svN3" disabled onclick="svStep(4)">Continuar</button></div>
               </div>
               <!-- Paso 4: Envio + Cobro -->
