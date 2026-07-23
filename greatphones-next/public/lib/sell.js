@@ -183,7 +183,7 @@ function svSelectModel(model){
 function renderStorGrid(){
   var grid=document.getElementById('svStorGrid');
   if(!grid)return;
-  var storages=['16 GB','32 GB','64 GB','128 GB','256 GB','512 GB','1 TB'];
+  var storages=MODEL_STORAGES[sv.model]||['16 GB','32 GB','64 GB','128 GB','256 GB','512 GB','1 TB'];
   var html='';
   storages.forEach(function(s){
     var isSelected=sv.storage===s;
