@@ -902,6 +902,7 @@ function openDetail(id, variantId){
   window._selectedVariantIdx=-1;
   window._selectedVariant=null;
   window._variantsLoaded=false;
+  window._colorCircleState={selectedColor:null,selectedStorage:null};
   // Collect all product IDs sharing the same modelGroup
   var variantProdIds=[id];
   if(currentProd.modelGroup){
@@ -1256,6 +1257,85 @@ function renderDetailVariants(){
     return;
   }
   container.style.display='block';
+
+  // Determine model name for color circle matching
+  var modelName='';
+  if(currentProd&&currentProd.modelGroup)modelName=currentProd.modelGroup;
+  if(!modelName&&currentProd)modelName=currentProd.name;
+  var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[modelName];
+  var hexMap=window.COLOR_HEX||{};
+
+  // Use color circles for known iPhone models
+  if(modelColors&&modelColors.length&&variants.some(function(v){return v.color;})){
+    if(!window._colorCircleState)window._colorCircleState={selectedColor:null,selectedStorage:null};
+    var state=window._colorCircleState;
+
+    // Group variants by color
+    var colorMap={};
+    variants.forEach(function(v){
+      if(!v.color)return;
+      if(!colorMap[v.color])colorMap[v.color]=[];
+      colorMap[v.color].push(v);
+    });
+
+    var circlesHtml=modelColors.map(function(c){
+      var hex=hexMap[c]||'#ccc';
+      var available=!!colorMap[c];
+      var isSelected=c===state.selectedColor;
+      if(available&&!state.selectedColor)state.selectedColor=c;
+      if(!available) {
+        return '<div style="width:36px;height:36px;border-radius:50%;background:#ddd;cursor:not-allowed;border:2px solid #ccc;flex-shrink:0;position:relative;opacity:.45" title="'+c+' (no disponible)">'+
+          '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
+          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></div></div>';
+      }
+      return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
+    }).join('');
+
+    // Storage boxes for selected color
+    var storageHtml='';
+    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
+    if(storagesForColor&&storagesForColor.length){
+      if(!state.selectedStorage)state.selectedStorage=storagesForColor[0].storage||'';
+      var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
+      // Also get all storages from other colors to gray them out
+      var allColorStorages={};
+      Object.keys(colorMap).forEach(function(col){
+        allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
+      });
+      var validStorages=allColorStorages[state.selectedColor]||[];
+      storageHtml='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        allStorages.map(function(s){
+          var isAvailable=validStorages.indexOf(s)>=0;
+          var isSelected=s===state.selectedStorage;
+          if(isAvailable){
+            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" style="padding:6px 14px;border-radius:8px;border:2px solid '+(isSelected?'var(--orange)':'var(--border)')+';background:'+(isSelected?'var(--orange)':'#fff')+';color:'+(isSelected?'#fff':'var(--dk)')+';font-size:12px;font-weight:'+(isSelected?'700':'500')+';cursor:pointer;transition:all .15s">'+s+'</div>';
+          }
+          return '<div style="padding:6px 14px;border-radius:8px;border:2px dashed #ddd;background:#f5f5f5;color:#bbb;font-size:12px;cursor:not-allowed" title="No disponible para '+state.selectedColor+'">'+s+'</div>';
+        }).join('')+'</div></div>';
+    }else if(state.selectedColor&&!storagesForColor){
+      storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
+    }
+
+    list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      circlesHtml+'</div>'+storageHtml+'</div>';
+
+    // Auto-select variant based on selected color+storage
+    if(state.selectedColor&&state.selectedStorage){
+      var foundIdx=-1;
+      for(var vi=0;vi<variants.length;vi++){
+        var v=variants[vi];
+        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
+          foundIdx=vi;break;
+        }
+      }
+      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
+      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
+    }else if(variants.length>0)selectDetailVariant(0);
+    return;
+  }
+
+  // Fallback: original text pills for non-iPhone products
   list.innerHTML=variants.map(function(v,i){
     var isActive=i===window._selectedVariantIdx;
     var parts=[];
@@ -1264,7 +1344,6 @@ function renderDetailVariants(){
     if(v.cosmeticCondition&&!v.color&&!v.storage)parts.push(v.cosmeticCondition);
     var label=parts.join(' \u00B7 ')||'Variante '+(i+1);
     if(v.targetPrice){
-      // Find the specific product for this variant to check its discount
       var variantProd=null;
       if(v.productId){
         for(var pi=0;pi<PRODUCTS.length;pi++){
@@ -1287,6 +1366,19 @@ function renderDetailVariants(){
       'transition:all .15s;box-shadow:'+(isActive?'0 2px 8px rgba(255,107,44,.3)':'none')+
       '">'+label+'</button>';
   }).join('');
+}
+
+function onColorCircleClick(color){
+  if(!window._colorCircleState)return;
+  window._colorCircleState.selectedColor=color;
+  window._colorCircleState.selectedStorage=null;
+  renderDetailVariants();
+}
+
+function onStorageBoxClick(storage){
+  if(!window._colorCircleState)return;
+  window._colorCircleState.selectedStorage=storage;
+  renderDetailVariants();
 }
 function selCuota(el,n){
   document.querySelectorAll('.cuota-btn').forEach(function(c){
@@ -1808,6 +1900,12 @@ function updateProductFields(){
     if(processorField)processorField.style.display='none';
   }
 }
+window.selectAdminColor=function(color,el){
+  window._adminColorCircleSelected=color;
+  document.querySelectorAll('#adminColorContainer > div').forEach(function(d){d.style.borderColor='transparent';d.style.transform='scale(1)';});
+  el.style.borderColor='var(--orange)';
+  el.style.transform='scale(1.1)';
+};
 function saveProduct(){
   var prodId=document.getElementById('prodId').value;
   var isEdit=!!prodId;
@@ -1830,7 +1928,7 @@ function saveProduct(){
     stock:parseInt(document.getElementById('prodStock').value)||0,
     condition:document.getElementById('prodCondition').value||'Nuevo',
     type:document.getElementById('prodType').value||'celular',
-    color:document.getElementById('prodColor').value.trim(),
+    color:window._adminColorCircleSelected||document.getElementById('prodColor').value.trim(),
     screen:parseFloat(document.getElementById('prodScreen').value)||null,
     storage:document.getElementById('prodStorage').value||null,
     ram:document.getElementById('prodRam').value||null,
@@ -1911,6 +2009,31 @@ function editProduct(id){
   document.getElementById('prodCondition').value=p.condition||'Nuevo';
   document.getElementById('prodType').value=p.type||'celular';
   document.getElementById('prodColor').value=p.color||'';
+  // Color circles for iPhone models in admin edit
+  var prodModelName=p.modelGroup||p.name||'';
+  var prodColors=window.MODEL_COLORS&&window.MODEL_COLORS[prodModelName];
+  var colorField=document.getElementById('prodColor');
+  var colorContainer=document.getElementById('adminColorContainer');
+  if(!colorContainer){
+    colorContainer=document.createElement('div');
+    colorContainer.id='adminColorContainer';
+    colorContainer.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:6px';
+    colorField.parentNode.appendChild(colorContainer);
+  }
+  if(prodColors&&prodColors.length){
+    colorField.style.display='none';
+    colorContainer.style.display='flex';
+    var hexMap=window.COLOR_HEX||{};
+    window._adminColorCircleSelected=p.color||'';
+    colorContainer.innerHTML=prodColors.map(function(c){
+      var hex=hexMap[c]||'#ccc';
+      var isSelected=c===p.color;
+      return '<div onclick="selectAdminColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
+    }).join('');
+  }else{
+    colorField.style.display='';
+    colorContainer.style.display='none';
+  }
   document.getElementById('prodScreen').value=p.screen||'';
   document.getElementById('prodStorage').value=p.storage||'';
   document.getElementById('prodRam').value=p.ram||'';
@@ -2141,7 +2264,7 @@ function showImeiProductModal(existingProductId){
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Color</label><input class="imei-fld" id="if-color" placeholder="Ej: Graphite"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Color</label><input class="imei-fld" id="if-color" placeholder="Ej: Graphite" style="display:none"><div id="imeiColorContainer" style="display:none;min-height:36px"></div></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">RAM</label><select class="imei-fld" id="if-ram"><option value="">—</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option></select></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
@@ -2227,6 +2350,27 @@ function showImeiProductModal(existingProductId){
   }
 
   // Global helper functions for this modal
+  window.renderImeiColorSwatches=function(modelName,preselectColor){
+    var container=document.getElementById('imeiColorContainer');
+    if(!container)return;
+    var colors=(window.MODEL_COLORS&&window.MODEL_COLORS[modelName])||[];
+    var hexMap=window.COLOR_HEX||{};
+    if(!colors.length){container.style.display='none';return;}
+    container.style.display='flex';
+    container.style.gap='8px';
+    container.style.flexWrap='wrap';
+    container.innerHTML=colors.map(function(c){
+      var hex=hexMap[c]||'#ccc';
+      var isSelected=c===preselectColor;
+      return '<div onclick="selectImeiColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
+    }).join('');
+    if(preselectColor)window._imeiSelectedColor=preselectColor;
+  };
+  window.selectImeiColor=function(color,el){
+    window._imeiSelectedColor=color;
+    document.querySelectorAll('#imeiColorContainer > div').forEach(function(d){d.style.borderColor='transparent';});
+    el.style.borderColor='var(--orange)';
+  };
   window.lookupImei=function(){
     var input=document.getElementById('imeiInput');
     var imei=input.value.trim();
@@ -2273,6 +2417,21 @@ function showImeiProductModal(existingProductId){
       }
       document.getElementById('imeiResult').style.display='block';
       document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:rgba(34,197,94,.1);border-radius:8px;font-size:13px;color:var(--green)">✅ Datos obtenidos del IMEI. Revisá y editá si es necesario.</div>';
+
+      // Color circles for iPhone models
+      window._imeiSelectedColor=null;
+      var imeiModel=data.modelName||'';
+      var isIphone=window.SELL_MODELS&&window.SELL_MODELS['iPhone']&&window.SELL_MODELS['iPhone'].indexOf(imeiModel)>=0;
+      var modelColors=isIphone&&window.MODEL_COLORS&&window.MODEL_COLORS[imeiModel];
+      if(modelColors&&modelColors.length){
+        document.getElementById('if-color').style.display='none';
+        renderImeiColorSwatches(imeiModel,data.color);
+        document.getElementById('imeiColorContainer').style.display='flex';
+      }else{
+        document.getElementById('if-color').style.display='';
+        document.getElementById('imeiColorContainer').style.display='none';
+      }
+
       document.getElementById('imeiForm').style.display='block';
       document.getElementById('imeiInput').disabled=true;
       btn.style.display='none';
@@ -2638,13 +2797,13 @@ function showImeiProductModal(existingProductId){
     var productData={
       name: modelName || document.getElementById('if-modelName').value,
       brand: brand || 'Otro',
-      sub: [document.getElementById('if-storage').value,document.getElementById('if-color').value].filter(Boolean).join(' / '),
+      sub: [document.getElementById('if-storage').value,window._imeiSelectedColor||document.getElementById('if-color').value].filter(Boolean).join(' / '),
       price: price,
       cost: parseInt((document.getElementById('if-cost').value||'0').replace(/[^0-9]/g,''))||0,
       condition: document.getElementById('if-condition').value,
       type: document.getElementById('if-type').value,
       storage: document.getElementById('if-storage').value || null,
-      color: document.getElementById('if-color').value || null,
+      color: window._imeiSelectedColor||document.getElementById('if-color').value || null,
       ram: document.getElementById('if-ram').value || null,
       screen: screenVal?parseFloat(screenVal):null,
       battery: parseInt(document.getElementById('if-battery').value)||null,
