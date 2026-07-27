@@ -196,8 +196,12 @@
         </div>
       </div>
     </div>
-    <button class="sarr sarr-l" onclick="sliderPrev()">&#8592;</button>
-    <button class="sarr sarr-r" onclick="sliderNext()">&#8594;</button>
+    <button class="sarr sarr-l" onclick="sliderPrev()" aria-label="Anterior">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>
+    </button>
+    <button class="sarr sarr-r" onclick="sliderNext()" aria-label="Siguiente">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
     <div class="slider-nav" id="sliderNav"></div>
   </div>
 
@@ -210,53 +214,53 @@
       </div>
       <div class="cat-scroll">
         <div class="cat-flex">
-          <button class="cat-card cat-card-iphone" onclick="navShop('iPhone')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="navShop('iPhone')">
             <div class="cat-ico-wrap">
-              <img src="/icons/apple-logo-svgrepo-com.svg" alt="Apple" style="width:32px;height:32px;filter:invert(1)">
+              <img src="/icons/apple-logo-svgrepo-com.svg" alt="Apple" style="width:28px;height:28px;filter:invert(1)">
             </div>
             <span class="cat-label">iPhone</span>
           </button>
-          <button class="cat-card cat-card-macbook" onclick="navShop('MacBook')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="navShop('MacBook')">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="laptop_mac">laptop</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
             </div>
             <span class="cat-label">MacBook</span>
           </button>
-          <button class="cat-card cat-card-ipad" onclick="navShop('iPad')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="navShop('iPad')">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="tablet_mac">tablet</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
             </div>
             <span class="cat-label">iPad</span>
           </button>
-          <button class="cat-card cat-card-samsung" onclick="navShop('Samsung')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="navShop('Samsung')">
             <div class="cat-ico-wrap">
-              <img src="/icons/samsung-svgrepo-com.svg" alt="Samsung" style="width:40px;height:auto;filter:invert(1)">
+              <img src="/icons/samsung-svgrepo-com.svg" alt="Samsung" style="width:32px;height:auto;filter:invert(1)">
             </div>
             <span class="cat-label">Samsung</span>
           </button>
-          <button class="cat-card cat-card-notebooks" style="display:none" onclick="nav('notebooks')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" style="display:none" onclick="nav('notebooks')">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="computer">computer</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
             </div>
             <span class="cat-label">Notebooks</span>
           </button>
-          <button class="cat-card cat-card-accesorios" onclick="nav('accesorios')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="nav('accesorios')">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="headphones">headphones</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><circle cx="9" cy="8" r="4"/><path d="M21 18v-2a4 4 0 00-4-4"/><circle cx="15" cy="8" r="4"/></svg>
             </div>
             <span class="cat-label">Accesorios</span>
           </button>
-          <button class="cat-card cat-card-garantias" onclick="nav('garantias')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
+          <button class="cat-card" onclick="nav('garantias')">
             <div class="cat-ico-wrap">
-              <span class="material-symbols-outlined text-3xl" data-icon="verified_user">verified</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
             <span class="cat-label">Garantías</span>
           </button>
-          <button class="cat-card cat-card-accent" onclick="navShop('ofertas')" onmousemove="svMagnetic(event,this)" onmouseleave="svMagneticReset(this)">
-            <div class="cat-ico-wrap cat-ico-accent">
-              <span class="material-symbols-outlined text-3xl" data-icon="local_offer" style="font-variation-settings:'FILL'1">sell</span>
+          <button class="cat-card cat-card-accent" onclick="navShop('ofertas')">
+            <div class="cat-ico-wrap">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
-            <span class="cat-label cat-label-accent">Ofertas</span>
+            <span class="cat-label">Ofertas</span>
           </button>
         </div>
       </div>
@@ -1044,6 +1048,22 @@
                     <input type="file" id="svPhotoInput" accept="image/*" style="display:none" onchange="handleSvPhotoSelect(this)">
                   </div>
                   <div id="svPhotoPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:.5rem"></div>
+                </div>
+                <div style="margin-top:1.25rem">
+                  <div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Fotos del DNI (requerido)</div>
+                  <div style="font-size:11px;color:var(--gray);margin-bottom:8px">Subi una foto del <strong>frente</strong> y otra del <strong>dorso</strong> de tu DNI</div>
+                  <div style="display:flex;gap:8px">
+                    <div id="svDniFrenteArea" style="flex:1;border:2px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)" onclick="document.getElementById('svDniFrenteInput').click()">
+                      <div id="svDniFrenteLabel" style="font-size:11px;color:var(--gray);line-height:1.6">&#128195;<br>Frente</div>
+                      <div id="svDniFrentePreview" style="display:none;margin-top:4px"></div>
+                      <input type="file" id="svDniFrenteInput" accept="image/*" style="display:none" onchange="handleSvDniPhotoSelect(this,'frente')">
+                    </div>
+                    <div id="svDniDorsoArea" style="flex:1;border:2px dashed var(--border);border-radius:12px;padding:1rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--cream)" onclick="document.getElementById('svDniDorsoInput').click()">
+                      <div id="svDniDorsoLabel" style="font-size:11px;color:var(--gray);line-height:1.6">&#128196;<br>Dorso</div>
+                      <div id="svDniDorsoPreview" style="display:none;margin-top:4px"></div>
+                      <input type="file" id="svDniDorsoInput" accept="image/*" style="display:none" onchange="handleSvDniPhotoSelect(this,'dorso')">
+                    </div>
+                  </div>
                 </div>
                 <div class="nav-row"><button class="btn-bk" onclick="svStep(2)">&#8592;</button><button class="btn-nx" id="svN3" disabled onclick="svStep(4)">Continuar</button></div>
               </div>
@@ -2439,62 +2459,147 @@
 
         <!-- ===== STEP 4: PAGO ===== -->
         <div class="checkout-step-content" data-step="4" style="display:none">
+          <!-- PLAN DE CUOTAS -->
           <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:16px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+              <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Plan de cuotas</h2>
+              <div>
+                <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin:0">Plan de cuotas</h2>
+                <p style="font-size:12px;color:var(--gray);margin:2px 0 0">Elegí cuántas cuotas querés</p>
+              </div>
             </div>
-            <div id="checkout-cuotas" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" data-testid="checkout-cuotas">
-              <button class="cuota-btn" data-cuota="1" onclick="selCheckoutCuota(this,1)" style="padding:14px 8px;border-radius:12px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green);cursor:pointer;transition:all .12s"><span style="font-size:18px;font-weight:700;display:block">1</span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.4px">Sin Int.</span></button>
-              <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)" style="padding:14px 8px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer;transition:all .12s"><span style="font-size:18px;font-weight:700;display:block">3</span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.4px">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)" style="padding:14px 8px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer;transition:all .12s"><span style="font-size:18px;font-weight:700;display:block">6</span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.4px">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="12" onclick="selCheckoutCuota(this,12)" style="padding:14px 8px;border-radius:12px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer;transition:all .12s"><span style="font-size:18px;font-weight:700;display:block">12</span><span style="font-size:10px;text-transform:uppercase;letter-spacing:.4px">Fijas</span></button>
-            </div>
-            <div id="checkout-cuotas-detail" style="margin-top:12px;padding:12px 16px;background:var(--cream);border-radius:10px;display:none;justify-content:space-between;align-items:center">
-              <span style="font-size:13px;font-weight:600;color:var(--dk)" id="pago-cuotas-label">1x sin interés</span>
-              <span style="font-size:16px;font-weight:700;color:var(--green)" id="pago-cuotas-amount">$0</span>
+            <div id="checkout-cuotas" style="display:flex;flex-direction:column;gap:10px" data-testid="checkout-cuotas">
+              <!-- 1 cuota - default -->
+              <button class="cuota-btn" data-cuota="1" onclick="selCheckoutCuota(this,1)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:var(--green);color:#fff;border:2px solid var(--green);cursor:pointer;transition:all .2s;text-align:left;width:100%">
+                <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:22px;font-weight:800">1</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
+                    Pago único
+                    <span style="font-size:9px;background:rgba(255,255,255,.3);padding:4px 10px;border-radius:4px;font-weight:600;white-space:nowrap">SIN INTERÉS</span>
+                  </div>
+                  <div style="font-size:12px;opacity:.85;margin-top:2px">Abonás todo de una</div>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+              </button>
+
+              <!-- 3 cuotas -->
+              <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
+                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:22px;font-weight:800;color:var(--dk)">3</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
+                    3 cuotas fijas
+                    <span style="font-size:9px;color:var(--green);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">SIN INTERÉS</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Iguales y sin recargo</div>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+
+              <!-- 6 cuotas -->
+              <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
+                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:22px;font-weight:800;color:var(--dk)">6</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
+                    6 cuotas fijas
+                    <span style="font-size:9px;color:var(--green);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">SIN INTERÉS</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Iguales y sin recargo</div>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+
+              <!-- 12 cuotas -->
+              <button class="cuota-btn" data-cuota="12" onclick="selCheckoutCuota(this,12)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
+                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font-size:22px;font-weight:800;color:var(--dk)">12</span>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
+                    12 cuotas fijas
+                    <span style="font-size:9px;color:var(--orange);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">CON INTERÉS</span>
+                  </div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Tasa fija mensual</div>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
             </div>
           </section>
 
+          <!-- MÉTODO DE PAGO -->
           <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
+              <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
               </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Método de pago</h2>
+              <div>
+                <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin:0">Método de pago</h2>
+                <p style="font-size:12px;color:var(--gray);margin:2px 0 0">Elegí cómo querés abonar</p>
+              </div>
             </div>
-            <div style="display:flex;flex-direction:column;gap:10px">
-              <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:48px;height:48px;border-radius:12px;background:#009EE3;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <!-- Mercado Pago -->
+              <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:52px;height:52px;border-radius:14px;background:#009EE3;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
+                  <img src="/icons/payments/mercadopago.png" alt="Mercado Pago" style="width:100%;height:100%;object-fit:contain">
                 </div>
                 <div style="flex:1">
-                  <div style="font-size:15px;font-weight:600;color:var(--dk)">Mercado Pago</div>
-                  <div style="font-size:12px;color:var(--gray)">Pagá con saldo, QR o link de pago</div>
+                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Mercado Pago</div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Saldo, QR, link de pago o tarjeta</div>
                 </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <img src="/icons/payments/Visa.webp" alt="Visa" style="height:20px;opacity:.7;border-radius:3px">
+                  <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:20px;opacity:.7;border-radius:3px">
+                </div>
               </div>
-              <div onclick="selectPaymentMethod('wallet',this)" class="payment-method-card" id="walletPaymentMethod" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+
+              <!-- Saldo Great Phones -->
+              <div onclick="selectPaymentMethod('wallet',this)" class="payment-method-card" id="walletPaymentMethod" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 12h8M12 8h8M12 16h4"/></svg>
                 </div>
                 <div style="flex:1">
-                  <div style="font-size:15px;font-weight:600;color:var(--dk)">Saldo Great Phones</div>
-                  <div style="font-size:12px;color:var(--gray)">Pagá con el saldo de tu billetera</div>
+                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Saldo Great Phones</div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá con el saldo de tu billetera</div>
                 </div>
-                <div id="walletBalanceCheckout" style="font-size:11px;color:var(--gray)">Cargando...</div>
+                <div id="walletBalanceCheckout" style="font-size:13px;font-weight:700;color:var(--green);white-space:nowrap">Cargando...</div>
               </div>
-              <div onclick="selectPaymentMethod('tarjeta',this)" class="payment-method-card" style="padding:16px 20px;border:2px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:14px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:48px;height:48px;border-radius:12px;background:var(--dk);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+
+              <!-- Tarjeta de crédito/débito -->
+              <div onclick="selectPaymentMethod('tarjeta',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
                 </div>
                 <div style="flex:1">
-                  <div style="font-size:15px;font-weight:600;color:var(--dk)">Tarjeta de crédito/débito</div>
-                  <div style="font-size:12px;color:var(--gray)">Visa, Mastercard y más</div>
+                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Tarjeta de crédito o débito</div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Visa y Mastercard</div>
                 </div>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <img src="/icons/payments/Visa.webp" alt="Visa" style="height:24px;border-radius:4px;border:1px solid var(--border)">
+                  <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:24px;border-radius:4px;border:1px solid var(--border)">
+                </div>
+              </div>
+
+              <!-- Pago Fácil / Rapi Pago -->
+              <div onclick="selectPaymentMethod('efectivo',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#e53935 0%,#b71c1c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </div>
+                <div style="flex:1">
+                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Pago Fácil / Rapi Pago</div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá en efectivo en cualquier sucursal</div>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <img src="/icons/payments/Pagofacil.png" alt="Pago Fácil" style="height:28px;border-radius:4px;border:1px solid var(--border)">
+                  <img src="/icons/payments/rapipago.webp" alt="Rapi Pago" style="height:28px;border-radius:4px;border:1px solid var(--border)">
+                </div>
               </div>
             </div>
           </section>
@@ -2534,9 +2639,12 @@
             </div>
           </div>
 
-          <div id="checkout-cuotas-box" style="background:var(--cream);border-radius:10px;padding:10px 14px;margin-bottom:.875rem;display:none;justify-content:space-between;align-items:center">
-            <span style="font-size:13px;font-weight:600;color:var(--dk)" id="checkout-cuotas-label">1x sin interés</span>
-            <span style="font-size:15px;font-weight:700;color:var(--green)" id="checkout-cuotas-amount">$0</span>
+          <div id="checkout-cuotas-box" style="background:var(--cream);border-radius:10px;padding:12px 14px;margin-bottom:.875rem;display:none;justify-content:space-between;align-items:center">
+            <div>
+              <span style="font-size:13px;font-weight:600;color:var(--dk)" id="checkout-cuotas-label">1x sin interés</span>
+              <span style="font-size:11px;color:var(--gray);display:block;margin-top:1px" id="checkout-cuotas-sidebar-total"></span>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:var(--green)" id="checkout-cuotas-amount">$0<span style="font-size:10px;font-weight:500;color:var(--gray)">/mes</span></span>
           </div>
 
           <div style="display:flex;justify-content:space-between;align-items:center">
@@ -2550,9 +2658,9 @@
               <span>Compra 100% segura</span>
             </div>
             <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">
-              <div style="padding:4px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:700;color:#009ee3">Mercado Pago</div>
-              <div style="padding:4px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:700;color:#1a1f71">VISA</div>
-              <div style="padding:4px 10px;background:#fff;border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:700;color:#eb001b">Mastercard</div>
+              <img src="/icons/payments/mercadopago.png" alt="Mercado Pago" style="height:22px;border-radius:4px;border:1px solid var(--border);object-fit:contain">
+              <img src="/icons/payments/Visa.webp" alt="Visa" style="height:22px;border-radius:4px;border:1px solid var(--border)">
+              <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:22px;border-radius:4px;border:1px solid var(--border)">
             </div>
             <div style="text-align:center;font-size:10px;color:var(--gray);line-height:1.6">
               <a onclick="nav('terminos')" style="cursor:pointer;text-decoration:underline;color:var(--gray)">Política de devoluciones</a> · Garantía legal 6 meses

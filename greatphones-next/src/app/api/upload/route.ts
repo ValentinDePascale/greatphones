@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireSession } from '@/lib/auth-guard'
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -25,7 +25,7 @@ export async function OPTIONS() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin(request)
+    await requireSession(request)
     const formData = await request.formData()
     const file = formData.get('file') as File
     
@@ -65,7 +65,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Upload error:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Error subiendo imagen'
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    return NextResponse.json({ error: 'Error subiendo imagen' }, { status: 500 })
   }
 }

@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       clientProvince,
       signature,
       photos,
+      dniPhotos,
       extras,
     } = body
 
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
         clientProvince,
         signature,
         photos: photos || [],
+        dniPhotos: dniPhotos || [],
         extras: extras || [],
       },
     })
@@ -131,7 +133,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, quote }, { status: 201 })
   } catch (error) {
     console.error('Error creating quote:', error)
-    return NextResponse.json({ error: 'Failed to create quote' }, { status: 500 })
+    const message = error instanceof Error ? error.message : typeof error === 'object' && error !== null ? (error as any).message || JSON.stringify(error) : String(error)
+    return NextResponse.json({ error: message }, { status: (error as any).status || 500 })
   }
 }
 

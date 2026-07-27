@@ -77,7 +77,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     })
   } catch (error) {
     console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product', details: String(error) }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
   }
 }
 

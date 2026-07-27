@@ -1,4 +1,5 @@
 import { prisma } from './prisma'
+import { Prisma } from '@prisma/client'
 
 export async function rateLimit(
   key: string,
@@ -8,18 +9,18 @@ export async function rateLimit(
   const now = Date.now()
   const expiresAt = new Date(now + windowMs)
 
-  const result = await prisma.$queryRawUnsafe<
+  const result = await prisma.$queryRaw<
     Array<{ count: bigint; resetAt: Date }>
   >(
-    `INSERT INTO "RateLimit" (key, count, "expiresAt", "createdAt", "updatedAt")
-     VALUES ($1, 1, $2, NOW(), NOW())
-     ON CONFLICT (key) DO UPDATE SET
-       count = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN 1 ELSE "RateLimit"."count" + 1 END,
-       "expiresAt" = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN $2 ELSE "RateLimit"."expiresAt" END,
-       "updatedAt" = NOW()
-     RETURNING count, "expiresAt" AS "resetAt"`,
-    key,
-    expiresAt
+    Prisma.sql`
+      INSERT INTO "RateLimit" (key, count, "expiresAt", "createdAt", "updatedAt")
+      VALUES (${key}, 1, ${expiresAt}, NOW(), NOW())
+      ON CONFLICT (key) DO UPDATE SET
+        count = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN 1 ELSE "RateLimit"."count" + 1 END,
+        "expiresAt" = CASE WHEN "RateLimit"."expiresAt" < NOW() THEN ${expiresAt} ELSE "RateLimit"."expiresAt" END,
+        "updatedAt" = NOW()
+      RETURNING count, "expiresAt" AS "resetAt"
+    `
   )
 
   const row = result?.[0]
@@ -43,11 +44,12 @@ export async function getRateLimitInfo(
   const now = Date.now()
   const nowDate = new Date(now)
 
-  const result = await prisma.$queryRawUnsafe<
+  const result = await prisma.$queryRaw<
     Array<{ count: bigint; expiresAt: Date }>
   >(
-    `SELECT count, "expiresAt" FROM "RateLimit" WHERE key = $1`,
-    key
+    Prisma.sql`
+      SELECT count, "expiresAt" FROM "RateLimit" WHERE key = ${key}
+    `
   )
 
   const row = result?.[0]

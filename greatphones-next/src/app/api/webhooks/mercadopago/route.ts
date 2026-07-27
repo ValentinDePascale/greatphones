@@ -9,17 +9,16 @@ const client = new MercadoPagoConfig({
 });
 
 function verifyWebhookSignature(request: NextRequest): boolean {
-  const signature = request.headers.get('x-signature') || '';
-  const requestId = request.headers.get('x-request-id') || '';
-  const dataId = request.headers.get('data-id') || '';
-
   if (!process.env.MP_WEBHOOK_SECRET) {
-    return true;
-  }
-
-  if (!signature) {
+    console.error('[MP Webhook] MP_WEBHOOK_SECRET not configured — rejecting');
     return false;
   }
+
+  const signature = request.headers.get('x-signature') || '';
+  if (!signature) return false;
+
+  const requestId = request.headers.get('x-request-id') || '';
+  const dataId = request.headers.get('data-id') || '';
 
   const params = new URLSearchParams(request.url.split('?')[1] || '');
   const topic = params.get('topic') || params.get('type') || '';
@@ -34,7 +33,7 @@ function verifyWebhookSignature(request: NextRequest): boolean {
 
   const stringToSign = parts.join('\n');
   const expectedSignature = crypto
-    .createHmac('sha256', process.env.MP_WEBHOOK_SECRET || '')
+    .createHmac('sha256', process.env.MP_WEBHOOK_SECRET)
     .update(stringToSign)
     .digest('hex');
 

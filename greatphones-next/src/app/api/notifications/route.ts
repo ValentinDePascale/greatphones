@@ -70,6 +70,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await requireSession(request)
     const body = await request.json()
     const { userId, type, title, text, conversationId, messageId } = body
 

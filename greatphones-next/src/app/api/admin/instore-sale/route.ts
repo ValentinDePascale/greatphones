@@ -344,13 +344,7 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error creating in-store sale:', error)
-    var msg = 'Error al crear la venta'
-    var details = ''
-    if (error instanceof Error) {
-      msg = error.message
-      details = error.stack || ''
-    }
-    return NextResponse.json({ error: msg, details: details.substring(0,500) }, { status: 500 })
+    return NextResponse.json({ error: 'Error al crear la venta' }, { status: 500 })
   }
 }
 

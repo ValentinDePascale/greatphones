@@ -372,6 +372,7 @@ model Quote {
   clientProvince String?
 
   photos      String[]
+  dniPhotos   String[]
   extras      String[]
 
   rejectReason String?

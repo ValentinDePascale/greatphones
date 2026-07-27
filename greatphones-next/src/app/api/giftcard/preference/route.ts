@@ -107,7 +107,6 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('[GiftCard Preference] Error:', error)
     const status = error.status || 500
-    const message = error.message || 'Error al crear la Gift Card'
-    return NextResponse.json({ error: message }, { status })
+    return NextResponse.json({ error: 'Error al crear la Gift Card' }, { status })
   }
 }

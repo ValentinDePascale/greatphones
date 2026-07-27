@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       cuotas,
       carrier,
       carrierService,
+      paymentMethod,
     } = body;
 
     const user = await findOrCreateUser(email, phone, document);
@@ -136,6 +137,14 @@ export async function POST(request: NextRequest) {
     const cleanDoc = document.replace(/[^0-9]/g, '');
     const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
 
+    // Filter payment types shown on MP checkout based on selected method
+    const excludedTypes: Record<string, string[]> = {
+      mercadopago: [],                          // all types
+      tarjeta: ['ticket', 'bank_transfer', 'atm', 'prepaid_card'],  // only credit+debit
+      efectivo: ['credit_card', 'debit_card', 'bank_transfer', 'atm', 'prepaid_card'], // only ticket
+    };
+    const excluded = excludedTypes[paymentMethod || 'mercadopago'] || excludedTypes.mercadopago;
+
     const preferenceData = {
       items: mpItems,
       payer: {
@@ -161,7 +170,7 @@ export async function POST(request: NextRequest) {
       notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
       external_reference: orderCode,
       auto_return: 'approved' as const,
-      payment_types: { excluded_types: [] }
+      payment_types: { excluded_types: excluded }
     };
 
     const mpPreference = new Preference(client);
@@ -189,6 +198,7 @@ export async function POST(request: NextRequest) {
           code: orderCode,
           userId: userId,
           status: 'PENDING',
+          payment: paymentMethod || 'mercadopago',
           warranty: warranty || '90 dias',
           cuotas: cuotas || 1,
           subtotal: calculatedSubtotal,
@@ -227,10 +237,10 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    if (error.status && error.message) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
     console.error('Checkout error:', error);
+    if (error.status) {
+      return NextResponse.json({ error: 'Error al procesar el pago' }, { status: error.status });
+    }
     return NextResponse.json(
       { error: 'Error al procesar el pago. Intenta novamente.' },
       { status: 500 }

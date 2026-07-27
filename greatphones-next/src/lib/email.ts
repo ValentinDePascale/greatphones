@@ -1,5 +1,11 @@
 import nodemailer from 'nodemailer';
 
+function escapeHtml(text: unknown): string {
+  const s = String(text ?? '')
+  const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
+  return s.replace(/[&<>"']/g, c => map[c])
+}
+
 const transporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
   ? nodemailer.createTransport({
       service: 'gmail',
@@ -55,7 +61,7 @@ export async function sendArrepentimientoEmail(data: {
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Número de Trámite:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${data.tramite}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(data.tramite)}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Orden:</strong></td>
@@ -63,15 +69,15 @@ export async function sendArrepentimientoEmail(data: {
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Email del cliente:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${data.email}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(data.email)}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Teléfono:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${data.telefono || 'No proporcionado'}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(data.telefono) || 'No proporcionado'}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Motivo:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">${data.motivo || 'No especificado'}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${escapeHtml(data.motivo) || 'No especificado'}</td>
           </tr>
         </table>
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
@@ -93,7 +99,7 @@ export async function sendArrepentimientoEmail(data: {
         <table style="width: 100%; border-collapse: collapse; background: #f5f5f5;">
           <tr>
             <td style="padding: 12px;"><strong>Número de Trámite:</strong></td>
-            <td style="padding: 12px;">${data.tramite}</td>
+            <td style="padding: 12px;">${escapeHtml(data.tramite)}</td>
           </tr>
           <tr>
             <td style="padding: 12px;"><strong>Orden:</strong></td>
@@ -196,7 +202,7 @@ export async function sendArrepRejectEmail(data: {
         <p>Hola,</p>
         <p>Te informamos que tu solicitud de arrepentimiento para la orden <strong>${data.orderCode}</strong> ha sido <strong>rechazada</strong>.</p>
         <p style="background: #fef2f2; padding: 16px; border-radius: 8px; border-left: 4px solid #dc2626;">
-          <strong>Motivo:</strong> ${data.reason}
+          <strong>Motivo:</strong> ${escapeHtml(data.reason)}
         </p>
         <p style="margin-top: 20px;">
           Si consideras que esta decision es incorrecta, podes comunicarte con nosotros para revisar tu caso.
@@ -230,7 +236,7 @@ export async function sendOrderConfirmationEmail(data: {
 }) {
   const itemsHtml = data.items.map(item => `
     <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eee;">${item.name}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eee;">${escapeHtml(item.name)}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: center;">${item.quantity}</td>
       <td style="padding: 10px; border-bottom: 1px solid #eee; text-align: right;">$${item.price.toLocaleString('es-AR')}</td>
     </tr>
@@ -252,7 +258,7 @@ export async function sendOrderConfirmationEmail(data: {
         <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
           <strong>Orden:</strong> ${data.orderCode}<br>
           <strong>Total pagado:</strong> $${data.total.toLocaleString('es-AR')}<br>
-          <strong>Metodo de pago:</strong> ${data.paymentMethod}<br>
+          <strong>Metodo de pago:</strong> ${escapeHtml(data.paymentMethod)}<br>
           <strong>Cuotas:</strong> ${installmentsText}
         </div>
 
@@ -271,13 +277,13 @@ export async function sendOrderConfirmationEmail(data: {
         </table>
 
         <h3 style="margin-top: 24px;">Direccion de envio:</h3>
-        <p style="background: #f5f5f5; padding: 12px; border-radius: 8px;">${data.shippingAddress || 'Retiro en tienda'}</p>
+        <p style="background: #f5f5f5; padding: 12px; border-radius: 8px;">${escapeHtml(data.shippingAddress) || 'Retiro en tienda'}</p>
 
         ${data.trackingNumber ? `
         <div style="background: #fff7ed; padding: 16px; border-radius: 8px; border-left: 4px solid #f97316; margin: 20px 0;">
           <strong>Datos de envio:</strong><br>
-          <strong>Correo:</strong> ${data.carrier || 'Envio'}<br>
-          <strong>Numero de seguimiento:</strong> ${data.trackingNumber}<br>
+          <strong>Correo:</strong> ${escapeHtml(data.carrier) || 'Envio'}<br>
+          <strong>Numero de seguimiento:</strong> ${escapeHtml(data.trackingNumber)}<br>
           <p style="margin: 8px 0 0; font-size: 13px; color: #666;">Segui tu envio en la seccion "Seguir mi pedido" de nuestra web.</p>
         </div>
         ` : ''}
@@ -320,16 +326,16 @@ export async function sendNewMessageToAdminEmail(data: {
 
   await sendEmail({
     to: data.adminEmail,
-    subject: `Nuevo mensaje de ${data.userName} - Great Phones Chat`,
+    subject: `Nuevo mensaje de ${escapeHtml(data.userName)} - Great Phones Chat`,
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
         <h2 style="color: #ff6b2c;">Nuevo mensaje en el chat</h2>
         <p>Hola equipo de Great Phones,</p>
-        <p>Tienes un nuevo mensaje de <strong>${data.userName}</strong> en el chat de soporte.</p>
+        <p>Tienes un nuevo mensaje de <strong>${escapeHtml(data.userName)}</strong> en el chat de soporte.</p>
         
         <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
-          <strong>Tipo:</strong> ${typeLabels[data.conversationType] || data.conversationType}<br>
-          <strong>Mensaje:</strong> ${data.messageText.substring(0, 200)}${data.messageText.length > 200 ? '...' : ''}
+          <strong>Tipo:</strong> ${typeLabels[data.conversationType] || escapeHtml(data.conversationType)}<br>
+          <strong>Mensaje:</strong> ${escapeHtml(data.messageText.substring(0, 200))}${data.messageText.length > 200 ? '...' : ''}
         </div>
 
         <p style="margin-top: 20px;">
@@ -360,11 +366,11 @@ export async function sendAdminReplyEmail(data: {
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
         <h2 style="color: #ff6b2c;">Nuevo mensaje del administrador</h2>
-        <p>Hola ${data.userName},</p>
+        <p>Hola ${escapeHtml(data.userName)},</p>
         <p>Tienes un nuevo mensaje del administrador en tu conversacion de soporte.</p>
         
         <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
-          <strong>Mensaje:</strong> ${data.messageText.substring(0, 200)}${data.messageText.length > 200 ? '...' : ''}
+          <strong>Mensaje:</strong> ${escapeHtml(data.messageText.substring(0, 200))}${data.messageText.length > 200 ? '...' : ''}
         </div>
 
         <p style="margin-top: 20px;">
@@ -407,7 +413,7 @@ export async function sendOrderStatusEmail(data: {
   if (data.trackingNumber && data.newStatus === 'SHIPPED') {
     trackingHtml = `
       <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
-        <strong>Numero de tracking:</strong> ${data.trackingNumber}<br>
+        <strong>Numero de tracking:</strong> ${escapeHtml(data.trackingNumber)}<br>
         <small>Podes seguir tu envio con este codigo</small>
       </div>
     `
@@ -419,8 +425,8 @@ export async function sendOrderStatusEmail(data: {
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
         <h2 style="color: #ff6b2c;">Actualizacion de tu pedido</h2>
-        <p>Hola ${data.userName},</p>
-        <p>El estado de tu pedido <strong>${data.orderCode}</strong> ha sido actualizado:</p>
+        <p>Hola ${escapeHtml(data.userName)},</p>
+        <p>El estado de tu pedido <strong>${escapeHtml(data.orderCode)}</strong> ha sido actualizado:</p>
         
         <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
           <strong>Nuevo estado:</strong> ${newStatusLabel}
@@ -465,11 +471,11 @@ export async function sendNewQuoteEmail(data: {
   }
 
   const extrasHtml = data.extras.length > 0
-    ? data.extras.map(e => `<li>${extrasLabels[e] || e}</li>`).join('')
+    ? data.extras.map(e => `<li>${extrasLabels[e] || escapeHtml(e)}</li>`).join('')
     : '<li>Ninguno</li>'
 
   const photosHtml = data.photos.length > 0
-    ? data.photos.map(p => `<img src="${p}" style="max-width:200px;margin:8px;border-radius:8px">`).join('')
+    ? data.photos.map(p => `<img src="${escapeHtml(p)}" style="max-width:200px;margin:8px;border-radius:8px">`).join('')
     : '<p>No se adjuntaron fotos</p>'
 
   await sendEmail({
@@ -481,8 +487,8 @@ export async function sendNewQuoteEmail(data: {
         
         <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
           <strong>Codigo:</strong> ${data.code}<br>
-          <strong>Dispositivo:</strong> ${data.device} ${data.storage}<br>
-          <strong>Estado:</strong> ${data.condition}<br>
+          <strong>Dispositivo:</strong> ${escapeHtml(data.device)} ${escapeHtml(data.storage)}<br>
+          <strong>Estado:</strong> ${escapeHtml(data.condition)}<br>
           <strong>Precio estimado:</strong> $${data.finalPrice.toLocaleString('es-AR')}
         </div>
 
@@ -491,9 +497,9 @@ export async function sendNewQuoteEmail(data: {
 
         <h3>Datos del cliente:</h3>
         <p>
-          <strong>Nombre:</strong> ${data.clientName}<br>
-          <strong>Telefono:</strong> ${data.clientPhone}<br>
-          ${data.clientEmail ? `<strong>Email:</strong> ${data.clientEmail}<br>` : ''}
+          <strong>Nombre:</strong> ${escapeHtml(data.clientName)}<br>
+          <strong>Telefono:</strong> ${escapeHtml(data.clientPhone)}<br>
+          ${data.clientEmail ? `<strong>Email:</strong> ${escapeHtml(data.clientEmail)}<br>` : ''}
         </p>
 
         <h3>Fotos del dispositivo:</h3>

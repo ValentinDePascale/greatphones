@@ -41,8 +41,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error approving sale:', error)
-    var msg = 'Error al aprobar la venta'
-    if (error instanceof Error) msg = error.message
-    return NextResponse.json({ error: msg }, { status: 500 })
+    return NextResponse.json({ error: 'Error al aprobar la venta' }, { status: 500 })
   }
 }

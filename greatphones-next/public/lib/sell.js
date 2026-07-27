@@ -44,6 +44,8 @@ function checkSellLogin(){
 }
 
 var svPhotos=[];
+var svDniFrente=null;
+var svDniDorso=null;
 
 function handleSvPhotoSelect(input){
   if(input.files&&input.files[0])uploadSvPhoto(input.files[0]);
@@ -88,6 +90,45 @@ function renderSvPhotoPreview(){
       '<button onclick="removeSvPhoto(\''+url+'\')" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'+
     '</div>';
   }).join('');
+}
+
+function handleSvDniPhotoSelect(input,side){
+  if(input.files&&input.files[0])uploadSvDniPhoto(input.files[0],side);
+}
+
+function uploadSvDniPhoto(file,side){
+  if(!file||!file.type.startsWith('image/'))return;
+  var formData=new FormData();
+  formData.append('file',file);
+  fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
+    if(data.url){
+      if(side==='frente')svDniFrente=data.url;
+      else svDniDorso=data.url;
+      renderSvDniPreview(side,data.url);
+      svChkData();
+    }
+  }).catch(function(e){console.error('Error uploading DNI photo:',e);});
+}
+
+function removeSvDniPhoto(side){
+  if(side==='frente'){svDniFrente=null;document.getElementById('svDniFrentePreview').innerHTML='';document.getElementById('svDniFrentePreview').style.display='none';document.getElementById('svDniFrenteLabel').style.display='block';}
+  else{svDniDorso=null;document.getElementById('svDniDorsoPreview').innerHTML='';document.getElementById('svDniDorsoPreview').style.display='none';document.getElementById('svDniDorsoLabel').style.display='block';}
+  svChkData();
+}
+
+function renderSvDniPreview(side,url){
+  var previewId='svDni'+side.charAt(0).toUpperCase()+side.slice(1)+'Preview';
+  var labelId='svDni'+side.charAt(0).toUpperCase()+side.slice(1)+'Label';
+  var preview=document.getElementById(previewId);
+  var label=document.getElementById(labelId);
+  if(preview){
+    preview.style.display='block';
+    preview.innerHTML='<div style="position:relative;width:100%;aspect-ratio:1.6;border-radius:8px;overflow:hidden;border:1px solid var(--border)">'+
+      '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'+
+      '<button onclick="removeSvDniPhoto(\''+side+'\');event.stopPropagation()" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'+
+    '</div>';
+  }
+  if(label)label.style.display='none';
 }
 
 function svStep(n){
@@ -142,7 +183,7 @@ function svSelectModel(model){
 function renderStorGrid(){
   var grid=document.getElementById('svStorGrid');
   if(!grid)return;
-  var storages=['16 GB','32 GB','64 GB','128 GB','256 GB','512 GB','1 TB'];
+  var storages=MODEL_STORAGES[sv.model]||['16 GB','32 GB','64 GB','128 GB','256 GB','512 GB','1 TB'];
   var html='';
   storages.forEach(function(s){
     var isSelected=sv.storage===s;
@@ -234,6 +275,7 @@ function svFillUserData(){
 function svChkData(){
   var fields=['svNombre','svDni','svTel','svEmail','svCiudad','svProvincia'];
   var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>0;});
+  ok=ok&&svDniFrente&&svDniDorso;
   var btn=document.getElementById('svN3');
   if(btn)btn.disabled=!ok;
 }
@@ -317,6 +359,7 @@ function svSubmit(){
     clientCp:cp,
     clientProvince:provincia,
     photos:svPhotos,
+    dniPhotos:[svDniFrente,svDniDorso].filter(function(u){return u;}),
     extras:extrasSelected,
   };
 
@@ -365,7 +408,14 @@ function svReset(){
   ['xPant','xBat','xIcloud','xCaja','xAcc'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   svUpdExt();
   svPhotos=[];
+  svDniFrente=null;svDniDorso=null;
   renderSvPhotoPreview();
+  ['Frente','Dorso'].forEach(function(side){
+    var preview=document.getElementById('svDni'+side+'Preview');
+    if(preview){preview.innerHTML='';preview.style.display='none';}
+    var label=document.getElementById('svDni'+side+'Label');
+    if(label)label.style.display='block';
+  });
   ['svN0','svN1','svN2','svN3','svN4','svN5'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
   var searchEl=document.getElementById('svModelSearch');if(searchEl)searchEl.value='';
   ['svNombre','svDni','svTel','svEmail','svCiudad','svCp'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});

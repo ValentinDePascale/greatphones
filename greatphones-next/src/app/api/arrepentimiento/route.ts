@@ -54,7 +54,8 @@ export async function GET(request: Request) {
     
     return NextResponse.json(transformed)
   } catch (e) {
-    return NextResponse.json({ error: (e as Error).message }, { status: 500 })
+    console.error('[ARREPENTIMIENTO] Error fetching:', e)
+    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
   }
 }
 

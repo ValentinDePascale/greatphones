@@ -167,10 +167,10 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    if (error.status && error.message) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
-    }
     console.error('[Wallet Pay] Error:', error)
+    if (error.status) {
+      return NextResponse.json({ error: 'Error al procesar el pago con saldo' }, { status: error.status })
+    }
     return NextResponse.json({ error: 'Error al procesar el pago con saldo' }, { status: 500 })
   }
 }

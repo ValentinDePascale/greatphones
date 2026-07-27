@@ -142,8 +142,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error('Error creating product:', error)
     const status = error.status || 500
-    const message = error.message || 'Error al crear producto'
-    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
+    return NextResponse.json({ error: 'Error al crear producto' }, { status, headers: corsHeaders })
   }
 }
 
@@ -199,8 +198,7 @@ export async function PUT(request: Request) {
   } catch (error: any) {
     console.error('Error updating product:', error)
     const status = error.status || 500
-    const message = error.message || 'Error al actualizar producto'
-    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
+    return NextResponse.json({ error: 'Error al actualizar producto' }, { status, headers: corsHeaders })
   }
 }
 
@@ -228,7 +226,6 @@ export async function DELETE(request: Request) {
   } catch (error: any) {
     console.error('Error deleting product:', error)
     const status = error.status || 500
-    const message = error.message || 'Error al eliminar producto'
-    return NextResponse.json({ error: message }, { status, headers: corsHeaders })
+    return NextResponse.json({ error: 'Error al eliminar producto' }, { status, headers: corsHeaders })
   }
 }

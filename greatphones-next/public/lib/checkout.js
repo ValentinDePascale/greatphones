@@ -5,27 +5,63 @@ var _selectedPaymentMethod=null;
 function selCheckoutCuota(btn,cuotas){
   checkoutState.cuotas=cuotas;
   document.querySelectorAll('#checkout-cuotas .cuota-btn').forEach(function(b){
-    b.style.background='var(--cream2)';b.style.color='var(--dk)';b.style.border='2px solid var(--border)';
+    var isSelected=b===btn;
+    // Button base
+    b.style.background=isSelected?'var(--green)':'#fff';
+    b.style.borderColor=isSelected?'var(--green)':'var(--border)';
+    // Icon circle
+    var iconDiv=b.children[0];
+    if(iconDiv){
+      iconDiv.style.background=isSelected?'rgba(255,255,255,.2)':'var(--cream2)';
+      var numSpan=iconDiv.children[0];
+      if(numSpan)numSpan.style.color=isSelected?'#fff':'var(--dk)';
+    }
+    // Text content
+    var textWrap=b.children[1];
+    if(textWrap){
+      var titleRow=textWrap.children[0];
+      if(titleRow)titleRow.style.color=isSelected?'#fff':'var(--dk)';
+      var subtitle=textWrap.children[1];
+      if(subtitle)subtitle.style.color=isSelected?'rgba(255,255,255,.8)':'var(--gray)';
+      // Badge inside title
+      var badge=titleRow?titleRow.children[0]:null;
+      if(badge&&badge.tagName==='SPAN'){
+        if(isSelected){
+          badge.style.background='rgba(255,255,255,.3)';
+          badge.style.color='#fff';
+          badge.style.padding='4px 10px';
+        }else{
+          badge.style.background='none';
+          badge.style.color=badge.textContent.includes('INTERES')?'var(--green)':'var(--orange)';
+          badge.style.padding='4px 10px';
+        }
+      }
+    }
+    // Arrow icon
+    var arrow=b.children[2];
+    if(arrow){
+      arrow.style.display=isSelected?'none':'block';
+      if(!isSelected)arrow.style.stroke='var(--gray)';
+    }
   });
-  btn.style.background='var(--green)';btn.style.color='#fff';btn.style.border='2px solid var(--green)';
   updateCheckoutTotal();
-  updateCuotaDetail();
+  updateCuotasMonthly();
 }
 
-function updateCuotaDetail(){
-  var detail=document.getElementById('checkout-cuotas-detail');
-  var label=document.getElementById('pago-cuotas-label');
-  var amount=document.getElementById('pago-cuotas-amount');
-  if(!detail)return;
-  if(checkoutState.cuotas>1){
-    var subtotal=cartTotal();
-    var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
-    detail.style.display='flex';
-    if(label)label.textContent=checkoutState.cuotas+'x sin interés';
-    if(amount)amount.textContent='$'+Math.round(total/checkoutState.cuotas).toLocaleString('es-AR')+'/mes';
-  }else{
-    detail.style.display='none';
-  }
+function updateCuotasMonthly(){
+  var subtotal=cartTotal();
+  var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+  document.querySelectorAll('#checkout-cuotas .cuota-btn').forEach(function(b){
+    var cuota=parseInt(b.getAttribute('data-cuota'));
+    var subtitle=b.querySelector('.cuota-monthly');
+    if(!subtitle)return;
+    if(cuota===1){
+      subtitle.textContent='Abonás todo de una';
+    }else{
+      var monthly=Math.round(total/cuota);
+      subtitle.textContent='$'+monthly.toLocaleString('es-AR')+'/mes × '+cuota+' cuotas';
+    }
+  });
 }
 
 function selCheckoutWarranty(btn,amount){
@@ -207,7 +243,9 @@ function updateCheckoutTotal(){
     if(checkoutState.cuotas>1){
       cuotasBox.style.display='flex';
       if(cuotasLabel)cuotasLabel.textContent=checkoutState.cuotas+'x sin interés';
-      if(cuotasAmount)cuotasAmount.textContent='$'+Math.round(total/checkoutState.cuotas).toLocaleString('es-AR')+'/mes';
+      if(cuotasAmount)cuotasAmount.innerHTML='$'+Math.round(total/checkoutState.cuotas).toLocaleString('es-AR')+'<span style="font-size:10px;font-weight:500;color:var(--gray)">/mes</span>';
+      var sidebarTotal=document.getElementById('checkout-cuotas-sidebar-total');
+      if(sidebarTotal)sidebarTotal.textContent='Total: $'+total.toLocaleString('es-AR');
     }else{
       cuotasBox.style.display='none';
     }
@@ -222,13 +260,43 @@ function updateCheckoutTotal(){
       btn.style.opacity='1';
     }
   }
+  updateCuotasMonthly();
 }
 
 function resetCheckoutSelections(){
   checkoutState={cuotas:1,warranty:0,delivery:0,shippingCalculated:false,selectedCarrier:null,selectedService:null};
   document.querySelectorAll('#checkout-cuotas .cuota-btn').forEach(function(b,i){
-    if(i===0){b.style.background='var(--green)';b.style.color='#fff';b.style.border='2px solid var(--green)';}
-    else{b.style.background='var(--cream2)';b.style.color='var(--dk)';b.style.border='2px solid var(--border)';}
+    var isSelected=i===0;
+    b.style.background=isSelected?'var(--green)':'#fff';
+    b.style.borderColor=isSelected?'var(--green)':'var(--border)';
+    var iconDiv=b.children[0];
+    if(iconDiv){
+      iconDiv.style.background=isSelected?'rgba(255,255,255,.2)':'var(--cream2)';
+      var numSpan=iconDiv.children[0];
+      if(numSpan)numSpan.style.color=isSelected?'#fff':'var(--dk)';
+    }
+    var textWrap=b.children[1];
+    if(textWrap){
+      var titleRow=textWrap.children[0];
+      if(titleRow)titleRow.style.color=isSelected?'#fff':'var(--dk)';
+      var subtitle=textWrap.children[1];
+      if(subtitle)subtitle.style.color=isSelected?'rgba(255,255,255,.8)':'var(--gray)';
+      var badge=titleRow?titleRow.children[0]:null;
+      if(badge&&badge.tagName==='SPAN'){
+        if(isSelected){
+          badge.style.background='rgba(255,255,255,.3)';
+          badge.style.color='#fff';
+        }else{
+          badge.style.background='none';
+          badge.style.color=badge.textContent.includes('INTERES')?'var(--green)':'var(--orange)';
+        }
+      }
+    }
+    var arrow=b.children[2];
+    if(arrow){
+      arrow.style.display=isSelected?'none':'block';
+      if(!isSelected)arrow.style.stroke='var(--gray)';
+    }
   });
   document.querySelectorAll('#checkout-warranty .warranty-btn').forEach(function(b,i){
     b.style.border=i===0?'2px solid var(--green)':'2px solid var(--border)';
@@ -420,6 +488,9 @@ function selectPaymentMethod(method, el){
       if(balEl)balEl.textContent='Saldo: $0';
     });
   }
+  if(method==='efectivo'){
+    showToast('Vas a pagar en efectivo. Vas a recibir un cupón de pago por email para abonar en cualquier sucursal de Pago Fácil o Rapi Pago.');
+  }
 }
 
 function submitOrder(){
@@ -516,14 +587,14 @@ function renderCheckoutSummaryStep(){
     container.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:36px;margin-bottom:.5rem">🛒</p><p style="font-size:14px">No hay productos en el carrito</p></div>';
     return;
   }
-  container.innerHTML=Cart.map(function(item){
+  container.innerHTML=Cart.map(function(item, idx){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId);
     if(p){
       var isPromo=p.isOffer&&p.discount>0;
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
-      return'<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
+      return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
         '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
@@ -624,7 +695,7 @@ function renderCheckoutItems(items){
 
   var subtotal=cartTotal();
 
-  itemsContainer.innerHTML=items.map(function(item){
+  var html=items.map(function(item, idx){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId);
     if(p){
@@ -636,7 +707,7 @@ function renderCheckoutItems(items){
         '<div style="font-size:9px;color:var(--gray);text-decoration:line-through">'+fmt(p.price*item.qty)+'</div>'+
         '<div style="font-size:9px;color:var(--red);font-weight:600">-'+p.discount+'%</div>':
         '<div style="font-size:13px;font-weight:700;color:var(--dk)">'+fmt(price*item.qty)+'</div>';
-      return'<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+
+      return'<div class="checkout-item" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+
         '<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
@@ -648,7 +719,7 @@ function renderCheckoutItems(items){
     var a=getById(window.ACCS,lookupId);
     if(!a)return '';
     var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📦</span>';
-    return'<div style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+
+    return'<div class="checkout-item" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+
       '<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img2+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
@@ -657,6 +728,7 @@ function renderCheckoutItems(items){
       '<div style="font-size:13px;font-weight:700;color:var(--dk)">'+fmt(a.price*item.qty)+'</div>'+
     '</div>';
   }).join('');
+  itemsContainer.innerHTML=html;
 
   if(subtotalEl)subtotalEl.textContent=fmt(subtotal);
   if(totalEl)totalEl.textContent=fmt(subtotal);
