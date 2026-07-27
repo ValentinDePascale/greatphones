@@ -2239,7 +2239,17 @@ function showImeiProductModal(existingProductId){
 
   var loadingProduct=false, imeiData=null;
 
-  var brandOptions=getUniqueBrands().map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
+  var rawBrands=getUniqueBrands();
+  var brandMap={};
+  rawBrands.forEach(function(b){
+    var label=/^iPhone$/i.test(b)?'Apple':b;
+    brandMap[label]=brandMap[label]||b;
+  });
+  var brandOptions=Object.keys(brandMap).sort().map(function(label){
+    return'<option value="'+brandMap[label]+'">'+label+'</option>';
+  }).join('');
+  var iphoneModels=(window.SELL_MODELS&&window.SELL_MODELS['iPhone'])||[];
+  var iphoneModelOptions=iphoneModels.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
   var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:20px;font-weight:700;color:var(--dk)">'+(existingProductId?'Agregar variante':'Nuevo producto por IMEI')+'</h3><button onclick="document.getElementById(\'imeiModalOverlay\').remove()" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--cream2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--gray)">✕</button></div>'+
     '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--gray)">IMEI del dispositivo</label>'+
     '<div style="display:flex;gap:8px"><input type="text" id="imeiInput" maxlength="15" placeholder="Ingresá o escaneá el IMEI de 15 dígitos" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none">'+
@@ -2250,8 +2260,8 @@ function showImeiProductModal(existingProductId){
     '<div id="imeiForm" style="display:none">'+
       '<div id="imeiFormFields" style="display:grid;gap:14px;margin-top:16px">'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><select class="imei-fld" id="if-brand" onchange="toggleImeiBrandOther()"><option value="">Seleccioná marca...</option>'+brandOptions+'<option value="__other__">Otra...</option></select><input class="imei-fld" id="if-brand-other" placeholder="Escribí la marca" style="display:none;margin-top:6px"></div>'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><select class="imei-fld" id="if-brand" onchange="toggleImeiBrandOther();onImeiBrandOrTypeChange()"><option value="">Seleccioná marca...</option>'+brandOptions+'<option value="__other__">Otra...</option></select><input class="imei-fld" id="if-brand-other" placeholder="Escribí la marca" style="display:none;margin-top:6px"></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName" style="display:none"><select class="imei-fld" id="if-iphoneModel" onchange="onImeiPhoneModelChange()" style="display:none"><option value="">Seleccioná modelo iPhone...</option>'+iphoneModelOptions+'</select></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
@@ -2259,7 +2269,7 @@ function showImeiProductModal(existingProductId){
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">RAM</label><select class="imei-fld" id="if-ram"><option value="">—</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option></select></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Tipo</label><select class="imei-fld" id="if-type"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Tipo</label><select class="imei-fld" id="if-type" onchange="onImeiBrandOrTypeChange()"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Condición</label><select class="imei-fld" id="if-condition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Pantalla</label><select class="imei-fld" id="if-screen"><option value="">—</option><option value="4.7">4.7"</option><option value="5.4">5.4"</option><option value="5.8">5.8"</option><option value="6.1">6.1"</option><option value="6.3">6.3"</option><option value="6.5">6.5"</option><option value="6.7">6.7"</option><option value="6.9">6.9"</option><option value="7.6">7.6"</option><option value="13.3">13.3"</option><option value="14">14"</option><option value="15.6">15.6"</option><option value="16">16"</option></select></div>'+
         '</div>'+
@@ -2309,6 +2319,31 @@ function showImeiProductModal(existingProductId){
     }
   };
 
+  window.onImeiBrandOrTypeChange=function(){
+    var brand=document.getElementById('if-brand').value;
+    var type=document.getElementById('if-type').value;
+    var isIphone=/^(iPhone|Apple)$/i.test(brand)&&type==='celular';
+    document.getElementById('if-modelName').style.display=isIphone?'none':'';
+    document.getElementById('if-iphoneModel').style.display=isIphone?'':'none';
+    if(!isIphone){
+      document.getElementById('if-color').style.display='';
+      document.getElementById('imeiColorContainer').style.display='none';
+    }
+    if(isIphone)onImeiPhoneModelChange();
+  };
+
+  window.onImeiPhoneModelChange=function(){
+    var model=document.getElementById('if-iphoneModel').value;
+    if(model&&window.MODEL_COLORS&&window.MODEL_COLORS[model]){
+      renderImeiColorSwatches(model,'');
+      document.getElementById('if-color').style.display='none';
+      document.getElementById('imeiColorContainer').style.display='flex';
+    }else{
+      document.getElementById('imeiColorContainer').style.display='none';
+      document.getElementById('if-color').style.display='';
+    }
+  };
+
   // If editing existing product, pre-fill and skip IMEI step
   if(existingProductId){
     var p=getById(PRODUCTS,existingProductId);
@@ -2324,7 +2359,6 @@ function showImeiProductModal(existingProductId){
         document.getElementById('if-brand-other').value=p.brand||'';
         document.getElementById('if-brand-other').style.display='block';
       }
-      document.getElementById('if-modelName').value=p.name||'';
       document.getElementById('if-storage').value=p.storage||'';
       document.getElementById('if-color').value=p.color||'';
       document.getElementById('if-ram').value=p.ram||'';
@@ -2337,6 +2371,18 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiResult').style.display='block';
       document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--gray)">📱 Agregando variante a <strong>'+p.name+'</strong></div>';
       document.getElementById('imeiForm').style.display='block';
+      // Set model field and color circles
+      onImeiBrandOrTypeChange();
+      window._imeiSelectedColor=null;
+      var prodName=p.name||'';
+      var iphoneSelect=document.getElementById('if-iphoneModel');
+      if(iphoneSelect&&iphoneSelect.querySelector('option[value="'+prodName+'"]')){
+        iphoneSelect.value=prodName;
+        onImeiPhoneModelChange();
+        if(p.color)window._imeiSelectedColor=p.color;
+      }else{
+        document.getElementById('if-modelName').value=prodName;
+      }
     }
   }
 
@@ -2385,6 +2431,8 @@ function showImeiProductModal(existingProductId){
       if(data.error){
         document.getElementById('imeiError').style.display='block';
         document.getElementById('imeiError').textContent=data.error;
+        document.getElementById('if-color').style.display='';
+        document.getElementById('imeiColorContainer').style.display='none';
         document.getElementById('imeiForm').style.display='block';
         return;
       }
@@ -2397,7 +2445,6 @@ function showImeiProductModal(existingProductId){
         document.getElementById('if-brand-other').value=data.brand||'';
         document.getElementById('if-brand-other').style.display='block';
       }
-      document.getElementById('if-modelName').value=data.modelName||'';
       document.getElementById('if-storage').value=data.storage||'';
       document.getElementById('if-color').value=data.color||'';
       document.getElementById('if-ram').value=data.ram||'';
@@ -2409,18 +2456,29 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiResult').style.display='block';
       document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:rgba(34,197,94,.1);border-radius:8px;font-size:13px;color:var(--green)">✅ Datos obtenidos del IMEI. Revisá y editá si es necesario.</div>';
 
-      // Color circles for iPhone models
+      // Set model field and color circles
       window._imeiSelectedColor=null;
       var imeiModel=data.modelName||'';
+      onImeiBrandOrTypeChange();
+      var iphoneSelect=document.getElementById('if-iphoneModel');
       var isIphone=window.SELL_MODELS&&window.SELL_MODELS['iPhone']&&window.SELL_MODELS['iPhone'].indexOf(imeiModel)>=0;
-      var modelColors=isIphone&&window.MODEL_COLORS&&window.MODEL_COLORS[imeiModel];
-      if(modelColors&&modelColors.length){
-        document.getElementById('if-color').style.display='none';
-        renderImeiColorSwatches(imeiModel,data.color);
-        document.getElementById('imeiColorContainer').style.display='flex';
+      if(isIphone&&iphoneSelect){
+        if(iphoneSelect.querySelector('option[value="'+imeiModel+'"]')){
+          iphoneSelect.value=imeiModel;
+          onImeiPhoneModelChange();
+          if(data.color)selectImeiColor(data.color,document.querySelector('#imeiColorContainer > div:first-child'));
+        }
       }else{
-        document.getElementById('if-color').style.display='';
-        document.getElementById('imeiColorContainer').style.display='none';
+        document.getElementById('if-modelName').value=imeiModel;
+        var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[imeiModel];
+        if(modelColors&&modelColors.length){
+          document.getElementById('if-color').style.display='none';
+          renderImeiColorSwatches(imeiModel,data.color);
+          document.getElementById('imeiColorContainer').style.display='flex';
+        }else{
+          document.getElementById('if-color').style.display='';
+          document.getElementById('imeiColorContainer').style.display='none';
+        }
       }
 
       document.getElementById('imeiForm').style.display='block';
@@ -2432,6 +2490,8 @@ function showImeiProductModal(existingProductId){
       btn.disabled=false;
       document.getElementById('imeiError').style.display='block';
       document.getElementById('imeiError').textContent='Error al consultar el IMEI. Completá los datos manualmente.';
+      document.getElementById('if-color').style.display='';
+      document.getElementById('imeiColorContainer').style.display='none';
       document.getElementById('imeiForm').style.display='block';
     });
   };
@@ -2769,7 +2829,8 @@ function showImeiProductModal(existingProductId){
     var imei=document.getElementById('imeiInput').value.trim();
     var brandSel=document.getElementById('if-brand');
     var brand=brandSel.value==='__other__'?document.getElementById('if-brand-other').value.trim():brandSel.value;
-    var modelName=document.getElementById('if-modelName').value.trim();
+    var iphoneSelect=document.getElementById('if-iphoneModel');
+    var modelName=(iphoneSelect&&iphoneSelect.style.display!=='none'&&iphoneSelect.value)?iphoneSelect.value:document.getElementById('if-modelName').value.trim();
     if(!modelName&&!existingId){
       showErrorToast('Error','El nombre del modelo es requerido');
       return;
