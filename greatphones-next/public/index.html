@@ -616,40 +616,45 @@
 <!-- ============================= PAGE: SHOP ============================= -->
 <div class="page" id="p-shop">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff;margin-bottom:.25rem" id="shopTitle">Catálogo</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="shopSub">Todos los equipos verificados con garantia incluida</p></div>
+    <div class="ctr" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <h1 class="sh-title" id="shopTitle">Catálogo</h1>
+        <p class="sh-sub" id="shopSub">Todos los equipos verificados con garantía incluida</p>
+      </div>
+      <div class="sh-accent">⌘</div>
+    </div>
   </div>
-  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06)">
-    <div class="ctr" style="padding:16px var(--pad)">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">
-          <button class="fchip act" onclick="filterShop('todos',this)" style="margin:0">Todos</button>
-          <button class="fchip" onclick="filterShop('iPhone',this)" style="margin:0">iPhone</button>
-          <button class="fchip" onclick="filterShop('iPad',this)" style="margin:0">iPad</button>
-          <button class="fchip" onclick="filterShop('MacBook',this)" style="margin:0">MacBook</button>
-          <button class="fchip" onclick="filterShop('Samsung',this)" style="margin:0">Samsung</button>
-          <button class="fchip" onclick="filterShop('Motorola',this)" style="margin:0">Motorola</button>
-          <button class="fchip" onclick="filterShop('Xiaomi',this)" style="margin:0">Xiaomi</button>
-          <button class="fchip" onclick="filterShop('fav',this)" style="margin:0">Favoritos</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          <div style="position:relative">
-            <button id="sortBtn" onclick="toggleSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-              <span id="sortLabel">Relevantes</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div id="sortMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
-              <div onclick="setSort('rel',this)" class="sort-opt act">Relevantes</div>
-              <div onclick="setSort('asc',this)" class="sort-opt">Menor precio ↑</div>
-              <div onclick="setSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
-              <div onclick="setSort('new',this)" class="sort-opt">Más nuevos</div>
-              <div onclick="setSort('disc',this)" class="sort-opt">Mayor descuento</div>
-              <div onclick="setSort('bat',this)" class="sort-opt">Mayor batería</div>
-            </div>
+  <div class="sh-filterbar">
+    <div class="sh-filter-inner">
+      <div class="sh-chips">
+        <button class="fchip act" onclick="filterShop('todos',this)">Todos</button>
+        <button class="fchip" onclick="filterShop('iPhone',this)">iPhone</button>
+        <button class="fchip" onclick="filterShop('iPad',this)">iPad</button>
+        <button class="fchip" onclick="filterShop('MacBook',this)">MacBook</button>
+        <button class="fchip" onclick="filterShop('Samsung',this)">Samsung</button>
+        <button class="fchip" onclick="filterShop('Motorola',this)">Motorola</button>
+        <button class="fchip" onclick="filterShop('Xiaomi',this)">Xiaomi</button>
+        <button class="fchip" onclick="filterShop('fav',this)">Favoritos</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <div style="position:relative">
+          <button id="sortBtn" onclick="toggleSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+            <span id="sortLabel">Relevantes</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="sortMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
+            <div onclick="setSort('rel',this)" class="sort-opt act">Relevantes</div>
+            <div onclick="setSort('asc',this)" class="sort-opt">Menor precio ↑</div>
+            <div onclick="setSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
+            <div onclick="setSort('new',this)" class="sort-opt">Más nuevos</div>
+            <div onclick="setSort('disc',this)" class="sort-opt">Mayor descuento</div>
+            <div onclick="setSort('bat',this)" class="sort-opt">Mayor batería</div>
           </div>
-          <button onclick="toggleFilterPanel()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;background:var(--cream);border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
-            Filtros
+        </div>
+        <button onclick="toggleFilterPanel()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;background:var(--cream);border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
+          Filtros
             <span id="filterCount" style="display:none;background:var(--orange);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:600">0</span>
           </button>
         </div>
@@ -736,7 +741,13 @@
 <!-- ============================= PAGE: OFERTAS ============================= -->
 <div class="page" id="p-ofertas">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff;margin-bottom:.25rem">Ofertas</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Precios especiales por tiempo limitado</p></div>
+    <div class="ctr" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <h1 class="sh-title">Ofertas</h1>
+        <p class="sh-sub">Precios especiales por tiempo limitado</p>
+      </div>
+      <div class="sh-accent">🔥</div>
+    </div>
   </div>
   <div style="background:var(--cream)">
     <div class="ctr">
@@ -1163,33 +1174,38 @@
 <!-- ============================= PAGE: ACCESORIOS ============================= -->
 <div class="page" id="p-accesorios">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Accesorios</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Apple &middot; Samsung &middot; Originales con garantia</p></div>
+    <div class="ctr" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <h1 class="sh-title">Accesorios</h1>
+        <p class="sh-sub">Apple · Samsung · Originales con garantía</p>
+      </div>
+      <div class="sh-accent">⚡</div>
+    </div>
   </div>
-  <div style="background:linear-gradient(180deg,#fff 0%,var(--cream) 100%);border-bottom:1px solid rgba(0,0,0,.06)">
-    <div class="ctr" style="padding:16px var(--pad)">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div style="display:flex;gap:10px;overflow-x:auto;padding:4px 0;flex:1">
-          <button class="fchip act" onclick="filtAcc('todos',this)">Todos</button>
-          <button class="fchip" onclick="filtAcc('Cargadores',this)">Cargadores</button>
-          <button class="fchip" onclick="filtAcc('Auriculares',this)">Auriculares</button>
-          <button class="fchip" onclick="filtAcc('Fundas',this)">Fundas</button>
-          <button class="fchip" onclick="filtAcc('Bandas',this)">Bandas</button>
-          <button class="fchip" onclick="filtAcc('Cables',this)">Cables</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
-          <div style="position:relative">
-            <button id="sortAccBtn" onclick="toggleAccSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:24px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
-              <span id="sortAccLabel">Relevantes</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
-            <div id="sortAccMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
-              <div onclick="setAccSort('rel',this)" class="sort-opt act">Relevantes</div>
-              <div onclick="setAccSort('asc',this)" class="sort-opt">Menor precio ↑</div>
-              <div onclick="setAccSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
-            </div>
+  <div class="sh-filterbar">
+    <div class="sh-filter-inner">
+      <div class="sh-chips">
+        <button class="fchip act" onclick="filtAcc('todos',this)">Todos</button>
+        <button class="fchip" onclick="filtAcc('Cargadores',this)">Cargadores</button>
+        <button class="fchip" onclick="filtAcc('Auriculares',this)">Auriculares</button>
+        <button class="fchip" onclick="filtAcc('Fundas',this)">Fundas</button>
+        <button class="fchip" onclick="filtAcc('Bandas',this)">Bandas</button>
+        <button class="fchip" onclick="filtAcc('Cables',this)">Cables</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <div style="position:relative">
+          <button id="sortAccBtn" onclick="toggleAccSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+            <span id="sortAccLabel">Relevantes</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div id="sortAccMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
+            <div onclick="setAccSort('rel',this)" class="sort-opt act">Relevantes</div>
+            <div onclick="setAccSort('asc',this)" class="sort-opt">Menor precio ↑</div>
+            <div onclick="setAccSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
           </div>
-        </div></div>
+        </div>
+      </div>
     </div>
   </div>
   <div style="background:var(--cream)">
