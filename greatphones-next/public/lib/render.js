@@ -3968,7 +3968,32 @@ function showQuotesDashboard(){
         '<div style="position:relative;height:280px"><canvas id="quotesStatusChart"></canvas></div>'+
       '</div>'+
     '</div>';
-  loadQuotesStats();
+  // Fetch stats and render KPIs + charts
+  var kpis=document.getElementById('quotesKpis');
+  if(!kpis)return;
+  kpis.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:1rem;color:var(--gray)">Cargando estadísticas...</div>';
+  fetch(API_URL+'/api/admin/quotes-stats').then(function(r){return r.json();}).then(function(d){
+    if(d.error){kpis.innerHTML='';return;}
+    var cards=[
+      {lbl:'Totales',val:d.total,sub:'Cotizaciones recibidas',clr:'var(--blue)'},
+      {lbl:'Pendientes',val:d.pending,sub:'Esperando revisión',clr:'var(--orange)'},
+      {lbl:'Aceptadas',val:d.approved,sub:'Tasa: '+d.approvalRate+'%',clr:'var(--green)'},
+      {lbl:'Rechazadas',val:d.rejected,sub:'',clr:'var(--red)'},
+      {lbl:'Pago estimado total',val:'$'+(d.totalRevenue||0).toLocaleString('es-AR'),sub:'Cotizaciones aceptadas',clr:'var(--orange)'},
+      {lbl:'Este mes',val:'$'+(d.monthlyRevenue||0).toLocaleString('es-AR'),sub:'Aceptadas en '+new Date().toLocaleString('es-AR',{month:'long'}),clr:'var(--green)'},
+      {lbl:'Más cotizado',val:d.mostQuotedDevice||'—',sub:d.mostQuotedCount>0?d.mostQuotedCount+' veces':'',clr:'var(--gray)'},
+    ];
+    kpis.innerHTML=cards.map(function(c){
+      return '<div class="stat-card" style="border-left:3px solid '+c.clr+'">'+
+        '<div class="stat-lbl">'+c.lbl+'</div>'+
+        '<div class="stat-val">'+c.val+'</div>'+
+        (c.sub?'<div class="stat-sub">'+c.sub+'</div>':'')+
+      '</div>';
+    }).join('');
+    renderQuotesCharts(d.monthlyBreakdown, d);
+  }).catch(function(){
+    kpis.innerHTML='';
+  });
 }
 
 function loadQuotesStats(){
@@ -3993,7 +4018,6 @@ function loadQuotesStats(){
         (c.sub?'<div class="stat-sub">'+c.sub+'</div>':'')+
       '</div>';
     }).join('');
-    renderQuotesCharts(d.monthlyBreakdown, d);
   }).catch(function(){
     kpis.innerHTML='';
   });
