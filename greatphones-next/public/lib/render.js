@@ -3064,6 +3064,16 @@ function renderAdminContent(tab){
             '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(239,68,68,.2);display:flex;align-items:center;gap:8px">\u26A0\uFE0F Alertas de Stock</h2>'+
             '<ul id="dashboard-stock-alerts" style="list-style:none;padding:0;margin:0"></ul>'+
           '</div>'+
+          '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border);cursor:pointer;transition:all .15s" onclick="showQuotesDashboard()" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.boxShadow=\'0 2px 12px rgba(255,107,44,.1)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.boxShadow=\'none\'">'+
+            '<div style="display:flex;align-items:center;gap:12px">'+
+              '<div style="width:40px;height:40px;border-radius:10px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px">\uD83D\uDCCA</div>'+
+              '<div>'+
+                '<div style="font-size:15px;font-weight:700;color:var(--dk)">Dashboard Cotizaciones</div>'+
+                '<div style="font-size:11px;color:var(--gray);margin-top:2px">Ver estadísticas y gráficos de cotizaciones</div>'+
+              '</div>'+
+              '<div style="margin-left:auto;color:var(--orange);font-size:18px">→</div>'+
+            '</div>'+
+          '</div>'+
         '</div>'+
       '</section>'+
     '</div>';
@@ -3540,13 +3550,13 @@ function renderStockList(){
   if(filterType==='todos'||filterType==='productos'){
     PRODUCTS.forEach(function(p){
       if(filterBrand&&p.brand!==filterBrand)return;
-      items.push({id:p.id,name:p.name,sub:p.sub||'',stock:p.stock,type:'producto',ico:p.ico||'📱',brand:p.brand});
+      items.push({id:p.id,name:p.name,sub:p.sub||'',stock:p.stock,type:'producto',ico:p.ico||'📱',brand:p.brand,imageUrl:p.imageUrl});
     });
   }
   if(filterType==='todos'||filterType==='accesorios'){
     (window.ACCS||[]).forEach(function(a){
       if(filterBrand&&a.brand!==filterBrand)return;
-      items.push({id:a.id,name:a.name,sub:a.category||'',stock:a.stock,type:'accesorio',ico:a.ico||'📦',brand:a.brand});
+      items.push({id:a.id,name:a.name,sub:a.category||'',stock:a.stock,type:'accesorio',ico:a.ico||'📦',brand:a.brand,imageUrl:a.imageUrl});
     });
   }
   // Update stats
@@ -3587,7 +3597,7 @@ function renderStockList(){
     var statusLabel=lowStock?'Sin stock':medStock?'Crítico':warning?'Bajo':'Normal';
     var stockId=item.type==='accesorio'?'acc-'+item.id:item.id;
     return '<div style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:#fff;border-radius:12px;border:1px solid '+borderColor+';transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(0,0,0,.06)\'" onmouseout="this.style.boxShadow=\'none\'">'+
-      '<div style="width:44px;height:44px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">'+item.ico+'</div>'+
+      '<div style="width:44px;height:44px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden">'+(item.imageUrl?'<img loading="lazy" src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">'+item.ico+'</span>')+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.name+'</div>'+
         '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">'+
@@ -3914,6 +3924,28 @@ function searchQuotes(val){
   loadQuotes(_quoteStatus);
 }
 
+function showQuotesDashboard(){
+  var el=document.getElementById('adminContent');
+  if(!el)return;
+  el.innerHTML=
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">'+
+      '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard de Cotizaciones</h1>'+
+      '<button onclick="adminTab(\'dashboard\',document.getElementById(\'adm-dashboard\'))" style="padding:8px 18px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'inherit\'">← Volver al Dashboard</button>'+
+    '</div>'+
+    '<div class="dash-kpis" id="quotesKpis" style="margin-bottom:1.5rem"></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 320px;gap:16px">'+
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:12px">Cotizaciones por mes</div>'+
+        '<div style="position:relative;height:280px"><canvas id="quotesMonthlyChart"></canvas></div>'+
+      '</div>'+
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px">'+
+        '<div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:12px">Estado general</div>'+
+        '<div style="position:relative;height:280px"><canvas id="quotesStatusChart"></canvas></div>'+
+      '</div>'+
+    '</div>';
+  loadQuotesStats();
+}
+
 function loadQuotesStats(){
   var kpis=document.getElementById('quotesKpis');
   if(!kpis)return;
@@ -3936,9 +3968,83 @@ function loadQuotesStats(){
         (c.sub?'<div class="stat-sub">'+c.sub+'</div>':'')+
       '</div>';
     }).join('');
+    renderQuotesCharts(d.monthlyBreakdown, d);
   }).catch(function(){
     kpis.innerHTML='';
   });
+}
+
+function renderQuotesCharts(monthly, stats){
+  if(!window.Chart)return;
+  var monthCanvas=document.getElementById('quotesMonthlyChart');
+  var statusCanvas=document.getElementById('quotesStatusChart');
+
+  if(monthCanvas&&window._quotesMonthlyChart)window._quotesMonthlyChart.destroy();
+  if(statusCanvas&&window._quotesStatusChart)window._quotesStatusChart.destroy();
+
+  if(monthCanvas&&monthly&&monthly.length){
+    window._quotesMonthlyChart=new window.Chart(monthCanvas,{
+      type:'bar',
+      data:{
+        labels:monthly.map(function(m){var p=m.month.split('-');var months=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];return months[parseInt(p[1])-1];}),
+        datasets:[{
+          label:'Aceptadas',
+          data:monthly.map(function(m){return m.approved;}),
+          backgroundColor:'rgba(34,197,94,0.7)',
+          borderColor:'rgba(34,197,94,1)',
+          borderWidth:1,
+          borderRadius:4,
+        },{
+          label:'Rechazadas',
+          data:monthly.map(function(m){return m.rejected;}),
+          backgroundColor:'rgba(239,68,68,0.7)',
+          borderColor:'rgba(239,68,68,1)',
+          borderWidth:1,
+          borderRadius:4,
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'circle',font:{size:10},padding:8}}},
+        scales:{
+          x:{stacked:true,grid:{display:false}},
+          y:{stacked:true,beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,0.05)'}}
+        }
+      }
+    });
+  }
+
+  if(statusCanvas&&stats){
+    var statusColors={'PENDING':'#f59e0b','APPROVED':'#22c55e','REJECTED':'#ef4444','REVIEWING':'#8b5cf6'};
+    var statusLabels={'PENDING':'Pendiente','APPROVED':'Aceptada','REJECTED':'Rechazada','REVIEWING':'Revisión'};
+    var data=[];
+    if(stats.pending>0)data.push({label:'Pendiente',val:stats.pending,clr:'#f59e0b'});
+    if(stats.approved>0)data.push({label:'Aceptada',val:stats.approved,clr:'#22c55e'});
+    if(stats.rejected>0)data.push({label:'Rechazada',val:stats.rejected,clr:'#ef4444'});
+    if(stats.reviewing>0)data.push({label:'Revisión',val:stats.reviewing,clr:'#8b5cf6'});
+    if(data.length){
+      window._quotesStatusChart=new window.Chart(statusCanvas,{
+        type:'doughnut',
+        data:{
+          labels:data.map(function(d){return d.label;}),
+          datasets:[{
+            data:data.map(function(d){return d.val;}),
+            backgroundColor:data.map(function(d){return d.clr;}),
+            borderWidth:0,
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          cutout:'65%',
+          plugins:{
+            legend:{position:'bottom',labels:{padding:8,usePointStyle:true,pointStyle:'circle',font:{size:10}}}
+          }
+        }
+      });
+    }
+  }
 }
 
 function renderQuotesList(res){
