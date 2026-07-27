@@ -2900,7 +2900,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -3227,11 +3227,13 @@ function renderAdminContent(tab){
   }else if(tab==='instore'){
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="instore-tabs">'+
       '<button class="ord-btn" id="instoreTabVenta" onclick="renderInStoreSale()">Nueva Venta</button>'+
-      '<button class="ord-btn" id="instoreTabPre" onclick="renderPreOrders()">Preeventas</button>'+
       '<button class="ord-btn" id="instoreTabHist" onclick="loadInStoreHistory()">Historial</button>'+
     '</div>'+
     '<div id="instore-subview"></div>';
     renderInStoreSale();
+  }else if(tab==='preventa'){
+    el.innerHTML='<div id="preventa-view"></div>';
+    renderPreventaTab('local');
   }
 }
 

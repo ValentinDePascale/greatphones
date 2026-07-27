@@ -14,9 +14,18 @@ export async function GET(request: Request) {
     await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
+    const search = searchParams.get('search')
 
     const where: any = {}
     if (status) where.status = status
+    if (search) {
+      const s = search.trim()
+      where.OR = [
+        { clientName: { contains: s, mode: 'insensitive' } },
+        { clientDni: { contains: s } },
+        { productModelName: { contains: s, mode: 'insensitive' } },
+      ]
+    }
 
     const preOrders = await prisma.preOrder.findMany({
       where,
@@ -27,7 +36,7 @@ export async function GET(request: Request) {
     return NextResponse.json(preOrders)
   } catch (error) {
     console.error('Error fetching preorders:', error)
-    return NextResponse.json({ error: 'Error al obtener preeventas' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al obtener preventas' }, { status: 500 })
   }
 }
 
@@ -35,21 +44,20 @@ export async function POST(request: Request) {
   try {
     const admin = await requireAdmin(request)
     const body = await request.json()
-    const { clientName, clientDni, clientPhone, clientEmail, productId, customName, customPrice, notes } = body
+    const {
+      clientName, clientDni, clientPhone, clientEmail,
+      productModelName, productStorage, productColor, productCondition,
+      price, paymentMethod, paymentType, installments,
+      expectedDeliveryStart, expectedDeliveryEnd,
+      notes,
+    } = body
 
     if (!clientName || !clientName.trim()) {
       return NextResponse.json({ error: 'El nombre del cliente es obligatorio' }, { status: 400 })
     }
 
-    if (!productId && !customName) {
-      return NextResponse.json({ error: 'Seleccioná un producto del catálogo o ingresá un nombre de producto' }, { status: 400 })
-    }
-
-    if (productId) {
-      const product = await prisma.product.findUnique({ where: { id: productId }, select: { id: true } })
-      if (!product) {
-        return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
-      }
+    if (!productModelName) {
+      return NextResponse.json({ error: 'Seleccioná un modelo de iPhone' }, { status: 400 })
     }
 
     const preOrder = await prisma.preOrder.create({
@@ -59,18 +67,24 @@ export async function POST(request: Request) {
         clientDni: clientDni || null,
         clientPhone: clientPhone || null,
         clientEmail: clientEmail || null,
-        productId: productId || null,
-        customName: customName || null,
-        customPrice: customPrice ? Number(customPrice) : null,
+        productModelName: productModelName || null,
+        productStorage: productStorage || null,
+        productColor: productColor || null,
+        productCondition: productCondition || null,
+        price: price ? Number(price) : 0,
+        paymentMethod: paymentMethod || null,
+        paymentType: paymentType || null,
+        installments: installments ? Number(installments) : null,
+        expectedDeliveryStart: expectedDeliveryStart ? new Date(expectedDeliveryStart) : null,
+        expectedDeliveryEnd: expectedDeliveryEnd ? new Date(expectedDeliveryEnd) : null,
         notes: notes || null,
         createdById: admin.id,
       },
-      include: { product: { select: { id: true, name: true, imageUrl: true, ico: true, price: true } } },
     })
 
     return NextResponse.json(preOrder, { status: 201 })
   } catch (error) {
     console.error('Error creating preorder:', error)
-    return NextResponse.json({ error: 'Error al crear preeventa' }, { status: 500 })
+    return NextResponse.json({ error: 'Error al crear preventa' }, { status: 500 })
   }
 }

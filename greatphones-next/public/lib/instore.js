@@ -2059,51 +2059,12 @@ function showInStoreSaleReceipt(orderId) {
   descargarRecibo()
 }
 
-// =========== PREEVENTAS ===========
+// =========== PREEVENTAS (redirigido a la nueva sección) ===========
 function renderPreOrders() {
-  var sub = document.getElementById('instore-subview')
-  if (!sub) return
-  document.querySelectorAll('.instore-tabs .ord-btn').forEach(function(b){ b.classList.remove('ord-btn-act'); })
-  var t = document.getElementById('instoreTabPre')
-  if (t) t.classList.add('ord-btn-act')
-
-  sub.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:8px">' +
-      '<h2 style="font-size:24px;font-weight:700;color:var(--dk)">Preeventas</h2>' +
-      '<div style="display:flex;gap:8px">' +
-        '<button onclick="preOrderFilter(\'PENDING\')" class="ord-btn" id="preFilterPENDING">Pendientes</button>' +
-        '<button onclick="preOrderFilter(\'CONFIRMED\')" class="ord-btn" id="preFilterCONFIRMED">Confirmadas</button>' +
-        '<button onclick="preOrderFilter(\'all\')" class="ord-btn" id="preFilterAll">Todas</button>' +
-      '</div>' +
-    '</div>' +
-    '<div style="background:var(--cream2);padding:1.25rem;border-radius:12px;margin-bottom:1.5rem;border:1px solid var(--border)">' +
-      '<h3 style="font-size:15px;font-weight:700;margin-bottom:1rem">Nueva Preeventa</h3>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Apellido y Nombre *</label>' +
-          '<input type="text" id="pre-clientName" placeholder="Nombre completo" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">DNI</label>' +
-          '<input type="text" id="pre-clientDni" placeholder="12345678" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Teléfono</label>' +
-          '<input type="text" id="pre-clientPhone" placeholder="2914727351" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Email</label>' +
-          '<input type="email" id="pre-clientEmail" placeholder="cliente@email.com" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Producto del catálogo</label>' +
-          '<input type="text" id="pre-productSearch" placeholder="Buscar producto..." oninput="preProductSearch(this.value)" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box">' +
-          '<div id="pre-productResults" style="margin-top:6px;display:none"></div></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">O producto custom</label>' +
-          '<input type="text" id="pre-customName" placeholder="Nombre del producto" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Precio acordado</label>' +
-          '<input type="number" id="pre-customPrice" placeholder="0" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;box-sizing:border-box"></div>' +
-      '</div>' +
-      '<div style="margin-top:10px"><label style="font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Notas</label>' +
-        '<textarea id="pre-notes" placeholder="Detalles de la preeventa..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;min-height:60px;box-sizing:border-box"></textarea></div>' +
-      '<div style="margin-top:12px"><button onclick="createPreOrder()" class="btn btn-primary" style="padding:12px 24px;font-weight:700">Guardar Preeventa</button></div>' +
-    '</div>' +
-    '<div id="preOrdersList"></div>'
-
-  window._preOrderFilter = 'PENDING'
-  setPreFilterActive('PENDING')
-  loadPreOrders()
+  // Redirigir a la nueva sección de Preventas
+  if (typeof adminTab === 'function') {
+    adminTab('preventa', document.getElementById('adm-preventa'))
+  }
 }
 
 function setPreFilterActive(f) {

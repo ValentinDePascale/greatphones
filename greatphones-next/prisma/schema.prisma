@@ -313,12 +313,32 @@ model PreOrder {
   clientDni    String?
   clientPhone  String?
   clientEmail  String?
+
+  // Producto del catálogo (opcional)
   productId    String?
   product      Product? @relation(fields: [productId], references: [id])
   customName   String?
   customPrice  Int?
+
+  // Campos de Preventa local (modelo iPhone + specs)
+  productModelName   String?  // "iPhone 16 Pro Max"
+  productStorage     String?  // "256 GB"
+  productColor       String?  // "Titanio Natural"
+  productCondition   String?  // "Nuevo"
+  price              Int      @default(0)
+
+  // Pago
+  paymentMethod      String?  // "cash" | "transfer"
+  paymentType        String?  // "single" | "installments"
+  installments       Int?
+
+  // Entrega estimada
+  expectedDeliveryStart DateTime?
+  expectedDeliveryEnd   DateTime?
+  deliveredAt        DateTime?
+
   notes        String?
-  status       String   @default("PENDING") // PENDING | CONFIRMED | SOLD | CANCELLED
+  status       String   @default("PENDING") // PENDING | CONFIRMED | DELIVERED | CANCELLED
   createdById  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
