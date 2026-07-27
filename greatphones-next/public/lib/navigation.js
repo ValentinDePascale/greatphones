@@ -96,8 +96,15 @@ function nav(id){
     if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
   }
   if(id==='admin'){
-    window.currentAdminTab='prods';
-    renderAdminContent('prods');
+    var hashTab=location.hash.replace('#','');
+    if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+      window.currentAdminTab=hashTab;
+      var btn=document.getElementById('adm-'+hashTab);
+      if(btn&&typeof adminTab==='function'){adminTab(hashTab,btn);}else{renderAdminContent(hashTab);}
+    }else{
+      window.currentAdminTab='prods';
+      renderAdminContent('prods');
+    }
   }
   if(id==='home'){renderHomeRail();renderOfferStrip();var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
   if(id==='admin-product'){

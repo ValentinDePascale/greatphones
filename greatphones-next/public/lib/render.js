@@ -1788,6 +1788,11 @@ function renderMayorista(){
 
 // =========== ADMIN ===========
 function adminTab(tab,btn){
+  // Update URL hash
+  if(tab&&tab!==window.currentAdminTab){
+    location.hash='#'+tab;
+  }
+  
   // Reset all sidebar nav items
   document.querySelectorAll('.admin-nav-item').forEach(function(b){b.classList.remove('act');});
   // Reset old tab buttons (for backwards compatibility)
@@ -1795,7 +1800,7 @@ function adminTab(tab,btn){
   document.querySelectorAll('.admin-sec').forEach(function(s){s.classList.remove('act');});
   
   // Activate clicked item
-  btn.classList.add('act');
+  if(btn)btn.classList.add('act');
   
   // Update topbar title
   var titles={
@@ -1827,6 +1832,25 @@ function adminTab(tab,btn){
   // Close mobile sidebar on navigation
   closeMobileSidebar();
 }
+
+// Open admin tab from URL hash on page load or hash change
+function initAdminHashRouting(){
+  if(!currentUser||currentUser.role!=='ADMIN')return;
+  var hashTab=location.hash.replace('#','');
+  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+    // Find sidebar button
+    var btn=document.getElementById('adm-'+hashTab);
+    if(btn)adminTab(hashTab,btn);
+  }
+}
+window.addEventListener('hashchange',function(){
+  if(!currentUser||currentUser.role!=='ADMIN')return;
+  var hashTab=location.hash.replace('#','');
+  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+    var btn=document.getElementById('adm-'+hashTab);
+    if(btn&&hashTab!==window.currentAdminTab)adminTab(hashTab,btn);
+  }
+});
 
 function toggleAdminTheme(){
   var layout=document.querySelector('.admin-layout');
@@ -3925,6 +3949,7 @@ function searchQuotes(val){
 }
 
 function showQuotesDashboard(){
+  location.hash='#quotes-dashboard';
   var el=document.getElementById('adminContent');
   if(!el)return;
   el.innerHTML=
