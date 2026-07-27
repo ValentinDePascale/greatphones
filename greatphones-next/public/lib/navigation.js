@@ -1017,8 +1017,19 @@ window.addEventListener('popstate',function(e){
   if(e.state&&e.state.page){
     if(e.state.page==='edit-profile'){nav('edit-profile');loadEditProfile();}
     else if(e.state.page==='detail'&&e.state.productId){openDetail(e.state.productId);}
+    else if(e.state.page==='admin'&&e.state.tab){
+      var btn=document.getElementById('adm-'+e.state.tab);
+      if(btn&&typeof adminTab==='function'){adminTab(e.state.tab,btn);}else{nav('admin');}
+    }
     else{nav(e.state.page);}
-  }else{nav('home');}
+  }else{
+    var hashTab=location.hash.replace('#','');
+    if(hashTab&&typeof adminTab==='function'&&document.getElementById('adm-'+hashTab)){
+      nav('admin');
+    }else{
+      nav('home');
+    }
+  }
 });
 var pendingDetailId=null;
 function handleInitialRoute(){

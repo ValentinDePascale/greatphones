@@ -1788,9 +1788,9 @@ function renderMayorista(){
 
 // =========== ADMIN ===========
 function adminTab(tab,btn){
-  // Update URL hash
+  // Update URL hash with proper history state
   if(tab&&tab!==window.currentAdminTab){
-    location.hash='#'+tab;
+    try{window.history.pushState({page:'admin',tab:tab},'','#'+tab);}catch(e){}
   }
   
   // Reset all sidebar nav items
@@ -3949,7 +3949,7 @@ function searchQuotes(val){
 }
 
 function showQuotesDashboard(){
-  location.hash='#quotes-dashboard';
+  try{window.history.pushState({page:'admin',tab:'quotes-dashboard'},'','#quotes-dashboard');}catch(e){}
   var el=document.getElementById('adminContent');
   if(!el)return;
   el.innerHTML=
