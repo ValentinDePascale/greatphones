@@ -344,6 +344,13 @@ function showOrderModal(order){
       warrantyLabel+=' (+$'+order.warrantyCost.toLocaleString('es-AR')+')';
     }
   }
+
+  var couponLabel='';
+  if(order.orderCoupons&&order.orderCoupons.length>0){
+    couponLabel=order.orderCoupons.map(function(oc){
+      return '<div style="font-size:12px;color:#6366f1;margin-top:2px"><strong>Cupon:</strong> '+oc.coupon.code+' (-$'+oc.amountUsed.toLocaleString('es-AR')+')</div>';
+    }).join('');
+  }
   
   var actionBtn='';
   if(order.status==='PENDING'){
@@ -402,7 +409,7 @@ function showOrderModal(order){
           '<div style="margin-top:12px;padding:10px;background:var(--cream2);border-radius:8px">'+
             '<div style="font-size:12px;color:var(--gray)"><strong>Metodo de pago:</strong> '+paymentLabel+'</div>'+
             '<div style="font-size:12px;color:var(--gray);margin-top:4px">'+warrantyLabel+'</div>'+
-          '</div>'+
+            couponLabel+
         '</div>'+
         (order.arrepStatus==='ARREP_OK'?'<div style="margin-top:1rem;padding:12px;background:#f0fdf4;border-radius:10px">'+
           '<div style="font-size:12px;font-weight:600;color:#059669;margin-bottom:4px">Arrepentimiento aceptado</div>'+

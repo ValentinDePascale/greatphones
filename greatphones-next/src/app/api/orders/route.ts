@@ -96,6 +96,15 @@ export async function GET(request: Request) {
                 }
               }
             }
+          },
+          orderCoupons: {
+            include: {
+              coupon: {
+                select: {
+                  code: true,
+                }
+              }
+            }
           }
         },
         orderBy: { createdAt: 'desc' },
@@ -136,6 +145,15 @@ export async function GET(request: Request) {
                 imageUrl: true,
                 brand: true,
                 sub: true,
+              }
+            }
+          }
+        },
+        orderCoupons: {
+          include: {
+            coupon: {
+              select: {
+                code: true,
               }
             }
           }
