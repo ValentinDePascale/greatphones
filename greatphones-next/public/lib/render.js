@@ -2554,7 +2554,7 @@ function showImeiProductModal(existingProductId){
     function limpiar(){
       if(detenido)return;
       detenido=true;
-      if(zxingReader){try{zxingReader.reset();}catch(e){}zxingReader=null;}
+      if(zxingReader){zxingReader=null;}
       if(window.Quagga){try{Quagga.stop();}catch(e){}}
       if(html5QrCode){try{html5QrCode.stop().catch(function(){/* cleanup, ignore errors */});}catch(e){}}
       if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
@@ -2570,7 +2570,7 @@ function showImeiProductModal(existingProductId){
     var detectando=false;
     var ultimaDetect=0;
     var zxingReader=null;
-    var zxingCargado=false;
+    var zxingListo=false;
 
     function initBarcodeDetector(){
       if(!window.BarcodeDetector)return false;
@@ -2616,7 +2616,7 @@ function showImeiProductModal(existingProductId){
       return false;
     }
 
-    // ---- Quagga (fallback obsoleto, ya no se usa) ----
+    // ---- Quagga/Quagga2 (fallback 1D barcode) ----
     function escanearQuagga(){
       if(detenido||!window.Quagga)return;
       if(statusEl)statusEl.textContent='Alineá el código de barras';
@@ -2700,47 +2700,60 @@ function showImeiProductModal(existingProductId){
       });
     }
 
-    // ---- ZXing scanner (fallback principal para barcode) ----
-    function cargarZxing(callback){
-      if(zxingCargado&&window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatOneDReader){
+    // ---- ZXing library scanner (canvas frames, todos los browsers) ----
+    function cargarZxingLib(callback){
+      if(zxingListo&&window.ZXing&&window.ZXing.MultiFormatReader){
+        if(!zxingReader)iniciarZxingCanvas();
         callback();return;
       }
       if(statusEl)statusEl.textContent='Cargando escáner...';
       var sc=document.createElement('script');
-      sc.src='https://unpkg.com/@zxing/browser@latest';
+      sc.src='https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js';
       sc.onload=function(){
         if(detenido)return;
-        zxingCargado=true;
+        zxingListo=true;
+        iniciarZxingCanvas();
         callback();
+      };
+      sc.onerror=function(){
+        cargarQuagga2(callback);
+      };
+      document.head.appendChild(sc);
+    }
+
+    function iniciarZxingCanvas(){
+      if(!window.ZXing)return;
+      var ZX=window.ZXing;
+      try{
+        var hints=new Map();
+        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[
+          ZX.BarcodeFormat.CODE_128,
+          ZX.BarcodeFormat.CODE_39,
+          ZX.BarcodeFormat.EAN_13,
+          ZX.BarcodeFormat.EAN_8,
+          ZX.BarcodeFormat.UPC_A
+        ]);
+        zxingReader=new ZX.MultiFormatReader();
+        zxingReader.setHints(hints);
+      }catch(e){
+        zxingReader=new ZX.MultiFormatReader();
+      }
+    }
+
+    // ---- Quagga2 (fallback si ZXing no carga) ----
+    function cargarQuagga2(callback){
+      if(window.Quagga){escanearQuagga();return;}
+      if(statusEl)statusEl.textContent='Cargando escáner...';
+      var sc=document.createElement('script');
+      sc.src='https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js';
+      sc.onload=function(){
+        if(detenido)return;
+        escanearQuagga();
       };
       sc.onerror=function(){
         escanearHtml5Qrcode();
       };
       document.head.appendChild(sc);
-    }
-
-    function escanearZxing(){
-      if(detenido||!window.ZXingBrowser)return;
-      if(statusEl)statusEl.textContent='Apuntá al código de barras';
-
-      var ZXB=window.ZXingBrowser;
-      try{
-        zxingReader=new ZXB.BrowserMultiFormatOneDReader();
-      }catch(e){
-        zxingReader=new ZXB.BrowserMultiFormatReader();
-      }
-
-      zxingReader.decodeFromVideoDevice(null,video,function(result,error,controls){
-        if(detenido)return;
-        if(error)return;
-        if(result){
-          procesarDigitos(result.getText());
-        }
-      }).catch(function(e){
-        if(!detenido){
-          escanearHtml5Qrcode();
-        }
-      });
     }
 
     // ---- Main scan loop ----
@@ -2762,6 +2775,26 @@ function showImeiProductModal(existingProductId){
             if(statusEl&&barcodes.length===0)statusEl.textContent='Buscando código de barras...';
           }).catch(function(){detectando=false;});
         }
+        requestAnimationFrame(escanear);
+        return;
+      }
+
+      if(zxingReader&&!usandoQuagga){
+        var zxctx=canvas.getContext('2d');
+        if(!zxctx){requestAnimationFrame(escanear);return;}
+        canvas.width=video.videoWidth;
+        canvas.height=video.videoHeight;
+        zxctx.drawImage(video,0,0,canvas.width,canvas.height);
+        var zxImgData=zxctx.getImageData(0,0,canvas.width,canvas.height);
+        try{
+          var zxLum=new window.ZXing.RGBLuminanceSource(canvas.width,canvas.height,new Uint8ClampedArray(zxImgData.data));
+          var zxBmp=new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(zxLum));
+          var zxRes=zxingReader.decode(zxBmp);
+          if(zxRes&&zxRes.getText()){
+            if(procesarDigitos(zxRes.getText()))return;
+          }
+          if(statusEl)statusEl.textContent='Buscando código de barras...';
+        }catch(e){}
         requestAnimationFrame(escanear);
         return;
       }
@@ -2820,8 +2853,8 @@ function showImeiProductModal(existingProductId){
         if(statusEl)statusEl.textContent='Escáner listo';
         iniciarCamara();
       }else{
-        cargarZxing(function(){
-          escanearZxing();
+        cargarZxingLib(function(){
+          iniciarCamara();
         });
       }
     }else{
