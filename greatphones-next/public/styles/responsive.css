@@ -70,6 +70,11 @@
   /* CategoryNav */
   .catnav-inner{height:34px;padding:0 .75rem}
   .cni{padding:6px 8px;font-size:10px}
+
+  /* CategoryCards */
+  .cat-scroll{overflow-x:visible}
+  .cat-flex{flex-wrap:wrap;justify-content:center;gap:.625rem}
+  .cat-card{flex:0 0 calc(50% - .3125rem);width:auto;padding:1.25rem .75rem}
 }
 
 /* --- <480px: Small mobile --- */
@@ -88,6 +93,10 @@
 
   .catnav-inner{height:30px;padding:0 .625rem}
   .cni{padding:4px 6px;font-size:9px}
+
+  .cat-card{padding:1rem .5rem}
+  .cat-ico-wrap{width:2.5rem;height:2.5rem}
+  .cat-label{font-size:10px}
 }
 
 /* --- Chat panel (all mobile) --- */
