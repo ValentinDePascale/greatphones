@@ -3,6 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { sendArrepentimientoEmail, sendArrepAcceptEmail, sendArrepRejectEmail } from '@/lib/email'
 import { requireSession, requireAdmin } from '@/lib/auth-guard'
 
+function generateCouponCode(prefix: string) {
+  const ts = Date.now().toString(36).toUpperCase()
+  const rnd = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `${prefix}-${ts}-${rnd}`
+}
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
@@ -100,17 +106,154 @@ export async function PUT(request: Request) {
           data: {
             status: 'CANCELLED',
             arrepStatus: 'ARREP_OK',
-            notes: `Arrepentimiento aceptado - Devolucion procesada segun Ley 24.240 (Res. 424/2020). Reembolso total: $${arrep.order.total.toLocaleString('es-AR')}`,
           }
         })
       ])
+
+      // Load order with items for stock restoration
+      const order = await prisma.order.findUnique({
+        where: { id: arrep.orderId },
+        include: { items: { include: { product: true } } }
+      })
+      if (!order) {
+        return NextResponse.json({ success: false, message: 'Orden no encontrada' }, { status: 404 })
+      }
+
+      const payment = (order.payment || '').toLowerCase()
+      const refundTotal = order.total
+      let refundMethod = ''
+      let couponCode = ''
+      let refundNote = ''
+
+      try {
+        if (payment === 'wallet') {
+          const wallet = await prisma.wallet.findUnique({ where: { userId: order.userId } })
+          if (wallet) {
+            await prisma.$transaction([
+              prisma.wallet.update({
+                where: { id: wallet.id },
+                data: { balance: { increment: refundTotal }, version: { increment: 1 } }
+              }),
+              prisma.walletTransaction.create({
+                data: {
+                  walletId: wallet.id,
+                  type: 'REFUND',
+                  amount: refundTotal,
+                  balanceBefore: wallet.balance,
+                  balanceAfter: wallet.balance + refundTotal,
+                  description: `Reembolso orden ${order.code}`,
+                }
+              })
+            ])
+            refundMethod = 'wallet'
+            refundNote = `Se acreditaron $${refundTotal.toLocaleString('es-AR')} en tu billetera Great Phones.`
+          } else {
+            refundMethod = 'wallet_no_account'
+            refundNote = `No se encontro billetera para el usuario. Tramitar manualmente.`
+          }
+
+        } else if (order.mpPaymentId && (payment.includes('mercadopago') || payment.includes('tarjeta') || payment.includes('visa') || payment.includes('master') || payment.includes('credit') || payment.includes('debit') || payment.includes('amex'))) {
+          try {
+            const idempotency = `refund-${order.code}-${Date.now()}`
+            const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${order.mpPaymentId}/refunds`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+                'Content-Type': 'application/json',
+                'X-Idempotency-Key': idempotency,
+              },
+            })
+            const mpData = await mpRes.json() as any
+            if (mpRes.ok && (mpData.status === 'approved' || mpData.status === 'refunded')) {
+              refundMethod = 'mercadopago'
+              refundNote = `Reembolso procesado automaticamente via MercadoPago por $${refundTotal.toLocaleString('es-AR')}.`
+            } else {
+              console.error('[ARREP] MP refund failed:', JSON.stringify(mpData))
+              refundMethod = 'mp_manual'
+              refundNote = `Error al procesar reembolso automatico en MercadoPago. Realizar manualmente. ID: ${order.mpPaymentId}. ${mpData.message || ''}`
+            }
+          } catch (mpErr: any) {
+            console.error('[ARREP] MP refund error:', mpErr)
+            refundMethod = 'mp_manual'
+            refundNote = `Error al contactar MercadoPago. Realizar reembolso manual. ID: ${order.mpPaymentId}. Error: ${mpErr.message || 'desconocido'}`
+          }
+
+        } else if (payment === 'transfer') {
+          refundMethod = 'transfer'
+          refundNote = `Reembolso por transferencia bancaria pendiente. Monto: $${refundTotal.toLocaleString('es-AR')}.`
+
+        } else {
+          // Cash: PagoFacil, RapiPago, efectivo, ticket — create refund coupon
+          const expiry = new Date()
+          expiry.setFullYear(expiry.getFullYear() + 1)
+          couponCode = generateCouponCode('REEM')
+          await prisma.coupon.create({
+            data: {
+              userId: order.userId,
+              code: couponCode,
+              originalAmount: refundTotal,
+              remainingAmount: refundTotal,
+              status: 'ACTIVE',
+              source: 'refund',
+              sourceId: order.code,
+              expiresAt: expiry,
+            }
+          })
+          refundMethod = 'coupon'
+          refundNote = `Recibis un cupon por $${refundTotal.toLocaleString('es-AR')} valido hasta ${expiry.toLocaleDateString('es-AR')}. Presentalo en tu proxima compra.`
+        }
+
+        // Stock restoration — only if product was paid and stock was deducted
+        if (order.items && order.items.length > 0) {
+          for (const item of order.items) {
+            if (item.productId && item.product) {
+              await prisma.product.update({
+                where: { id: item.productId },
+                data: { stock: { increment: item.quantity } }
+              })
+            }
+          }
+          // Also release reserved if still held
+          for (const item of order.items) {
+            if (item.productId && item.product && (item.product as any).reserved >= item.quantity) {
+              await prisma.product.update({
+                where: { id: item.productId },
+                data: { reserved: { decrement: item.quantity } }
+              }).catch(() => {})
+            }
+          }
+        }
+
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            refundProcessed: true,
+            refundDate: new Date(),
+            notes: `Arrepentimiento aceptado segun Ley 24.240 (Res. 424/2020). Reembolso total: $${refundTotal.toLocaleString('es-AR')} via ${refundMethod}. ${refundNote} ${couponCode ? 'Cupon: ' + couponCode : ''}`,
+          }
+        })
+
+      } catch (refundErr: any) {
+        console.error('[ARREP] Refund processing failed:', refundErr)
+        refundNote = `ERROR al procesar reembolso automatico: ${refundErr.message || 'desconocido'}. Tramitar manualmente.`
+        refundMethod = refundMethod || 'error'
+
+        await prisma.order.update({
+          where: { id: order.id },
+          data: {
+            notes: `Arrepentimiento aceptado. REEMBOLSO FALLIDO. ${refundNote}`
+          }
+        })
+      }
 
       try {
         await sendArrepAcceptEmail({
           orderCode: arrep.order.code,
           email: arrep.email,
-          total: arrep.order.total,
-          shippingAddress: [arrep.order.shippingStreet, arrep.order.shippingNumber, arrep.order.shippingCity, arrep.order.shippingProvince].filter(Boolean).join(', '),
+          total: order.total,
+          refundMethod,
+          couponCode,
+          shippingAddress: [order.shippingStreet, order.shippingNumber, order.shippingCity, order.shippingProvince].filter(Boolean).join(', '),
         })
       } catch (emailError) {
         console.error('[ARREP] Error sending accept email:', emailError)

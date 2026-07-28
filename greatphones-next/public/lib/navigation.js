@@ -5,7 +5,7 @@ var _origFetch=window.fetch;
 window.fetch=function(url,opts){
   opts=opts||{};
   opts.headers=opts.headers||{};
-  if(currentUser&&currentUser.id&&typeof url==='string'&&url.indexOf(API_URL)===0&&!opts.headers['X-User-Id']){
+  if(currentUser&&currentUser.id&&typeof url==='string'&&(url.indexOf(API_URL)===0||url.indexOf('/api/')===0)&&!opts.headers['X-User-Id']){
     opts.headers['X-User-Id']=currentUser.id;
   }
   return _origFetch.call(window,url,opts);
@@ -91,8 +91,12 @@ function nav(id){
     renderOrderHistory();
     renderQuotHistory();
     loadClientQuotes();
-    if(typeof updateWalletUI==='function')updateWalletUI();
-    if(typeof renderWalletTransactions==='function')renderWalletTransactions(1);
+    if(typeof cpnRenderCuentaSection==='function')cpnRenderCuentaSection('ACTIVE');
+    if(typeof getWallet==='function'){
+      getWallet().then(function(w){
+        if(typeof cpnRenderLegacyWallet==='function')cpnRenderLegacyWallet(w.balance);
+      }).catch(function(){});
+    }
     if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
   }
   if(id==='admin'){

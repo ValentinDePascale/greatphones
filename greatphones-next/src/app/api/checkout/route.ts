@@ -57,22 +57,9 @@ export async function POST(request: NextRequest) {
     }
     
     const { 
-      items, 
-      email, 
-      phone,
-      street, 
-      number, 
-      floor, 
-      zip, 
-      city, 
-      province, 
-      document,
-      warranty,
-      delivery,
-      cuotas,
-      carrier,
-      carrierService,
-      paymentMethod,
+      items, email, phone, street, number, floor, zip, city, province, document,
+      warranty, delivery, cuotas, carrier, carrierService, paymentMethod,
+      coupons: couponIds,
     } = body;
 
     const user = await findOrCreateUser(email, phone, document);
@@ -101,10 +88,42 @@ export async function POST(request: NextRequest) {
     const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0;
     const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + (body.deliveryCost || 0);
 
-    // Cross-check: reject if frontend total doesn't match (detects price tampering)
+    // Cross-check: reject if frontend total doesn't match
     if (body.total !== calculatedTotal) {
       return NextResponse.json({ error: 'Error de validación: el total no coincide. Reintente.' }, { status: 400 });
     }
+
+    // ---- COUPON HANDLING ----
+    let couponDiscount = 0;
+    let validatedCoupons: Array<{ id: string; code: string; remainingAmount: number }> = [];
+
+    if (couponIds && Array.isArray(couponIds) && couponIds.length > 0) {
+      const coupons = await prisma.coupon.findMany({
+        where: { id: { in: couponIds }, userId, status: 'ACTIVE' },
+        select: { id: true, code: true, remainingAmount: true }
+      });
+
+      if (coupons.length !== couponIds.length) {
+        return NextResponse.json({ error: 'Uno o más cupones no son válidos' }, { status: 400 });
+      }
+
+      for (const c of coupons) {
+        if (c.remainingAmount <= 0) {
+          return NextResponse.json({ error: `El cupón ${c.code} no tiene saldo disponible` }, { status: 400 });
+        }
+      }
+
+      couponDiscount = coupons.reduce((sum, c) => sum + c.remainingAmount, 0);
+      validatedCoupons = coupons.map(c => ({ id: c.id, code: c.code, remainingAmount: c.remainingAmount }));
+
+      if (couponDiscount > calculatedTotal) {
+        couponDiscount = calculatedTotal;
+      }
+    }
+
+    const totalAfterCoupons = calculatedTotal - couponDiscount;
+    const isFullyPaidByCoupons = totalAfterCoupons <= 0;
+    // ---- END COUPON HANDLING ----
 
     // Build MP preference items with server-side prices
     const mpItems = enrichedItems.map((item: any) => ({
@@ -134,50 +153,54 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const cleanDoc = document.replace(/[^0-9]/g, '');
-    const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
+    let preferenceId: string | null = null;
+    let initPoint: string | null = null;
 
-    // Filter payment types shown on MP checkout based on selected method
-    const excludedTypes: Record<string, string[]> = {
-      mercadopago: [],                          // all types
-      tarjeta: ['ticket', 'bank_transfer', 'atm', 'prepaid_card'],  // only credit+debit
-      efectivo: ['credit_card', 'debit_card', 'bank_transfer', 'atm', 'prepaid_card'], // only ticket
-    };
-    const excluded = excludedTypes[paymentMethod || 'mercadopago'] || excludedTypes.mercadopago;
+    if (!isFullyPaidByCoupons) {
+      const cleanDoc = document.replace(/[^0-9]/g, '');
+      const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
 
-    const preferenceData = {
-      items: mpItems,
-      payer: {
-        email: email,
-        name: user.name || 'Cliente',
-        surname: '',
-        phone: { number: phone || '0000000000' },
-        identification: { type: idType, number: cleanDoc },
-        address: {
-          street_name: street,
-          street_number: number,
-          apartment: floor || '',
-          city: city,
-          state: province,
-          zip_code: zip
-        }
-      },
-      back_urls: {
-        success: `${process.env.NEXTAUTH_URL}/success?order=${orderCode}`,
-        failure: `${process.env.NEXTAUTH_URL}/failure?order=${orderCode}`,
-        pending: `${process.env.NEXTAUTH_URL}/pending?order=${orderCode}`
-      },
-      notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
-      external_reference: orderCode,
-      auto_return: 'approved' as const,
-      payment_types: { excluded_types: excluded }
-    };
+      const excludedTypes: Record<string, string[]> = {
+        mercadopago: [],
+        tarjeta: ['ticket', 'bank_transfer', 'atm', 'prepaid_card'],
+        efectivo: ['credit_card', 'debit_card', 'bank_transfer', 'atm', 'prepaid_card'],
+      };
+      const excluded = excludedTypes[paymentMethod || 'mercadopago'] || excludedTypes.mercadopago;
 
-    const mpPreference = new Preference(client);
-    const mpResponse = await mpPreference.create({ body: preferenceData });
-    const preferenceId = mpResponse.id || '';
-    if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
-    const initPoint = mpResponse.init_point;
+      const preferenceData = {
+        items: mpItems,
+        payer: {
+          email: email,
+          name: user.name || 'Cliente',
+          surname: '',
+          phone: { number: phone || '0000000000' },
+          identification: { type: idType, number: cleanDoc },
+          address: {
+            street_name: street,
+            street_number: number,
+            apartment: floor || '',
+            city: city,
+            state: province,
+            zip_code: zip
+          }
+        },
+        back_urls: {
+          success: `${process.env.NEXTAUTH_URL}/success?order=${orderCode}`,
+          failure: `${process.env.NEXTAUTH_URL}/failure?order=${orderCode}`,
+          pending: `${process.env.NEXTAUTH_URL}/pending?order=${orderCode}`
+        },
+        notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
+        external_reference: orderCode,
+        auto_return: 'approved' as const,
+        payment_types: { excluded_types: excluded }
+      };
+
+      const mpPreference = new Preference(client);
+      const mpResponse = await mpPreference.create({ body: preferenceData });
+      preferenceId = mpResponse.id || '';
+      if (!preferenceId) throw new Error('Failed to create MercadoPago preference');
+      initPoint = mpResponse.init_point || null;
+    }
 
     const order = await prisma.$transaction(async (tx) => {
       for (const item of enrichedItems) {
@@ -193,16 +216,19 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      return tx.order.create({
+      const orderStatus = isFullyPaidByCoupons ? 'PROCESSING' : 'PENDING';
+      const orderPayment = isFullyPaidByCoupons ? 'coupons' : (paymentMethod || 'mercadopago');
+
+      const created = await tx.order.create({
         data: {
           code: orderCode,
           userId: userId,
-          status: 'PENDING',
-          payment: paymentMethod || 'mercadopago',
+          status: orderStatus,
+          payment: orderPayment,
           warranty: warranty || '90 dias',
           cuotas: cuotas || 1,
           subtotal: calculatedSubtotal,
-          total: calculatedTotal,
+          total: isFullyPaidByCoupons ? 0 : calculatedTotal,
           warrantyCost: calculatedWarrantyCost,
           deliveryCost: body.deliveryCost || 0,
           clientEmail: email,
@@ -226,6 +252,39 @@ export async function POST(request: NextRequest) {
           }
         }
       });
+
+      // Create OrderCoupon records and update coupon balances
+      if (validatedCoupons.length > 0) {
+        let remainingDiscount = couponDiscount;
+        for (const c of validatedCoupons) {
+          const amountToUse = Math.min(c.remainingAmount, remainingDiscount);
+          if (amountToUse <= 0) continue;
+
+          await tx.orderCoupon.create({
+            data: {
+              orderId: created.id,
+              couponId: c.id,
+              amountUsed: amountToUse,
+            }
+          });
+
+          const newRemaining = c.remainingAmount - amountToUse;
+          const newStatus = newRemaining <= 0 ? 'USED' : 'ACTIVE';
+
+          await tx.coupon.update({
+            where: { id: c.id },
+            data: {
+              remainingAmount: newRemaining,
+              status: newStatus,
+              usedAt: newStatus === 'USED' ? new Date() : undefined,
+            }
+          });
+
+          remainingDiscount -= amountToUse;
+        }
+      }
+
+      return created;
     });
 
     return NextResponse.json({
@@ -233,13 +292,15 @@ export async function POST(request: NextRequest) {
       orderId: order.id,
       orderCode: order.code,
       initPoint: initPoint,
-      preferenceId: preferenceId
+      preferenceId: preferenceId,
+      couponDiscount,
+      totalAfterCoupons,
     });
 
   } catch (error: any) {
     console.error('Checkout error:', error);
     if (error.status) {
-      return NextResponse.json({ error: 'Error al procesar el pago' }, { status: error.status });
+      return NextResponse.json({ error: error.message || 'Error al procesar el pago' }, { status: error.status });
     }
     return NextResponse.json(
       { error: 'Error al procesar el pago. Intenta novamente.' },

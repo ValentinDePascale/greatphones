@@ -25,16 +25,16 @@ export async function POST(request: Request) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      const giftCard = await tx.$queryRawUnsafe<Array<{ id: string }>>(
+      const giftCardRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
         'SELECT id FROM "GiftCard" WHERE code = $1 FOR UPDATE',
         normalizedCode
       )
 
-      if (!giftCard || giftCard.length === 0) {
+      if (!giftCardRows || giftCardRows.length === 0) {
         throw { status: 404, message: 'Código no encontrado' }
       }
 
-      const gc = await tx.giftCard.findUnique({ where: { id: giftCard[0].id } })
+      const gc = await tx.giftCard.findUnique({ where: { id: giftCardRows[0].id } })
       if (!gc) {
         throw { status: 404, message: 'Código no encontrado' }
       }
@@ -53,39 +53,24 @@ export async function POST(request: Request) {
         throw { status: 400, message: 'Esta Gift Card expiró' }
       }
 
-      const walletRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
-        'SELECT id FROM "Wallet" WHERE "userId" = $1 FOR UPDATE',
-        user.id
-      )
+      // Create coupon from gift card
+      const couponCode = gc.code
+      const expiresAt = gc.expiresAt || new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
 
-      let wallet: any
-      if (!walletRows || walletRows.length === 0) {
-        wallet = await tx.wallet.create({
-          data: { userId: user.id }
-        })
-      } else {
-        wallet = await tx.wallet.findUnique({ where: { id: walletRows[0].id } })
+      const existing = await tx.coupon.findUnique({ where: { code: couponCode } })
+      if (existing) {
+        throw { status: 400, message: 'Esta Gift Card ya fue canjeada' }
       }
 
-      const balanceBefore = wallet!.balance
-
-      await tx.wallet.update({
-        where: { id: wallet!.id },
+      const coupon = await tx.coupon.create({
         data: {
-          balance: { increment: gc.originalAmount },
-          totalEarned: { increment: gc.originalAmount },
-        }
-      })
-
-      const transaction = await tx.walletTransaction.create({
-        data: {
-          walletId: wallet!.id,
-          type: 'GIFT_CARD_REDEEM',
-          amount: gc.originalAmount,
-          balanceBefore,
-          balanceAfter: balanceBefore + gc.originalAmount,
-          referenceId: gc.id,
-          description: `Canje de Gift Card ${gc.code}`,
+          userId: user.id,
+          code: couponCode,
+          originalAmount: gc.originalAmount,
+          remainingAmount: gc.originalAmount,
+          source: 'giftcard',
+          sourceId: gc.id,
+          expiresAt,
         }
       })
 
@@ -95,18 +80,17 @@ export async function POST(request: Request) {
           status: 'REDEEMED',
           redeemedAt: new Date(),
           redeemedByUserId: user.id,
-          transactionId: transaction.id,
         }
       })
 
-      return { newBalance: balanceBefore + gc.originalAmount, amount: gc.originalAmount }
+      return { amount: gc.originalAmount, code: coupon.code, couponId: coupon.id }
     })
 
     return NextResponse.json({ success: true, ...result })
   } catch (error: any) {
     console.error('[GiftCard Redeem] Error:', error)
     if (error.status) {
-      return NextResponse.json({ error: 'Error al canjear la Gift Card' }, { status: error.status })
+      return NextResponse.json({ error: error.message }, { status: error.status })
     }
     return NextResponse.json({ error: 'Error al canjear la Gift Card' }, { status: 500 })
   }

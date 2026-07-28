@@ -27,7 +27,7 @@
   <meta name="twitter:image" content="https://greatphones.com.ar/og-image.jpg">
 
   <title>Great Phones — Tecnologia premium. Precio justo.</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Manrope:wght@400;700;800&family=Inter:wght@300;400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Manrope:wght@400;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles/globals.css">
   <link rel="stylesheet" href="/styles/components.css">
   <link rel="stylesheet" href="/styles/pages.css">
@@ -35,6 +35,7 @@
   <link rel="stylesheet" href="/styles/responsive.css">
   <link rel="stylesheet" href="/styles/cookies.css">
   <link rel="stylesheet" href="/styles/wallet.css">
+  <link rel="stylesheet" href="/styles/coupons.css">
 </head>
 <body>
 <a href="#main-content" style="position:absolute;top:-100%;left:0;background:var(--orange);color:#fff;padding:12px 24px;z-index:99999;font-weight:700;text-decoration:none;border-radius:0 0 8px 0" onfocus="this.style.top='0'" onblur="this.style.top='-100%'">Saltar al contenido</a>
@@ -1346,23 +1347,11 @@
     </div>
 
     <div id="cuentaLoggedIn">
-      <div class="cu-saldo-card">
-        <div class="cu-saldo-bg"></div>
-        <div class="cu-saldo-body">
-          <span class="cu-saldo-lbl">Saldo Great Phones</span>
-          <div class="cu-saldo-val">
-            <span class="cu-saldo-signo">$</span>
-            <span id="cuentaSaldo">0</span>
-          </div>
-        </div>
-        <div class="cu-saldo-acts">
-          <button class="cu-btn-pri" onclick="nav('shop')">
-            <span>Usar en compras</span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-          <button class="cu-btn-sec">Retirar</button>
-        </div>
-      </div>
+      <!-- Coupon Section -->
+      <div class="cpn-section" id="cpnCuentaContainer"></div>
+
+      <!-- Legacy Wallet -->
+      <div id="cpnLegacyWallet" style="display:none"></div>
 
       <div class="cu-grid">
         <div class="cu-card">
@@ -1387,14 +1376,8 @@
         </div>
       </div>
 
-      <!-- Wallet: Redeem Gift Card -->
+      <!-- Redeem Gift Card -->
       <div class="wallet-section" id="walletRedeemSection"></div>
-
-      <!-- Wallet: Transactions -->
-      <div class="wallet-section">
-        <h3 class="wallet-section-title">Movimientos de saldo</h3>
-        <div class="wallet-transactions-container" id="walletTransactions"></div>
-      </div>
     </div>
 
     <div class="cu-logout">
@@ -2435,6 +2418,7 @@
               <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Subtotal</span><span id="sum-subtotal">$0</span></div>
               <div id="sum-warranty-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Garantía extendida</span><span id="sum-warranty-cost" style="color:var(--orange);font-weight:600">+$0</span></div>
               <div id="sum-delivery-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Envío</span><span id="sum-delivery-cost" style="color:var(--orange);font-weight:600">+$0</span></div>
+              <div id="sum-coupon-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--orange)">Descuento cupones</span><span id="sum-coupon-cost" style="color:var(--orange);font-weight:700">-$0</span></div>
               <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:2px solid var(--dk);margin-top:4px">
                 <span style="font-weight:700">Total</span>
                 <span id="sum-total" style="font-weight:700;font-size:20px;color:var(--orange);font-family:'Playfair Display',Georgia,serif">$0</span>
@@ -2540,6 +2524,7 @@
                 <p style="font-size:12px;color:var(--gray);margin:2px 0 0">Elegí cómo querés abonar</p>
               </div>
             </div>
+            <div id="cpnAppliedContainer" style="margin-bottom:16px;display:none"></div>
             <div style="display:flex;flex-direction:column;gap:12px">
               <!-- Mercado Pago -->
               <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
@@ -2556,16 +2541,16 @@
                 </div>
               </div>
 
-              <!-- Saldo Great Phones -->
-              <div onclick="selectPaymentMethod('wallet',this)" class="payment-method-card" id="walletPaymentMethod" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 12h8M12 8h8M12 16h4"/></svg>
+              <!-- Cupones / Saldo GP -->
+              <div onclick="selectPaymentMethod('coupons',this)" class="payment-method-card" id="cpnCheckoutCard" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
+                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
                 </div>
                 <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Saldo Great Phones</div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá con el saldo de tu billetera</div>
+                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Cupones / Saldo GP</div>
+                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá con cupones de descuento</div>
                 </div>
-                <div id="walletBalanceCheckout" style="font-size:13px;font-weight:700;color:var(--green);white-space:nowrap">Cargando...</div>
+                <div id="cpnCouponCount" style="font-size:12px;font-weight:600;color:var(--gray2);white-space:nowrap">Cargando...</div>
               </div>
 
               <!-- Tarjeta de crédito/débito -->
@@ -2632,6 +2617,10 @@
             <div id="checkout-delivery-line" style="display:none;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
               <span>Envío</span>
               <span id="checkout-delivery-cost" style="color:var(--orange);font-weight:600">+$0</span>
+            </div>
+            <div id="checkout-coupon-line" style="display:none;justify-content:space-between;font-size:13px;color:var(--orange);margin-bottom:6px">
+              <span>Descuento cupones</span>
+              <span id="checkout-coupon-cost" style="font-weight:700">-$0</span>
             </div>
           </div>
 
@@ -2909,6 +2898,7 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/checkout.js"></script>
 <script defer src="/lib/wallet.js"></script>
 <script defer src="/lib/giftcard.js"></script>
+<script defer src="/lib/coupons.js"></script>
 <script defer src="/lib/notifications.js"></script>
 <script defer src="/lib/cookies.js"></script>
 <script defer src="/lib/sell.js"></script>
