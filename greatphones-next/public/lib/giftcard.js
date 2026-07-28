@@ -175,7 +175,7 @@ function renderRedeemSection(containerId) {
         '<h4 class="redeem-title">¿Tenés una Gift Card?</h4>' +
         '<p class="redeem-desc">Ingresá el código y obtené un cupón de descuento al instante</p>' +
         '<div class="redeem-input-wrap">' +
-          '<input type="text" class="redeem-input" id="redeemCodeInput" placeholder="GP-XXXX-XXXX" maxlength="11" style="text-transform:uppercase" oninput="onRedeemInput(this)" onkeydown="if(event.key===\'Enter\')redeemGiftCard()">' +
+          '<input type="text" class="redeem-input" id="redeemCodeInput" placeholder="GP-XXXX-XXXX" maxlength="12" style="text-transform:uppercase" oninput="onRedeemInput(this)" onkeydown="if(event.key===\'Enter\')redeemGiftCard()">' +
           '<button class="btn btn-o redeem-btn" id="redeemBtn" onclick="redeemGiftCard()" disabled>Canjear</button>' +
         '</div>' +
         '<div id="redeemStatus" style="font-size:12px;margin-top:8px;display:none"></div>' +
