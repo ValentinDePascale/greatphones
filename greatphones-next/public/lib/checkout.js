@@ -225,8 +225,20 @@ function updateCheckoutTotal(){
   var cuotasLabel=document.getElementById('checkout-cuotas-label');
   var cuotasAmount=document.getElementById('checkout-cuotas-amount');
   var cuotasBox=document.getElementById('checkout-cuotas-box');
+  var couponLine=document.getElementById('checkout-coupon-line');
+  var couponCost=document.getElementById('checkout-coupon-cost');
   if(subtotalEl)subtotalEl.textContent=fmt(subtotal);
-  if(totalEl)totalEl.textContent=fmt(total);
+  var couponTotal=typeof CPN!=='undefined'&&CPN.applied?CPN.applied.reduce(function(s,c){return s+c.amount},0):0;
+  var displayTotal=couponTotal>0?total-couponTotal:total;
+  if(totalEl)totalEl.textContent=fmt(displayTotal);
+  if(couponLine&&couponCost){
+    if(couponTotal>0){
+      couponLine.style.display='flex';
+      couponCost.textContent='-$'+couponTotal.toLocaleString('es-AR');
+    }else{
+      couponLine.style.display='none';
+    }
+  }
   if(warrantyLine){
     warrantyLine.style.display=checkoutState.warranty>0?'flex':'none';
     if(warrantyCost)warrantyCost.textContent='+$'+checkoutState.warranty.toLocaleString('es-AR');
@@ -374,6 +386,11 @@ function openCheckout(){
     prefillCheckoutFields();
     renderCheckoutSummary();
     showCheckoutStep(1);
+    if(typeof cpnUpdateCheckoutCard==='function'){
+      CPN.applied=[];
+      CPN.discountTotal=0;
+      cpnUpdateCheckoutCard();
+    }
   },100);
 }
 
@@ -411,14 +428,7 @@ function showCheckoutStep(step){
   if(step===3)renderCheckoutSummaryStep();
   if(step===4){
     updateCuotaDetail();
-    var balEl=document.getElementById('walletBalanceCheckout');
-    if(balEl&&balEl.textContent==='Cargando...'){
-      getWallet().then(function(w){
-        if(balEl)balEl.textContent='$'+w.balance.toLocaleString('es-AR');
-      }).catch(function(){
-        if(balEl)balEl.textContent='Saldo: $0';
-      });
-    }
+    if(typeof cpnUpdateCheckoutCard==='function')cpnUpdateCheckoutCard();
   }
 }
 
@@ -479,14 +489,8 @@ function selectPaymentMethod(method, el){
     target.style.borderColor='var(--orange)';
     target.style.background='rgba(255,107,44,.05)';
   }
-  if(method==='wallet'){
-    var balEl=document.getElementById('walletBalanceCheckout');
-    if(balEl)balEl.textContent='Cargando...';
-    getWallet().then(function(w){
-      if(balEl)balEl.textContent='$'+w.balance.toLocaleString('es-AR');
-    }).catch(function(){
-      if(balEl)balEl.textContent='Saldo: $0';
-    });
+  if(method==='coupons'){
+    cpnOpenModal();
   }
   if(method==='efectivo'){
     showToast('Vas a pagar en efectivo. Vas a recibir un cupón de pago por email para abonar en cualquier sucursal de Pago Fácil o Rapi Pago.');
@@ -494,10 +498,20 @@ function selectPaymentMethod(method, el){
 }
 
 function submitOrder(){
-  if(!_selectedPaymentMethod){
+  var total=cartTotal()+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
+  var hasCoupons=CPN.applied.length>0;
+  var couponTotal=CPN.applied.reduce(function(s,c){return s+c.amount},0);
+  var remaining=total-couponTotal;
+
+  if(!_selectedPaymentMethod&&!(hasCoupons&&remaining<=0)){
     showToast('Seleccioná un método de pago');
     return;
   }
+  if(hasCoupons&&remaining>0&&(!_selectedPaymentMethod||_selectedPaymentMethod==='coupons')){
+    showToast('Seleccioná otro método de pago para el saldo restante');
+    return;
+  }
+
   var btn=document.getElementById('btn-final-pay');
   if(btn){
     btn.disabled=true;
@@ -519,11 +533,12 @@ function submitOrder(){
   }).filter(function(i){return i;});
 
   var subtotal=cartTotal();
-  var total=subtotal+checkoutState.warranty+(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
   var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses':'+24 meses'):'90 días';
   var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envío 24-48hs');
   if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
   if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
+
+  var actualPaymentMethod = (hasCoupons && remaining <= 0) ? 'coupons' : (_selectedPaymentMethod || 'mercadopago');
 
   var payload={
     items:items,
@@ -543,14 +558,15 @@ function submitOrder(){
     warrantyCost:checkoutState.warranty,
     deliveryCost:typeof checkoutState.delivery==='number'?checkoutState.delivery:0,
     total:total,
-    paymentMethod:_selectedPaymentMethod||'mercadopago',
+    paymentMethod:actualPaymentMethod,
     carrier:checkoutState.selectedCarrier||null,
-    carrierService:checkoutState.selectedService||null
+    carrierService:checkoutState.selectedService||null,
+    coupons:hasCoupons?CPN.applied.map(function(c){return c.id}):[]
   };
 
-  var endpoint = _selectedPaymentMethod === 'wallet' ? API_URL + '/api/wallet/pay' : API_URL + '/api/checkout';
+  if(hasCoupons)payload.couponDiscount=couponTotal;
 
-  fetch(endpoint,{
+  fetch(API_URL+'/api/checkout',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify(payload)
@@ -562,12 +578,15 @@ function submitOrder(){
     Cart=[];
     saveCart();
     updCartBadge();
+    CPN.applied=[];
+    CPN.discountTotal=0;
     if(data.redirectUrl){
       window.location.href=data.redirectUrl;
     }else if(data.initPoint){
       window.location.href=data.initPoint;
     }else{
-      throw new Error('No se recibió link de pago');
+      showToast('¡Compra realizada con éxito!');
+      setTimeout(function(){location.reload()},1500);
     }
   })
   .catch(function(error){
@@ -620,8 +639,10 @@ function renderCheckoutSummaryStep(){
   if(sumDelivery)sumDelivery.textContent=deliveryLabel;
   var sumSubtotal=document.getElementById('sum-subtotal');
   if(sumSubtotal)sumSubtotal.textContent=fmt(subtotal);
+  var couponTotal=typeof CPN!=='undefined'&&CPN.applied?CPN.applied.reduce(function(s,c){return s+c.amount},0):0;
+  var displayTotal=couponTotal>0?total-couponTotal:total;
   var sumTotal=document.getElementById('sum-total');
-  if(sumTotal)sumTotal.textContent=fmt(total);
+  if(sumTotal)sumTotal.textContent=fmt(displayTotal);
   var sumWarrantyLine=document.getElementById('sum-warranty-line');
   var sumWarrantyCost=document.getElementById('sum-warranty-cost');
   if(sumWarrantyLine){
@@ -633,6 +654,16 @@ function renderCheckoutSummaryStep(){
   if(sumDeliveryLine){
     sumDeliveryLine.style.display=deliveryCost>0?'flex':'none';
     if(sumDeliveryCost)sumDeliveryCost.textContent='+$'+deliveryCost.toLocaleString('es-AR');
+  }
+  var sumCouponLine=document.getElementById('sum-coupon-line');
+  var sumCouponCost=document.getElementById('sum-coupon-cost');
+  if(sumCouponLine&&sumCouponCost){
+    if(couponTotal>0){
+      sumCouponLine.style.display='flex';
+      sumCouponCost.textContent='-$'+couponTotal.toLocaleString('es-AR');
+    }else{
+      sumCouponLine.style.display='none';
+    }
   }
 }
 

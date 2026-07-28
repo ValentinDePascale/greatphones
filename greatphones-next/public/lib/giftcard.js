@@ -173,12 +173,16 @@ function renderRedeemSection(containerId) {
       '<div class="redeem-ico">&#127873;</div>' +
       '<div class="redeem-body">' +
         '<h4 class="redeem-title">¿Tenés una Gift Card?</h4>' +
-        '<p class="redeem-desc">Ingresá el código y sumá el saldo a tu billetera al instante</p>' +
+        '<p class="redeem-desc">Ingresá el código y obtené un cupón de descuento al instante</p>' +
         '<div class="redeem-input-wrap">' +
-          '<input type="text" class="redeem-input" id="redeemCodeInput" placeholder="GP-XXXX-XXXX" maxlength="11" style="text-transform:uppercase" oninput="onRedeemInput(this)" onkeydown="if(event.key===\'Enter\')redeemGiftCard()">' +
+          '<input type="text" class="redeem-input" id="redeemCodeInput" placeholder="GP-XXXX-XXXX" maxlength="12" style="text-transform:uppercase" oninput="onRedeemInput(this)" onkeydown="if(event.key===\'Enter\')redeemGiftCard()">' +
           '<button class="btn btn-o redeem-btn" id="redeemBtn" onclick="redeemGiftCard()" disabled>Canjear</button>' +
         '</div>' +
         '<div id="redeemStatus" style="font-size:12px;margin-top:8px;display:none"></div>' +
+        '<div class="cpn-redeem-hint">' +
+          '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H2v7l6.29 6.29a1 1 0 0 0 1.42 0l5.58-5.58a1 1 0 0 0 0-1.42L9 5Z"/><path d="M6 9.01V9"/><path d="m15 5 6.3 6.3a1 1 0 0 1 0 1.42L14 19"/></svg>' +
+          'Los cupones se aplican al pagar en el checkout' +
+        '</div>' +
       '</div>' +
     '</div>'
 }
@@ -268,7 +272,7 @@ function redeemGiftCard() {
 
     // Success
     if (statusEl) {
-      statusEl.textContent = '✅ ¡Gift card canjeada! Se acreditaron $' + data.amount.toLocaleString('es-AR') + ' a tu saldo.'
+      statusEl.textContent = '✅ ¡Gift card canjeada! Se generó un cupón de $' + data.amount.toLocaleString('es-AR') + '.'
       statusEl.className = 'redeem-status redeem-status-ok'
       statusEl.style.display = 'block'
     }
@@ -276,7 +280,6 @@ function redeemGiftCard() {
     input.value = ''
     input.disabled = true
 
-    updateWalletUI()
     setTimeout(function() {
       input.disabled = false
       btn.textContent = 'Canjear'

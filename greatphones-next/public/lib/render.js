@@ -2554,6 +2554,7 @@ function showImeiProductModal(existingProductId){
     function limpiar(){
       if(detenido)return;
       detenido=true;
+      if(zxingReader){try{zxingReader.reset();}catch(e){}zxingReader=null;}
       if(window.Quagga){try{Quagga.stop();}catch(e){}}
       if(html5QrCode){try{html5QrCode.stop().catch(function(){/* cleanup, ignore errors */});}catch(e){}}
       if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
@@ -2568,8 +2569,8 @@ function showImeiProductModal(existingProductId){
     var usandoQuagga=false;
     var detectando=false;
     var ultimaDetect=0;
-    var ultimoImei='';
-    var imeiCount=0;
+    var zxingReader=null;
+    var zxingCargado=false;
 
     function initBarcodeDetector(){
       if(!window.BarcodeDetector)return false;
@@ -2601,16 +2602,6 @@ function showImeiProductModal(existingProductId){
       var len=d.length;
       if(len>=14&&len<=16){
         var imei=d.substring(0,15);
-        if(imei===ultimoImei){
-          imeiCount++;
-          if(imeiCount<2){
-            if(statusEl)statusEl.textContent='Verificando... ('+imeiCount+'/2)';
-            return false;
-          }
-        }else{
-          ultimoImei=imei;
-          imeiCount=1;
-        }
         if(luhnValido(imei)){
           limpiar();onDetected({type:'imei',imei:imei,raw:raw});return true;
         }
@@ -2709,6 +2700,57 @@ function showImeiProductModal(existingProductId){
       });
     }
 
+    // ---- ZXing scanner (fallback principal para barcode) ----
+    function cargarZxing(callback){
+      if(zxingCargado&&window.ZXing&&window.ZXing.BrowserMultiFormatReader){
+        callback();return;
+      }
+      if(statusEl)statusEl.textContent='Cargando escáner...';
+      var sc=document.createElement('script');
+      sc.src='https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.2/umd/index.min.js';
+      sc.onload=function(){
+        if(detenido)return;
+        zxingCargado=true;
+        callback();
+      };
+      sc.onerror=function(){
+        escanearHtml5Qrcode();
+      };
+      document.head.appendChild(sc);
+    }
+
+    function escanearZxing(){
+      if(detenido||!window.ZXing)return;
+      if(statusEl)statusEl.textContent='Apuntá al código de barras';
+
+      var ZX=window.ZXing;
+      try{
+        var hints=new Map();
+        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[
+          ZX.BarcodeFormat.CODE_128,
+          ZX.BarcodeFormat.CODE_39,
+          ZX.BarcodeFormat.EAN_13,
+          ZX.BarcodeFormat.EAN_8,
+          ZX.BarcodeFormat.UPC_A
+        ]);
+        zxingReader=new ZX.BrowserMultiFormatReader(hints);
+      }catch(e){
+        zxingReader=new ZX.BrowserMultiFormatReader();
+      }
+
+      zxingReader.decodeFromVideoDevice(null,video,function(result,err){
+        if(detenido)return;
+        if(err)return;
+        if(result){
+          procesarDigitos(result.getText());
+        }
+      }).catch(function(e){
+        if(!detenido){
+          escanearHtml5Qrcode();
+        }
+      });
+    }
+
     // ---- Main scan loop ----
     function escanear(){
       if(detenido)return;
@@ -2716,7 +2758,7 @@ function showImeiProductModal(existingProductId){
 
       if(barcodeDetector){
         var ahora=Date.now();
-        if(!detectando&&ahora-ultimaDetect>200){
+        if(!detectando&&ahora-ultimaDetect>100){
           ultimaDetect=ahora;
           detectando=true;
           barcodeDetector.detect(video).then(function(barcodes){
@@ -2761,9 +2803,16 @@ function showImeiProductModal(existingProductId){
         video.srcObject=s;video.play();escanear();
       }).catch(function(){
         var fallback=isBarcode
-          ? {video:{width:{min:1280,ideal:1920},height:{min:720,ideal:1080},facingMode:'environment'}}
+          ? {video:{width:{ideal:1280},height:{ideal:720},facingMode:'environment'}}
           : {video:{facingMode:'environment'}};
         return navigator.mediaDevices.getUserMedia(fallback).then(function(s){
+          video.srcObject=s;video.play();escanear();
+        });
+      }).catch(function(){
+        var fallback2=isBarcode
+          ? {video:{facingMode:'environment'}}
+          : {video:{facingMode:'environment'}};
+        return navigator.mediaDevices.getUserMedia(fallback2).then(function(s){
           video.srcObject=s;video.play();escanear();
         });
       }).catch(function(err){
@@ -2779,7 +2828,9 @@ function showImeiProductModal(existingProductId){
         if(statusEl)statusEl.textContent='Escáner listo';
         iniciarCamara();
       }else{
-        escanearHtml5Qrcode();
+        cargarZxing(function(){
+          escanearZxing();
+        });
       }
     }else{
       if(typeof jsQR==='undefined'){
@@ -2794,26 +2845,33 @@ function showImeiProductModal(existingProductId){
   };
 
   window.startImeiScanner=function(){
+    // Remove any lingering confirmation overlay before opening scanner
+    var prev=document.getElementById('imeiConfirmOverlay');
+    if(prev)prev.remove();
+
     window.abrirScannerQR({
       mode:'barcode',
       onDetected:function(res){
         if(res.type==='imei'){
           var imei=res.imei;
-          // Show confirmation before accepting
           var confirmDiv=document.createElement('div');
           confirmDiv.id='imeiConfirmOverlay';
           confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
           confirmDiv.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2rem;text-align:center">'+
             '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
             '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
-            '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">Verificá que el número sea correcto:</p>'+
+            '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">El código escaneado es:</p>'+
             '<div id="imeiConfirmNumber" style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+imei+'</div>'+
             '<div style="display:flex;gap:8px">'+
-              '<button onclick="document.getElementById(\'imeiConfirmOverlay\').remove()" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
+              '<button id="imeiRetryBtn" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
               '<button id="imeiConfirmBtn" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
             '</div>'+
           '</div>';
           document.body.appendChild(confirmDiv);
+          document.getElementById('imeiRetryBtn').onclick=function(){
+            document.getElementById('imeiConfirmOverlay').remove();
+            window.startImeiScanner();
+          };
           document.getElementById('imeiConfirmBtn').onclick=function(){
             document.getElementById('imeiConfirmOverlay').remove();
             window._confirmarImei(imei);
