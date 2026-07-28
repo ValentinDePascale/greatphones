@@ -265,12 +265,12 @@ function renderInStoreSale() {
             <!-- Step 2: Método de pago -->
             <label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:0.5rem">2. Método de pago</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-bottom:0.75rem">
-              <button onclick="selectPaymentMethod('cash')" id="btn-cash"
+              <button onclick="instoreSelectPaymentMethod('cash')" id="btn-cash"
                 style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
                 <div style="font-size:16px;margin-bottom:2px">💵</div>
                 <div style="font-size:11px;font-weight:600">Efectivo</div>
               </button>
-              <button onclick="selectPaymentMethod('transfer')" id="btn-transfer"
+              <button onclick="instoreSelectPaymentMethod('transfer')" id="btn-transfer"
                 style="padding:10px;border:2px solid var(--border);border-radius:10px;background:white;cursor:pointer;transition:all .2s">
                 <div style="font-size:16px;margin-bottom:2px">📲</div>
                 <div style="font-size:11px;font-weight:600">Transferencia</div>
@@ -888,7 +888,7 @@ function formatMoney(n) {
   return curr + ' ' + n.toLocaleString('es-AR')
 }
 
-function selectPaymentMethod(method) {
+function instoreSelectPaymentMethod(method) {
   instoreState.paymentMethod = method
 
   var cashBtn = document.getElementById('btn-cash')

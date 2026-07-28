@@ -427,7 +427,7 @@ function showCheckoutStep(step){
   });
   if(step===3)renderCheckoutSummaryStep();
   if(step===4){
-    updateCuotaDetail();
+    if(typeof updateCuotasMonthly==='function')updateCuotasMonthly();
     if(typeof cpnUpdateCheckoutCard==='function')cpnUpdateCheckoutCard();
   }
 }
