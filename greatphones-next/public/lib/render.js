@@ -2702,12 +2702,12 @@ function showImeiProductModal(existingProductId){
 
     // ---- ZXing scanner (fallback principal para barcode) ----
     function cargarZxing(callback){
-      if(zxingCargado&&window.ZXing&&window.ZXing.BrowserMultiFormatReader){
+      if(zxingCargado&&window.ZXingBrowser&&window.ZXingBrowser.BrowserMultiFormatOneDReader){
         callback();return;
       }
       if(statusEl)statusEl.textContent='Cargando escáner...';
       var sc=document.createElement('script');
-      sc.src='https://cdn.jsdelivr.net/npm/@zxing/browser@0.2.2/umd/index.min.js';
+      sc.src='https://unpkg.com/@zxing/browser@latest';
       sc.onload=function(){
         if(detenido)return;
         zxingCargado=true;
@@ -2720,27 +2720,19 @@ function showImeiProductModal(existingProductId){
     }
 
     function escanearZxing(){
-      if(detenido||!window.ZXing)return;
+      if(detenido||!window.ZXingBrowser)return;
       if(statusEl)statusEl.textContent='Apuntá al código de barras';
 
-      var ZX=window.ZXing;
+      var ZXB=window.ZXingBrowser;
       try{
-        var hints=new Map();
-        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[
-          ZX.BarcodeFormat.CODE_128,
-          ZX.BarcodeFormat.CODE_39,
-          ZX.BarcodeFormat.EAN_13,
-          ZX.BarcodeFormat.EAN_8,
-          ZX.BarcodeFormat.UPC_A
-        ]);
-        zxingReader=new ZX.BrowserMultiFormatReader(hints);
+        zxingReader=new ZXB.BrowserMultiFormatOneDReader();
       }catch(e){
-        zxingReader=new ZX.BrowserMultiFormatReader();
+        zxingReader=new ZXB.BrowserMultiFormatReader();
       }
 
-      zxingReader.decodeFromVideoDevice(null,video,function(result,err){
+      zxingReader.decodeFromVideoDevice(null,video,function(result,error,controls){
         if(detenido)return;
-        if(err)return;
+        if(error)return;
         if(result){
           procesarDigitos(result.getText());
         }
