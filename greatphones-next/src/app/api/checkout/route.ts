@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
+import { sendOrderConfirmationEmail } from '@/lib/email';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -286,6 +287,23 @@ export async function POST(request: NextRequest) {
 
       return created;
     });
+
+    if (isFullyPaidByCoupons) {
+      sendOrderConfirmationEmail({
+        orderCode: order.code,
+        email,
+        phone: phone || '',
+        total: order.total,
+        items: enrichedItems.map((item: any) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          price: item.unitPrice
+        })),
+        shippingAddress: [street, number, floor, city, province, zip].filter(Boolean).join(', '),
+        paymentMethod: validatedCoupons.map(c => c.code).join(', ') || 'Cupón',
+        installments: 1,
+      }).catch((err) => console.error('[Checkout] Error sending confirmation email:', err));
+    }
 
     return NextResponse.json({
       success: true,

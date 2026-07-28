@@ -115,7 +115,7 @@ function loadPendingOrders(page){
   setActiveOrderBtn('btnPendingOrders');
   window._currentOrderTab='pending';
   
-  var url=API_URL+'/api/orders?admin=true&status=PENDING&page='+(page||1)+'&limit=20';
+  var url=API_URL+'/api/orders?admin=true&status=PENDING,PROCESSING&page='+(page||1)+'&limit=20';
   fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.json();
@@ -136,7 +136,7 @@ function loadAcceptedOrders(page){
   setActiveOrderBtn('btnAcceptedOrders');
   window._currentOrderTab='accepted';
   
-  var url=API_URL+'/api/orders?admin=true&status=PROCESSING,SHIPPED&page='+(page||1)+'&limit=20';
+  var url=API_URL+'/api/orders?admin=true&status=SHIPPED&page='+(page||1)+'&limit=20';
   fetch(url,{headers:{'X-User-Id': currentUser.id}}).then(function(r){
     if(!r.ok)throw new Error('HTTP '+r.status);
     return r.json();
