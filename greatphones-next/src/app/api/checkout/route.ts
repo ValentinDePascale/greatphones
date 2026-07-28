@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { productCache } from '@/lib/cache';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -51,11 +52,13 @@ async function findOrCreateUser(email: string, phone?: string, document?: string
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
+    console.log('[Checkout] Body:', JSON.stringify({ itemsN:body.items?.length, email:body.email, total:body.total, pm:body.paymentMethod, cids:body.coupons }));
     const validation = CheckoutSchema.safeParse(body);
     if (!validation.success) {
+      console.error('[Checkout] Zod FAIL:', validation.error.errors);
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
     }
+    console.log('[Checkout] Zod OK');
     
     const { 
       items, email, phone, street, number, floor, zip, city, province, document,
@@ -124,6 +127,7 @@ export async function POST(request: NextRequest) {
 
     const totalAfterCoupons = calculatedTotal - couponDiscount;
     const isFullyPaidByCoupons = totalAfterCoupons <= 0;
+    console.log('[Checkout] Coupons:', { count: validatedCoupons.length, discount: couponDiscount, calcTotal: calculatedTotal, afterCoupons: totalAfterCoupons, fullyPaid: isFullyPaidByCoupons });
     // ---- END COUPON HANDLING ----
 
     // Build MP preference items with server-side prices
@@ -203,6 +207,7 @@ export async function POST(request: NextRequest) {
       initPoint = mpResponse.init_point || null;
     }
 
+    console.log('[Checkout] Starting transaction for order:', orderCode);
     const order = await prisma.$transaction(async (tx) => {
       for (const item of enrichedItems) {
         const updated = await tx.product.update({
@@ -212,6 +217,7 @@ export async function POST(request: NextRequest) {
             reserved: { increment: item.quantity }
           }
         });
+        console.log('[Checkout] Stock updated:', { productId: item.product.id, name: item.product.name, oldStock: updated.stock + item.quantity, newStock: updated.stock, reserved: updated.reserved, dec: item.quantity });
         if (updated.stock < 0) {
           throw new Error(`Stock insuficiente para ${item.product.name}`);
         }
@@ -253,6 +259,7 @@ export async function POST(request: NextRequest) {
           }
         }
       });
+      console.log('[Checkout] Order created:', { id: created.id, code: created.code, status: created.status, payment: created.payment, total: created.total });
 
       // Create OrderCoupon records and update coupon balances
       if (validatedCoupons.length > 0) {
@@ -287,8 +294,12 @@ export async function POST(request: NextRequest) {
 
       return created;
     });
+    console.log('[Checkout] Transaction committed. Order:', { id: order.id, code: order.code, status: order.status });
+
+    productCache.clear();
 
     if (isFullyPaidByCoupons) {
+      console.log('[Checkout] Sending coupon confirmation email to:', email);
       sendOrderConfirmationEmail({
         orderCode: order.code,
         email,
@@ -305,6 +316,7 @@ export async function POST(request: NextRequest) {
       }).catch((err) => console.error('[Checkout] Error sending confirmation email:', err));
     }
 
+    console.log('[Checkout] SUCCESS — Returning response. OrderId:', order.id, 'OrderCode:', order.code);
     return NextResponse.json({
       success: true,
       orderId: order.id,

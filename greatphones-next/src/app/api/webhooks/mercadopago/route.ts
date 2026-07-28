@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { sendOrderConfirmationEmail } from '@/lib/email';
+import { productCache } from '@/lib/cache';
 import crypto from 'crypto';
 
 const client = new MercadoPagoConfig({
@@ -216,6 +217,8 @@ export async function POST(request: NextRequest) {
           status: orderStatus as any
         }
       });
+
+      productCache.clear();
 
       // Create Envío Pack shipment if carrier selected (not store pickup)
       if (status === 'approved' && order.carrier && order.deliveryCost > 0 && !order.enviopackId) {
