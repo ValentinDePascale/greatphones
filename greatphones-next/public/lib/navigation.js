@@ -118,6 +118,7 @@ function nav(id){
       document.getElementById('prodBrand').value='iPhone';
       document.getElementById('prodDescription').value='';
       document.getElementById('prodPrice').value='';
+      document.getElementById('prodBuyPrice').value='';
       document.getElementById('prodStock').value='';
       document.getElementById('prodCondition').value='Nuevo';
       document.getElementById('prodType').value='celular';
@@ -133,6 +134,14 @@ function nav(id){
       document.getElementById('prodImagePreview').innerHTML='📷';
       document.getElementById('prodAdditionalImages').innerHTML='<div id="addImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
       window.additionalImages=[];
+      // Reset header for new product
+      var h1=document.querySelector('#p-admin-product .sh-hdr h1');
+      var hp=document.querySelector('#p-admin-product .sh-hdr p');
+      if(h1)h1.textContent='Agregar Producto';
+      if(hp)hp.textContent='Completa los datos del nuevo producto';
+      // Hide iPhone model select
+      var iphoneSel=document.getElementById('prodIphoneModel');
+      if(iphoneSel)iphoneSel.style.display='none';
     }
     window.isEditingProduct=false;
   }

@@ -27,10 +27,10 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net",
+              "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://www.googletagmanager.com https://connect.facebook.net",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: https://res.cloudinary.com https://http2.mlstatic.com",
+              "img-src 'self' data: blob: https://res.cloudinary.com https://http2.mlstatic.com",
               "connect-src 'self' https://api.mercadopago.com https://greatphones.onrender.com https://*.neon.tech wss://*.neon.tech",
               "frame-src https://www.mercadopago.com",
               "base-uri 'self'",

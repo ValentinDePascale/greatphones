@@ -1915,6 +1915,24 @@ function updateProductFields(){
     if(processorField)processorField.style.display='none';
   }
 }
+window.updateAdminBrandFields=function(){
+  var brand=document.getElementById('prodBrand').value;
+  var iphoneField=document.getElementById('prodIphoneModelField');
+  if(brand==='iPhone'){
+    if(iphoneField)iphoneField.style.display='';
+  }else{
+    if(iphoneField)iphoneField.style.display='none';
+  }
+};
+window.onAdminIphoneModelChange=function(){
+  var sel=document.getElementById('prodIphoneModel');
+  var model=sel.value;
+  if(model){
+    document.getElementById('prodName').value=model;
+    var base=window.COTIZ_BASE&&window.COTIZ_BASE[model]||0;
+    if(base)document.getElementById('prodPrice').value=base;
+  }
+};
 window.selectAdminColor=function(color,el){
   window._adminColorCircleSelected=color;
   document.querySelectorAll('#adminColorContainer > div').forEach(function(d){d.style.borderColor='transparent';d.style.transform='scale(1)';});
@@ -1940,6 +1958,7 @@ function saveProduct(){
     sub:document.getElementById('prodDescription').value.trim().substring(0,60)||null,
     description:document.getElementById('prodDescription').value.trim()||null,
     price:parseInt(document.getElementById('prodPrice').value.replace(/[^0-9]/g,''))||0,
+    cost:parseInt(document.getElementById('prodBuyPrice').value.replace(/[^0-9]/g,''))||0,
     stock:parseInt(document.getElementById('prodStock').value)||0,
     condition:document.getElementById('prodCondition').value||'Nuevo',
     type:document.getElementById('prodType').value||'celular',
@@ -1952,8 +1971,7 @@ function saveProduct(){
     imei:document.getElementById('prodImei').value.trim()||null,
     imageUrl:document.getElementById('prodImageUrl').value.trim()||null,
     images:getAdditionalImages(),
-    ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1',
-    cost:0
+    ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1'
   };
   if(!data.name||!data.price){
     showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
@@ -1985,6 +2003,12 @@ function saveProduct(){
 function editProduct(id){
   var p=getById(PRODUCTS,id);
   if(!p)return;
+  // Update header for editing
+  var h1=document.querySelector('#p-admin-product .sh-hdr h1');
+  var hp=document.querySelector('#p-admin-product .sh-hdr p');
+  if(h1)h1.textContent='Editar Producto';
+  if(hp)hp.textContent='Modificá los datos del producto';
+  
   document.getElementById('prodId').value=p.id;
   document.getElementById('prodName').value=p.name||'';
   // Dynamically populate brand select with all existing brands
@@ -2017,7 +2041,25 @@ function editProduct(id){
   brandSel.onchange=function(){
     if(brandSel.value==='__other__'){otherInput.style.display='block';otherInput.focus();}
     else{otherInput.style.display='none';}
+    // Show/hide iPhone model select
+    updateAdminBrandFields();
   };
+  // iPhone model selector
+  var iphoneField=document.getElementById('prodIphoneModelField');
+  var iphoneSel=document.getElementById('prodIphoneModel');
+  if(iphoneSel){
+    var iphoneModels=window.SELL_MODELS&&window.SELL_MODELS['iPhone']||[];
+    iphoneSel.innerHTML='<option value="">Seleccionar...</option>'+iphoneModels.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
+  }
+  // Hide iPhone field by default, show if brand is iPhone
+  if(p.brand==='iPhone'){
+    if(iphoneField)iphoneField.style.display='';
+    var iphoneModelName=p.modelGroup||p.name||'';
+    if(iphoneSel)iphoneSel.value=iphoneModelName;
+  }else{
+    if(iphoneField)iphoneField.style.display='none';
+  }
+  document.getElementById('prodBuyPrice').value=p.cost||'';
   document.getElementById('prodDescription').value=p.description||'';
   document.getElementById('prodPrice').value=p.price||'';
   document.getElementById('prodStock').value=p.stock||'';

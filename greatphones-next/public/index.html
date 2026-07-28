@@ -1755,10 +1755,12 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="prodName" placeholder="iPhone 15 Pro"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prodBrand"><option value="iPhone">iPhone</option><option value="Samsung">Samsung</option><option value="MacBook">MacBook</option><option value="iPad">iPad</option><option value="Motorola">Motorola</option><option value="Xiaomi">Xiaomi</option><option value="Otro">Otro</option></select></div>
+          <div id="prodIphoneModelField" style="display:none"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo iPhone</label><select class="sel-f" id="prodIphoneModel" onchange="onAdminIphoneModelChange()"><option value="">Seleccionar...</option></select></div>
         </div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="prodDescription" placeholder="Descripcion completa del producto..." style="height:80px;resize:none"></textarea></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="prodPrice" type="text" placeholder="1320000" oninput="formatPriceInput(this)"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio Venta *</label><input class="inp-f" id="prodPrice" type="text" placeholder="1320000" oninput="formatPriceInput(this)"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio Compra</label><input class="inp-f" id="prodBuyPrice" type="text" placeholder="980000" oninput="formatPriceInput(this)"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="prodStock" type="number" min="0" placeholder="3"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condicion</label><select class="sel-f" id="prodCondition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>
         </div>
