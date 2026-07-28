@@ -325,6 +325,8 @@ export async function POST(request: NextRequest) {
       preferenceId: preferenceId,
       couponDiscount,
       totalAfterCoupons,
+      stockUpdated: enrichedItems.map((item: any) => ({ id: item.product.id, name: item.product.name })),
+      itemCount: enrichedItems.length,
     });
 
   } catch (error: any) {

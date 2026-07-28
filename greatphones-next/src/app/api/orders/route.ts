@@ -6,19 +6,37 @@ import {
   formatZodError 
 } from '@/lib/validations'
 import { sendOrderStatusEmail } from '@/lib/email'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, requireSession } from '@/lib/auth-guard'
 
 export async function GET(request: Request) {
   try {
-    const user = await requireAdmin(request)
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status') || undefined
     const userId = searchParams.get('userId') || undefined
     const admin = searchParams.get('admin')
     const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
     
+    let authUser: { id: string; role: string } | null = null
+    try { authUser = await requireSession(request) } catch {}
+    
+    if (admin === 'true') {
+      if (!authUser || authUser.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 })
+      }
+    } else if (userId) {
+      if (!authUser || (authUser.id !== userId && authUser.role !== 'ADMIN')) {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+      }
+    } else {
+      if (!authUser || authUser.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'Acceso denegado' }, { status: 403 })
+      }
+    }
+
+    const user = authUser
+    
+    const status = searchParams.get('status') || undefined
     const where: any = {}
     
     if (status) {

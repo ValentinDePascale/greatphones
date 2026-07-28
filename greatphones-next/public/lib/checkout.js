@@ -586,7 +586,7 @@ function submitOrder(){
       window.location.href=data.initPoint;
     }else{
       showToast('¡Compra realizada con éxito!');
-      setTimeout(function(){location.reload()},1500);
+      setTimeout(function(){window.location.href='/'},1500);
     }
   })
   .catch(function(error){
