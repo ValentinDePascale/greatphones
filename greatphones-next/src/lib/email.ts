@@ -154,7 +154,36 @@ export async function sendArrepAcceptEmail(data: {
   email: string;
   total: number;
   shippingAddress: string;
+  refundMethod?: string;
+  couponCode?: string;
 }) {
+  const refundInfo = data.refundMethod === 'coupon' ? `
+    <p style="background: #fffbeb; padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 16px;">
+      <strong>Reembolso por cupon</strong><br>
+      Como pagaste en efectivo, recibis un <strong>cupon de devolucion</strong> para usar en tu proxima compra:<br><br>
+      <span style="font-family: monospace; font-size: 18px; font-weight: bold; color: #d97706; background: #fef3c7; padding: 4px 12px; border-radius: 6px;">${data.couponCode || '—'}</span><br><br>
+      <strong>Valor:</strong> $${data.total.toLocaleString('es-AR')}<br>
+      <strong>Validez:</strong> 1 ano desde hoy.<br>
+      <small>Presenta este codigo en tu proxima compra. No es canjeable por efectivo.</small>
+    </p>
+  ` : data.refundMethod === 'wallet' ? `
+    <p style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #8b5cf6; margin-top: 16px;">
+      <strong>Reembolso en tu billetera</strong><br>
+      Se acreditaron <strong>$${data.total.toLocaleString('es-AR')}</strong> en tu saldo de Great Phones.
+    </p>
+  ` : data.refundMethod === 'mercadopago' ? `
+    <p style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #009EE3; margin-top: 16px;">
+      <strong>Reembolso via MercadoPago</strong><br>
+      El dinero fue devuelto automaticamente a tu tarjeta o cuenta de MercadoPago por <strong>$${data.total.toLocaleString('es-AR')}</strong>.<br>
+      <small>El tiempo de acreditacion depende de tu banco.</small>
+    </p>
+  ` : data.refundMethod === 'transfer' ? `
+    <p style="background: #fffbeb; padding: 16px; border-radius: 8px; border-left: 4px solid #f59e0b; margin-top: 16px;">
+      <strong>Reembolso por transferencia</strong><br>
+      Te contactaremos para coordinar la transferencia bancaria por <strong>$${data.total.toLocaleString('es-AR')}</strong>.
+    </p>
+  ` : ``;
+
   await sendEmail({
     to: data.email,
     subject: `Arrepentimiento aceptado - Instrucciones de devolucion - Orden ${data.orderCode}`,
@@ -167,6 +196,7 @@ export async function sendArrepAcceptEmail(data: {
           <strong>Reembolso total:</strong> $${data.total.toLocaleString('es-AR')}<br>
           <small>Segun Ley 24.240 y Resolucion 424/2020</small>
         </p>
+        ${data.refundMethod ? refundInfo : ''}
         <h3 style="margin-top: 24px;">Instrucciones para la devolucion:</h3>
         <ol style="line-height: 1.8;">
           <li>El producto debe estar en las mismas condiciones en que fue recibido, con su empaque original.</li>
