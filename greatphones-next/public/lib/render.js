@@ -1547,29 +1547,57 @@ function clearAdvF(){
 }
 
 // =========== ORDER & QUOTE HISTORY ===========
+var statusBadges={PENDING:'cu-item-badge--pending',APPROVED:'cu-item-badge--success',COMPLETED:'cu-item-badge--success',REJECTED:'cu-item-badge--neutral',CANCELLED:'cu-item-badge--neutral',SHIPPED:'cu-item-badge--success',DELIVERED:'cu-item-badge--success',REVIEWING:'cu-item-badge--pending'};
+var statusLabels={PENDING:'Pendiente',APPROVED:'Aceptada',COMPLETED:'Completada',REJECTED:'Rechazada',CANCELLED:'Cancelada',SHIPPED:'En camino',DELIVERED:'Entregado',REVIEWING:'En revisión'};
+function _cuSkeletonRow(){return'<div class="cu-skeleton-row"><div class="cu-skeleton" style="width:38px;height:38px;border-radius:10px;flex-shrink:0"></div><div style="flex:1;display:flex;flex-direction:column;gap:7px"><div class="cu-skeleton" style="width:55%;height:13px;border-radius:6px"></div><div class="cu-skeleton" style="width:35%;height:10px;border-radius:6px"></div></div></div>';}
+
 function renderOrderHistory(){
   var list=document.getElementById('orderHistory');
   if(!list)return;
-  if(!currentUser){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Inicia sesion para ver tu historial</div>';return;}
-  try{
-    fetch(API_URL+'/api/orders?userId='+currentUser.id).then(function(r){return r.json();}).then(function(res){
-      var ords=res.data||res;
-      if(!ords||ords.length===0){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">No tenes pedidos</div>';}
-      else{list.innerHTML=ords.map(function(o){return'<div class="order-item"><div class="oi-ico">📱</div><div style="flex:1"><div class="oi-n">'+(o.items[0]?.product?.name||'Producto')+'</div><div class="oi-s">'+o.code+' · '+new Date(o.createdAt).toLocaleDateString('es-AR')+'</div></div><div><div class="oi-p">$'+o.total.toLocaleString('es-AR')+'</div><span class="oi-bdg">'+o.status+'</span></div></div>';}).join('');}
-    }).catch(function(){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando pedidos</div>';});
-  }catch(e){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando pedidos</div>';}
+  if(!currentUser){list.innerHTML='<div class="cu-empty"><p>Iniciá sesión para ver tu historial</p></div>';return;}
+  fetch(API_URL+'/api/orders?userId='+currentUser.id).then(function(r){return r.json();}).then(function(res){
+    var ords=res.data||res;
+    var countEl=document.getElementById('orderCount');
+    if(!ords||ords.length===0){
+      list.innerHTML='<div class="cu-empty"><p>Todavía no hiciste ningún pedido</p><a href="/shop" onclick="event.preventDefault();nav(\'shop\')" class="cu-empty-link">Ir a la tienda</a></div>';
+      if(countEl)countEl.style.display='none';
+    }else{
+      if(countEl){countEl.textContent=ords.length;countEl.style.display='inline';}
+      list.innerHTML=ords.map(function(o){
+        var status=o.status||'PENDING';
+        var badgeClass=statusBadges[status]||'cu-item-badge--neutral';
+        var label=statusLabels[status]||status;
+        return'<div class="cu-item"><div class="cu-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="cu-item-body"><div class="cu-item-title">'+(o.items[0]?.product?.name||'Producto')+'</div><div class="cu-item-sub">'+o.code+' · '+new Date(o.createdAt).toLocaleDateString('es-AR')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-weight:700;font-size:13px;color:var(--orange)">$'+o.total.toLocaleString('es-AR')+'</div><span class="cu-item-badge '+badgeClass+'">'+label+'</span></div></div>';
+      }).join('');
+    }
+  }).catch(function(){
+    list.innerHTML='<div class="cu-error"><p>No pudimos cargar tus pedidos</p><button class="cu-error-btn" onclick="renderOrderHistory()">Reintentar</button></div>';
+  });
 }
+
 function renderQuotHistory(){
-  var list=document.getElementById('quotHistory');
+  var list=document.getElementById('clientQuoteList');
   if(!list)return;
-  var user=Storage.get('user');
-  if(!user){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Inicia sesion para ver tus cotizaciones</div>';return;}
-  try{
-    cachedFetch(API_URL+'/api/quotes?userId='+user.id,null,15000).then(function(qts){
-      if(qts.length===0){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">No tenes cotizaciones</div>';}
-      else{list.innerHTML=qts.map(function(q){return'<div class="order-item"><div class="oi-ico">📱</div><div style="flex:1"><div class="oi-n">'+q.device+' '+q.storage+'</div><div class="oi-s">'+q.code+' · '+new Date(q.createdAt).toLocaleDateString('es-AR')+'</div></div><div><div class="oi-p">$'+q.finalPrice.toLocaleString('es-AR')+'</div><span class="oi-bdg">'+q.status+'</span></div></div>';}).join('');}
-    }).catch(function(){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando cotizaciones</div>';});
-  }catch(e){list.innerHTML='<div style="text-align:center;padding:1rem;font-size:12px;color:var(--gray)">Error cargando cotizaciones</div>';}
+  if(!currentUser){list.innerHTML='<div class="cu-empty"><p>Iniciá sesión para ver tus cotizaciones</p></div>';return;}
+  cachedFetch(API_URL+'/api/quotes?userId='+currentUser.id,null,15000).then(function(qts){
+    var quotes=Array.isArray(qts)?qts:(qts.data||[]);
+    var countEl=document.getElementById('quoteCount');
+    if(quotes.length===0){
+      list.innerHTML='<div class="cu-empty"><p>No tenés cotizaciones activas</p><a href="/sell" onclick="event.preventDefault();nav(\'sell\')" class="cu-empty-link">Solicitar una ahora</a></div>';
+      if(countEl)countEl.style.display='none';
+    }else{
+      if(countEl){countEl.textContent=quotes.length;countEl.style.display='inline';}
+      list.innerHTML=quotes.map(function(q){
+        var status=q.status||'PENDING';
+        var badgeClass=statusBadges[status]||'cu-item-badge--neutral';
+        var label=statusLabels[status]||status;
+        var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+        return'<div class="cu-item" onclick="openClientQuoteDetail(\''+q.id+'\')" style="cursor:pointer"><div class="cu-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="cu-item-body"><div class="cu-item-title">'+q.device+' '+q.storage+'</div><div class="cu-item-sub">'+q.code+' · '+date+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-weight:700;font-size:13px;color:var(--orange)">$'+q.finalPrice.toLocaleString('es-AR')+'</div><span class="cu-item-badge '+badgeClass+'">'+label+'</span></div></div>';
+      }).join('');
+    }
+  }).catch(function(){
+    list.innerHTML='<div class="cu-error"><p>No pudimos cargar tus cotizaciones</p><button class="cu-error-btn" onclick="renderQuotHistory()">Reintentar</button></div>';
+  });
 }
 
 function loadClientQuotes(){

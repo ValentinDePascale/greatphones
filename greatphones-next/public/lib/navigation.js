@@ -89,13 +89,17 @@ function nav(id){
   if(id==='mayorista')renderMayorista();
   if(id==='cuenta'){
     renderOrderHistory();
-    renderQuotHistory();
     loadClientQuotes();
     if(typeof cpnRenderCuentaSection==='function')cpnRenderCuentaSection('ACTIVE');
     if(typeof getWallet==='function'){
       getWallet().then(function(w){
+        var amt=document.getElementById('cuBalanceAmount');
+        if(amt)amt.innerHTML='$<span id="cuentaSaldo" style="font-family:\'Playfair Display\',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px">'+(w.balance||0).toLocaleString('es-AR')+'</span>';
         if(typeof cpnRenderLegacyWallet==='function')cpnRenderLegacyWallet(w.balance);
-      }).catch(function(){});
+      }).catch(function(){
+        var amt=document.getElementById('cuBalanceAmount');
+        if(amt)amt.innerHTML='<span class="cu-balance-amount-error">$ —</span><button class="cu-btn cu-btn-retry" style="margin-left:12px;font-size:12px;padding:6px 14px" onclick="location.reload()">Reintentar</button>';
+      });
     }
     if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
   }

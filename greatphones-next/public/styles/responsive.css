@@ -569,33 +569,34 @@
   #btn-final-pay{font-size:13px !important;padding:12px 24px !important}
 }
 
-/* --- Cuenta Redesign --- */
+/* --- Cuenta --- */
 
 @media(max-width:1023px){
-  #p-cuenta{padding:1.5rem .75rem}
+  #p-cuenta{padding:0}
   #p-edit-profile{padding:1.5rem .75rem}
   #p-edit-profile > div{max-width:100%}
 }
 
 @media(max-width:767px){
-  #p-cuenta{padding:1.25rem .75rem}
-  .cu-hdr{flex-direction:column;text-align:center;gap:1rem;padding-bottom:1.25rem;margin-bottom:1.25rem}
-  .cu-name-row{justify-content:center}
-  .cu-name{font-size:24px}
+  .cu-container{padding:1.25rem .75rem 2rem}
+  .cu-profile{gap:1rem;padding-bottom:1.25rem;margin-bottom:1.25rem}
+  .cu-avatar{width:72px;height:72px;font-size:24px}
+  .cu-avatar-badge{width:20px;height:20px;border-width:2px}
+  .cu-avatar-badge svg{width:8px;height:8px}
+  .cu-name{font-size:22px}
   .cu-email{font-size:13px}
-  .cu-av{width:64px;height:64px;font-size:22px}
-  .cu-av-bdg{width:22px;height:22px;border-width:2px}
-  .cu-av-bdg svg{width:10px;height:10px}
-  .cu-saldo-card{padding:1.25rem;min-height:auto;border-radius:16px}
-  .cu-saldo-signo{font-size:26px}
+  .cu-balance{padding:1.25rem 1.25rem 1rem;border-radius:16px}
   #cuentaSaldo{font-size:36px}
-  .cu-saldo-acts{gap:8px}
-  .cu-btn-pri,.cu-btn-sec{padding:11px 20px;font-size:12px;flex:1;justify-content:center}
-  .cu-grid{grid-template-columns:1fr;gap:.875rem}
-  .cu-card{padding:1rem;border-radius:14px}
-  .cu-card-hdr h3{font-size:16px}
-  .cu-logout{margin-top:1.25rem;padding-top:1rem}
-  .cu-logout-btn{padding:11px;font-size:12px}
+  .cu-balance-amount{font-size:36px}
+  .cu-balance-actions{gap:8px}
+  .cu-btn{padding:11px 20px;font-size:12px;flex:1;justify-content:center}
+  .cu-btn-primary,.cu-btn-secondary{justify-content:center}
+  .cu-card-trigger{height:52px;padding:0 .875rem}
+  .cu-card-trigger{gap:10px}
+  .cu-card-title{font-size:13px}
+  .cu-card-content{padding:0 .875rem .875rem;margin:0 .875rem}
+  .cu-footer{margin-top:2rem}
+  .cu-logout-btn{padding:10px 24px;font-size:12px}
 
   #p-edit-profile{padding:1.25rem .75rem}
   #p-edit-profile > div:first-child{margin-bottom:1.25rem}
@@ -621,22 +622,33 @@
 }
 
 @media(max-width:639px){
-  #p-cuenta{padding:1rem .5rem}
-  .cu-hdr{gap:.875rem;padding-bottom:1rem;margin-bottom:1rem}
-  .cu-av{width:52px;height:52px;font-size:18px}
-  .cu-av-bdg{width:18px;height:18px}
+  .cu-container{padding:1rem .5rem 1.5rem}
+  .cu-back{font-size:12px;margin-bottom:1rem}
+  .cu-profile{gap:.875rem;padding-bottom:1rem;margin-bottom:1rem}
+  .cu-avatar{width:60px;height:60px;font-size:20px}
+  .cu-avatar-badge{width:18px;height:18px}
   .cu-name{font-size:20px}
   .cu-email{font-size:12px}
-  .cu-saldo-card{padding:1rem;border-radius:14px}
-  .cu-saldo-signo{font-size:22px}
+  .cu-balance{padding:1rem;border-radius:14px}
   #cuentaSaldo{font-size:28px}
-  .cu-saldo-acts{flex-direction:column}
-  .cu-btn-pri,.cu-btn-sec{width:100%;justify-content:center}
-  .cu-card{padding:.875rem}
-  .cu-card-hdr h3{font-size:15px}
-  .cu-empty{padding:1rem 0}
-  .cu-empty-ico{width:40px;height:40px}
-  .cu-empty-txt{font-size:12px}
+  .cu-balance-amount{font-size:28px}
+  .cu-balance-actions{flex-direction:column}
+  .cu-btn{width:100%;justify-content:center}
+  .cu-section{margin-bottom:1.5rem}
+  .cu-section-title{font-size:11px;margin-bottom:.625rem}
+  .cu-card{border-radius:12px;margin-bottom:6px}
+  .cu-card-trigger{height:48px;padding:0 .75rem}
+  .cu-card-title{font-size:12px}
+  .cu-card-content{padding:0 .75rem .75rem;margin:0 .75rem}
+  .cu-item{padding:8px 0}
+  .cu-item-icon{width:32px;height:32px;border-radius:8px}
+  .cu-item-title{font-size:12px}
+  .cu-item-badge{font-size:9px;padding:1px 6px}
+  .cu-empty{padding:.875rem 0}
+  .cu-empty p{font-size:12px}
+  .cu-empty-link{font-size:12px}
+  .cu-logout-btn{padding:9px 20px;font-size:11px}
+  .cu-legal{font-size:9px}
 
   #p-edit-profile{padding:1rem .5rem}
   #p-edit-profile > div:first-child h2{font-size:20px}
@@ -650,38 +662,32 @@
 }
 
 @media(max-width:480px){
-  #p-cuenta{padding:.75rem .5rem}
-  .cu-hdr{gap:.75rem}
-  .cu-av{width:44px;height:44px;font-size:15px}
-  .cu-av-bdg{width:16px;height:16px;bottom:0;right:0}
-  .cu-av-bdg svg{width:8px;height:8px}
+  .cu-container{padding:.75rem .5rem 1.25rem}
+  .cu-back{font-size:11px}
+  .cu-profile{gap:.75rem}
+  .cu-avatar{width:48px;height:48px;font-size:17px}
+  .cu-avatar-badge{width:16px;height:16px;bottom:-1px;right:-1px}
+  .cu-avatar-badge svg{width:7px;height:7px}
   .cu-name{font-size:18px}
   .cu-email{font-size:11px}
-  .cu-saldo-card{padding:.875rem;border-radius:12px}
-  .cu-saldo-signo{font-size:18px}
+  .cu-edit-link{font-size:12px}
+  .cu-balance{padding:.875rem;border-radius:12px}
+  .cu-balance-label{font-size:10px;letter-spacing:1px}
   #cuentaSaldo{font-size:24px}
-  .cu-grid{gap:.75rem}
-  .cu-card{padding:.75rem;border-radius:12px}
-  .cu-card-hdr h3{font-size:14px}
-  .cu-card-hdr{margin-bottom:.75rem}
-  .cu-empty-ico{width:36px;height:36px}
-  .cu-empty-txt{font-size:11px}
-  .cu-empty-btn{font-size:11px}
-  .cu-logout-btn{padding:10px;font-size:11px}
-
-  #p-edit-profile{padding:.75rem .5rem}
-  #p-edit-profile > div:first-child h2{font-size:18px;margin-bottom:.25rem}
-  #p-edit-profile > div:first-child p{font-size:11px}
-  #p-edit-profile > div:nth-child(2){flex-direction:column;text-align:center;padding:.875rem}
-  #editProfileAvatar{width:56px;height:56px;font-size:18px}
-  #p-edit-profile .ep-tab{font-size:9px;padding:6px 10px}
-  #epPersonalContent > div > div[style*="grid-template-columns"]{gap:.5rem}
-  #epFacturacionContent > div > div[style*="grid-template-columns"]{gap:.5rem}
-  #p-edit-profile > div:nth-child(5){gap:.5rem}
-  #p-edit-profile > div:nth-child(5) button{padding:12px 20px;font-size:13px}
-  #p-edit-profile > div:last-child > div:first-child > div:first-child{padding:.875rem;border-radius:10px}
-  #p-edit-profile > div:nth-last-child(2) h3{font-size:15px;margin-bottom:.75rem}
+  .cu-balance-amount{font-size:24px}
+  .cu-card-trigger{height:44px}
+  .cu-card-title{font-size:12px}
+  .cu-card-content{padding:0 .625rem .625rem;margin:0 .625rem}
+  .cu-item-icon{width:28px;height:28px;border-radius:7px}
+  .cu-item-title{font-size:11px}
+  .cu-item-sub{font-size:10px}
+  .cu-item-badge{font-size:9px}
+  .cu-empty p{font-size:11px}
+  .cu-logout-btn{padding:8px 16px;font-size:11px}
+  .cu-legal{font-size:8px}
 }
+
+/* --- Cuenta end --- */
 
 /* --- Admin IMEI modal --- */
 @media(max-width:767px){

@@ -740,137 +740,233 @@
 .acc-add:hover{background:var(--ol)}
 .acc-add.in-cart{background:var(--gl)}
 
-/* CUENTA */
-.cuenta-hdr{background:var(--dk);padding:1.75rem;text-align:center;margin:0 -1rem}
-.cuenta-av{
-  width:48px;
-  height:48px;
-  border-radius:50%;
-  background:var(--green);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:17px;
-  font-weight:500;
-  color:#fff;
-  margin-bottom:.75rem;
-  font-family:'Playfair Display',Georgia,serif
-}
-.cuenta-name{font-family:'Playfair Display',Georgia,serif;font-size:19px;color:var(--cream);margin-bottom:.2rem}
-.cuenta-sub{font-size:11px;color:rgba(255,255,255,.35)}
-.vwallet{
-  background:linear-gradient(135deg,var(--dk3),var(--dk2));
-  border-radius:14px;
-  margin:0 0 1rem 0;
-  padding:1.1rem;
-  border:1px solid rgba(255,255,255,.07)
-}
-.vw-lbl{font-size:9px;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.6px;margin-bottom:.2rem}
-.vw-v{font-family:'Playfair Display',Georgia,serif;font-size:30px;color:var(--cream);letter-spacing:-1px;margin-bottom:.65rem}
-.vw-info{font-size:10px;color:rgba(255,255,255,.35);line-height:1.5;margin-bottom:.75rem}
-.vw-btns{display:flex;gap:6px}
-.vw-btn{
-  flex:1;
-  padding:7px;
-  border-radius:7px;
-  border:none;
-  font-size:10px;
-  font-weight:500;
-  cursor:pointer;
-  transition:all .15s;
-  text-align:center
-}
-.vw-use{background:var(--orange);color:#fff}
-.vw-ret{background:rgba(255,255,255,.09);color:var(--cream);border:1px solid rgba(255,255,255,.12)}
-.sec-sm-t{
-  font-size:10px;
-  font-weight:500;
-  text-transform:uppercase;
-  letter-spacing:.5px;
-  color:var(--gray);
-  padding:0 1rem;
-  margin-bottom:.65rem
-}
-.order-item{
-  display:flex;
-  align-items:center;
-  gap:9px;
-  background:var(--cream);
-  border-radius:11px;
-  padding:.65rem;
-  margin-bottom:6px;
-  border:1px solid var(--border);
-  cursor:pointer;
-  transition:border-color .15s;
-  margin-left:1rem;
-  margin-right:1rem
-}
-.order-item:hover{border-color:var(--orange)}
-.oi-ico{width:34px;height:34px;border-radius:8px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.oi-n{font-size:11px;font-weight:500}
-.oi-s{font-size:9px;color:var(--gray);margin-top:1px}
-.oi-p{font-size:12px;font-weight:500;font-family:'Playfair Display',Georgia,serif}
-.oi-bdg{font-size:8px;font-weight:500;padding:2px 5px;border-radius:4px;display:block;margin-top:2px;text-align:right}
-.retiro-panel{background:var(--cream);border:1px solid var(--border);border-radius:11px;padding:.875rem;margin:0 1rem .75rem}
+/* ──────────────── CUENTA ──────────────── */
+#p-cuenta{min-height:100vh;background:var(--cream)}
+.cu-page{min-height:inherit}
+.cu-container{max-width:720px;margin:0 auto;padding:1.5rem var(--pad) 3rem}
 
-/* CUENTA REDESIGN */
-#p-cuenta{background:var(--cream);padding:2rem 1rem;min-height:100vh}
-.cu-wrap{max-width:1000px;margin:0 auto}
+/* Back link */
+.cu-back{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:500;color:var(--gray);
+  text-decoration:none;margin-bottom:1.5rem;
+  transition:color .15s
+}
+.cu-back:hover{color:var(--orange)}
 
-/* Header */
-.cu-hdr{display:flex;align-items:center;gap:1.25rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
-.cu-av-wrap{position:relative;flex-shrink:0}
-.cu-av{width:80px;height:80px;border-radius:50%;background:var(--orange);color:#fff;font-size:26px;font-weight:700;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',Georgia,serif;box-shadow:0 0 0 3px rgba(255,107,44,.2);transition:box-shadow .3s}
-.cu-av-wrap:hover .cu-av{box-shadow:0 0 0 5px rgba(255,107,44,.3)}
-.cu-av-bdg{position:absolute;bottom:1px;right:1px;background:var(--green);width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:3px solid var(--cream);box-shadow:0 2px 6px rgba(0,0,0,.12)}
-.cu-info{flex:1;min-width:0}
-.cu-name-row{display:flex;align-items:center;gap:10px}
-.cu-name{font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--dk);margin:0}
-.cu-edit-btn{background:none;border:none;cursor:pointer;padding:6px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gray);transition:all .2s;flex-shrink:0}
-.cu-edit-btn:hover{background:var(--cream2);color:var(--orange)}
-.cu-email{font-size:14px;color:var(--gray);margin-top:2px}
+/* Profile */
+.cu-profile{
+  display:flex;align-items:center;gap:1.25rem;
+  padding-bottom:1.5rem;margin-bottom:1.5rem;
+  border-bottom:1px solid var(--border)
+}
+.cu-avatar-wrap{position:relative;flex-shrink:0}
+.cu-avatar{
+  width:88px;height:88px;border-radius:50%;
+  background:var(--orange);color:#fff;
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:30px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 0 4px rgba(255,107,44,.15);
+  transition:box-shadow .25s
+}
+.cu-avatar-wrap:hover .cu-avatar{box-shadow:0 0 0 6px rgba(255,107,44,.25)}
+.cu-avatar-badge{
+  position:absolute;bottom:2px;right:2px;
+  background:var(--green);width:22px;height:22px;
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  border:3px solid var(--cream);color:#fff
+}
+.cu-profile-body{flex:1;min-width:0}
+.cu-name-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cu-name{
+  font-family:'Playfair Display',Georgia,serif;
+  font-size:26px;font-weight:700;color:var(--dk);margin:0;line-height:1.2
+}
+.cu-edit-link{
+  display:inline-flex;align-items:center;gap:5px;
+  font-family:'DM Sans',system-ui,sans-serif;
+  font-size:13px;font-weight:500;color:var(--gray);
+  text-decoration:none;transition:color .15s
+}
+.cu-edit-link:hover{color:var(--orange)}
+.cu-email{font-size:14px;color:var(--gray);margin-top:4px;line-height:1.4}
 
-/* Saldo card */
-.cu-saldo-card{background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);border-radius:20px;padding:2rem;position:relative;overflow:hidden;margin-bottom:1.5rem;display:flex;flex-direction:column;justify-content:space-between;min-height:200px;color:#fff;box-shadow:var(--shlg)}
-.cu-saldo-bg{position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(255,107,44,.35) 0%,transparent 60%);border-radius:50%;pointer-events:none;animation:cuGlow 4s ease-in-out infinite}
-@keyframes cuGlow{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.08)}}
-.cu-saldo-body{position:relative;z-index:1}
-.cu-saldo-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.6)}
-.cu-saldo-val{display:flex;align-items:baseline;gap:4px;margin-top:10px}
-.cu-saldo-signo{font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700}
+/* Balance card */
+.cu-balance{
+  background:linear-gradient(135deg,var(--dk) 0%,#27231e 100%);
+  border-radius:20px;padding:1.75rem;
+  position:relative;overflow:hidden;
+  margin-bottom:2rem;color:#fff;
+  box-shadow:var(--shlg)
+}
+.cu-balance-glow{
+  position:absolute;top:-50px;right:-50px;
+  width:220px;height:220px;
+  background:radial-gradient(circle,rgba(255,107,44,.32) 0%,transparent 55%);
+  border-radius:50%;pointer-events:none;
+  animation:cuGlow 4s ease-in-out infinite
+}
+@keyframes cuGlow{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.1)}}
+.cu-balance-body{position:relative;z-index:1}
+.cu-balance-label{
+  font-size:11px;font-weight:600;text-transform:uppercase;
+  letter-spacing:1.5px;color:rgba(255,255,255,.55)
+}
+.cu-balance-amount{font-size:44px;font-weight:700;margin-top:6px;display:flex;align-items:center;gap:4px}
 #cuentaSaldo{font-family:'Playfair Display',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px}
-.cu-saldo-acts{position:relative;z-index:1;display:flex;gap:12px;flex-wrap:wrap;margin-top:1.25rem}
-.cu-btn-pri{background:var(--orange);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;display:flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(255,107,44,.3);transition:all .2s}
-.cu-btn-pri:hover{background:var(--orange2);transform:translateY(-1px);box-shadow:0 6px 16px rgba(255,107,44,.4)}
-.cu-btn-sec{background:rgba(255,255,255,.08);color:#fff;padding:12px 24px;border-radius:12px;font-size:13px;font-weight:600;border:1px solid rgba(255,255,255,.15);cursor:pointer;backdrop-filter:blur(8px);transition:all .2s}
-.cu-btn-sec:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.25)}
+.cu-balance-amount-error{font-size:32px;color:rgba(255,255,255,.35)}
+.cu-balance-actions{
+  position:relative;z-index:1;display:flex;gap:10px;
+  flex-wrap:wrap;margin-top:1.25rem
+}
+.cu-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:10px 20px;border-radius:10px;
+  font-size:13px;font-weight:600;cursor:pointer;
+  text-decoration:none;border:none;
+  transition:all .2s;font-family:inherit
+}
+.cu-btn-primary{
+  background:var(--orange);color:#fff;
+  box-shadow:0 3px 10px rgba(255,107,44,.28)
+}
+.cu-btn-primary:hover{background:var(--orange2);transform:translateY(-1px);box-shadow:0 5px 14px rgba(255,107,44,.38)}
+.cu-btn-secondary{
+  background:rgba(255,255,255,.07);color:#fff;
+  border:1px solid rgba(255,255,255,.13)
+}
+.cu-btn-secondary:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.22)}
+.cu-btn-retry{
+  background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);
+  border:1px solid rgba(255,255,255,.13);cursor:pointer
+}
+.cu-btn-retry:hover{background:rgba(255,255,255,.14)}
 
-/* Grid 2-col */
-.cu-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem}
+/* Section group */
+.cu-section{margin-bottom:2rem}
+.cu-section-title{
+  font-size:12px;font-weight:600;text-transform:uppercase;
+  letter-spacing:.8px;color:var(--gray);
+  margin-bottom:.75rem;padding:0 2px
+}
 
-/* Cards */
-.cu-card{background:#fff;border-radius:18px;padding:1.25rem;border:1px solid var(--border);transition:all .2s}
-.cu-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.06);border-color:var(--orange)}
-.cu-card-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
-.cu-card-hdr h3{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--dk);margin:0}
-.cu-card-ico{flex-shrink:0}
-.cu-card-body{min-height:80px}
+/* Accordion card */
+.cu-card{
+  background:#fff;border:1px solid var(--border);
+  border-radius:14px;margin-bottom:8px;
+  transition:border-color .2s
+}
+.cu-card:hover{border-color:rgba(0,0,0,.14)}
+.cu-card--link{
+  cursor:pointer;display:flex;align-items:center;
+  justify-content:space-between;padding:0 1rem
+}
+.cu-card--link .cu-card-trigger{padding:0}
+.cu-card-trigger{
+  display:flex;align-items:center;gap:12px;
+  width:100%;padding:0 1rem;height:56px;
+  background:none;border:none;text-align:left;
+  cursor:pointer;font-family:inherit;color:inherit
+}
+.cu-card-icon{
+  color:var(--gray);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;width:20px;height:20px
+}
+.cu-card-label{flex:1;display:flex;align-items:center;gap:8px;min-width:0}
+.cu-card-title{font-size:14px;font-weight:600;color:var(--dk);white-space:nowrap}
+.cu-card-count{
+  font-size:11px;font-weight:600;color:var(--gray);
+  background:var(--cream2);padding:1px 7px;border-radius:10px
+}
+.cu-card-chevron{
+  color:var(--gray2);transition:transform .2s;flex-shrink:0;margin-left:8px
+}
+.cu-card--open .cu-card-chevron{transform:rotate(180deg)}
+.cu-card-content{
+  display:none;padding:0 1rem 1rem;border-top:1px solid var(--border);
+  margin:0 1rem
+}
+.cu-card--open .cu-card-content{display:block}
+.cu-card-list{min-height:48px;padding-top:.75rem}
+
+/* Link variant — no accordion, full clickable */
+.cu-card--link{padding:0}
+.cu-card--link .cu-card-icon{margin-right:0}
+.cu-card--link .cu-card-title{flex:1}
+
+/* Skeleton */
+@keyframes cuSkeletonPulse{0%{opacity:.5}50%{opacity:.85}100%{opacity:.5}}
+.cu-skeleton{
+  background:linear-gradient(90deg,var(--cream2) 25%,var(--cream3) 50%,var(--cream2) 75%);
+  background-size:200% 100%;
+  animation:cuSkeletonPulse 1.4s ease-in-out infinite;
+  border-radius:6px;display:block
+}
+.cu-skeleton-row{
+  display:flex;align-items:center;gap:12px;padding:8px 0;
+  min-height:56px
+}
+.cu-skeleton--dark{
+  background:linear-gradient(90deg,rgba(255,255,255,.06) 25%,rgba(255,255,255,.12) 50%,rgba(255,255,255,.06) 75%);
+  background-size:200% 100%
+}
+
+/* Order / Quote list items */
+.cu-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;border-bottom:1px solid var(--border)
+}
+.cu-item:last-child{border-bottom:none}
+.cu-item-icon{
+  width:38px;height:38px;border-radius:10px;
+  background:var(--cream2);display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--gray)
+}
+.cu-item-body{flex:1;min-width:0}
+.cu-item-title{font-size:13px;font-weight:600;color:var(--dk);line-height:1.3}
+.cu-item-sub{font-size:11px;color:var(--gray);margin-top:2px}
+.cu-item-badge{
+  font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;
+  white-space:nowrap;flex-shrink:0
+}
+.cu-item-badge--success{background:rgba(45,90,39,.08);color:var(--green)}
+.cu-item-badge--pending{background:rgba(255,107,44,.08);color:var(--orange)}
+.cu-item-badge--neutral{background:rgba(0,0,0,.04);color:var(--gray)}
 
 /* Empty state */
-.cu-empty{text-align:center;padding:1.5rem 0;color:var(--gray)}
-.cu-empty-ico{margin-bottom:.75rem}
-.cu-empty-txt{font-size:13px;font-weight:500;margin-bottom:.75rem}
-.cu-empty-btn{color:var(--orange);background:none;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:color .15s}
-.cu-empty-btn:hover{color:var(--orange2)}
+.cu-empty{
+  text-align:center;padding:1.25rem 0;color:var(--gray)
+}
+.cu-empty p{margin:0 0 .75rem;font-size:13px;font-weight:500;line-height:1.5}
+.cu-empty-link{
+  color:var(--orange);font-size:13px;font-weight:600;
+  text-decoration:none;transition:color .15s
+}
+.cu-empty-link:hover{color:var(--orange2)}
 
-/* Quote list (dynamic) */
-.cu-quote-list{min-height:80px}
+/* Error state */
+.cu-error{
+  text-align:center;padding:1rem 0;color:var(--gray)
+}
+.cu-error p{margin:0 0 .5rem;font-size:13px}
+.cu-error-btn{
+  background:none;border:none;color:var(--orange);font-size:12px;
+  font-weight:600;cursor:pointer;padding:4px 8px
+}
+.cu-error-btn:hover{color:var(--orange2)}
 
-/* Logout */
-.cu-logout{margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid var(--border)}
-.cu-logout-btn{width:100%;padding:12px;border:1.5px solid rgba(192,57,43,.25);border-radius:12px;background:transparent;color:var(--red);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .2s}
-.cu-logout-btn:hover{background:rgba(192,57,43,.06);border-color:var(--red);box-shadow:0 0 20px rgba(192,57,43,.08)}
-.cu-legal{text-align:center;font-size:10px;color:var(--gray);margin-top:.75rem}
+/* Footer */
+.cu-footer{margin-top:2.5rem;text-align:center}
+.cu-logout-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 28px;border:1px solid rgba(192,57,43,.18);
+  border-radius:10px;background:transparent;
+  color:var(--red);font-size:13px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:inherit
+}
+.cu-logout-btn:hover{background:rgba(192,57,43,.05);border-color:rgba(192,57,43,.35)}
+.cu-legal{font-size:10px;color:var(--gray);margin-top:1rem}
 
 /* MESSAGING */
 .msg-hdr{
