@@ -52,10 +52,10 @@ async function findOrCreateUser(email: string, phone?: string, document?: string
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    console.log('[Checkout] Body:', JSON.stringify({ itemsN:body.items?.length, email:body.email, total:body.total, pm:body.paymentMethod, cids:body.coupons }));
+    console.log('[Checkout] Body:', JSON.stringify({ itemsN:body.items?.length, email:body.email, total:body.total, subtotal:body.subtotal, pm:body.paymentMethod, cids:body.coupons, doc:body.document?.substring(0,3)+'***', street:!!body.street, city:!!body.city, province:!!body.province, zip:!!body.zip }));
     const validation = CheckoutSchema.safeParse(body);
     if (!validation.success) {
-      console.error('[Checkout] Zod FAIL:', validation.error.errors);
+      console.error('[Checkout] Zod FAIL:', JSON.stringify(validation.error.issues));
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
     }
     console.log('[Checkout] Zod OK');

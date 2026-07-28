@@ -11,6 +11,7 @@ export function formatZodError(error: z.ZodError) {
 
   return {
     success: false,
+    error: 'Error de validación: ' + issues.map((e: any) => e.path.join('.') + ': ' + e.message).join(', '),
     message: 'Error de validación',
     errors: formattedErrors,
     rawIssues: issues.map((e: any) => ({ path: e.path, message: e.message, code: e.code }))
