@@ -1715,29 +1715,49 @@ function buildAccDeviceFilter(){
 function renderRelatedAccs(){
   var container=document.getElementById('detRelated');
   if(!container)return;
-  var accs=window.ACCS||[];
-  var modelName=(currentProd?currentProd.name:currentAcc?currentAcc.name:'').replace(/iPhone\s*/,'').trim();
-  var related=accs.filter(function(a){
-    if(!a.compatibleModels||a.stock<=0)return false;
-    var models=a.compatibleModels.split(',').map(function(s){return s.trim();});
-    return models.some(function(m){
-      return modelName.indexOf(m)>=0||(m&&modelName&&m.indexOf(modelName.split(' ').pop())>=0);
-    });
-  }).slice(0,8);
-  if(related.length===0){container.style.display='none';return;}
+  container.style.display='none';
+  var related=[];
+  var title='';
+  var clickFn='';
+
+  if(currentProd){
+    // Product detail → show compatible accessories
+    var modelName=currentProd.name.replace(/iPhone\s*/,'').trim();
+    related=(window.ACCS||[]).filter(function(a){
+      if(!a.compatibleModels||a.stock<=0)return false;
+      var models=a.compatibleModels.split(',').map(function(s){return s.trim();});
+      return models.some(function(m){
+        return modelName.indexOf(m)>=0||(m&&modelName&&m.indexOf(modelName.split(' ').pop())>=0);
+      });
+    }).slice(0,8);
+    title='Accesorios compatibles';
+    clickFn='openAccDetail';
+  }else if(currentAcc&&currentAcc.compatibleModels){
+    // Accessory detail → show compatible products
+    var accModels=currentAcc.compatibleModels.split(',').map(function(s){return s.trim();});
+    related=(PRODUCTS||[]).filter(function(p){
+      if(p.stock<=0)return false;
+      var prodName=p.name||'';
+      return accModels.some(function(m){return prodName.indexOf(m)>=0;});
+    }).slice(0,8);
+    title='Compatible con estos dispositivos';
+    clickFn='openDetail';
+  }
+
+  if(!related.length)return;
   container.style.display='block';
   container.innerHTML=
     '<div class="det-related-section">'+
-      '<div class="det-related-title">Tambien te puede interesar</div>'+
+      '<div class="det-related-title">'+title+'</div>'+
       '<div class="det-related-scroll">'+
-        related.map(function(a){
-          var isPromo=a.isOffer&&a.discount>0;
-          var fp=isPromo?Math.round(a.price*(1-a.discount/100)):a.price;
-          var img=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:contain">':'<span>'+(a.ico||'\u{1F4E6}')+'</span>';
-          return '<div class="det-related-card" onclick="openAccDetail(\''+a.id+'\')">'+
+        related.map(function(item){
+          var isPromo=item.isOffer&&item.discount>0;
+          var fp=isPromo?Math.round(item.price*(1-item.discount/100)):item.price;
+          var img=item.imageUrl?'<img src="'+item.imageUrl+'">':'<span>'+(item.ico||'\u{1F4E6}')+'</span>';
+          return '<div class="det-related-card" onclick="'+clickFn+'(\''+item.id+'\')">'+
             '<div class="det-related-img">'+img+'</div>'+
             '<div class="det-related-body">'+
-              '<div class="det-related-name">'+a.name+'</div>'+
+              '<div class="det-related-name">'+(item.name||item.brand||'')+'</div>'+
               '<div class="det-related-price">'+fmt(fp)+'</div>'+
             '</div>'+
           '</div>';
