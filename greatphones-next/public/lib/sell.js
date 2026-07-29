@@ -59,6 +59,7 @@ function uploadSvPhotoNew(file,slot){
     if(data.url){
       svPhotos[slot]=data.url;
       renderSvPhotoSlot(slot);
+      svChkPhotos();
     }
   }).catch(function(e){console.error('Error uploading photo:',e);});
 }
@@ -79,6 +80,7 @@ function renderSvPhotoSlot(slot){
 function removeSvPhotoNew(slot){
   svPhotos[slot]=null;
   renderSvPhotoSlot(slot);
+  svChkPhotos();
 }
 
 function handleSvPhotoSelect(input){
@@ -153,7 +155,8 @@ function svStep(n){
   var bars=document.querySelectorAll('#svBar .sv-bar');
   bars.forEach(function(b,i){b.className='sv-bar'+(i<n?' done':i===n?' cur':'');});
   if(n===0)renderModelGrid();
-  if(n===3)svFillUserData();
+  if(n===2)svChkPhotos();
+  if(n===3){svFillUserData();svChkPersonalData();}
   if(n===7){svRenderPrice();svBuildSum();svFillDecl();}
 }
 
@@ -289,6 +292,23 @@ function svChkDniFrente(){
 function svChkDniDorso(){
   var btn=document.getElementById('svN5');
   if(btn)btn.disabled=!svDniDorso;
+}
+function svChkPhotos(){
+  var allDone=svPhotos.frente&&svPhotos.dorso&&svPhotos.bordes&&svPhotos.bateria;
+  var btn=document.getElementById('svN2');
+  if(btn)btn.disabled=!allDone;
+}
+function svChkPersonalData(){
+  var nombre=document.getElementById('svNombre');
+  var dni=document.getElementById('svDni');
+  var tel=document.getElementById('svTel');
+  var email=document.getElementById('svEmail');
+  var ciudad=document.getElementById('svCiudad');
+  var cp=document.getElementById('svCp');
+  var provincia=document.getElementById('svProvincia');
+  var ok=nombre&&nombre.value.trim()&&dni&&dni.value.trim()&&tel&&tel.value.trim()&&email&&email.value.trim()&&ciudad&&ciudad.value.trim()&&cp&&cp.value.trim()&&provincia&&provincia.value;
+  var btn=document.getElementById('svN3');
+  if(btn)btn.disabled=!ok;
 }
 
 function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChkShip();}

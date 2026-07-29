@@ -135,20 +135,21 @@ function renderFavGrid(){
         var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
         var isFav=isFavorite(item.id);
-        var favStyleAcc=isFav?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
-        return '<div class="pcard" onclick="openAccDetail(\''+item.id+'\')" style="position:relative">'+
-          '<div class="pcard-img" style="position:relative">'+imgHtml+
-          (isPromo?'<span style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;z-index:3;line-height:1">-'+item.discount+'%</span>':'')+
+        var heartSvgA='<svg width="14" height="14" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        return '<article class="pcard" onclick="openAccDetail(\''+item.id+'\')">'+
+          '<div class="pcard-img">'+imgHtml+
+          (isPromo?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+
+          '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')">'+heartSvgA+'</button>'+
           '</div>'+
-          '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:2;'+favStyleAcc+'">'+(isFav?'\u2665':'\u2661')+'</button>'+
           '<div class="pcard-body">'+
+          '<div class="pcard-brand">'+(item.brand||'Accesorio')+'</div>'+
           '<div class="pcard-name">'+item.name+'</div>'+
-          '<div class="pcard-sub">'+(item.brand||item.category||'')+'</div>'+
-          '<div style="display:flex;flex-direction:column;gap:2px"><span class="pcard-price">'+fmt(finalPrice)+'</span>'+(isPromo?'<span class="pcard-old" style="font-size:12px">'+fmt(item.price)+'</span>':'')+'</div>'+
-          '<div class="pcard-cuota">12x '+fmt(cuota)+' sin interes</div>'+
+          '<div class="pcard-discount-row">'+(isPromo?'<span class="pcard-old">'+fmt(item.price)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span>':'')+'</div>'+
+          '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+          '<span class="pcard-cuota">12x '+fmt(cuota)+' sin interes</span>'+
           '</div>'+
-          '<button class="pcard-add" onclick="event.stopPropagation();addToCartAcc(\''+item.id+'\')" style="margin-top:auto">+ Agregar al carrito</button>'+
-          '</div>';
+          '<button class="pcard-add" onclick="event.stopPropagation();addToCartAcc(\''+item.id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
+          '</article>';
       }else{
         var isPromo2=item.isOffer&&item.discount>0;
         var finalPrice2=isPromo2?Math.round(item.price-item.price*item.discount/100):item.price;
@@ -156,23 +157,23 @@ function renderFavGrid(){
         var imgHtml2=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">\u{1F4F1}</span>';
         var isFav2=isFavorite(item.id);
         var isOutOfStock=item.stock===0;
-        var clickHandler=isOutOfStock?'':'openDetail(\''+item.id+'\')';
-        var opacityStyle=isOutOfStock?' style="opacity:.6"':'';
-        var favStyle2=isFav2?'background:#fff0ec;border-color:rgba(255,107,44,.35);color:var(--orange)':'';
-        return '<div class="pcard'+(isOutOfStock?' ocard-out':'')+'" onclick="'+clickHandler+'"'+opacityStyle+'>'+
-          '<div class="pcard-img" style="position:relative">'+imgHtml2+
-          (isPromo2?'<span style="position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:8px;z-index:3;line-height:1">-'+item.discount+'%</span>':'')+
-          (isOutOfStock?'<div style="position:absolute;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center"><span style="font-size:14px;font-weight:700;color:#fff;background:var(--red);padding:4px 12px;border-radius:6px">Agotado</span></div>':'')+
+        var outClass=isOutOfStock?' pcard-out-of-stock':'';
+        var clickH=isOutOfStock?'':'openDetail(\''+item.id+'\')';
+        var heartSvgP='<svg width="14" height="14" viewBox="0 0 24 24" fill="'+(isFav2?'var(--red)':'none')+'" stroke="'+(isFav2?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        return '<article class="pcard'+outClass+'" onclick="'+clickH+'">'+
+          '<div class="pcard-img">'+imgHtml2+
+          (isPromo2?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+
+          '<button class="pcard-fav '+(isFav2?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')">'+heartSvgP+'</button>'+
           '</div>'+
-          '<button class="pcard-fav '+(isFav2?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:2;'+favStyle2+'">'+(isFav2?'\u2665':'\u2661')+'</button>'+
           '<div class="pcard-body">'+
+          '<div class="pcard-brand">'+(item.brand||'')+'</div>'+
           '<div class="pcard-name">'+item.name+'</div>'+
-          '<div class="pcard-sub">'+item.sub+'</div>'+
-          '<div style="display:flex;flex-direction:column;gap:2px"><span class="pcard-price">'+fmt(finalPrice2)+'</span>'+(isPromo2?'<span class="pcard-old" style="font-size:12px">'+fmt(item.price)+'</span>':'')+'</div>'+
-          '<div class="pcard-cuota">12x '+fmt(cuota2)+' sin interes</div>'+
+          (isPromo2?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old">'+fmt(item.price)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span></div>':'')+
+          '<span class="pcard-price">'+fmt(finalPrice2)+'</span>'+
+          '<span class="pcard-cuota">12x '+fmt(cuota2)+' sin interes</span>'+
           '</div>'+
-          (isOutOfStock?'':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+item.id+'\')" style="margin-top:auto">+ Agregar al carrito</button>')+
-          '</div>';
+          (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+item.id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
+          '</article>';
       }
     }).join('');
     if(cnt)cnt.textContent=allFavs.length+' guardados';

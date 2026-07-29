@@ -154,44 +154,40 @@
 
 /* --- Product Cards (pcard) --- */
 
-/* <800px: 2-column grid, cards ~220-280px wide */
 @media(max-width:800px){
-  .pcard>div:first-child{margin:12px !important}
-  .pcard-body{padding:12px !important}
-  .pcard-name{font-size:14px !important}
-  .pcard-price{font-size:22px !important}
-  .pcard-cuota{font-size:11px !important}
-  .pcard-sub{font-size:12px !important}
-  .pcard-old{font-size:12px !important}
-  .pcard-stock{font-size:11px !important;padding:5px 8px !important}
-  .pcard-add{padding:11px !important;font-size:12px !important;margin-top:12px !important}
-  .pcard-fav{width:34px !important;height:34px !important;top:12px !important;right:12px !important;font-size:18px !important}
+  .pcard-img{margin:10px 10px 0;border-radius:10px}
+  .pcard-body{padding:10px 12px 12px;gap:6px}
+  .pcard-brand{font-size:9px}
+  .pcard-name{font-size:12px}
+  .pcard-price{font-size:18px}
+  .pcard-old{font-size:11px}
+  .pcard-cuota{font-size:10px}
+  .pcard-spec{font-size:9px;padding:2px 6px}
+  .pcard-add{font-size:12px;padding:10px 12px;border-radius:8px}
+  .pcard-fav{width:30px;height:30px;top:8px;right:8px}
+  .pcard-fav svg{width:14px;height:14px}
 }
-
-/* <640px: Mobile, cards ~160-190px */
 @media(max-width:640px){
-  .pcard>div:first-child{margin:8px !important}
-  .pcard-body{padding:10px !important;gap:4px !important}
-  .pcard-name{font-size:12px !important}
-  .pcard-sub{font-size:10px !important}
-  .pcard-price{font-size:18px !important}
-  .pcard-cuota{font-size:10px !important}
-  .pcard-old{font-size:10px !important}
-  .pcard-stock{font-size:10px !important;padding:3px 6px !important}
-  .pcard-add{padding:9px !important;font-size:11px !important;border-radius:8px !important;margin-top:8px !important}
-  .pcard-fav{width:30px !important;height:30px !important;font-size:15px !important;top:8px !important;right:8px !important}
-  .pcard>div:first-child>div:first-child{top:8px !important;left:8px !important;font-size:9px !important;padding:3px 8px !important}
+  .pcard-img{margin:8px 8px 0;border-radius:8px}
+  .pcard-body{padding:8px 10px 10px;gap:4px}
+  .pcard-name{font-size:11px}
+  .pcard-price{font-size:16px}
+  .pcard-cuota{font-size:9px}
+  .pcard-spec{font-size:8px;padding:2px 5px;border-radius:4px}
+  .pcard-add{font-size:11px;padding:9px 10px}
+  .pcard-fav{width:26px;height:26px;top:6px;right:6px}
+  .pcard-fav svg{width:12px;height:12px}
 }
-
-/* <460px: Small mobile, cards ~145-155px */
 @media(max-width:460px){
-  .pcard>div:first-child{margin:6px !important}
-  .pcard-body{padding:8px !important}
-  .pcard-name{font-size:11px !important}
-  .pcard-price{font-size:16px !important}
-  .pcard-add{padding:7px !important;font-size:10px !important}
-  .pcard-fav{width:26px !important;height:26px !important;font-size:13px !important;top:6px !important;right:6px !important}
-  .pcard>div:first-child>div:first-child{top:6px !important;left:6px !important;font-size:8px !important;padding:2px 6px !important}
+  .pcard-img{margin:6px 6px 0;border-radius:6px}
+  .pcard-body{padding:6px 8px 8px}
+  .pcard-name{font-size:10px}
+  .pcard-price{font-size:15px}
+  .pcard-add{font-size:10px;padding:8px 8px}
+  .pcard-fav{width:24px;height:24px;top:5px;right:5px}
+  .pcard-fav svg{width:11px;height:11px}
+  .pcard-badge{font-size:9px;padding:3px 8px;border-radius:6px;top:6px;left:6px}
+  .pcard-var-badge{font-size:9px;padding:2px 7px;bottom:6px;right:6px}
 }
 
 /* --- Product Detail (p-detail) --- */

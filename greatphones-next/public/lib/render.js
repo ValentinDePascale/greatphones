@@ -500,58 +500,86 @@ function renderGrid(gid,prods){
   }
   var now=new Date();
   grid.innerHTML=prods.map(function(p){
-    if(p.isGroup){
-      var isOutOfStock=p.stock===0;
-      var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
-      var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(p.discount>0?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">Hasta -'+p.discount+'% OFF</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">\u{1F525} Nuevo</div>':''));
-      var isFav=isFavorite(p.id);
-      return '<article class="pcard pcard-group" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
-        '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
-        badge+
-        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
-        imgHtml+
-        '<div style="position:absolute;bottom:16px;right:16px;background:var(--orange);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:12px;z-index:2;box-shadow:0 2px 8px rgba(255,107,44,.4)">'+p.variantCount+' var.</div>'+
-        '</div>'+
-        '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
-        '<div>'+
-        '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:4px">'+p.name+'</h3>'+
-        '<p class="pcard-sub" style="font-size:12px;color:var(--gray);margin-bottom:4px">'+p.brand+'</p>'+
-        '</div>'+
-        '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-        '<div class="pcard-price" style="font-size:22px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">Desde '+fmt(p.price)+(p.discount>0?' <span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;vertical-align:middle">-'+p.discount+'%</span>':'')+'</div>'+
-        '<div style="font-size:12px;color:var(--gray);font-weight:500">'+p.sub+'</div>'+
-        '</div>'+
-        '<button class="pcard-add" onclick="event.stopPropagation();openDetail(\''+p.id+'\')" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">Ver variantes</button>'+
-        '</div>'+
-        '</article>';
+    // --- Common helpers ---
+    var isOutOfStock=p.stock===0;
+    var isFav=isFavorite(p.id);
+    var heartSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+
+    // Image HTML
+    function imgHtml(url,ico,oos){
+      if(url)return'<img loading="lazy" src="'+url+'" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:contain;width:100%;height:100%'+(oos?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:56px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(ico||'\u{1F4F1}')+'</span>';
+      return'<span style="font-size:56px'+(oos?';filter:grayscale(100%) opacity(.5)':'')+'">'+ico+'</span>';
     }
+
+    // Badge
+    function badgeHTML(p,oos){
+      if(oos)return'<div class="pcard-badge pcard-badge--gray">Agotado</div>';
+      var isPromo=p.isOffer&&p.discount>0;
+      if(isPromo)return'<div class="pcard-badge">-'+p.discount+'%</div>';
+      return'';
+    }
+
+    // Spec pills (condition-focused)
+    function condPillsHTML(p){
+      var pills=[];
+      if(p.condition&&p.condition!=='Nuevo')pills.push('<span class="pcard-spec">Estado: '+p.condition+'</span>');
+      if(p.battery!=null)pills.push('<span class="pcard-spec">Bateria: '+p.battery+'%</span>');
+      if(p.ram)pills.push('<span class="pcard-spec">'+p.ram+'</span>');
+      return pills.length?'<div class="pcard-specs">'+pills.join('')+'</div>':'';
+    }
+
+    // === GROUP CARD ===
+    if(p.isGroup){
+      var gBadge=p.stock===0?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(p.discount>0?'<div class="pcard-badge">Hasta -'+p.discount+'%</div>':'');
+      return '<article class="pcard pcard-group'+(p.stock===0?' pcard-out-of-stock':'')+'" onclick="openDetail(\''+p.id+'\')">'+
+        '<div class="pcard-img">'+
+          gBadge+
+          '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
+          imgHtml(p.imageUrl,p.ico,p.stock===0)+
+          '<div class="pcard-var-badge">'+p.variantCount+' var.</div>'+
+        '</div>'+
+        '<div class="pcard-body">'+
+          '<div class="pcard-brand">'+p.brand+'</div>'+
+          '<div class="pcard-name">'+p.name+'</div>'+
+          condPillsHTML(p)+
+          '<div class="pcard-price-row">'+
+            '<span class="pcard-price">Desde '+fmt(p.price)+'</span>'+
+            (p.discount>0?'<span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+
+          '</div>'+
+          '<button class="pcard-add" onclick="event.stopPropagation();openDetail(\''+p.id+'\')">Ver variantes</button>'+
+        '</div>'+
+      '</article>';
+    }
+
+    // === SINGLE PRODUCT CARD ===
     var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
-    var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
-    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(isPromoActive?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+p.discount+'% OFF</div>':(p.condition==='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">\u{1F525} Nuevo</div>':(p.condition&&p.condition!=='Nuevo'?'<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>':'')));
-    var isFav=isFavorite(p.id);
-    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
-      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
-      badge+
-      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
-      imgHtml+
+    var badge=badgeHTML(p,isOutOfStock);
+    // Subtitle: storage / color
+    var subtParts=[];
+    if(p.storage)subtParts.push(p.storage);
+    if(p.color)subtParts.push(p.color);
+    var subtitle=subtParts.length?subtParts.join(' / '):(p.sub||'');
+
+    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"')+'>'+
+      '<div class="pcard-img">'+
+        badge+
+        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
+        imgHtml(p.imageUrl,p.ico,isOutOfStock)+
       '</div>'+
-      '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
-      '<div>'+
-      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+p.name+'</h3>'+
-      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
+      '<div class="pcard-body">'+
+        '<div class="pcard-brand">'+(p.brand||'')+'</div>'+
+        '<div class="pcard-name">'+p.name+'</div>'+
+        (subtitle?'<div class="pcard-subtitle">'+subtitle+'</div>':'')+
+        condPillsHTML(p)+
+        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
+        '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+        '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(cuota)+' sin interes</span>'+
+        (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center;margin-top:4px">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
+        (p.stock<=5&&p.stock>0?'<span class="pcard-stock">Solo '+p.stock+' disponibles</span>':'')+
       '</div>'+
-      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span></div>':'')+
-      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">\u{1F4B3} 12x '+fmt(cuota)+' sin inter\u00E9s</div>'+
-      (p.stock<=5&&p.stock>0?'<div class="pcard-stock" style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--red);background:rgba(239,68,68,.1);padding:8px 12px;border-radius:10px;font-weight:600">\u{1F525} Solo '+p.stock+' disponibles</div>':'')+
-      '</div>'+
-      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">\u{1F6D2} Agregar al carrito</button>')+
-      '</div>'+
-      '</article>';
+    '</article>';
   }).join('');
 }
 function renderHomeRail(){
@@ -569,48 +597,26 @@ function renderHomeRail(){
     var isPromoActive=p.isOffer&&p.discount>0;
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var isOutOfStock=p.stock===0;
-    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
-    var badge;
-    if(isOutOfStock){
-      badge='<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>';
-    }else if(isPromoActive){
-      badge='<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+p.discount+'% OFF</div>';
-    }else if(p.condition==='Nuevo'){
-      badge='<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+'\uD83D\uDD25 Nuevo</div>';
-    }else if(p.condition&&p.condition!=='Nuevo'){
-      badge='<div style="position:absolute;top:16px;left:16px;background:rgba(0,0,0,.8);color:#fff;font-size:10px;font-weight:600;padding:5px 12px;border-radius:16px;z-index:2">'+p.condition+'</div>';
-    }else{
-      badge='';
-    }
     var isFav=isFavorite(p.id);
-    var cardClass='pcard'+(isOutOfStock?' pcard-out-of-stock':'');
-    var cardStyle='cursor:'+(isOutOfStock?'default':'pointer');
-    var imgWrapStyle='position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'');
-    var bodyStyle='padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'');
-    var favBg=isFav?'background:#fff0ec;color:var(--orange)':'';
-    var favIcon=isFav?'\u2665':'\u2661';
-    var priceHtml=isPromoActive?'<span style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span>':'';
-    var discBadge=isPromoActive?'<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span>':'';
-    var actionHtml=isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">'+'\uD83D\uDED2 Agregar al carrito</button>';
+    var heartSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:contain;width:100%;height:100%'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:56px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:56px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
+    var badge=isOutOfStock?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(isPromoActive?'<div class="pcard-badge">-'+p.discount+'%</div>':'');
     var onclick=isOutOfStock?'':' onclick="openDetail(\''+p.id+'\')"';
-    return '<article class="'+cardClass+'"'+onclick+' style="'+cardStyle+'">'+
-      '<div style="'+imgWrapStyle+'">'+
-      badge+
-      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+favIcon+'</button>'+
-      imgHtml+
+    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+onclick+'>'+
+      '<div class="pcard-img">'+
+        badge+
+        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
+        imgHtml+
       '</div>'+
-      '<div class="pcard-body" style="'+bodyStyle+'">'+
-      '<div>'+
-      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+(p.name||p.brand)+'</h3>'+
-      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+(p.sub||p.brand||'')+'</p>'+
+      '<div class="pcard-body">'+
+        '<div class="pcard-brand">'+(p.brand||'')+'</div>'+
+        '<div class="pcard-name">'+(p.name||p.brand)+'</div>'+
+        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
+        '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+        (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
+        (p.stock<=5&&p.stock>0?'<span class="pcard-stock">Solo '+p.stock+' disponibles</span>':'')+
       '</div>'+
-      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      (priceHtml?'<div style="display:flex;align-items:center;gap:8px">'+priceHtml+discBadge+'</div>':'')+
-      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      '</div>'+
-      actionHtml+
-      '</div>'+
-      '</article>';
+    '</article>';
   }).join('');
 }
 function renderOfferStrip(){
@@ -788,27 +794,27 @@ function renderAccGrid(){
     var isPromoActive=a.isOffer&&a.discount>0;
     var finalPrice=isPromoActive?Math.round(a.price-a.price*a.discount/100):a.price;
     var isOutOfStock=a.stock===0;
-    var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(a.ico||'\u{1F4E6}')+'</span>':'<span style="font-size:72px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'\u{1F4E6}')+'</span>';
-    var badge=isOutOfStock?'<div style="position:absolute;top:16px;left:16px;background:rgba(100,100,100,.85);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2">Agotado</div>':(isPromoActive?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--red) 0%,#cc0000 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,0,0,.4)">-'+a.discount+'% OFF</div>':(a.category?'<div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;z-index:2;box-shadow:0 4px 12px rgba(255,107,44,.4)">'+a.category+'</div>':''));
     var isFav=isFavorite(a.id);
-    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openAccDetail(\''+a.id+'\')"')+' style="cursor:'+((isOutOfStock?'default':'pointer'))+'">'+
-      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)'+(isOutOfStock?';opacity:.6':'')+'">'+
-      badge+
-      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+a.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
-      imgHtml+
+    var heartSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+    var imgHtml=a.imageUrl?'<img loading="lazy" src="'+a.imageUrl+'" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:contain;width:100%;height:100%'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:56px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(a.ico||'\u{1F4E6}')+'</span>':'<span style="font-size:56px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+(a.ico||'\u{1F4E6}')+'</span>';
+    var badge=isOutOfStock?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(isPromoActive?'<div class="pcard-badge">-'+a.discount+'%</div>':'');
+
+    return '<article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'"'+(isOutOfStock?'':' onclick="openAccDetail(\''+a.id+'\')"')+'>'+
+      '<div class="pcard-img">'+
+        badge+
+        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+a.id+'\')">'+heartSvg+'</button>'+
+        imgHtml+
       '</div>'+
-      '<div class="pcard-body" style="padding:0 20px 20px'+(isOutOfStock?';opacity:.6':'')+'">'+
-      '<div>'+
-      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+(a.name||a.brand)+'</h3>'+
-      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+(a.brand||a.description||'')+'</p>'+
+      '<div class="pcard-body">'+
+        '<div class="pcard-brand">'+(a.brand||'Accesorio')+'</div>'+
+        '<div class="pcard-name">'+(a.name||a.brand)+'</div>'+
+        (a.category?'<div class="pcard-subtitle">'+a.category+'</div>':'')+
+        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(a.price)+'</span><span class="pcard-discount-badge">-'+a.discount+'%</span>':'')+'</div>'+
+        '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+        (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
+        (a.stock<=5&&a.stock>0?'<span class="pcard-stock">Solo '+a.stock+' disponibles</span>':'')+
       '</div>'+
-      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      (isPromoActive?'<div style="display:flex;align-items:center;gap:8px"><span style="font-size:14px;font-weight:600;color:var(--gray);text-decoration:line-through">'+fmt(a.price)+'</span><span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--red);color:#fff">-'+a.discount+'%</span></div>':'')+
-      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(finalPrice)+'</div>'+
-      '</div>'+
-      (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;text-align:center;margin-top:16px;cursor:default">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+a.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>')+
-      '</div>'+
-      '</article>';
+    '</article>';
   }).join('');
   if(!grid.dataset.svRevealed){grid.classList.add('pgrid-reveal');grid.dataset.svRevealed='1';}else{grid.classList.remove('pgrid-reveal');}
 }
