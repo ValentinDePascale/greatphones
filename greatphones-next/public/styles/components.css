@@ -1336,7 +1336,7 @@
 .no-scroll{overflow:hidden !important}
 
 /* ──────────────── RELATED ACCESSORIES STRIP ──────────────── */
-.det-related-section{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);clear:both;position:relative;width:100%}
+.det-related-section{margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border);clear:both;position:relative;width:100%;z-index:2;background:var(--cream)}
 .det-related-title{font-family:'Playfair Display',Georgia,serif;font-size:17px;font-weight:700;color:var(--dk);margin-bottom:12px}
 .det-related-scroll{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;padding:2px 0}
 .det-related-scroll::-webkit-scrollbar{display:none}
