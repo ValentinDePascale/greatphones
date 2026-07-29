@@ -1557,7 +1557,7 @@ function renderSalesList(orders) {
         '</div>' +
         '<div class="sv-row-info">' +
           '<span><strong>' + (order.clientName || '—') + '</strong> · DNI: ' + (order.clientDni || '—') + '</span>' +
-          '<span class="sv-meta">' + formatDate(order.createdAt) + '</span>' +
+          '<span class="sv-meta">' + svFormatDate(order.createdAt) + '</span>' +
         '</div>' +
         '<div class="sv-row-items-preview">' +
           '<span>' + itemCount + ' artículo' + (itemCount !== 1 ? 's' : '') + '</span>' +
@@ -1622,8 +1622,10 @@ function getSalesStatusLabel(status) {
   }
 }
 
-function formatDate(dateStr) {
+function svFormatDate(dateStr) {
+  if (!dateStr) return '—'
   var d = new Date(dateStr)
+  if (isNaN(d.getTime())) return '—'
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
@@ -1637,7 +1639,7 @@ function openSaleDetail(orderId) {
 
   var overlay = document.createElement('div')
   overlay.className = 'modal-overlay'
-  overlay.onclick = function(e) { if (e.target === overlay) closeModal(overlay) }
+  overlay.onclick = function(e) { if (e.target === overlay) closeSaleModal(overlay) }
 
   var itemsHtml = (order.items || []).map(function(item) {
     var name = item.customName || (item.product ? item.product.name : 'Producto #' + (item.productId || ''))
@@ -1663,9 +1665,9 @@ function openSaleDetail(orderId) {
     '<div class="sv-modal-hdr">' +
       '<div>' +
         '<div class="sv-modal-title">' + order.code + '</div>' +
-        '<div class="sv-modal-sub">' + channelLabel + ' · ' + formatDate(order.createdAt) + '</div>' +
+        '<div class="sv-modal-sub">' + channelLabel + ' · ' + svFormatDate(order.createdAt) + '</div>' +
       '</div>' +
-      '<button onclick="closeModal(this.parentElement.parentElement.parentElement)" class="sv-modal-close material-symbols-outlined">close</button>' +
+      '<button onclick="closeSaleModal(this.parentElement.parentElement.parentElement)" class="sv-modal-close material-symbols-outlined">close</button>' +
     '</div>' +
 
     '<div class="sv-modal-body">' +
@@ -1707,7 +1709,7 @@ function openSaleDetail(orderId) {
     '</div>' +
 
     '<div class="sv-modal-footer">' +
-      '<button onclick="closeModal(this.parentElement.parentElement.parentElement)" class="btn btn-o">Cerrar</button>' +
+      '<button onclick="closeSaleModal(this.parentElement.parentElement.parentElement)" class="btn btn-o">Cerrar</button>' +
     '</div>' +
   '</div>'
 
@@ -1715,7 +1717,7 @@ function openSaleDetail(orderId) {
   setTimeout(function() { overlay.classList.add('show') }, 10)
 }
 
-function closeModal(el) {
+function closeSaleModal(el) {
   if (el) {
     el.classList.remove('show')
     setTimeout(function() { el.remove() }, 200)
@@ -1744,7 +1746,7 @@ function exportSalesCSV() {
       o.total,
       o.currency || 'ARS',
       o.cuotas || 1,
-      formatDate(o.createdAt),
+      svFormatDate(o.createdAt),
       o.admin ? o.admin.name : ''
     ].join(',')
   })
