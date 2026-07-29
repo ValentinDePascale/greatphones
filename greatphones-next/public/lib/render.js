@@ -149,6 +149,7 @@ function loadAccessories(){
     window._accLoaded=true;
     if(useCache)return;
     if(document.getElementById('accGrid'))renderAccGrid();
+    if(document.getElementById('p-detail').classList.contains('act')){renderRelatedAccs();}
     if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
     if(document.getElementById('adminContent')){
@@ -1030,6 +1031,7 @@ function openDetail(id, variantId){
   var activePage=document.querySelector('.page.act');
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
   currentProd=getById(PRODUCTS,id);if(!currentProd)return;
+  currentAcc=null;
   window._detailVariants=[];
   window._selectedVariantIdx=-1;
   window._selectedVariant=null;
@@ -1089,6 +1091,7 @@ function openDetail(id, variantId){
         }
       }
     }else if(window._detailVariants.length>0)selectDetailVariant(0);
+    renderRelatedAccs();
     nav('detail');
     return;
   }
