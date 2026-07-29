@@ -1404,3 +1404,363 @@ function exportProductLog(){
 
 function renderDash(){notAvailable();}
 function switchChart(period,btn){notAvailable();}
+
+// =========== SALES HISTORY ===========
+window._salesHistoryCache = {}
+
+function loadSalesHistory(page, filters) {
+  var content = document.getElementById('adminContent')
+  if (!content) return
+
+  page = page || 1
+  filters = filters || {}
+
+  var params = 'page=' + page + '&limit=30'
+  if (filters.startDate) params += '&startDate=' + filters.startDate
+  if (filters.endDate) params += '&endDate=' + filters.endDate
+  if (filters.saleChannel && filters.saleChannel !== 'all') params += '&saleChannel=' + filters.saleChannel
+  if (filters.paymentMethod && filters.paymentMethod !== 'all') params += '&paymentMethod=' + filters.paymentMethod
+  if (filters.status && filters.status !== 'all') params += '&status=' + filters.status
+  if (filters.search) params += '&search=' + encodeURIComponent(filters.search)
+
+  content.innerHTML = `
+    <div class="sv-wrapper">
+      <div class="sv-header">
+        <h2 class="sv-title">Historial de Ventas</h2>
+        <button onclick="exportSalesCSV()" class="btn btn-g" style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px">📥 Exportar CSV</button>
+      </div>
+
+      <div class="sv-summary" id="svSummary">
+        <div class="sv-stat"><div class="sv-stat-val" id="svStatRevenue">—</div><div class="sv-stat-label">Ingresos totales</div></div>
+        <div class="sv-stat"><div class="sv-stat-val" id="svStatOrders">—</div><div class="sv-stat-label">Ventas totales</div></div>
+        <div class="sv-stat"><div class="sv-stat-val" id="svStatToday">—</div><div class="sv-stat-label">Ventas hoy</div></div>
+        <div class="sv-stat"><div class="sv-stat-val" id="svStatPending">—</div><div class="sv-stat-label">Pendientes</div></div>
+      </div>
+
+      <div class="sv-filters">
+        <div class="sv-filters-row">
+          <div class="sv-filter-group">
+            <label>Desde</label>
+            <input type="date" id="svf-start" class="sv-inp">
+          </div>
+          <div class="sv-filter-group">
+            <label>Hasta</label>
+            <input type="date" id="svf-end" class="sv-inp">
+          </div>
+          <div class="sv-filter-group">
+            <label>Canal</label>
+            <select id="svf-channel" class="sv-inp">
+              <option value="all">Todos</option>
+              <option value="online">Online</option>
+              <option value="in-store">Tienda</option>
+            </select>
+          </div>
+          <div class="sv-filter-group">
+            <label>Pago</label>
+            <select id="svf-payment" class="sv-inp">
+              <option value="all">Todos</option>
+              <option value="cash">Efectivo</option>
+              <option value="transfer">Transferencia</option>
+              <option value="mp">MercadoPago</option>
+              <option value="card">Tarjeta</option>
+            </select>
+          </div>
+          <div class="sv-filter-group">
+            <label>Estado</label>
+            <select id="svf-status" class="sv-inp">
+              <option value="all">Todos</option>
+              <option value="DELIVERED">Entregado</option>
+              <option value="SHIPPED">Enviado</option>
+              <option value="PROCESSING">Procesando</option>
+              <option value="PENDING">Pendiente</option>
+              <option value="CANCELLED">Cancelado</option>
+            </select>
+          </div>
+          <button onclick="applySalesFilters()" class="btn btn-o" style="padding:8px 20px;align-self:flex-end">Filtrar</button>
+        </div>
+        <div class="sv-search-row">
+          <span class="material-symbols-outlined" style="font-size:18px;color:var(--gray)">search</span>
+          <input type="text" id="svf-search" placeholder="Buscar por código, cliente, DNI, email o teléfono..." onkeydown="if(event.key==='Enter')applySalesFilters()">
+        </div>
+      </div>
+
+      <div class="sv-list" id="svList">
+        <div class="sv-loading">Cargando ventas...</div>
+      </div>
+
+      <div class="sv-pagination" id="svPagination"></div>
+    </div>
+  `
+
+  fetch(API_URL + '/api/admin/sales-history?' + params, {
+    headers: { 'X-User-Id': currentUser.id }
+  })
+    .then(function(r) { return r.json() })
+    .then(function(res) {
+      if (res.error) {
+        document.getElementById('svList').innerHTML = '<div class="sv-empty">Error: ' + res.error + '</div>'
+        return
+      }
+      window._salesHistoryCache = res
+      renderSalesSummary(res.summary)
+      renderSalesList(res.data)
+      renderSalesPagination(res.page, res.totalPages)
+    })
+    .catch(function(err) {
+      console.error('Error loading sales:', err)
+      document.getElementById('svList').innerHTML = '<div class="sv-empty">Error al cargar ventas</div>'
+    })
+}
+
+function applySalesFilters() {
+  loadSalesHistory(1, {
+    startDate: document.getElementById('svf-start').value,
+    endDate: document.getElementById('svf-end').value,
+    saleChannel: document.getElementById('svf-channel').value,
+    paymentMethod: document.getElementById('svf-payment').value,
+    status: document.getElementById('svf-status').value,
+    search: document.getElementById('svf-search').value
+  })
+}
+
+function renderSalesSummary(summary) {
+  if (!summary) return
+  document.getElementById('svStatRevenue').textContent = '$' + summary.totalRevenue.toLocaleString('es-AR')
+  document.getElementById('svStatOrders').textContent = summary.totalOrders
+  document.getElementById('svStatToday').textContent = summary.todayOrders
+  document.getElementById('svStatPending').textContent = summary.pendingOrders
+}
+
+function renderSalesList(orders) {
+  var list = document.getElementById('svList')
+  if (!list) return
+
+  if (!orders || orders.length === 0) {
+    list.innerHTML = '<div class="sv-empty">No se encontraron ventas</div>'
+    return
+  }
+
+  list.innerHTML = orders.map(function(order) {
+    var channelLabel = order.saleChannel === 'in-store' ? 'Tienda' : 'Online'
+    var channelClass = order.saleChannel === 'in-store' ? 'sv-badge-tienda' : 'sv-badge-online'
+    var statusClass = getSalesStatusClass(order.status)
+    var statusLabel = getSalesStatusLabel(order.status)
+    var itemCount = (order.items || []).length
+    var adminName = order.admin ? order.admin.name : (order.saleChannel === 'online' ? 'Web' : '—')
+
+    return '<div class="sv-row" onclick="openSaleDetail(\'' + order.id + '\')">' +
+      '<div class="sv-row-main">' +
+        '<div class="sv-row-top">' +
+          '<span class="sv-code">' + order.code + '</span>' +
+          '<span class="sv-badge ' + channelClass + '">' + channelLabel + '</span>' +
+          '<span class="sv-badge sv-status ' + statusClass + '">' + statusLabel + '</span>' +
+        '</div>' +
+        '<div class="sv-row-info">' +
+          '<span><strong>' + (order.clientName || '—') + '</strong> · DNI: ' + (order.clientDni || '—') + '</span>' +
+          '<span class="sv-meta">' + formatDate(order.createdAt) + '</span>' +
+        '</div>' +
+        '<div class="sv-row-items-preview">' +
+          '<span>' + itemCount + ' artículo' + (itemCount !== 1 ? 's' : '') + '</span>' +
+          (order.payment ? '<span class="sv-dot">·</span><span>' + order.payment + '</span>' : '') +
+          (adminName !== '—' ? '<span class="sv-dot">·</span><span>Admin: ' + adminName + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="sv-row-amount">' +
+        '<span class="sv-price">$' + order.total.toLocaleString('es-AR') + '</span>' +
+        (order.currency === 'USD' ? '<span class="sv-currency">USD</span>' : '') +
+        (order.cuotas > 1 ? '<span class="sv-cuotas">' + order.cuotas + ' cuotas</span>' : '') +
+        '<span class="sv-arrow material-symbols-outlined">chevron_right</span>' +
+      '</div>' +
+    '</div>'
+  }).join('')
+}
+
+function renderSalesPagination(currentPage, totalPages) {
+  var pagination = document.getElementById('svPagination')
+  if (!pagination || totalPages <= 1) {
+    if (pagination) pagination.innerHTML = ''
+    return
+  }
+
+  var html = ''
+  for (var i = 1; i <= totalPages; i++) {
+    html += '<button onclick="loadSalesHistory(' + i + ', getCurrentSalesFilters())" class="btn ' + (i === currentPage ? 'btn-primary' : 'btn-o') + '" style="min-width:36px;padding:6px 10px;font-size:12px">' + i + '</button>'
+  }
+  pagination.innerHTML = html
+}
+
+function getCurrentSalesFilters() {
+  return {
+    startDate: document.getElementById('svf-start')?.value || '',
+    endDate: document.getElementById('svf-end')?.value || '',
+    saleChannel: document.getElementById('svf-channel')?.value || 'all',
+    paymentMethod: document.getElementById('svf-payment')?.value || 'all',
+    status: document.getElementById('svf-status')?.value || 'all',
+    search: document.getElementById('svf-search')?.value || ''
+  }
+}
+
+function getSalesStatusClass(status) {
+  switch (status) {
+    case 'DELIVERED': return 'sv-status-delivered'
+    case 'SHIPPED': return 'sv-status-shipped'
+    case 'PROCESSING': return 'sv-status-processing'
+    case 'PENDING': return 'sv-status-pending'
+    case 'CANCELLED': return 'sv-status-cancelled'
+    default: return ''
+  }
+}
+
+function getSalesStatusLabel(status) {
+  switch (status) {
+    case 'DELIVERED': return 'Entregado'
+    case 'SHIPPED': return 'Enviado'
+    case 'PROCESSING': return 'Procesando'
+    case 'PENDING': return 'Pendiente'
+    case 'CANCELLED': return 'Cancelado'
+    default: return status
+  }
+}
+
+function formatDate(dateStr) {
+  var d = new Date(dateStr)
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+}
+
+// =========== SALE DETAIL MODAL ===========
+function openSaleDetail(orderId) {
+  var order = null
+  if (window._salesHistoryCache && window._salesHistoryCache.data) {
+    order = window._salesHistoryCache.data.find(function(o) { return o.id === orderId })
+  }
+  if (!order) return
+
+  var overlay = document.createElement('div')
+  overlay.className = 'modal-overlay'
+  overlay.onclick = function(e) { if (e.target === overlay) closeModal(overlay) }
+
+  var itemsHtml = (order.items || []).map(function(item) {
+    var name = item.customName || (item.product ? item.product.name : 'Producto #' + (item.productId || ''))
+    var imgHtml = item.product && item.product.imageUrl
+      ? '<img src="' + item.product.imageUrl + '" style="width:36px;height:36px;border-radius:6px;object-fit:cover">'
+      : '<span style="font-size:20px">📱</span>'
+    var lineTotal = (item.price || 0) * (item.quantity || 1)
+    return '<div class="sv-modal-item">' +
+      '<div class="sv-modal-item-img">' + imgHtml + '</div>' +
+      '<div class="sv-modal-item-info">' +
+        '<div class="sv-modal-item-name">' + name + '</div>' +
+        '<div class="sv-modal-item-sub">$' + (item.price || 0).toLocaleString('es-AR') + ' x ' + (item.quantity || 1) + '</div>' +
+      '</div>' +
+      '<div class="sv-modal-item-price">$' + lineTotal.toLocaleString('es-AR') + '</div>' +
+    '</div>'
+  }).join('')
+
+  var channelLabel = order.saleChannel === 'in-store' ? 'Venta en tienda' : 'Venta online'
+  var statusLabel = getSalesStatusLabel(order.status)
+  var statusClass = getSalesStatusClass(order.status)
+
+  overlay.innerHTML = '<div class="sv-modal">' +
+    '<div class="sv-modal-hdr">' +
+      '<div>' +
+        '<div class="sv-modal-title">' + order.code + '</div>' +
+        '<div class="sv-modal-sub">' + channelLabel + ' · ' + formatDate(order.createdAt) + '</div>' +
+      '</div>' +
+      '<button onclick="closeModal(this.parentElement.parentElement.parentElement)" class="sv-modal-close material-symbols-outlined">close</button>' +
+    '</div>' +
+
+    '<div class="sv-modal-body">' +
+      '<div class="sv-modal-grid">' +
+        '<div class="sv-modal-info-card">' +
+          '<div class="sv-modal-info-label">Cliente</div>' +
+          '<div class="sv-modal-info-val">' + (order.clientName || '—') + '</div>' +
+          '<div class="sv-modal-info-sub">DNI: ' + (order.clientDni || '—') + '</div>' +
+          (order.clientPhone ? '<div class="sv-modal-info-sub">Tel: ' + order.clientPhone + '</div>' : '') +
+          (order.clientEmail ? '<div class="sv-modal-info-sub">Email: ' + order.clientEmail + '</div>' : '') +
+          (order.clientAddress ? '<div class="sv-modal-info-sub">Dir: ' + order.clientAddress + '</div>' : '') +
+          (order.clientCuil ? '<div class="sv-modal-info-sub">CUIL: ' + order.clientCuil + '</div>' : '') +
+        '</div>' +
+        '<div class="sv-modal-info-card">' +
+          '<div class="sv-modal-info-label">Pago y Estado</div>' +
+          '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+            '<span class="sv-badge sv-status ' + statusClass + '">' + statusLabel + '</span>' +
+          '</div>' +
+          '<div class="sv-modal-info-sub">Método: ' + (order.payment || '—') + '</div>' +
+          (order.cuotas > 1 ? '<div class="sv-modal-info-sub">Cuotas: ' + order.cuotas + '</div>' : '') +
+          (order.cashReceived ? '<div class="sv-modal-info-sub">Recibido: $' + order.cashReceived.toLocaleString('es-AR') + '</div>' : '') +
+          (order.change ? '<div class="sv-modal-info-sub">Vuelto: $' + order.change.toLocaleString('es-AR') + '</div>' : '') +
+          '<div class="sv-modal-info-sub">Moneda: ' + (order.currency || 'ARS') + '</div>' +
+        '</div>' +
+        '<div class="sv-modal-info-card">' +
+          '<div class="sv-modal-info-label">Resumen</div>' +
+          '<div class="sv-modal-info-sub">Subtotal: $' + (order.subtotal || 0).toLocaleString('es-AR') + '</div>' +
+          (order.deliveryCost > 0 ? '<div class="sv-modal-info-sub">Envío: $' + order.deliveryCost.toLocaleString('es-AR') + '</div>' : '') +
+          (order.warrantyCost > 0 ? '<div class="sv-modal-info-sub">Garantía: $' + order.warrantyCost.toLocaleString('es-AR') + '</div>' : '') +
+          '<div class="sv-modal-info-total">Total: $' + (order.total || 0).toLocaleString('es-AR') + '</div>' +
+        '</div>' +
+      '</div>' +
+
+      '<div class="sv-modal-section-title">Artículos</div>' +
+      '<div class="sv-modal-items">' + itemsHtml + '</div>' +
+
+      (order.notes ? '<div class="sv-modal-notes"><strong>Notas:</strong> ' + order.notes + '</div>' : '') +
+      (order.trackingNumber ? '<div class="sv-modal-notes"><strong>Tracking:</strong> ' + order.trackingNumber + (order.trackingUrl ? ' (<a href="' + order.trackingUrl + '" target="_blank">ver</a>)' : '') + '</div>' : '') +
+    '</div>' +
+
+    '<div class="sv-modal-footer">' +
+      '<button onclick="closeModal(this.parentElement.parentElement.parentElement)" class="btn btn-o">Cerrar</button>' +
+    '</div>' +
+  '</div>'
+
+  document.body.appendChild(overlay)
+  setTimeout(function() { overlay.classList.add('show') }, 10)
+}
+
+function closeModal(el) {
+  if (el) {
+    el.classList.remove('show')
+    setTimeout(function() { el.remove() }, 200)
+  }
+}
+
+// =========== EXPORT SALES CSV ===========
+function exportSalesCSV() {
+  var data = window._salesHistoryCache && window._salesHistoryCache.data
+  if (!data || data.length === 0) {
+    showToast('No hay datos para exportar', 'warning')
+    return
+  }
+
+  var headers = ['Codigo', 'Cliente', 'DNI', 'Email', 'Telefono', 'Canal', 'Estado', 'Pago', 'Total', 'Moneda', 'Cuotas', 'Fecha', 'Admin']
+  var rows = data.map(function(o) {
+    return [
+      o.code,
+      (o.clientName || '').replace(/,/g, ' '),
+      o.clientDni || '',
+      o.clientEmail || '',
+      o.clientPhone || '',
+      o.saleChannel === 'in-store' ? 'Tienda' : 'Online',
+      getSalesStatusLabel(o.status),
+      o.payment || '',
+      o.total,
+      o.currency || 'ARS',
+      o.cuotas || 1,
+      formatDate(o.createdAt),
+      o.admin ? o.admin.name : ''
+    ].join(',')
+  })
+
+  var csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n')
+  var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  var link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = 'ventas_' + new Date().toISOString().slice(0, 10) + '.csv'
+  link.click()
+  URL.revokeObjectURL(link.href)
+  showToast('CSV exportado correctamente', 'success')
+}
+
+function showToast(msg, type) {
+  if (typeof window.showToast === 'function') {
+    window.showToast(msg, type || 'info')
+  }
+}

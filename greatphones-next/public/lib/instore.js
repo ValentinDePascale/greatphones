@@ -709,7 +709,10 @@ function renderItemsList() {
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${item.name}</div>
         <div style="font-size:11px;color:var(--gray)">
-          ${isInventory ? `${item.storage ? item.storage + ' · ' : ''}${item.color ? item.color + ' · ' : ''}${item.code}` : '$' + item.price.toLocaleString('es-AR') + ' c/u'}
+          ${isInventory ? `${item.storage ? item.storage + ' · ' : ''}${item.color ? item.color + ' · ' : ''}${item.code}` : 
+            item.price === 0 && item.originalPrice != null ? 
+              `<span style="text-decoration:line-through;color:var(--gray)">$${item.originalPrice.toLocaleString('es-AR')}</span> <span style="color:var(--green);font-weight:600">Gratis</span>` :
+              '$' + item.price.toLocaleString('es-AR') + ' c/u'}
         </div>
         ${isInventory ? `<div style="font-size:10px;color:var(--orange);font-weight:600;margin-top:2px">📋 ${item.code} · ${item.imei}</div>` : ''}
       </div>
@@ -728,9 +731,16 @@ function renderItemsList() {
       </div>
       ` : '<div style="min-width:60px;text-align:center"><span style="font-size:10px;color:var(--gray)">1 unidad</span></div>'}
       
-      <div style="min-width:100px;text-align:right;font-weight:700;font-size:14px;color:var(--dk)">
-        $${(item.price * (item.quantity || 1)).toLocaleString('es-AR')}
+      <div style="min-width:100px;text-align:right;font-weight:700;font-size:14px;color:${item.price === 0 ? 'var(--green)' : 'var(--dk)'}">
+        ${item.price === 0 ? '<span style="font-size:11px;color:var(--green);font-weight:600">GRATIS</span>' : '$' + (item.price * (item.quantity || 1)).toLocaleString('es-AR')}
       </div>
+      
+      <button onclick="toggleItemFree(${i})" 
+        style="padding:4px 10px;border-radius:6px;border:1px solid ${item.price === 0 ? 'var(--green)' : 'var(--orange)'};background:${item.price === 0 ? 'var(--green)' : 'white'};color:${item.price === 0 ? 'white' : 'var(--orange)'};cursor:pointer;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0"
+        onmouseover="if(${item.price !== 0}){this.style.background='var(--orange)';this.style.color='white'}"
+        onmouseout="if(${item.price !== 0}){this.style.background='white';this.style.color='var(--orange)'}">
+        ${item.price === 0 ? '✓ Gratis' : '🎁 Gratis'}
+      </button>
       
       <button onclick="removeItem(${i})" 
         style="width:28px;height:28px;border-radius:6px;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"
@@ -740,6 +750,26 @@ function renderItemsList() {
       </button>
     </div>`
   }).join('')
+}
+
+function toggleItemFree(index) {
+  var item = instoreState.items[index]
+  if (!item) return
+
+  if (item.price === 0 && item.originalPrice != null) {
+    // Restore original price
+    item.price = item.originalPrice
+    delete item.originalPrice
+    delete item.isFree
+  } else {
+    // Set to free
+    item.originalPrice = item.price
+    item.price = 0
+    item.isFree = true
+  }
+
+  renderItemsList()
+  updateSummary()
 }
 
 function updateItemQuantity(index, delta) {
