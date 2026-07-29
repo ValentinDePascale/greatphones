@@ -840,6 +840,8 @@
           </div>
         </div>
       </div>
+      <!-- Related accessories -->
+      <div id="detRelated" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -1267,6 +1269,14 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  <div id="accDeviceFilter" style="display:none;background:var(--cream);border-bottom:1px solid var(--border)">
+    <div class="ctr" style="padding:10px var(--pad);display:flex;align-items:center;gap:10px">
+      <span style="font-size:11px;font-weight:600;color:var(--gray);white-space:nowrap">Modelo:</span>
+      <div class="device-filter-row" id="accDeviceFilterRow">
+        <button class="fchip act" onclick="filtAccDevice('todos',this)">Todos</button>
       </div>
     </div>
   </div>
@@ -1703,45 +1713,43 @@
     <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff" id="accFormTitle">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="accFormSubtitle">Completa los datos del nuevo accesorio</p></div>
   </div>
   <div style="background:var(--cream);padding:1.5rem 0">
-    <div class="ctr" style="max-width:600px">
+    <div class="ctr" style="max-width:620px">
       <input type="hidden" id="accId">
       <input type="hidden" id="accImageUrl">
       <input type="hidden" id="accImages">
-      <div style="text-align:center;margin-bottom:1rem">
-        <div id="accImagePreview" style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:40px;border:2px dashed var(--border);cursor:pointer" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.1)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream2)';handleAccImageDrop(event)">📦</div>
-        <div style="margin-top:8px">
-          <label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:var(--rsm);font-size:12px;cursor:pointer;margin-right:8px">
-            Imagen principal
-            <input type="file" id="accImageInput" accept="image/*" style="display:none" onchange="uploadAccImage(this)">
-          </label>
-          <span style="font-size:11px;color:var(--gray)">o arrastra una imagen aqui</span>
-        </div>
-      </div>
-      <div style="margin-bottom:1rem">
-        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Imagenes adicionales (opcional)</div>
-        <div id="accAdditionalImages" style="display:flex;gap:8px;flex-wrap:wrap;min-height:60px;padding:10px;background:var(--cream2);border-radius:var(--rsm);border:1px dashed var(--border)">
-          <div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>
-        </div>
-        <input type="file" id="accAdditionalImagesInput" accept="image/*" multiple style="display:none" onchange="uploadAccAdditionalImages(this)">
-        <button onclick="document.getElementById('accAdditionalImagesInput').click()" style="margin-top:8px;padding:6px 12px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer">+ Agregar mas imagenes</button>
-      </div>
+      <input type="hidden" id="accStock" value="0">
       <div style="display:grid;gap:16px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="accName" placeholder="AirPods Pro"></div>
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><input class="inp-f" id="accBrand" placeholder="Apple"></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="25000"></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="accStock" type="number" placeholder="10"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo / Grupo</label><input class="inp-f" id="accModelGroup" placeholder="funda-iphone-14"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Otros">Otros</option></select></div>
-          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="accColor" placeholder="Negro"></div>
         </div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
-      <div style="display:flex;gap:12px;margin-top:1rem">
+        <input type="hidden" id="accColor">
+        <input type="hidden" id="accCompatibleModels">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--dk);display:block;margin-bottom:8px">Colores / Variantes <span style="font-size:10px;color:var(--gray);font-weight:400">(cada fila es un registro independiente)</span></label>
+          <div id="accColorRows"></div>
+          <button onclick="addColorRow()" style="margin-top:8px;padding:10px 16px;border:1.5px dashed var(--border);border-radius:10px;background:var(--cream);font-size:12px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;width:100%;justify-content:center" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar variante</button>
+        </div>
+        <div style="margin-top:.5rem">
+          <label style="font-size:11px;font-weight:500;display:block;margin-bottom:6px">Dispositivos compatibles</label>
+          <button onclick="openCompatModal()" style="display:flex;align-items:center;gap:8px;width:100%;padding:14px 16px;border:2px dashed var(--border);border-radius:12px;background:var(--cream);cursor:pointer;text-align:left;font-size:13px;color:var(--gray);transition:all .15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'" id="compatTriggerBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span id="compatTriggerLabel">Seleccionar modelos compatibles</span>
+            <span id="compatTriggerCount" style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:600;display:none"></span>
+          </button>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:1rem">
           <button class="btn btn-o" style="flex:1" onclick="saveAccessory()">Guardar Accesorio</button>
-          <button class="btn btn-g" style="flex:1" onclick="nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
+          <button class="btn btn-g" style="flex:1" onclick="resetAccessoryForm();nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
         </div>
       </div>
     </div>
@@ -3337,6 +3345,61 @@ function toggleMobileSearch(){
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
         Carrito
       </a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= COMPATIBILITY MODAL ============================= -->
+<div id="compatModal" class="compat-modal-overlay" style="display:none" onclick="closeCompatModal(event)">
+  <div class="compat-modal" onclick="event.stopPropagation()">
+    <div class="compat-modal-hdr">
+      <div>
+        <h2 class="compat-modal-title">Seleccionar dispositivos compatibles</h2>
+        <p class="compat-modal-sub" id="compatModalCount">0 seleccionados</p>
+      </div>
+      <button onclick="closeCompatModal()" class="compat-modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="compat-modal-tools">
+      <div class="compat-range-row">
+        <select id="compatRangeFrom" class="compat-range-sel">
+          <option value="">Desde...</option>
+        </select>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+        <select id="compatRangeTo" class="compat-range-sel">
+          <option value="">Hasta...</option>
+        </select>
+        <button onclick="applyCompatRange()" class="compat-range-apply">Aplicar rango</button>
+      </div>
+      <div class="compat-actions-row">
+        <button onclick="selectAllCompat()" class="compat-action-btn">Seleccionar todos</button>
+        <button onclick="clearAllCompat()" class="compat-action-btn compat-action-btn--sec">Limpiar</button>
+      </div>
+    </div>
+    <div class="compat-modal-grid" id="accCompatGrid"></div>
+    <div class="compat-modal-footer">
+      <button onclick="closeCompatModal()" class="compat-done-btn">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= COLOR PICKER MODAL ============================= -->
+<div id="colorPickerModal" class="compat-modal-overlay" style="display:none" onclick="closeColorPicker()">
+  <div class="compat-modal" style="max-width:480px" onclick="event.stopPropagation()">
+    <div class="compat-modal-hdr">
+      <div><h2 class="compat-modal-title">Seleccionar color</h2></div>
+      <button onclick="closeColorPicker()" class="compat-modal-close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="padding:16px 24px;border-bottom:1px solid var(--border)">
+      <input type="text" id="colorPickerSearch" placeholder="Buscar color..." oninput="filterColorPicker(this.value)" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;font-family:inherit" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+    </div>
+    <div class="compat-modal-grid" id="colorPickerGrid"></div>
+    <div style="padding:12px 24px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
+      <input type="text" id="colorPickerCustom" placeholder="O escribí un color..." style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;outline:none;font-family:inherit" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+      <button onclick="selectCustomColor()" style="padding:9px 16px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap">Usar</button>
     </div>
   </div>
 </div>

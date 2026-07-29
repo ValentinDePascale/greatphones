@@ -292,6 +292,7 @@ var COLOR_HEX = {
 
 var shopFilter='todos';
 var accFilter='todos';
+var accDeviceFilter='todos';
 var sliderIdx=0;
 var sliderTimer=null;
 var currentProd=null;

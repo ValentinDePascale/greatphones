@@ -732,6 +732,7 @@ model Accessory {
   brand            String?  
   color            String?  
   compatibleModels String?  
+  modelGroup       String?
   isActive         Boolean  @default(true)
   discount         Int?     
   isOffer          Boolean  @default(false)

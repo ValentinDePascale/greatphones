@@ -63,6 +63,7 @@ export const AccessoryCreateSchema = z.object({
   imageUrl: z.string().url().nullable().optional().or(z.literal('')),
   images: z.array(z.string()).optional(),
   compatibleModels: z.string().nullable().optional(),
+  modelGroup: z.string().nullable().optional(),
   ico: z.string().optional(),
   isActive: z.boolean().optional(),
   description: z.string().optional(),

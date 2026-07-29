@@ -119,6 +119,7 @@ export async function POST(request: Request) {
         brand: body.brand || null,
         color: body.color || null,
         compatibleModels: body.compatibleModels || null,
+        modelGroup: body.modelGroup || null,
         isActive: body.isActive !== false,
         discount: body.discount ? Number(body.discount) : null,
         isOffer: body.isOffer || false,
@@ -171,6 +172,8 @@ export async function PUT(request: Request) {
     if (body.brand !== undefined) data.brand = body.brand || null
     if (body.color !== undefined) data.color = body.color || null
     if (body.compatibleModels !== undefined) data.compatibleModels = body.compatibleModels || null
+    if (body.modelGroup !== undefined) data.modelGroup = body.modelGroup || null
+    if (body.colorStock !== undefined) data.colorStock = body.colorStock || null
     if (body.isActive !== undefined) data.isActive = body.isActive
     if (body.discount !== undefined) data.discount = body.discount !== null ? Number(body.discount) : null
     if (body.isOffer !== undefined) data.isOffer = body.isOffer

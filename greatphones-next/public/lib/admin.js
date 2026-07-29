@@ -866,43 +866,72 @@ function removeAccImage(btn,url){
 
 function saveAccessory(){
   var id=document.getElementById('accId').value;
-  var data={};
-  
-  data.name=document.getElementById('accName').value;
-  data.price=parseInt(document.getElementById('accPrice').value)||0;
-  data.stock=parseInt(document.getElementById('accStock').value)||0;
-  data.category=document.getElementById('accCategory').value;
-  data.brand=document.getElementById('accBrand').value;
-  data.description=document.getElementById('accDescription').value;
-  data.color=document.getElementById('accColor').value;
-  data.ico=document.getElementById('accIco').value;
-  data.imageUrl=document.getElementById('accImageUrl').value;
-  data.images=window.accAdditionalImages||[];
-  data.compatibleModels=document.getElementById('accCompatibleModels').value||null;
-  
-  if(!data.name||!data.price){
-    showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
+  var rows=document.querySelectorAll('#accColorRows .var-row');
+  var name=document.getElementById('accName').value;
+  var price=parseInt(document.getElementById('accPrice').value)||0;
+  if(!name||!price){showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');return;}
+
+  // Collect base data (shared across all variants)
+  var baseData={
+    name:name,
+    price:price,
+    category:document.getElementById('accCategory').value,
+    brand:document.getElementById('accBrand').value,
+    description:document.getElementById('accDescription').value,
+    modelGroup:document.getElementById('accModelGroup').value||null,
+    compatibleModels:collectCompatModels()||null,
+    ico:document.getElementById('accIco')?document.getElementById('accIco').value:'📦',
+    images:window.accAdditionalImages||[],
+  };
+
+  // If editing an existing record, just PUT the first row's data
+  if(id){
+    var firstRow=rows[0];
+    var data=Object.assign({},baseData);
+    data.color=firstRow?(firstRow.querySelector('.var-color-val')?firstRow.querySelector('.var-color-val').value.trim():''):document.getElementById('accColor').value;
+    data.stock=firstRow?(firstRow.querySelector('.var-stock-val')?parseInt(firstRow.querySelector('.var-stock-val').value)||0:0):(parseInt(document.getElementById('accStock').value)||0);
+    data.imageUrl=firstRow&&firstRow.querySelector('.var-img-val')?firstRow.querySelector('.var-img-val').value||(document.getElementById('accImageUrl').value):document.getElementById('accImageUrl').value;
+    fetch(API_URL+'/api/accessories?id='+id,{method:'PUT',headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},body:JSON.stringify(data)})
+    .then(function(r){if(!r.ok)throw new Error('Error '+r.status);return r.json();})
+    .then(function(){showSuccessToast('Actualizado','Accesorio guardado');resetAccessoryForm();loadAccessories();nav('admin');renderAdminContent('acc');})
+    .catch(function(e){showErrorToast('Error',e.message||'No se pudo guardar');});
     return;
   }
-  
-  var method=id?'PUT':'POST';
-  var endpoint=id?'/api/accessories?id='+id:'/api/accessories';
-  
-  fetch(API_URL+endpoint,{
-    method:method,
-    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
-    body:JSON.stringify(data)
-  }).then(function(r){
-    if(!r.ok)throw new Error('Error '+r.status);
-    return r.json();
-  }).then(function(result){
-    if(result.error||result.success===false)throw new Error(result.message||'Error de validación');
-    showSuccessToast(id?'Accesorio actualizado':'Accesorio creado', 'Los cambios han sido guardados');
-    resetAccessoryForm();
-    loadAccessories();
-    nav('admin');
-    renderAdminContent('acc');
-  }).catch(function(e){showErrorToast('Error', e.message || 'No se pudo guardar el accesorio');});
+
+  // Creating new — build payloads from each color row
+  var payloads=[];
+  if(rows.length>0){
+    rows.forEach(function(r){
+      var color=r.querySelector('.var-color-val');
+      var stock=r.querySelector('.var-stock-val');
+      var img=r.querySelector('.var-img-val');
+      var c=color?color.value.trim():'';
+      if(!c)return;
+      var data=Object.assign({},baseData);
+      data.color=c;
+      data.stock=stock?parseInt(stock.value)||0:0;
+      data.imageUrl=img&&img.value?img.value:document.getElementById('accImageUrl').value;
+      payloads.push(data);
+    });
+  }else{
+    var data=Object.assign({},baseData);
+    data.color=document.getElementById('accColor').value;
+    data.stock=parseInt(document.getElementById('accStock').value)||0;
+    data.imageUrl=document.getElementById('accImageUrl').value;
+    payloads.push(data);
+  }
+
+  if(!payloads.length){showAlert('Sin datos', 'Agregá al menos una variante de color', 'warning');return;}
+  if(payloads.length>1&&!baseData.modelGroup){showAlert('Falta modelo/grupo', 'Poné un Modelo/Grupo para enlazar las variantes', 'warning');return;}
+
+  // Save each payload
+  var saved=0;
+  payloads.forEach(function(p){
+    fetch(API_URL+'/api/accessories',{method:'POST',headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},body:JSON.stringify(p)})
+    .then(function(r){if(!r.ok)throw new Error('Error '+r.status);return r.json();})
+    .then(function(){saved++;if(saved===payloads.length){showSuccessToast('Guardado',payloads.length>1?payloads.length+' variantes creadas':'Accesorio guardado');resetAccessoryForm();loadAccessories();nav('admin');renderAdminContent('acc');}})
+    .catch(function(e){showErrorToast('Error',e.message||'No se pudo guardar');});
+  });
 }
 
 function editAccessory(id){
@@ -933,12 +962,26 @@ function fillAccForm(a){
   document.getElementById('accBrand').value=a.brand||'';
   document.getElementById('accDescription').value=a.description||'';
   document.getElementById('accColor').value=a.color||'';
-  document.getElementById('accIco').value=a.ico||'\uD83D\uDCE6';
+  var accIcoEl=document.getElementById('accIco');if(accIcoEl)accIcoEl.value=a.ico||'\uD83D\uDCE6';
   document.getElementById('accImageUrl').value=a.imageUrl||'';
-  document.getElementById('accCompatibleModels').value=a.compatibleModels||'';
+  document.getElementById('accColor').value=a.color||'';
+  document.getElementById('accModelGroup').value=a.modelGroup||'';
+  buildCompatGrid(a.compatibleModels||'');
   window.accAdditionalImages=Array.isArray(a.images)?a.images.slice():[];
-  if(a.imageUrl){
-    document.getElementById('accImagePreview').innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+  var prevImg=document.getElementById('accImagePreview');if(prevImg&&a.imageUrl)prevImg.innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+  // When editing, load all variants if modelGroup exists
+  var rowsContainer=document.getElementById('accColorRows');
+  if(rowsContainer&&a.modelGroup){
+    var variants=(window.ACCS||[]).filter(function(acc){return acc.modelGroup===a.modelGroup;});
+    if(variants.length>0){
+      rowsContainer.innerHTML='';
+      variants.forEach(function(v){addColorRow(v.color,v.stock,v.imageUrl);});
+    }else{
+      addColorRow(a.color,a.stock,a.imageUrl);
+    }
+  }else if(rowsContainer){
+    rowsContainer.innerHTML='';
+    addColorRow(a.color,a.stock,a.imageUrl);
   }
   document.getElementById('accFormTitle').textContent='Editar Accesorio';
   document.getElementById('accFormSubtitle').textContent=a.name;
@@ -1036,15 +1079,187 @@ function resetAccessoryForm(){
   document.getElementById('accBrand').value='';
   document.getElementById('accDescription').value='';
   document.getElementById('accColor').value='';
-  document.getElementById('accIco').value='📦';
+  var accIcoEl=document.getElementById('accIco');if(accIcoEl)accIcoEl.value='\u{1F4E6}';
   document.getElementById('accImageUrl').value='';
   document.getElementById('accImages').value='';
-  document.getElementById('accCompatibleModels').value='';
-  document.getElementById('accImagePreview').innerHTML='📦';
-  document.getElementById('accAdditionalImages').innerHTML='<div id="addAccImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
-  document.getElementById('accFormTitle').textContent='Agregar Accesorio';
-  document.getElementById('accFormSubtitle').textContent='Completa los datos del nuevo accesorio';
-  window.accAdditionalImages=[];
+  document.getElementById('accModelGroup').value='';
+  buildCompatGrid('');
+  // Reset color rows
+  var rowsContainer=document.getElementById('accColorRows');
+  if(rowsContainer)rowsContainer.innerHTML='';
+}
+
+function createVariant(){
+  var name=document.getElementById('accName').value;
+  var brand=document.getElementById('accBrand').value;
+  var price=document.getElementById('accPrice').value;
+  var category=document.getElementById('accCategory').value;
+  var modelGroup=document.getElementById('accModelGroup').value;
+  var description=document.getElementById('accDescription').value;
+  var imageUrl=document.getElementById('accImageUrl').value;
+  var compatModels=document.getElementById('accCompatibleModels').value;
+  // Reset only color, stock, image — keep the rest
+  resetAccessoryForm();
+  document.getElementById('accName').value=name;
+  document.getElementById('accBrand').value=brand;
+  document.getElementById('accPrice').value=price;
+  document.getElementById('accCategory').value=category;
+  document.getElementById('accModelGroup').value=modelGroup;
+  document.getElementById('accDescription').value=description;
+  document.getElementById('accFormTitle').textContent='Nueva variante';
+  document.getElementById('accFormSubtitle').textContent='Crear variante de: '+name;
+  if(document.getElementById('accImageUrl'))document.getElementById('accImageUrl').value=imageUrl;
+  if(compatModels)document.getElementById('accCompatibleModels').value=compatModels;
+  buildCompatGrid(compatModels||'');
+}
+
+// =========== COLOR STOCK ROWS ===========
+var COLOR_PALETTE=['Negro','Blanco','Rojo','Azul','Verde','Amarillo','Naranja','Rosa','Gris','Plata','Dorado','Púrpura','Celeste','Beige','Marrón','Turquesa','Coral','Lavanda','Oliva','Carbón','Azul Marino','Verde Menta','Gris Oscuro','Crema'];
+var COLOR_CSS={Negro:'#1a1a1a',Blanco:'#f0f0f0',Rojo:'#e53e3e',Azul:'#3182ce',Verde:'#38a169',Amarillo:'#ecc94b',Naranja:'#ed8936',Rosa:'#ed64a6',Gris:'#a0aec0',Plata:'#cbd5e0',Dorado:'#d69e2e','Púrpura':'#805ad5',Celeste:'#63b3ed',Beige:'#f5e6cc','Marrón':'#8b4513',Turquesa:'#4fd1c5',Coral:'#fc8181',Lavanda:'#b794f4',Oliva:'#68d391','Carbón':'#2d3748','Azul Marino':'#1a365d','Verde Menta':'#81e6d9','Gris Oscuro':'#4a5568',Crema:'#fefcbf'};
+var _colorPickerTarget=null;
+
+function _cssColor(name){return COLOR_CSS[name]||name||'#ccc'}
+
+function addColorRow(color,stock,img){
+  var container=document.getElementById('accColorRows');
+  if(!container)return;
+  var c=color||'';
+  var s=stock!=null?stock:'';
+  var imgUrl=img||'';
+  var row=document.createElement('div');
+  row.className='var-row';
+  var colorBtn=c?'<span class="var-color-dot" style="background:'+_cssColor(c)+';flex-shrink:0"></span><span class="var-color-label">'+c+'</span>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg><span>Elegir color</span>';
+  row.innerHTML=
+    '<input type="hidden" class="var-color-val" value="'+c+'">'+
+    '<button class="var-color-btn" onclick="openColorPicker(this)">'+colorBtn+'</button>'+
+    '<label class="var-img-zone" ondragover="event.preventDefault();this.style.borderColor=\'var(--orange)\'" ondragleave="this.style.borderColor=\'var(--border)\'" ondrop="event.preventDefault();this.style.borderColor=\'var(--border)\';handleVarImageDrop(event,this)">'+
+      '<input type="file" accept="image/*" style="display:none" onchange="uploadVarImage(this)">'+
+      '<input type="hidden" class="var-img-val" value="'+imgUrl+'">'+
+      (imgUrl?'<img src="'+imgUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">':'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>')+
+    '</label>'+
+    '<input class="var-stock-val" value="'+s+'" type="number" placeholder="Stock" style="width:64px;padding:6px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;outline:none;background:#fff;text-align:center;font-family:inherit">'+
+    '<button onclick="this.parentElement.remove()" style="width:30px;height:30px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--gray);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✕</button>';
+  container.appendChild(row);
+}
+
+function openColorPicker(btn){_colorPickerTarget=btn;var grid=document.getElementById('colorPickerGrid');if(grid)grid.innerHTML=COLOR_PALETTE.map(function(c){return'<div class="cp-dot" style="background:'+_cssColor(c)+'" title="'+c+'" onclick="selectColorFromPicker(\''+c+'\')"></div>';}).join('');document.getElementById('colorPickerModal').style.display='flex';var search=document.getElementById('colorPickerSearch');if(search)search.value='';}
+function closeColorPicker(e){if(e&&e.target!==document.getElementById('colorPickerModal'))return;document.getElementById('colorPickerModal').style.display='none';}
+function selectColorFromPicker(color){if(!_colorPickerTarget)return;var row=_colorPickerTarget.closest('.var-row');if(!row)return;var valInput=row.querySelector('.var-color-val');if(valInput)valInput.value=color;_colorPickerTarget.innerHTML='<span class="var-color-dot" style="background:'+_cssColor(color)+';flex-shrink:0"></span><span class="var-color-label">'+color+'</span>';document.getElementById('colorPickerModal').style.display='none';}
+function selectCustomColor(){var input=document.getElementById('colorPickerCustom');if(!input||!input.value.trim())return;selectColorFromPicker(input.value.trim());}
+function filterColorPicker(q){var grid=document.getElementById('colorPickerGrid');if(!grid)return;var ql=q.toLowerCase().trim();var items=grid.querySelectorAll('.cp-dot');items.forEach(function(item){item.style.display=(!ql||item.getAttribute('title').toLowerCase().indexOf(ql)>=0)?'':'none';});}
+function handleVarImageDrop(e,zone){e.preventDefault();zone.style.borderColor='var(--border)';var files=e.dataTransfer.files;if(files.length>0)uploadVarImageFile(files[0],zone);}
+function uploadVarImage(input){if(input.files&&input.files[0])uploadVarImageFile(input.files[0],input.parentElement);}
+function uploadVarImageFile(file,zone){var formData=new FormData();formData.append('file',file);fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){if(data.url){var imgInput=zone.querySelector('.var-img-val');if(imgInput)imgInput.value=data.url;zone.innerHTML='<input type="file" accept="image/*" style="display:none" onchange="uploadVarImage(this)"><input type="hidden" class="var-img-val" value="'+data.url+'"><img src="'+data.url+'" style="width:100%;height:100%;object-fit:cover;border-radius:8px">';}}).catch(function(e){console.error('Error uploading variant image:',e);});}
+
+// =========== COMPATIBILITY GRID ===========
+function getCompatModels(){
+  var models=(window.SELL_MODELS&&window.SELL_MODELS['iPhone'])?window.SELL_MODELS['iPhone'].slice():[];
+  var extra=[
+    'iPhone','iPad','Mac','Android','Samsung',
+    'AirPods','AirPods Pro','Apple Watch','MacBook','MacBook Pro','MacBook Air',
+    'Apple Watch 38mm','Apple Watch 42mm','Apple Watch 45mm',
+    'AirPods 1ra Gen','AirPods 2da Gen','AirPods 3ra Gen','AirPods Pro 1ra Gen','AirPods Pro 2da Gen'
+  ];
+  return models.concat(extra.filter(function(e){return models.indexOf(e)===-1;}));
+}
+
+function collectCompatModels(){
+  var chips=document.querySelectorAll('#accCompatGrid .compat-chip.on');
+  var selected=[];
+  chips.forEach(function(c){var m=c.getAttribute('data-model');if(m)selected.push(m);});
+  return selected.join(',');
+}
+
+function buildCompatGrid(existing){
+  var grid=document.getElementById('accCompatGrid');
+  if(!grid)return;
+  var models=getCompatModels();
+  var existingArr=existing?existing.split(',').map(function(s){return s.trim();}):[];
+  var phones=models.filter(function(m){return m.indexOf('iPhone')>=0||m.indexOf('iPad')>=0;});
+  var others=models.filter(function(m){return phones.indexOf(m)===-1;});
+  function renderGroup(label,list){
+    if(!list.length)return'';
+    return'<div class="compat-group"><div class="compat-group-label">'+label+'</div><div class="compat-group-chips">'+
+      list.map(function(m){return'<div class="compat-chip'+(existingArr.indexOf(m)>=0?' on':'')+'" data-model="'+m+'" onclick="toggleCompatChip(this)">'+m+'</div>';}).join('')+'</div></div>';
+  }
+  grid.innerHTML=renderGroup('iPhone / iPad',phones)+renderGroup('Otros',others);
+  updateCompatCount();
+  populateCompatRange(models);
+}
+
+function toggleCompatChip(el){
+  el.classList.toggle('on');
+  updateCompatCount();
+}
+
+function updateCompatCount(){
+  var count=document.querySelectorAll('#accCompatGrid .compat-chip.on').length;
+  var modalEl=document.getElementById('compatModalCount');
+  if(modalEl)modalEl.textContent=count+' seleccionados';
+  var triggerLabel=document.getElementById('compatTriggerLabel');
+  var triggerCount=document.getElementById('compatTriggerCount');
+  if(count>0){
+    if(triggerLabel)triggerLabel.textContent='Dispositivos compatibles';
+    if(triggerCount){triggerCount.textContent=count+' seleccionados';triggerCount.style.display='inline';}
+  }else{
+    if(triggerLabel)triggerLabel.textContent='Seleccionar modelos compatibles';
+    if(triggerCount)triggerCount.style.display='none';
+  }
+}
+
+function openCompatModal(){
+  var models=getCompatModels();
+  populateCompatRange(models);
+  // Ensure grid is built if not already
+  var grid=document.getElementById('accCompatGrid');
+  if(grid&&!grid.children.length)buildCompatGrid('');
+  document.getElementById('compatModal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+
+function closeCompatModal(e){
+  if(e&&e.target!==document.getElementById('compatModal'))return;
+  document.getElementById('compatModal').style.display='none';
+  document.body.style.overflow='';
+  // Sync hidden input
+  document.getElementById('accCompatibleModels').value=collectCompatModels();
+}
+
+function selectAllCompat(){
+  document.querySelectorAll('#accCompatGrid .compat-chip').forEach(function(c){c.classList.add('on');});
+  updateCompatCount();
+}
+function clearAllCompat(){
+  document.querySelectorAll('#accCompatGrid .compat-chip').forEach(function(c){c.classList.remove('on');});
+  updateCompatCount();
+}
+
+function populateCompatRange(models){
+  var from=document.getElementById('compatRangeFrom');
+  var to=document.getElementById('compatRangeTo');
+  if(!from||!to)return;
+  [from,to].forEach(function(s){s.innerHTML='<option value="">Seleccionar...</option>';});
+  models.forEach(function(m){
+    var opt='<option value="'+m+'">'+m+'</option>';
+    from.innerHTML+=opt;
+    to.innerHTML+=opt;
+  });
+}
+
+function applyCompatRange(){
+  var from=document.getElementById('compatRangeFrom');
+  var to=document.getElementById('compatRangeTo');
+  if(!from||!to||!from.value||!to.value)return;
+  var models=getCompatModels();
+  var fromIdx=models.indexOf(from.value);
+  var toIdx=models.indexOf(to.value);
+  if(fromIdx<0||toIdx<0||fromIdx>toIdx)return;
+  var range=models.slice(fromIdx,toIdx+1);
+  document.querySelectorAll('#accCompatGrid .compat-chip').forEach(function(c){
+    var m=c.getAttribute('data-model');
+    c.classList.toggle('on',m&&range.indexOf(m)>=0);
+  });
+  updateCompatCount();
 }
 
 // =========== PRODUCT FUNCTIONS ===========
