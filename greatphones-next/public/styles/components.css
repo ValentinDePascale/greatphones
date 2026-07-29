@@ -738,6 +738,38 @@
 .checkout-item:nth-child(5){animation-delay:.24s}
 @keyframes coIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
 
+
+/* === PHOTO GRID (new) === */
+.sv-photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sv-photo-slot{aspect-ratio:1/1;border:2px dashed var(--border);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .15s;background:var(--cream);color:var(--gray);font-size:11px;font-weight:600;position:relative;overflow:hidden}
+.sv-photo-slot:hover{border-color:var(--orange);background:rgba(255,107,44,.03)}
+.sv-photo-slot.filled{border-style:solid;border-color:var(--border);background:#fff}
+.sv-photo-sub{font-size:9px;color:var(--gray2);font-weight:400}
+.sv-photo-preview{position:absolute;inset:0}
+.sv-photo-preview img{width:100%;height:100%;object-fit:cover}
+.sv-photo-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.5);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2;line-height:1}
+
+/* === DNI FRAMES (new) === */
+.sv-dni-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sv-dni-card{display:flex;flex-direction:column}
+.sv-dni-frame{aspect-ratio:1.6;border:2px dashed var(--border);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all .15s;background:var(--cream);color:var(--gray);font-size:12px;font-weight:600}
+.sv-dni-frame:hover{border-color:var(--orange);background:rgba(255,107,44,.03)}
+.sv-dni-preview{aspect-ratio:1.6;border-radius:14px;overflow:hidden;position:relative;border:2px solid var(--border)}
+.sv-dni-preview img{width:100%;height:100%;object-fit:cover}
+.sv-dni-preview .sv-dni-remove{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;z-index:2;line-height:1}
+
+/* DNI hero frames (dedicated step) */
+.sv-dni-full-card{display:flex;flex-direction:column;margin-bottom:4px}
+.sv-dni-hero-frame{aspect-ratio:1.6;border:3px dashed var(--border);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:all .2s;background:var(--cream);color:var(--gray);padding:1.5rem;position:relative}
+.sv-dni-hero-frame:hover{border-color:var(--orange);background:rgba(255,107,44,.03);transform:scale(1.01)}
+.sv-dni-hero-preview{aspect-ratio:1.6;border-radius:18px;overflow:hidden;position:relative;border:3px solid var(--border)}
+.sv-dni-hero-preview img{width:100%;height:100%;object-fit:cover}
+.sv-dni-hero-preview .sv-dni-remove{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:2;line-height:1}
+.sv-dni-action-btn{padding:14px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--orange);color:#fff;transition:all .15s}
+.sv-dni-action-btn:hover{background:var(--orange2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(255,107,44,.25)}
+.sv-dni-action-btn.sec{background:var(--cream);color:var(--dk);border:1.5px solid var(--border)}
+.sv-dni-action-btn.sec:hover{border-color:var(--orange);color:var(--orange);background:#fff;transform:translateY(-1px)}
+
 /* SELL v7 */
 .sell-top{background:linear-gradient(135deg,var(--green),#1A3D12);padding:2rem 0}
 .sell-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.13);color:rgba(255,255,255,.8);font-size:10px;padding:3px 11px;border-radius:18px;margin-bottom:.875rem;text-transform:uppercase;letter-spacing:.5px;width:fit-content}

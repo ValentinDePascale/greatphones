@@ -43,9 +43,43 @@ function checkSellLogin(){
   return true;
 }
 
-var svPhotos=[];
+var svPhotos={frente:null,dorso:null,bordes:null,bateria:null};
 var svDniFrente=null;
 var svDniDorso=null;
+
+function handleSvPhotoSelectNew(input,slot){
+  if(input.files&&input.files[0])uploadSvPhotoNew(input.files[0],slot);
+}
+
+function uploadSvPhotoNew(file,slot){
+  if(!file||!file.type.startsWith('image/'))return;
+  var formData=new FormData();
+  formData.append('file',file);
+  fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
+    if(data.url){
+      svPhotos[slot]=data.url;
+      renderSvPhotoSlot(slot);
+    }
+  }).catch(function(e){console.error('Error uploading photo:',e);});
+}
+
+function renderSvPhotoSlot(slot){
+  var id='svSlot'+slot.charAt(0).toUpperCase()+slot.slice(1);
+  var slotEl=document.getElementById(id);if(!slotEl)return;
+  var preview=slotEl.querySelector('.sv-photo-preview');
+  if(svPhotos[slot]){
+    slotEl.classList.add('filled');
+    if(preview){preview.style.display='block';preview.innerHTML='<img src="'+svPhotos[slot]+'" alt="'+slot+'"><button class="sv-photo-remove" onclick="event.stopPropagation();removeSvPhotoNew(\''+slot+'\')">x</button>';}
+  }else{
+    slotEl.classList.remove('filled');
+    if(preview){preview.style.display='none';preview.innerHTML='';}
+  }
+}
+
+function removeSvPhotoNew(slot){
+  svPhotos[slot]=null;
+  renderSvPhotoSlot(slot);
+}
 
 function handleSvPhotoSelect(input){
   if(input.files&&input.files[0])uploadSvPhoto(input.files[0]);
@@ -59,37 +93,22 @@ function handleSvPhotoDrop(e){
 
 function uploadSvPhoto(file){
   if(!file||!file.type.startsWith('image/'))return;
-  if(svPhotos.length>=3){
-    if(typeof showWarningToast==='function')showWarningToast('Limite alcanzado','Maximo 3 fotos');
-    return;
-  }
   var formData=new FormData();
   formData.append('file',file);
   fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
     if(data.url){
-      svPhotos.push(data.url);
-      renderSvPhotoPreview();
+      // find first empty slot
+      for(var k in svPhotos){if(!svPhotos[k]){svPhotos[k]=data.url;renderSvPhotoSlot(k);return;}}
     }
   }).catch(function(e){console.error('Error uploading photo:',e);});
 }
 
 function removeSvPhoto(url){
-  var idx=svPhotos.indexOf(url);
-  if(idx>-1)svPhotos.splice(idx,1);
-  renderSvPhotoPreview();
+  for(var k in svPhotos){if(svPhotos[k]===url){svPhotos[k]=null;renderSvPhotoSlot(k);break;}}
 }
 
 function renderSvPhotoPreview(){
-  var container=document.getElementById('svPhotoPreview');
-  if(!container)return;
-  if(svPhotos.length===0){container.innerHTML='';container.style.display='none';return;}
-  container.style.display='flex';
-  container.innerHTML=svPhotos.map(function(url){
-    return '<div style="position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid var(--border)">'+
-      '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'+
-      '<button onclick="removeSvPhoto(\''+url+'\')" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'+
-    '</div>';
-  }).join('');
+  // legacy - no-op, per-slot rendering handles this
 }
 
 function handleSvDniPhotoSelect(input,side){
@@ -102,43 +121,40 @@ function uploadSvDniPhoto(file,side){
   formData.append('file',file);
   fetch(API_URL+'/api/upload',{method:'POST',body:formData}).then(function(r){return r.json();}).then(function(data){
     if(data.url){
-      if(side==='frente')svDniFrente=data.url;
-      else svDniDorso=data.url;
+      if(side==='frente'){svDniFrente=data.url;svChkDniFrente();}
+      else{svDniDorso=data.url;svChkDniDorso();}
       renderSvDniPreview(side,data.url);
-      svChkData();
     }
   }).catch(function(e){console.error('Error uploading DNI photo:',e);});
 }
 
 function removeSvDniPhoto(side){
-  if(side==='frente'){svDniFrente=null;document.getElementById('svDniFrentePreview').innerHTML='';document.getElementById('svDniFrentePreview').style.display='none';document.getElementById('svDniFrenteLabel').style.display='block';}
-  else{svDniDorso=null;document.getElementById('svDniDorsoPreview').innerHTML='';document.getElementById('svDniDorsoPreview').style.display='none';document.getElementById('svDniDorsoLabel').style.display='block';}
-  svChkData();
+  if(side==='frente'){svDniFrente=null;renderSvDniPreview('frente',null);svChkDniFrente();}
+  else{svDniDorso=null;renderSvDniPreview('dorso',null);svChkDniDorso();}
 }
 
 function renderSvDniPreview(side,url){
-  var previewId='svDni'+side.charAt(0).toUpperCase()+side.slice(1)+'Preview';
-  var labelId='svDni'+side.charAt(0).toUpperCase()+side.slice(1)+'Label';
-  var preview=document.getElementById(previewId);
-  var label=document.getElementById(labelId);
-  if(preview){
-    preview.style.display='block';
-    preview.innerHTML='<div style="position:relative;width:100%;aspect-ratio:1.6;border-radius:8px;overflow:hidden;border:1px solid var(--border)">'+
-      '<img src="'+url+'" style="width:100%;height:100%;object-fit:cover">'+
-      '<button onclick="removeSvDniPhoto(\''+side+'\');event.stopPropagation()" style="position:absolute;top:4px;right:4px;width:20px;height:20px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;font-size:14px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center">&times;</button>'+
-    '</div>';
+  var frame=document.getElementById('svDni'+(side==='frente'?'Frente':'Dorso')+'Frame');
+  var preview=document.getElementById('svDni'+(side==='frente'?'Frente':'Dorso')+'Preview');
+  if(url){
+    if(frame)frame.style.display='none';
+    if(preview){
+      preview.style.display='block';
+      preview.innerHTML='<img src="'+url+'" alt="DNI '+side+'"><button class="sv-dni-remove" onclick="event.stopPropagation();removeSvDniPhoto(\''+side+'\')">x</button>';
+    }
+  }else{
+    if(frame)frame.style.display='flex';
+    if(preview){preview.style.display='none';preview.innerHTML='';}
   }
-  if(label)label.style.display='none';
 }
 
 function svStep(n){
-  for(var i=0;i<=6;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
+  for(var i=0;i<=8;i++){var el=document.getElementById('svS'+i);if(el)el.className=(i===n)?'':'hidden';}
   var bars=document.querySelectorAll('#svBar .sv-bar');
   bars.forEach(function(b,i){b.className='sv-bar'+(i<n?' done':i===n?' cur':'');});
   if(n===0)renderModelGrid();
-  if(n===1)renderStorGrid();
   if(n===3)svFillUserData();
-  if(n===5){svRenderPrice();svBuildSum();svFillDecl();}
+  if(n===7){svRenderPrice();svBuildSum();svFillDecl();}
 }
 
 function filterModels(query){
@@ -168,16 +184,13 @@ function renderModelGrid(){
 }
 
 function svSelectModel(model){
-  sv.model=model;
-  sv.storage='';
+  sv.model=model;sv.storage='';
   document.querySelectorAll('.model-card').forEach(function(c){c.classList.remove('act');});
-  var cards=document.querySelectorAll('.model-card');
-  cards.forEach(function(c){
+  document.querySelectorAll('.model-card').forEach(function(c){
     if(c.getAttribute('data-model')===model)c.classList.add('act');
   });
-  var btn=document.getElementById('svN0');
-  if(btn)btn.disabled=false;
   svShowPreview();
+  renderStorGrid();
 }
 
 function renderStorGrid(){
@@ -201,12 +214,9 @@ function renderStorGrid(){
 function svSelectStorage(stor){
   sv.storage=stor;
   document.querySelectorAll('.stor-card').forEach(function(c){c.classList.remove('act');});
-  var cards=document.querySelectorAll('.stor-card');
-  cards.forEach(function(c){
+  document.querySelectorAll('.stor-card').forEach(function(c){
     if(c.querySelector('.stor-name').textContent===stor)c.classList.add('act');
   });
-  var btn=document.getElementById('svN1');
-  if(btn)btn.disabled=false;
   svShowPreview();
 }
 
@@ -215,15 +225,16 @@ function svShowPreview(){
   if(!el)return;
   var base=COTIZ_BASE[sv.model]||0;
   var mult=SMULT[sv.storage]||1;
-  el.textContent=base?fmt(Math.round(base*mult)):'Selecciona modelo';
+  var price=base?fmt(Math.round(base*mult)):'Selecciona modelo';
+  el.textContent=sv.model&&sv.storage?price:'Selecciona modelo y almacenamiento';
+  var btn=document.getElementById('svN0');
+  if(btn)btn.disabled=!(sv.model&&sv.storage);
 }
 
 function svCond(cond,mult,el){
   sv.cond=cond;sv.condMult=mult;
   document.querySelectorAll('.cond-card').forEach(function(c){c.classList.remove('act');});
   if(el)el.classList.add('act');svRecalc();
-  var btn=document.getElementById('svN2');
-  if(btn)btn.disabled=false;
 }
 
 function svUpdExt(){
@@ -269,15 +280,15 @@ function svFillUserData(){
     var provincia=document.getElementById('svProvincia');
     if(provincia&&!provincia.value)provincia.value=currentUser.provincia||'';
   }
-  svChkData();
 }
 
-function svChkData(){
-  var fields=['svNombre','svDni','svTel','svEmail','svCiudad','svProvincia'];
-  var ok=fields.every(function(id){var el=document.getElementById(id);return el&&el.value.trim().length>0;});
-  ok=ok&&svDniFrente&&svDniDorso;
-  var btn=document.getElementById('svN3');
-  if(btn)btn.disabled=!ok;
+function svChkDniFrente(){
+  var btn=document.getElementById('svN4');
+  if(btn)btn.disabled=!svDniFrente;
+}
+function svChkDniDorso(){
+  var btn=document.getElementById('svN5');
+  if(btn)btn.disabled=!svDniDorso;
 }
 
 function svEnvio(tipo,el){sv.envio=tipo;document.querySelectorAll('.eopt').forEach(function(e){e.classList.remove('act');});if(el)el.classList.add('act');svChkShip();}
@@ -290,7 +301,7 @@ function svChkShip(){
   var ok=sv.envio&&sv.cobro;
   if(sv.cobro==='transfer'){var cbu=document.getElementById('svCBUInput');if(cbu&&cbu.value.trim().length<1)ok=false;}
   if(sv.cobro==='mp'){var alias=document.getElementById('svAliasInput');if(alias&&alias.value.trim().length<1)ok=false;}
-  var btn=document.getElementById('svN4');
+  var btn=document.getElementById('svN6');
   if(btn)btn.disabled=!ok;
 }
 
@@ -320,14 +331,14 @@ function svFillDecl(){
 
 function svToggleAccept(el){
   sv.accepted=el.checked;
-  var btn=document.getElementById('svN5');
+  var btn=document.getElementById('svN7');
   if(btn)btn.disabled=!sv.accepted;
 }
 
 function svSubmit(){
   if(!checkSellLogin())return;
 
-  var btn=document.getElementById('svN5');
+  var btn=document.getElementById('svN7');
   if(btn){
     btn.disabled=true;
     btn.textContent='Enviando...';
@@ -358,7 +369,7 @@ function svSubmit(){
     clientCity:ciudad,
     clientCp:cp,
     clientProvince:provincia,
-    photos:svPhotos,
+    photos:Object.values(svPhotos).filter(Boolean),
     dniPhotos:[svDniFrente,svDniDorso].filter(function(u){return u;}),
     extras:extrasSelected,
   };
@@ -373,7 +384,7 @@ function svSubmit(){
   }).then(function(result){
     if(result.success){
       svRenderConfirm(result.quote);
-      svStep(6);
+      svStep(8);
     }else{
       throw new Error(result.error||'Error al enviar');
     }
@@ -407,16 +418,11 @@ function svReset(){
   svStep(0);
   ['xPant','xBat','xIcloud','xCaja','xAcc'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
   svUpdExt();
-  svPhotos=[];
+  svPhotos={frente:null,dorso:null,bordes:null,bateria:null};
   svDniFrente=null;svDniDorso=null;
-  renderSvPhotoPreview();
-  ['Frente','Dorso'].forEach(function(side){
-    var preview=document.getElementById('svDni'+side+'Preview');
-    if(preview){preview.innerHTML='';preview.style.display='none';}
-    var label=document.getElementById('svDni'+side+'Label');
-    if(label)label.style.display='block';
-  });
-  ['svN0','svN1','svN2','svN3','svN4','svN5'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
+  for(var pk in svPhotos){renderSvPhotoSlot(pk);}
+  ['Frente','Dorso'].forEach(function(side){renderSvDniPreview(side.toLowerCase(),null);});
+  ['svN0','svN1','svN2','svN3','svN4','svN5','svN6','svN7'].forEach(function(id){var el=document.getElementById(id);if(el)el.disabled=true;});
   var searchEl=document.getElementById('svModelSearch');if(searchEl)searchEl.value='';
   ['svNombre','svDni','svTel','svEmail','svCiudad','svCp'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var provincia=document.getElementById('svProvincia');if(provincia)provincia.value='';

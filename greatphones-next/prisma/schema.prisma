@@ -360,6 +360,7 @@ model Quote {
   basePrice   Int
   finalPrice  Int
   bonus       Int?
+  batteryHealth Int?
 
   status      QuoteStatus @default(PENDING)
 

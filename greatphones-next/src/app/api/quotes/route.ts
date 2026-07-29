@@ -80,6 +80,7 @@ export async function POST(request: Request) {
       photos,
       dniPhotos,
       extras,
+      batteryHealth,
     } = body
 
     if (!device || !storage || !condition || !finalPrice) {
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
         photos: photos || [],
         dniPhotos: dniPhotos || [],
         extras: extras || [],
+        batteryHealth: batteryHealth != null ? parseInt(batteryHealth) : null,
       },
     })
 

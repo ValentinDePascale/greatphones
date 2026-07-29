@@ -5,15 +5,20 @@ vi.mock('@/lib/prisma', () => ({
     user: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     product: { findMany: vi.fn() },
     order: { create: vi.fn() },
-    $transaction: vi.fn((fn) => fn({ product: { update: vi.fn() }, order: { create: vi.fn() } })),
+    $transaction: vi.fn((fn) => fn({
+      product: { update: vi.fn().mockResolvedValue({ stock: 4, reserved: 1 }) },
+      order: { create: vi.fn().mockResolvedValue({ id: 'o1', code: 'GP-TEST', status: 'PENDING', payment: 'mercadopago', total: 1200000, warrantyCost: 0, deliveryCost: 0, subtotal: 1200000 }) },
+      orderCoupon: { create: vi.fn() },
+      coupon: { update: vi.fn() },
+    })),
   },
 }))
 
 vi.mock('mercadopago', () => ({
   MercadoPagoConfig: vi.fn(),
-  Preference: vi.fn().mockImplementation(() => ({
-    create: vi.fn().mockResolvedValue({ id: 'pref_123', init_point: 'https://mp.com/pay' }),
-  })),
+  Preference: vi.fn(function(this: any) {
+    this.create = vi.fn().mockResolvedValue({ id: 'pref_123', init_point: 'https://mp.com/pay' })
+  }),
 }))
 
 describe('POST /api/checkout', () => {
@@ -88,5 +93,43 @@ describe('POST /api/checkout', () => {
     expect(res.status).toBe(400)
     const data = await res.json()
     expect(data.error).toContain('Stock insuficiente')
+  })
+
+  it('returns 200 with preferenceId on successful checkout', async () => {
+    const { prisma } = await import('@/lib/prisma')
+    vi.mocked(prisma.user.findFirst).mockResolvedValue({ id: 'user1', email: 'test@test.com', name: 'Test' } as any)
+    vi.mocked(prisma.product.findMany).mockResolvedValue([{
+      id: '1', name: 'iPhone 16 Pro', brand: 'Apple', sub: '',
+      price: 1200000, stock: 5, imageUrl: null, isOffer: false, discount: 0,
+    }] as any)
+
+    const { POST } = await import('./route')
+    const req = new Request('http://localhost/api/checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        items: [{ id: '1', name: 'iPhone 16 Pro', price: 1200000, quantity: 1 }],
+        email: 'test@test.com',
+        phone: '1234567890',
+        document: '40123456',
+        street: 'Calle',
+        number: '123',
+        zip: '8000',
+        city: 'Bahia Blanca',
+        province: 'Buenos Aires',
+        subtotal: 1200000,
+        total: 1200000,
+        paymentMethod: 'mercadopago',
+        warranty: '90 días',
+        delivery: 'Estandar',
+        deliveryCost: 0,
+        cuotas: 1,
+      }),
+    })
+    const res = await POST(req as any)
+    expect(res.status).toBe(200)
+    const data = await res.json()
+    expect(data.success).toBe(true)
+    expect(data.preferenceId).toBe('pref_123')
+    expect(data.orderCode).toBeDefined()
   })
 })
