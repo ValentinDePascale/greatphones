@@ -881,6 +881,7 @@ function renderAccGrid(){
 }
 function openAccDetail(id){
   detailBackTarget='accesorios';
+  currentProd=null;
   currentAcc=getById(window.ACCS,id);if(!currentAcc)return;
   var now=new Date();
   var isPromoActive=currentAcc.isOffer&&currentAcc.discount>0;
@@ -1753,7 +1754,7 @@ function renderRelatedAccs(){
         related.map(function(item){
           var isPromo=item.isOffer&&item.discount>0;
           var fp=isPromo?Math.round(item.price*(1-item.discount/100)):item.price;
-          var img=item.imageUrl?'<img src="'+item.imageUrl+'">':'<span>'+(item.ico||'\u{1F4E6}')+'</span>';
+          var img=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:contain">':'<span>'+(item.ico||'\u{1F4E6}')+'</span>';
           return '<div class="det-related-card" onclick="'+clickFn+'(\''+item.id+'\')">'+
             '<div class="det-related-img">'+img+'</div>'+
             '<div class="det-related-body">'+
