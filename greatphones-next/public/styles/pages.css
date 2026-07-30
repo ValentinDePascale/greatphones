@@ -1521,3 +1521,50 @@
 #panelMsgList .empty-state-chat{padding:1.5rem .5rem}
 #panelMsgList .empty-state-chat svg{width:52px;height:52px}
 #panelMsgList .empty-state-chat h3{font-size:15px}
+
+/* ──────────────── GARANTIAS ──────────────── */
+.gar-hdr-content{padding:0.5rem 0}
+.gar-hdr-title{font-family:'Playfair Display',Georgia,serif;font-size:clamp(24px,4vw,32px);color:#fff;margin-bottom:0.4rem}
+.gar-hdr-sub{font-size:clamp(11px,1.5vw,13px);color:rgba(255,255,255,.45)}
+.gar-body{background:var(--cream);padding:2.5rem var(--pad)}
+.gar-anim-1{animation:garFadeIn .5s ease both}
+.gar-anim-2{animation:garFadeIn .5s ease .12s both}
+.gar-anim-3{animation:garFadeIn .5s ease .24s both}
+.gar-anim-4{animation:garFadeIn .5s ease .36s both}
+@keyframes garFadeIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.gar-card{background:#fff;border:1px solid var(--border);border-radius:var(--rlg);padding:1.25rem;margin-bottom:1.25rem;transition:box-shadow .25s,transform .25s}
+.gar-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.06);transform:translateY(-1px)}
+
+.gar-card-info{display:flex;gap:12px;align-items:flex-start;background:rgba(45,90,39,.05);border-color:rgba(45,90,39,.18);padding:1.25rem}
+.gar-card-info-icon{font-size:28px;flex-shrink:0;margin-top:2px}
+.gar-card-info-content strong{display:block;font-size:14px;color:var(--green);margin-bottom:4px}
+.gar-card-info-content p{font-size:13px;color:var(--gray);line-height:1.6}
+.gar-card-info-content p strong{display:inline;font-size:inherit;color:var(--dk)}
+
+.gar-card-form{padding:1.5rem}
+.gar-form-hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:1.25rem}
+.gar-form-hdr .material-symbols-outlined{font-size:28px;color:var(--orange);flex-shrink:0;margin-top:2px}
+.gar-form-title{font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk);margin-bottom:2px}
+.gar-form-sub{font-size:12px;color:var(--gray);line-height:1.5}
+.gar-form-fields{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem}
+.gar-field label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px}
+.gar-input-wrap{position:relative;display:flex;align-items:center}
+.gar-input-wrap .material-symbols-outlined{position:absolute;left:12px;font-size:18px;color:var(--gray2);pointer-events:none;z-index:1}
+.gar-input-wrap .inp-f{padding-left:38px;margin-bottom:0}
+
+.gar-card-badge{display:flex;gap:14px;align-items:flex-start;background:var(--dk2);border-color:rgba(255,255,255,.08);padding:1.5rem}
+.gar-card-badge:hover{box-shadow:0 6px 20px rgba(0,0,0,.15)}
+.gar-badge-icon{font-size:32px;flex-shrink:0;margin-top:2px}
+.gar-badge-title{font-family:'Playfair Display',Georgia,serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:6px}
+.gar-badge-body p{font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:10px}
+
+.gar-faq{padding:0.5rem 0 0.5rem}
+.gar-faq-title{font-family:'Playfair Display',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk);margin-bottom:1rem}
+.gar-faq-item{background:#fff;border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;cursor:pointer;transition:border-color .2s}
+.gar-faq-item:hover{border-color:var(--orange)}
+.gar-faq-q{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:13px;font-weight:600;color:var(--dk);gap:8px}
+.gar-faq-q .material-symbols-outlined{font-size:18px;color:var(--gray2);transition:transform .2s}
+.gar-faq-item.open .gar-faq-q .material-symbols-outlined{transform:rotate(180deg)}
+.gar-faq-a{padding:0 16px 0;max-height:0;overflow:hidden;font-size:12px;color:var(--gray);line-height:1.6;transition:all .25s ease}
+.gar-faq-item.open .gar-faq-a{padding:0 16px 14px;max-height:200px}
