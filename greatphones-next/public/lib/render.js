@@ -2383,7 +2383,7 @@ function editProduct(id){
   var vl=document.getElementById('variantsList');
   if(vs&&vl){
     vs.style.display='block';
-    vl.innerHTML='<div style="text-align:center;padding:10px;color:var(--gray);font-size:12px">Cargando variantes...</div>';
+    vl.innerHTML='<div class="loader-spinner" style="padding:10px"><span>Cargando variantes...</span></div>';
     fetch(API_URL+'/api/inventory?productId='+p.id+'&limit=50').then(function(r){return r.json();}).then(function(res){
       var vc=res.data||res||[];
       if(vc.length>0){
@@ -2950,7 +2950,7 @@ function showImeiProductModal(existingProductId){
     var html5QrCode=null;
     function escanearHtml5Qrcode(){
       if(detenido)return;
-      if(statusEl)statusEl.textContent='Cargando escáner...';
+      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
       if(window.Html5Qrcode){
         iniciarHtml5Qrcode();
         return;
@@ -3008,7 +3008,7 @@ function showImeiProductModal(existingProductId){
         if(!zxingReader)iniciarZxingCanvas();
         callback();return;
       }
-      if(statusEl)statusEl.textContent='Cargando escáner...';
+      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
       var sc=document.createElement('script');
       sc.src='https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js';
       sc.onload=function(){
@@ -3045,7 +3045,7 @@ function showImeiProductModal(existingProductId){
     // ---- Quagga2 (fallback si ZXing no carga) ----
     function cargarQuagga2(callback){
       if(window.Quagga){escanearQuagga();return;}
-      if(statusEl)statusEl.textContent='Cargando escáner...';
+      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
       var sc=document.createElement('script');
       sc.src='https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js';
       sc.onload=function(){
@@ -3522,7 +3522,7 @@ function renderAdminContent(tab){
     el.innerHTML='<div style="margin-bottom:1.5rem">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">'+
         '<h3 style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',Georgia,serif;margin:0">Gestión de Stock</h3>'+
-        '<span style="font-size:12px;color:var(--gray)" id="stockTotalLabel">Cargando...</span>'+
+        '<span class="loader-spinner" style="padding:0;display:inline-flex" id="stockTotalLabel"><span style="font-size:12px">Cargando...</span></span>'+
       '</div>'+
       '<div id="stockStatsRow" style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap"></div>'+
     '</div>'+
@@ -3614,7 +3614,7 @@ function renderAdminContent(tab){
       if(typeof loadPendingOrders==='function'){
         loadPendingOrders();
       }else{
-        document.getElementById('orderList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando pedidos...</div>';
+        document.getElementById('orderList').innerHTML='<div class="loader-spinner"><span>Cargando pedidos...</span></div>';
       }
     }
   }else if(tab==='acc'){
@@ -3648,7 +3648,7 @@ function renderAdminContent(tab){
       '<button class="ord-btn" id="arrepBtnAceptados" onclick="loadArrepAceptados()">Aceptados</button>'+
       '<button class="ord-btn" id="arrepBtnRechazados" onclick="loadArrepRechazados()">Rechazados</button>'+
     '</div>'+
-    '<div class="adm-list" id="arrepList">Cargando...</div>';
+    '<div class="loader-spinner"><span>Cargando...</span></div>';
     loadArrepPendientes();
   }else if(tab==='chat'){
     el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+

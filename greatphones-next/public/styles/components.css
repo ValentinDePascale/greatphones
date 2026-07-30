@@ -1373,7 +1373,6 @@
 .sv-search-row{display:flex;align-items:center;gap:8px;margin-top:12px;padding:10px 14px;background:var(--cream2);border-radius:10px}
 .sv-search-row input{flex:1;border:none;background:transparent;outline:none;font-size:13px;color:var(--dk);min-width:0}
 .sv-list{background:var(--cream2);border-radius:12px;padding:8px;min-height:200px}
-.sv-loading{text-align:center;padding:3rem;color:var(--gray);font-size:14px}
 .sv-empty{text-align:center;padding:3rem;color:var(--gray);font-size:14px}
 .sv-row{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:14px 16px;border-radius:10px;margin-bottom:6px;border:1px solid var(--border);cursor:pointer;transition:all .15s;gap:12px}
 .sv-row:hover{border-color:var(--orange);box-shadow:0 2px 12px rgba(0,0,0,.06)}
@@ -1434,3 +1433,7 @@
 /* Sales modal overlay */
 .modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;transition:opacity .2s;pointer-events:none}
 .modal-overlay.show{opacity:1;pointer-events:auto}
+
+/* ──────────────── LOADER SPINNER ──────────────── */
+.loader-spinner{display:flex;align-items:center;justify-content:center;padding:2.5rem;gap:10px;color:var(--gray);font-size:13px;font-weight:500}
+.loader-spinner::before{content:'';width:20px;height:20px;border:2.5px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}

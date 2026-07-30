@@ -269,7 +269,7 @@ function loadPreventaList(status, search) {
   if (status && status !== 'all') params.push('status=' + status)
   if (search) params.push('search=' + encodeURIComponent(search))
   var url = API_URL + '/api/admin/preorders' + (params.length ? '?' + params.join('&') : '')
-  list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>'
+  list.innerHTML = '<div class="loader-spinner"><span>Cargando...</span></div>'
   fetch(url, { headers: { 'X-User-Id': currentUser && currentUser.id } })
     .then(function(r) { return r.json() })
     .then(function(data) {

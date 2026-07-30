@@ -1867,7 +1867,7 @@ function loadInStoreHistory(page, filters) {
       </div>
 
       <div id="instore-historyList" style="background:var(--cream2);border-radius:12px;padding:1rem;min-height:200px">
-        <div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>
+        <div class="loader-spinner"><span>Cargando...</span></div>
       </div>
 
       <div id="instore-historyPagination" style="margin-top:1rem"></div>
@@ -2180,7 +2180,7 @@ function loadPreOrders() {
   if (!list) return
   var f = window._preOrderFilter || 'PENDING'
   var url = API_URL + '/api/admin/preorders' + (f!=='all' ? '?status='+f : '')
-  list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>'
+  list.innerHTML = '<div class="loader-spinner"><span>Cargando...</span></div>'
   fetch(url, { headers: { 'X-User-Id': currentUser.id } }).then(function(r){ return r.json(); }).then(function(data){
     if (!Array.isArray(data) || !data.length) {
       list.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:44px;margin-bottom:.5rem">📝</div><p>No hay preeventas'+(f!=='all'?' en este estado':'')+'</p></div>'

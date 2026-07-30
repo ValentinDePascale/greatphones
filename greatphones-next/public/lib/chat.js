@@ -1238,7 +1238,7 @@ function loadAdminConversations(){
     setTimeout(loadAdminConversations,100);
     return;
   }
-  list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:14px">Cargando conversaciones...</p></div>';
+  list.innerHTML='<div class="loader-spinner"><span>Cargando conversaciones...</span></div>';
   fetch(API_URL+'/api/admin/conversations',{
     headers:{'X-User-Id':currentUser.id}
   })

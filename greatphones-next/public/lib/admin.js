@@ -1485,7 +1485,7 @@ function loadSalesHistory(page, filters) {
       </div>
 
       <div class="sv-list" id="svList">
-        <div class="sv-loading">Cargando ventas...</div>
+        <div class="loader-spinner"><span>Cargando ventas...</span></div>
       </div>
 
       <div class="sv-pagination" id="svPagination"></div>
