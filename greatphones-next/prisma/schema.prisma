@@ -183,7 +183,8 @@ model InventoryItem {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  history InventoryHistory[]
+  history    InventoryHistory[]
+  orderItems OrderItem[]
 }
 
 model InventoryHistory {
@@ -312,6 +313,9 @@ model OrderItem {
 
   accessoryId String?
   accessory   Accessory? @relation(fields: [accessoryId], references: [id])
+
+  inventoryItemId String?
+  inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
 }
 
 // ==================== PREEVENTAS ====================

@@ -147,6 +147,31 @@ export async function POST(request: NextRequest) {
       for (const a of accessories) accessoryMap.set(a.id, a);
     }
 
+    // Validate IMEI items (specific inventory units)
+    const imeiMap = new Map<string, any>();
+    const imeiItems = items.filter((item: any) => item.imei);
+    if (imeiItems.length > 0) {
+      const imeis = imeiItems.map((item: any) => item.imei);
+      const inventoryUnits = await prisma.inventoryItem.findMany({
+        where: { imei: { in: imeis } },
+        select: { id: true, imei: true, productId: true, status: true, salePrice: true },
+      });
+      for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit);
+
+      for (const item of imeiItems) {
+        const unit = imeiMap.get(item.imei);
+        if (!unit) {
+          throw { status: 400, message: `IMEI no encontrado: ${item.imei}` };
+        }
+        if (unit.productId !== item.id) {
+          throw { status: 400, message: `El IMEI ${item.imei} no pertenece al producto ${item.name}` };
+        }
+        if (unit.status !== 'IN_STOCK') {
+          throw { status: 400, message: `El equipo con IMEI ${item.imei} no está disponible (${unit.status})` };
+        }
+      }
+    }
+
     // Build enriched items with server-side prices
     const enrichedItems: any[] = [];
     for (const item of items) {
@@ -327,6 +352,22 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Reserve specific inventory units (IMEI items)
+      const itemInventoryMap = new Map<string, string>();
+      for (const item of enrichedItems) {
+        if (item.imei && imeiMap.has(item.imei)) {
+          const unit = imeiMap.get(item.imei);
+          await tx.inventoryItem.update({
+            where: { id: unit.id },
+            data: {
+              status: 'RESERVED',
+              salePrice: item.unitPrice,
+            },
+          });
+          itemInventoryMap.set(item.imei, unit.id);
+        }
+      }
+
       const orderStatus = isFullyPaidByCoupons ? 'PROCESSING' : 'PENDING';
       const orderPayment = isFullyPaidByCoupons ? 'coupons' : (paymentMethod || 'mercadopago');
 
@@ -358,6 +399,7 @@ export async function POST(request: NextRequest) {
             create: enrichedItems.map((item: any) => ({
               productId: item.product?.id || null,
               accessoryId: item.accessory?.id || null,
+              inventoryItemId: item.imei ? (itemInventoryMap.get(item.imei) || null) : null,
               quantity: item.quantity,
               price: item.unitPrice
             }))

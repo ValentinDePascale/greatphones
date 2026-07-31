@@ -201,6 +201,12 @@ export async function POST(request: NextRequest) {
                 }
               });
             }
+            if (item.inventoryItemId) {
+              await tx.inventoryItem.update({
+                where: { id: item.inventoryItemId },
+                data: { status: 'SOLD', soldAt: new Date() }
+              });
+            }
           }
         });
       } else if (status === 'rejected' || status === 'cancelled') {
@@ -223,6 +229,12 @@ export async function POST(request: NextRequest) {
                   stock: { increment: item.quantity },
                   reserved: { decrement: item.quantity }
                 }
+              });
+            }
+            if (item.inventoryItemId) {
+              await tx.inventoryItem.update({
+                where: { id: item.inventoryItemId },
+                data: { status: 'IN_STOCK', salePrice: null }
               });
             }
           }

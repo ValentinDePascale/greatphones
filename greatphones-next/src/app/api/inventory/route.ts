@@ -176,6 +176,7 @@ export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
     const search = searchParams.get('search')

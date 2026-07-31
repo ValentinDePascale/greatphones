@@ -351,6 +351,12 @@ export async function PUT(request: Request) {
               },
             });
           }
+          if (item.inventoryItemId) {
+            await tx.inventoryItem.update({
+              where: { id: item.inventoryItemId },
+              data: { status: 'IN_STOCK', salePrice: null },
+            });
+          }
         }
       });
     }
@@ -446,6 +452,12 @@ export async function DELETE(request: Request) {
                 stock: { increment: item.quantity },
                 reserved: { decrement: item.quantity },
               },
+            });
+          }
+          if (item.inventoryItemId) {
+            await tx.inventoryItem.update({
+              where: { id: item.inventoryItemId },
+              data: { status: 'IN_STOCK', salePrice: null },
             });
           }
         }

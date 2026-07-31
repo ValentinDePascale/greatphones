@@ -50,6 +50,31 @@ export async function POST(request: NextRequest) {
     const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
     const productMap = new Map(products.map((p: any) => [p.id, p]))
 
+    // Validate IMEI items
+    const imeiMap = new Map<string, any>();
+    const imeiItems = items.filter((item: any) => item.imei);
+    if (imeiItems.length > 0) {
+      const imeis = imeiItems.map((item: any) => item.imei);
+      const inventoryUnits = await prisma.inventoryItem.findMany({
+        where: { imei: { in: imeis } },
+        select: { id: true, imei: true, productId: true, status: true },
+      });
+      for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit);
+
+      for (const item of imeiItems) {
+        const unit = imeiMap.get(item.imei);
+        if (!unit) {
+          throw { status: 400, message: `IMEI no encontrado: ${item.imei}` };
+        }
+        if (unit.productId !== item.id) {
+          throw { status: 400, message: `El IMEI ${item.imei} no pertenece al producto ${item.name}` };
+        }
+        if (unit.status !== 'IN_STOCK') {
+          throw { status: 400, message: `El equipo ${item.imei} no está disponible (${unit.status})` };
+        }
+      }
+    }
+
     // Build enriched items with server-side prices
     const enrichedItems = items.map((item: any) => {
       const product = productMap.get(item.id)
@@ -64,7 +89,8 @@ export async function POST(request: NextRequest) {
     // Recalculate totals server-side
     const calculatedSubtotal = enrichedItems.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0)
     const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0
-    const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + (body.deliveryCost || 0)
+    const safeDeliveryCost = Math.max(0, body.deliveryCost || 0)
+    const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + safeDeliveryCost
 
     // Cross-check: reject if frontend total doesn't match
     if (body.total !== calculatedTotal) {
@@ -112,6 +138,22 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Reserve IMEI units
+      const itemInventoryMap = new Map<string, string>();
+      for (const item of enrichedItems) {
+        if (item.imei && imeiMap.has(item.imei)) {
+          const unit = imeiMap.get(item.imei);
+          await tx.inventoryItem.update({
+            where: { id: unit.id },
+            data: {
+              status: 'RESERVED',
+              salePrice: item.unitPrice,
+            },
+          });
+          itemInventoryMap.set(item.imei, unit.id);
+        }
+      }
+
       const orderCode = generateOrderCode()
       const order = await tx.order.create({
         data: {
@@ -124,7 +166,7 @@ export async function POST(request: NextRequest) {
           subtotal: calculatedSubtotal,
           total: calculatedTotal,
           warrantyCost: calculatedWarrantyCost,
-          deliveryCost: body.deliveryCost || 0,
+          deliveryCost: safeDeliveryCost,
           clientEmail: email,
           clientPhone: phone,
           clientDni: document,
@@ -137,6 +179,7 @@ export async function POST(request: NextRequest) {
           items: {
             create: enrichedItems.map((item: any) => ({
               productId: item.product.id,
+              inventoryItemId: item.imei ? (itemInventoryMap.get(item.imei) || null) : null,
               quantity: item.quantity,
               price: item.unitPrice
             }))

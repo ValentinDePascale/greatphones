@@ -17,7 +17,10 @@ export async function GET(request: Request) {
   try {
     const user = await requireSession(request)
     const { searchParams } = new URL(request.url)
-    const userId = searchParams.get('userId') || user.id
+    const queryUserId = searchParams.get('userId')
+
+    // Only admins can view other users' favorites
+    const userId = (queryUserId && user.role === 'ADMIN') ? queryUserId : user.id
     
     if (!userId) {
       return NextResponse.json({ error: 'userId requerido' }, { status: 400 })

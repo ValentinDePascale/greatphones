@@ -19,7 +19,20 @@ export async function OPTIONS() {
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
-    await requireSession(request)
+    const user = await requireSession(request)
+
+    // Verify ownership: only conversation owner or admin can read messages
+    const conversation = await prisma.conversation.findUnique({
+      where: { id },
+      select: { userId: true }
+    })
+    if (!conversation) {
+      return NextResponse.json({ error: 'Conversación no encontrada' }, { status: 404 })
+    }
+    if (user.id !== conversation.userId && user.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+    }
+
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit') || '50')
     const cursor = searchParams.get('cursor')
