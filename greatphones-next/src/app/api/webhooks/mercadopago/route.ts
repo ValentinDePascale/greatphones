@@ -15,30 +15,33 @@ function verifyWebhookSignature(request: NextRequest): boolean {
     return false;
   }
 
-  const signature = request.headers.get('x-signature') || '';
-  if (!signature) return false;
+  const xSignature = request.headers.get('x-signature') || '';
+  const xRequestId = request.headers.get('x-request-id') || '';
+  if (!xSignature || !xRequestId) return false;
 
-  const requestId = request.headers.get('x-request-id') || '';
-  const dataId = request.headers.get('data-id') || '';
+  const sigParts = xSignature.split(',').reduce((acc: Record<string, string>, part) => {
+    const [key, ...vals] = part.split('=');
+    if (key) acc[key.trim()] = vals.join('=').trim();
+    return acc;
+  }, {});
 
-  const params = new URLSearchParams(request.url.split('?')[1] || '');
-  const topic = params.get('topic') || params.get('type') || '';
-  const id = params.get('id') || params.get('data.id') || '';
+  const ts = sigParts['ts'];
+  const v1 = sigParts['v1'];
+  if (!ts || !v1) return false;
 
-  const parts = [
-    `id:${id || dataId}`,
-    `topic:${topic}`,
-    `request-id:${requestId}`,
-    `wmid:${process.env.MP_WEBHOOK_SECRET}`,
-  ];
+  const url = new URL(request.url);
+  const dataId = url.searchParams.get('data.id') || url.searchParams.get('id') || '';
 
-  const stringToSign = parts.join('\n');
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
   const expectedSignature = crypto
     .createHmac('sha256', process.env.MP_WEBHOOK_SECRET)
-    .update(stringToSign)
+    .update(manifest)
     .digest('hex');
 
-  return signature === expectedSignature;
+  return crypto.timingSafeEqual(
+    Buffer.from(v1),
+    Buffer.from(expectedSignature)
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -74,12 +77,12 @@ export async function POST(request: NextRequest) {
       if (externalReference && externalReference.startsWith('gc::')) {
         const gcId = externalReference.replace('gc::', '');
         const gc = await prisma.giftCard.findUnique({ where: { id: gcId } });
-        if (gc && gc.status === 'ACTIVE') {
-          const newStatus = status === 'approved' ? 'ACTIVE' : status === 'rejected' || status === 'cancelled' ? 'CANCELLED' : 'ACTIVE';
+        if (gc && (gc.status === 'PENDING' || gc.status === 'ACTIVE')) {
           if (status === 'approved') {
             await prisma.giftCard.update({
               where: { id: gc.id },
               data: {
+                status: 'ACTIVE',
                 mpPaymentId: paymentId.toString(),
                 mpStatus: status,
               }

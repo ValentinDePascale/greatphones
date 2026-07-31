@@ -672,6 +672,7 @@ model GiftCard {
 }
 
 enum GiftCardStatus {
+  PENDING
   ACTIVE
   REDEEMED
   EXPIRED

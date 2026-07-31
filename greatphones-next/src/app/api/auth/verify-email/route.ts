@@ -78,6 +78,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Email y código requeridos' }, { status: 400 })
       }
 
+      const vfLimit = await rateLimit(`verify-code:${email}`, 10, 15 * 60 * 1000)
+      if (!vfLimit.allowed) {
+        const mins = Math.ceil((vfLimit.resetAt - Date.now()) / 60000)
+        return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
+      }
+
       const records = await prisma.emailVerification.findMany({
         where: { email },
         orderBy: { createdAt: 'desc' },

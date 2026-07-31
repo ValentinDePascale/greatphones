@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -24,6 +25,12 @@ export async function POST(request: Request) {
 
     if (newPassword.length < 6) {
       return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 })
+    }
+
+    const limit = await rateLimit(`reset-pass:${email}`, 5, 60 * 60 * 1000)
+    if (!limit.allowed) {
+      const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
+      return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
     }
 
     const records = await prisma.passwordReset.findMany({

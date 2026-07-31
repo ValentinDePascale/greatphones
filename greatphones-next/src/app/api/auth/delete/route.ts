@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSelfOrAdmin } from '@/lib/auth-guard'
+import { requireSelfOrAdmin, handleRouteError } from '@/lib/auth-guard'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -32,9 +32,7 @@ export async function DELETE(request: Request) {
       status: 200,
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-
   } catch (error) {
-    console.error('[DELETE API] Delete account error:', error)
-    return NextResponse.json({ error: 'Error al eliminar cuenta' }, { status: 500 })
+    return handleRouteError(error)
   }
 }

@@ -4,6 +4,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
+import { rateLimit } from '@/lib/rate-limit';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -59,7 +60,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
     }
     console.log('[Checkout] Zod OK');
-    
+
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const checkoutLimit = await rateLimit(`checkout:${ip}`, 10, 300000)
+    if (!checkoutLimit.allowed) {
+      return NextResponse.json({ error: 'Demasiados intentos. Espera 5 minutos.' }, { status: 429 })
+    }
+
     const { 
       items, email, phone, street, number, floor, zip, city, province, document,
       warranty, delivery, cuotas, carrier, carrierService, paymentMethod,

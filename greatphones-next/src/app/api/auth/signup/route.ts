@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { SignupSchema, formatZodError } from '@/lib/validations'
 import { rateLimit } from '@/lib/rate-limit'
+import { createSessionCookie } from '@/lib/session'
 
 export async function GET() {
   return NextResponse.json({ 
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 })
     }
     
-    const { email, name, phone, dni, provincia, ciudad, password, verified } = body
+    const { email, name, phone, dni, provincia, ciudad, password } = body
 
     const limit = await rateLimit(`signup:${email}`, 3, 60 * 60 * 1000)
     if (!limit.allowed) {
@@ -57,16 +58,30 @@ export async function POST(request: Request) {
         ciudad,
         password: hashedPassword,
         role: 'CLIENT',
-        verified: verified || false,
+        verified: false,
       }
     })
 
+    const cookie = createSessionCookie(user.id, user.role)
+
     return NextResponse.json({ 
       message: 'Usuario creado',
-      user: { id: user.id, email: user.email, name: user.name }
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        dni: user.dni,
+        provincia: user.provincia,
+        ciudad: user.ciudad,
+        role: user.role,
+      }
     }, { 
       status: 201,
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {
+        'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
+        'Set-Cookie': cookie,
+      }
     })
 
   } catch (error) {

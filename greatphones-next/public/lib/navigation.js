@@ -1,15 +1,6 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
-var _origFetch=window.fetch;
-window.fetch=function(url,opts){
-  opts=opts||{};
-  opts.headers=opts.headers||{};
-  if(currentUser&&currentUser.id&&typeof url==='string'&&(url.indexOf(API_URL)===0||url.indexOf('/api/')===0)&&!opts.headers['X-User-Id']){
-    opts.headers['X-User-Id']=currentUser.id;
-  }
-  return _origFetch.call(window,url,opts);
-};
 function nav(id){
   ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
   var _cf=document.querySelector('.cat-flex');if(_cf)_cf.classList.remove('cat-reveal');
@@ -261,7 +252,7 @@ async function doLogin(){
     updateUserUI();
     Storage.set('user',currentUser);
     if(remember&&remember.checked){
-      Storage.set('remember',{email:email,password:password});
+      Storage.set('remember',{email:email});
     }else{
       Storage.remove('remember');
     }
@@ -318,6 +309,7 @@ function doLogout(){
   currentUser=null;
   Storage.remove('user');
   Storage.remove('remember');
+  fetch(API_URL+'/api/auth/logout',{method:'POST'}).catch(function(){});
   document.querySelector('button[onclick="nav(\'cuenta\')"]').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
   if(adminLink)adminLink.remove();
@@ -421,14 +413,7 @@ document.addEventListener('click',function(e){
 function checkGoogleSession(){
   fetch('/api/auth/session').then(function(r){return r.json();}).then(function(session){
     if(session&&session.user&&session.user.email){
-      var email=session.user.email;
-      var name=session.user.name||email;
-      var id=session.user.id;
-      fetch(API_URL+'/api/auth/signin',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:email,_googleSession:true})
-      }).then(function(r){return r.json();}).then(function(data){
+      fetch(API_URL+'/api/auth/me',{credentials:'include'}).then(function(r){return r.json();}).then(function(data){
         if(data.user){
           currentUser=data.user;
           Storage.set('user',currentUser);
@@ -443,19 +428,7 @@ function checkGoogleSession(){
             prefillCheckoutFields();
           }
         }
-      }).catch(function(){
-        currentUser={id:id,email:email,name:name,role:'CLIENT'};
-        Storage.set('user',currentUser);
-        updateUserUI();
-        loadUserFavorites();
-        initCart();
-        if(window.location.pathname==='/login')nav('home');
-        if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
-          renderCheckoutSummary();
-          resetCheckoutSelections();
-          prefillCheckoutFields();
-        }
-      });
+      }).catch(function(e){console.error('Error loading user session:',e);});
     }
   }).catch(function(e){console.error('Error loading checkout:',e);});
 }

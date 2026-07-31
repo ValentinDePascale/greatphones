@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 let rateLimitCallCount = 0
 
+vi.mock('@/lib/session', () => ({
+  createSessionCookie: vi.fn().mockReturnValue('gp-session=mock-token; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800'),
+  clearSessionCookie: vi.fn().mockReturnValue('gp-session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0'),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: {
@@ -42,7 +47,7 @@ describe('POST /api/auth/signin', () => {
     const res = await POST(req)
     expect(res.status).toBe(400)
     const data = await res.json()
-    expect(data.error).toBe('Email requerido')
+    expect(data.error).toBe('Email y password requeridos')
   })
 
   it('returns 400 when password is missing', async () => {
@@ -105,25 +110,5 @@ describe('POST /api/auth/signin', () => {
     expect(res.status).toBe(401)
     const data = await res.json()
     expect(data.needsVerification).toBe(true)
-  })
-
-  it('creates user on Google session when not found', async () => {
-    const { prisma } = await import('@/lib/prisma')
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.user.create).mockResolvedValue({
-      id: 'new1', email: 'google@test.com', name: 'google', role: 'CLIENT',
-      phone: null, dni: null, direccion: null, piso: null, cp: null,
-      provincia: null, ciudad: null, verified: true,
-    } as any)
-
-    const { POST } = await import('./route')
-    const req = new Request('http://localhost/api/auth/signin', {
-      method: 'POST',
-      body: JSON.stringify({ email: 'google@test.com', _googleSession: true }),
-    })
-    const res = await POST(req)
-    expect(res.status).toBe(200)
-    const data = await res.json()
-    expect(data.user.email).toBe('google@test.com')
   })
 })

@@ -4,10 +4,10 @@ let queryRawCallCount = 0
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    $queryRawUnsafe: vi.fn().mockImplementation(() => {
+    $queryRaw: vi.fn().mockImplementation(() => {
       queryRawCallCount++
       const count = queryRawCallCount
-      return Promise.resolve([{ count, resetAt: new Date(Date.now() + 60000) }])
+      return Promise.resolve([{ count: BigInt(count), resetAt: new Date(Date.now() + 60000) }])
     }),
     user: { findUnique: vi.fn() },
     passwordReset: { create: vi.fn() },

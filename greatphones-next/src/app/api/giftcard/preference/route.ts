@@ -49,7 +49,7 @@ export async function POST(request: Request) {
         code,
         originalAmount: amount,
         remainingAmount: amount,
-        status: 'ACTIVE',
+        status: 'PENDING',
         buyerEmail: user.email,
         recipientEmail: recipientEmail || null,
         message: message || null,

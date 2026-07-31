@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 let rateLimitCallCount = 0
 
+vi.mock('@/lib/session', () => ({
+  createSessionCookie: vi.fn().mockReturnValue('gp-session=mock-token; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800'),
+}))
+
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: {

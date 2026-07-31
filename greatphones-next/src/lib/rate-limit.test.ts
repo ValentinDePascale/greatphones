@@ -3,7 +3,7 @@ import { prisma } from './prisma'
 
 vi.mock('./prisma', () => ({
   prisma: {
-    $queryRawUnsafe: vi.fn(),
+    $queryRaw: vi.fn(),
   },
 }))
 
@@ -16,8 +16,8 @@ describe('rateLimit', () => {
 
   it('allows first request and returns remaining', async () => {
     const mockResetAt = new Date(Date.now() + 60000)
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
-      { count: 1, resetAt: mockResetAt },
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { count: BigInt(1), resetAt: mockResetAt },
     ])
 
     const result = await rateLimit('test:user1', 3, 60000)
@@ -27,8 +27,8 @@ describe('rateLimit', () => {
 
   it('blocks after exceeding limit', async () => {
     const mockResetAt = new Date(Date.now() + 60000)
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
-      { count: 4, resetAt: mockResetAt },
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { count: BigInt(4), resetAt: mockResetAt },
     ])
 
     const result = await rateLimit('test:user2', 3, 60000)
@@ -38,8 +38,8 @@ describe('rateLimit', () => {
 
   it('allows when exactly at limit', async () => {
     const mockResetAt = new Date(Date.now() + 60000)
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
-      { count: 3, resetAt: mockResetAt },
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { count: BigInt(3), resetAt: mockResetAt },
     ])
 
     const result = await rateLimit('test:user3', 3, 60000)
@@ -48,9 +48,9 @@ describe('rateLimit', () => {
   })
 
   it('tracks different keys independently', async () => {
-    vi.mocked(prisma.$queryRawUnsafe)
-      .mockResolvedValueOnce([{ count: 4, resetAt: new Date(Date.now() + 60000) }])
-      .mockResolvedValueOnce([{ count: 1, resetAt: new Date(Date.now() + 60000) }])
+    vi.mocked(prisma.$queryRaw)
+      .mockResolvedValueOnce([{ count: BigInt(4), resetAt: new Date(Date.now() + 60000) }])
+      .mockResolvedValueOnce([{ count: BigInt(1), resetAt: new Date(Date.now() + 60000) }])
 
     const rA = await rateLimit('test:userA', 3, 60000)
     const rB = await rateLimit('test:userB', 3, 60000)
@@ -61,7 +61,7 @@ describe('rateLimit', () => {
 
 describe('getRateLimitInfo', () => {
   it('returns fresh info for untouched key', async () => {
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([])
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([])
 
     const info = await getRateLimitInfo('fresh:key', 5, 60000)
     expect(info.count).toBe(0)
@@ -69,8 +69,8 @@ describe('getRateLimitInfo', () => {
   })
 
   it('returns info for expired key as fresh', async () => {
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
-      { count: 3, expiresAt: new Date(Date.now() - 1000) },
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { count: BigInt(3), expiresAt: new Date(Date.now() - 1000) },
     ])
 
     const info = await getRateLimitInfo('expired:key', 5, 60000)
@@ -79,8 +79,8 @@ describe('getRateLimitInfo', () => {
   })
 
   it('returns current count for active key', async () => {
-    vi.mocked(prisma.$queryRawUnsafe).mockResolvedValue([
-      { count: 2, expiresAt: new Date(Date.now() + 30000) },
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([
+      { count: BigInt(2), expiresAt: new Date(Date.now() + 30000) },
     ])
 
     const info = await getRateLimitInfo('active:key', 5, 60000)

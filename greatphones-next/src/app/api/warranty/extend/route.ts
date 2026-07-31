@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSession } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 const PLANS: Record<string, { months: number; price: number; label: string }> = {
   '12m': { months: 12, price: 85000, label: '12 meses' },
@@ -9,7 +9,7 @@ const PLANS: Record<string, { months: number; price: number; label: string }> = 
 
 export async function POST(request: Request) {
   try {
-    await requireSession(request)
+    await requireAdmin(request)
     const body = await request.json()
     const { code, imei, plan, price } = body
 
@@ -82,7 +82,6 @@ export async function POST(request: Request) {
       expiresAt: expiresStr,
     })
   } catch (error) {
-    console.error('[Warranty Extend] Error:', error)
-    return NextResponse.json({ error: 'Error al procesar la extensión de garantía' }, { status: 500 })
+    return handleRouteError(error)
   }
 }
