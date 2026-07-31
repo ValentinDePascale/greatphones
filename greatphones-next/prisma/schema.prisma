@@ -15,10 +15,10 @@ model User {
   phone     String?
   dni       String?
   direccion String?
-  piso     String?
+  piso      String?
   cp        String?
   provincia String?
-  ciudad   String?
+  ciudad    String?
   role      Role     @default(CLIENT)
   avatar    String?
   location  String?
@@ -26,22 +26,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  orders          Order[]
-  adminSales      Order[]         @relation("AdminSales")
-  quotes          Quote[]
-  sales           Sale[]
-  repairs         Repair[]
-  guarantees      Guarantee[]
-  conversations   Conversation[]
-  adminConversations Conversation[] @relation("AdminConversations")
-  wallet          Wallet?
-  favorites       Favorite[]
-  accounts        Account[]
-  sessions        Session[]
+  orders                Order[]
+  adminSales            Order[]           @relation("AdminSales")
+  quotes                Quote[]
+  sales                 Sale[]
+  repairs               Repair[]
+  guarantees            Guarantee[]
+  conversations         Conversation[]
+  adminConversations    Conversation[]    @relation("AdminConversations")
+  wallet                Wallet?
+  favorites             Favorite[]
+  accounts              Account[]
+  sessions              Session[]
   arrepentimientos      Arrepentimiento[]
   sentMessages          Message[]
-  createdInventoryItems InventoryItem[]    @relation("CreatedBy")
-  soldInventoryItems    InventoryItem[]    @relation("SoldBy")
+  createdInventoryItems InventoryItem[]   @relation("CreatedBy")
+  soldInventoryItems    InventoryItem[]   @relation("SoldBy")
   redeemedGiftCards     GiftCard[]
   coupons               Coupon[]
 }
@@ -53,7 +53,7 @@ enum Role {
 
 // ==================== PRODUCTOS ====================
 model Product {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   ico         String
   imageUrl    String?
@@ -69,30 +69,30 @@ model Product {
   ram         String?
   processor   String?
   stock       Int
-  reserved    Int       @default(0)
+  reserved    Int      @default(0)
   score       Int?
   color       String?
   screen      Float?
   type        String
   imei        String?
-  sold        Int       @default(0)
-  
-  isOffer     Boolean   @default(false)
+  sold        Int      @default(0)
+
+  isOffer    Boolean   @default(false)
   discount   Int       @default(0)
   offerStart DateTime?
   offerEnd   DateTime?
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  slug       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  slug      String?
 
   modelGroup String?
 
-  supplierId  String?
-  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
-  orderItems  OrderItem[]
-  preOrders   PreOrder[]
-  favorites   Favorite[]
+  supplierId     String?
+  supplier       Supplier?       @relation(fields: [supplierId], references: [id])
+  orderItems     OrderItem[]
+  preOrders      PreOrder[]
+  favorites      Favorite[]
   inventoryItems InventoryItem[]
 }
 
@@ -113,7 +113,7 @@ model ProductLog {
   ram       String?
   battery   Int?
   imei      String?
-  source    String   // "manual" | "inventory" | "duplicate"
+  source    String // "manual" | "inventory" | "duplicate"
   createdAt DateTime @default(now())
 }
 
@@ -127,61 +127,61 @@ enum InventoryStatus {
 }
 
 model InventoryItem {
-  id              String          @id @default(cuid())
-  code            String          @unique
-  imei            String          @unique
-  serialNumber    String?
+  id           String  @id @default(cuid())
+  code         String  @unique
+  imei         String  @unique
+  serialNumber String?
 
   // Auto-completado por API IMEI
-  brand           String
-  modelName       String
-  storage         String?
-  color           String?
-  modelNumber     String?
-  deviceType      String
-  specs           Json?
-  imageUrl        String?
+  brand       String
+  modelName   String
+  storage     String?
+  color       String?
+  modelNumber String?
+  deviceType  String
+  specs       Json?
+  imageUrl    String?
 
   // Datos manuales del negocio
-  purchasePrice   Int
-  cosmeticCondition String
+  purchasePrice       Int
+  cosmeticCondition   String
   functionalCondition String?
-  batteryHealth   Int?
-  notes           String?
-  investor        String?
-  targetPrice     Int?
+  batteryHealth       Int?
+  notes               String?
+  investor            String?
+  targetPrice         Int?
 
   // Estado
-  status          InventoryStatus @default(IN_STOCK)
+  status InventoryStatus @default(IN_STOCK)
 
   // QR
-  qrCode          String?
-  labelPrinted    Boolean         @default(false)
+  qrCode       String?
+  labelPrinted Boolean @default(false)
 
   // Links
-  productId       String?
-  product         Product?        @relation(fields: [productId], references: [id])
-  supplierId      String?
-  supplier        Supplier?       @relation(fields: [supplierId], references: [id])
+  productId  String?
+  product    Product?  @relation(fields: [productId], references: [id])
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
 
   // Purchase tracking
-  purchasedFrom   String?
-  purchaseDate    DateTime        @default(now())
+  purchasedFrom String?
+  purchaseDate  DateTime @default(now())
 
   // Sale tracking
-  salePrice       Int?
-  soldAt          DateTime?
-  soldById        String?
-  soldBy          User?           @relation("SoldBy", fields: [soldById], references: [id])
+  salePrice Int?
+  soldAt    DateTime?
+  soldById  String?
+  soldBy    User?     @relation("SoldBy", fields: [soldById], references: [id])
 
   // Creator
-  createdById     String
-  createdBy       User            @relation("CreatedBy", fields: [createdById], references: [id])
+  createdById String
+  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
 
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  history         InventoryHistory[]
+  history InventoryHistory[]
 }
 
 model InventoryHistory {
@@ -189,19 +189,19 @@ model InventoryHistory {
   inventoryItemId String
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
 
-  type            String        // CREATED | STATUS_CHANGE | REPAIR | SOLD | LABEL_PRINTED | NOTE
-  oldValue        String?
-  newValue        String?
-  description     String?
-  userId          String?
+  type        String // CREATED | STATUS_CHANGE | REPAIR | SOLD | LABEL_PRINTED | NOTE
+  oldValue    String?
+  newValue    String?
+  description String?
+  userId      String?
 
-  createdAt       DateTime      @default(now())
+  createdAt DateTime @default(now())
 }
 
 // ==================== CACHE DE IMEI (TAC) ====================
 model TacCache {
   id          String   @id @default(cuid())
-  tac         String   @unique          // primeros 8 dígitos del IMEI
+  tac         String   @unique // primeros 8 dígitos del IMEI
   brand       String
   modelName   String
   storage     String?
@@ -217,47 +217,47 @@ model TacCache {
 
 // ==================== PEDIDOS ====================
 model Order {
-  id        String      @id @default(cuid())
-  code      String      @unique
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  status    OrderStatus @default(PENDING)
-  warranty  String?
-  cuotas    Int         @default(1)
-  payment   String?
-  subtotal  Int
-  warrantyCost Int      @default(0)
-  deliveryCost Int      @default(0)
-  total     Int
-  notes     String?
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id           String      @id @default(cuid())
+  code         String      @unique
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  status       OrderStatus @default(PENDING)
+  warranty     String?
+  cuotas       Int         @default(1)
+  payment      String?
+  subtotal     Int
+  warrantyCost Int         @default(0)
+  deliveryCost Int         @default(0)
+  total        Int
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   // Shipping info
-  clientName     String?
-  clientDni      String?
-  clientCuil     String?
-  clientEmail    String?
-  clientPhone    String?
-  clientAddress  String?
-  shippingStreet String?
-  shippingNumber String?
-  shippingFloor  String?
-  shippingZip    String?
-  shippingCity   String?
+  clientName       String?
+  clientDni        String?
+  clientCuil       String?
+  clientEmail      String?
+  clientPhone      String?
+  clientAddress    String?
+  shippingStreet   String?
+  shippingNumber   String?
+  shippingFloor    String?
+  shippingZip      String?
+  shippingCity     String?
   shippingProvince String?
-  
+
   // Mercado Pago
   mpPreferenceId String?
   mpPaymentId    String?
   mpStatus       String?
 
   // Arrepentimiento
-  arrepStatus    String?     // ARREP_OK, ARREP_RECHAZADO
-  arrepReason    String?     // Motivo del rechazo
-  refundProcessed Boolean    @default(false)
-  refundDate     DateTime?
-  
+  arrepStatus     String? // ARREP_OK, ARREP_RECHAZADO
+  arrepReason     String? // Motivo del rechazo
+  refundProcessed Boolean   @default(false)
+  refundDate      DateTime?
+
   // Tracking
   trackingNumber String?
   trackingUrl    String?
@@ -269,17 +269,17 @@ model Order {
   enviopackId    String?
 
   // Ventas presenciales
-  cashReceived  Int?
-  change        Int?
-  saleChannel   String          @default("online")
-  currency      String          @default("ARS")
-  adminId       String?
-  admin         User?           @relation("AdminSales", fields: [adminId], references: [id])
+  cashReceived Int?
+  change       Int?
+  saleChannel  String  @default("online")
+  currency     String  @default("ARS")
+  adminId      String?
+  admin        User?   @relation("AdminSales", fields: [adminId], references: [id])
 
-  items           OrderItem[]
+  items            OrderItem[]
   arrepentimientos Arrepentimiento[]
-  warrantyExtends WarrantyExtend[]
-  orderCoupons    OrderCoupon[]
+  warrantyExtends  WarrantyExtend[]
+  orderCoupons     OrderCoupon[]
 }
 
 enum OrderStatus {
@@ -291,99 +291,102 @@ enum OrderStatus {
 }
 
 model OrderItem {
-  id          String   @id @default(cuid())
-  orderId     String
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
   // Producto del catálogo (opcional para ventas presenciales)
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id])
-  
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
   // Campos para productos custom
   customName  String?
   customPrice Int?
-  
-  quantity    Int      @default(1)
-  price       Int
+
+  quantity Int @default(1)
+  price    Int
+
+  accessoryId String?
+  accessory   Accessory? @relation(fields: [accessoryId], references: [id])
 }
 
 // ==================== PREEVENTAS ====================
 model PreOrder {
-  id           String   @id @default(cuid())
-  code         String   @unique
-  clientName   String
-  clientDni    String?
-  clientPhone  String?
-  clientEmail  String?
+  id          String  @id @default(cuid())
+  code        String  @unique
+  clientName  String
+  clientDni   String?
+  clientPhone String?
+  clientEmail String?
 
   // Producto del catálogo (opcional)
-  productId    String?
-  product      Product? @relation(fields: [productId], references: [id])
-  customName   String?
-  customPrice  Int?
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id])
+  customName  String?
+  customPrice Int?
 
   // Campos de Preventa local (modelo iPhone + specs)
-  productModelName   String?  // "iPhone 16 Pro Max"
-  productStorage     String?  // "256 GB"
-  productColor       String?  // "Titanio Natural"
-  productCondition   String?  // "Nuevo"
-  price              Int      @default(0)
+  productModelName String? // "iPhone 16 Pro Max"
+  productStorage   String? // "256 GB"
+  productColor     String? // "Titanio Natural"
+  productCondition String? // "Nuevo"
+  price            Int     @default(0)
 
   // Pago
-  paymentMethod      String?  // "cash" | "transfer"
-  paymentType        String?  // "single" | "installments"
-  installments       Int?
+  paymentMethod String? // "cash" | "transfer"
+  paymentType   String? // "single" | "installments"
+  installments  Int?
 
   // Entrega estimada
   expectedDeliveryStart DateTime?
   expectedDeliveryEnd   DateTime?
-  deliveredAt        DateTime?
+  deliveredAt           DateTime?
 
-  notes        String?
-  status       String   @default("PENDING") // PENDING | CONFIRMED | DELIVERED | CANCELLED
-  createdById  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  notes       String?
+  status      String   @default("PENDING") // PENDING | CONFIRMED | DELIVERED | CANCELLED
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 // ==================== COTIZACIONES ====================
 model Quote {
-  id          String      @id @default(cuid())
-  code        String      @unique
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  code   String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  device      String
-  storage     String
-  condition   String
+  device    String
+  storage   String
+  condition String
 
-  basePrice   Int
-  finalPrice  Int
-  bonus       Int?
+  basePrice     Int
+  finalPrice    Int
+  bonus         Int?
   batteryHealth Int?
 
-  status      QuoteStatus @default(PENDING)
+  status QuoteStatus @default(PENDING)
 
-  envio       String?
-  payment     String?
+  envio   String?
+  payment String?
 
-  clientName  String?
-  clientDni   String?
-  clientPhone String?
-  clientCity  String?
-  clientCp    String?
+  clientName     String?
+  clientDni      String?
+  clientPhone    String?
+  clientCity     String?
+  clientCp       String?
   clientProvince String?
 
-  photos      String[]
-  dniPhotos   String[]
-  extras      String[]
+  photos    String[]
+  dniPhotos String[]
+  extras    String[]
 
   rejectReason String?
 
-  signature   String?
+  signature String?
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum QuoteStatus {
@@ -396,21 +399,21 @@ enum QuoteStatus {
 
 // ==================== VENTAS ====================
 model Sale {
-  id          String    @id @default(cuid())
-  code        String    @unique
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  code   String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  device      String
-  storage     String?
-  condition  String?
-  imei        String?
+  device    String
+  storage   String?
+  condition String?
+  imei      String?
 
-  price       Int
-  payment     String
-  status      SaleStatus @default(PENDING)
+  price   Int
+  payment String
+  status  SaleStatus @default(PENDING)
 
-  createdAt   DateTime  @default(now())
+  createdAt DateTime @default(now())
 }
 
 enum SaleStatus {
@@ -422,21 +425,21 @@ enum SaleStatus {
 
 // ==================== REPARACIONES ====================
 model Repair {
-  id          String       @id @default(cuid())
-  code        String       @unique
-  userId      String
-  user        User         @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  code   String @unique
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  device      String
-  issue       String
-  serviceId   String?
-  service     RepairService? @relation(fields: [serviceId], references: [id])
+  device    String
+  issue     String
+  serviceId String?
+  service   RepairService? @relation(fields: [serviceId], references: [id])
 
-  price       Int?
-  status      RepairStatus @default(PENDING)
+  price  Int?
+  status RepairStatus @default(PENDING)
 
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum RepairStatus {
@@ -449,31 +452,31 @@ enum RepairStatus {
 }
 
 model RepairService {
-  id          String    @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
   ico         String
   description String?
   price       Int
   category    String?
 
-  repairs     Repair[]
+  repairs Repair[]
 }
 
 // ==================== GARANTÍAS ====================
 model Guarantee {
-  id          String          @id @default(cuid())
-  userId      String
-  user        User            @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  product     String
-  type        String
-  price       Int?
+  product String
+  type    String
+  price   Int?
 
-  startsAt    DateTime @default(now())
-  expiresAt   DateTime
-  status      GuaranteeStatus @default(ACTIVE)
+  startsAt  DateTime        @default(now())
+  expiresAt DateTime
+  status    GuaranteeStatus @default(ACTIVE)
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 enum GuaranteeStatus {
@@ -485,40 +488,40 @@ enum GuaranteeStatus {
 
 // ==================== PROVEEDORES ====================
 model Supplier {
-  id        String    @id @default(cuid())
-  name      String
-  type      String
-  phone     String?
-  email     String?
-  notes     String?
-  total     Int       @default(0)
+  id    String  @id @default(cuid())
+  name  String
+  type  String
+  phone String?
+  email String?
+  notes String?
+  total Int     @default(0)
 
-  products        Product[]
-  inventoryItems  InventoryItem[]
-  createdAt       DateTime @default(now())
+  products       Product[]
+  inventoryItems InventoryItem[]
+  createdAt      DateTime        @default(now())
 }
 
 // ==================== CONVERSACIONES ====================
 model Conversation {
-  id        String     @id @default(cuid())
-  userId    String
-  user      User       @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  type      ConvType
-  subject   String?
-  status    ConvStatus @default(OPEN)
-  adminId   String?
-  admin     User?      @relation("AdminConversations", fields: [adminId], references: [id])
-  unread    Int        @default(0)
-  unreadByUser  Int    @default(0)
-  unreadByAdmin Int    @default(0)
-  lastMsgAt DateTime?
-  closedAt  DateTime?
+  type          ConvType
+  subject       String?
+  status        ConvStatus @default(OPEN)
+  adminId       String?
+  admin         User?      @relation("AdminConversations", fields: [adminId], references: [id])
+  unread        Int        @default(0)
+  unreadByUser  Int        @default(0)
+  unreadByAdmin Int        @default(0)
+  lastMsgAt     DateTime?
+  closedAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  messages Message[]
+  messages      Message[]
   notifications Notification[]
 }
 
@@ -542,18 +545,18 @@ model Message {
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
-  from           String
-  fromUserId     String?
-  fromUser       User?        @relation(fields: [fromUserId], references: [id])
-  text           String?
-  imageUrl       String?
-  imageCaption   String?
-  status         MsgStatus    @default(SENT)
+  from         String
+  fromUserId   String?
+  fromUser     User?     @relation(fields: [fromUserId], references: [id])
+  text         String?
+  imageUrl     String?
+  imageCaption String?
+  status       MsgStatus @default(SENT)
 
-  readAt         DateTime?
-  createdAt      DateTime     @default(now())
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
 
-  notifications  Notification[]
+  notifications Notification[]
 }
 
 enum MsgStatus {
@@ -564,17 +567,17 @@ enum MsgStatus {
 
 // ==================== WALLET ====================
 model Wallet {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  user        User     @relation(fields: [userId], references: [id])
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
 
-  balance     Int      @default(0)
-  totalEarned Int      @default(0)
-  totalSpent  Int      @default(0)
-  version     Int      @default(0)
+  balance     Int @default(0)
+  totalEarned Int @default(0)
+  totalSpent  Int @default(0)
+  version     Int @default(0)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   transactions WalletTransaction[]
 }
@@ -591,7 +594,7 @@ model WalletTransaction {
   description   String?
   createdAt     DateTime        @default(now())
 
-  giftCard  GiftCard?
+  giftCard GiftCard?
 
   @@index([walletId, createdAt])
 }
@@ -620,8 +623,8 @@ model Coupon {
   originalAmount  Int
   remainingAmount Int
   status          CouponStatus @default(ACTIVE)
-  source          String?      // 'giftcard', 'sell', 'admin'
-  sourceId        String?      // giftCardId if source='giftcard'
+  source          String? // 'giftcard', 'sell', 'admin'
+  sourceId        String? // giftCardId if source='giftcard'
   expiresAt       DateTime?
   createdAt       DateTime     @default(now())
   usedAt          DateTime?
@@ -637,8 +640,8 @@ model OrderCoupon {
   id         String   @id @default(cuid())
   orderId    String
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  couponId    String
-  coupon      Coupon  @relation(fields: [couponId], references: [id])
+  couponId   String
+  coupon     Coupon   @relation(fields: [couponId], references: [id])
   amountUsed Int
   createdAt  DateTime @default(now())
 
@@ -647,11 +650,11 @@ model OrderCoupon {
 }
 
 model GiftCard {
-  id               String        @id @default(cuid())
-  code             String        @unique
+  id               String             @id @default(cuid())
+  code             String             @unique
   originalAmount   Int
   remainingAmount  Int
-  status           GiftCardStatus @default(ACTIVE)
+  status           GiftCardStatus     @default(ACTIVE)
   buyerEmail       String?
   recipientEmail   String?
   message          String?
@@ -659,13 +662,13 @@ model GiftCard {
   mpPaymentId      String?
   mpStatus         String?
   expiresAt        DateTime?
-  purchasedAt      DateTime      @default(now())
+  purchasedAt      DateTime           @default(now())
   redeemedAt       DateTime?
   redeemedByUserId String?
-  redeemedBy       User?         @relation(fields: [redeemedByUserId], references: [id])
-  transactionId    String?       @unique
+  redeemedBy       User?              @relation(fields: [redeemedByUserId], references: [id])
+  transactionId    String?            @unique
   transaction      WalletTransaction? @relation(fields: [transactionId], references: [id])
-  version          Int           @default(0)
+  version          Int                @default(0)
 
   @@index([code])
   @@index([status])
@@ -681,11 +684,11 @@ enum GiftCardStatus {
 
 // ==================== FAVORITOS ====================
 model Favorite {
-  id        String   @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
   productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -694,13 +697,13 @@ model Favorite {
 
 // ==================== NOTIFICACIONES ====================
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String?
-  
-  type      NotifType
-  title     String
-  text      String
-  read      Boolean  @default(false)
+  id     String  @id @default(cuid())
+  userId String?
+
+  type  NotifType
+  title String
+  text  String
+  read  Boolean   @default(false)
 
   conversationId String?
   conversation   Conversation? @relation(fields: [conversationId], references: [id])
@@ -720,26 +723,29 @@ enum NotifType {
 
 // ==================== ACCESORIOS ====================
 model Accessory {
-  id               String   @id @default(cuid())
+  id               String      @id @default(cuid())
   name             String
-  ico              String?  
+  ico              String?
   description      String?
   category         String
   price            Int
-  compareAtPrice   Int?     
-  stock            Int      @default(0)
-  imageUrl         String?  
-  images           String[] @default([])
-  brand            String?  
-  color            String?  
-  compatibleModels String?  
+  compareAtPrice   Int?
+  stock            Int         @default(0)
+  reserved         Int         @default(0)
+  sold             Int         @default(0)
+  imageUrl         String?
+  images           String[]    @default([])
+  brand            String?
+  color            String?
+  compatibleModels String?
   modelGroup       String?
-  isActive         Boolean  @default(true)
-  discount         Int?     
-  isOffer          Boolean  @default(false)
+  isActive         Boolean     @default(true)
+  discount         Int?
+  isOffer          Boolean     @default(false)
   offerStart       DateTime?
   offerEnd         DateTime?
-  createdAt        DateTime @default(now())
+  createdAt        DateTime    @default(now())
+  orderItems       OrderItem[]
 }
 
 // ==================== NEXT.AUTH ====================
@@ -802,20 +808,20 @@ model PasswordReset {
 
 // ==================== ARREPENTIMIENTO (Ley 24.240 - Resolucion 424/2020) ====================
 model Arrepentimiento {
-  id          String            @id @default(cuid())
-  orderId     String
-  order       Order            @relation(fields: [orderId], references: [id])
-  userId      String?
-  user        User?           @relation(fields: [userId], references: [id])
-  
-  email       String
-  telefono    String?
-  motivo      String?
-  estado      ArrepEstado      @default(PENDIENTE)
-  tramite     String?
-  
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id      String  @id @default(cuid())
+  orderId String
+  order   Order   @relation(fields: [orderId], references: [id])
+  userId  String?
+  user    User?   @relation(fields: [userId], references: [id])
+
+  email    String
+  telefono String?
+  motivo   String?
+  estado   ArrepEstado @default(PENDIENTE)
+  tramite  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ArrepEstado {
@@ -838,17 +844,17 @@ model RateLimit {
 
 // ==================== EXTENSIÓN DE GARANTÍA ====================
 model WarrantyExtend {
-  id        String              @id @default(cuid())
+  id        String               @id @default(cuid())
   orderId   String
-  order     Order               @relation(fields: [orderId], references: [id])
+  order     Order                @relation(fields: [orderId], references: [id])
   imei      String
-  plan      String              // "12m" or "24m"
+  plan      String // "12m" or "24m"
   months    Int
   price     Int
   status    WarrantyExtendStatus @default(PENDING_PAYMENT)
-  startDate DateTime            @default(now())
+  startDate DateTime             @default(now())
   endDate   DateTime
-  createdAt DateTime            @default(now())
+  createdAt DateTime             @default(now())
 
   mpPreferenceId String?
   mpPaymentId    String?

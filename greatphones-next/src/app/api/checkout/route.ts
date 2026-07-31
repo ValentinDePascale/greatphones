@@ -16,6 +16,8 @@ const WARRANTY_COST_MAP: Record<string, number> = {
   '+24 meses': 150000,
 };
 
+const RESERVATION_TTL_MINUTES = 30;
+
 function getEffectivePrice(product: any): number {
   if (product.isOffer && product.discount && product.discount > 0) {
     const now = new Date();
@@ -50,8 +52,55 @@ async function findOrCreateUser(email: string, phone?: string, document?: string
   return user;
 }
 
+async function releaseStaleReservations() {
+  const staleSince = new Date(Date.now() - RESERVATION_TTL_MINUTES * 60 * 1000);
+  const staleOrders = await prisma.order.findMany({
+    where: {
+      status: 'PENDING',
+      createdAt: { lt: staleSince },
+    },
+    include: { items: true },
+    take: 20,
+  });
+
+  for (const order of staleOrders) {
+    await prisma.$transaction(async (tx) => {
+      for (const item of order.items) {
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: { increment: item.quantity },
+              reserved: { decrement: item.quantity },
+            },
+          });
+        }
+        if (item.accessoryId) {
+          await tx.accessory.update({
+            where: { id: item.accessoryId },
+            data: {
+              stock: { increment: item.quantity },
+              reserved: { decrement: item.quantity },
+            },
+          });
+        }
+      }
+      await tx.order.update({
+        where: { id: order.id },
+        data: { status: 'CANCELLED' },
+      });
+      console.log('[Checkout] Released stale reservation for order:', order.code);
+    }).catch(err => {
+      console.error('[Checkout] Error releasing stale order:', order.code, err.message);
+    });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
+    // Release stale PENDING reservations before processing new checkout
+    releaseStaleReservations().catch(err => console.error('[Checkout] Error in releaseStaleReservations:', err));
+
     const body = await request.json();
     console.log('[Checkout] Body:', JSON.stringify({ itemsN:body.items?.length, email:body.email, total:body.total, subtotal:body.subtotal, pm:body.paymentMethod, cids:body.coupons, doc:body.document?.substring(0,3)+'***', street:!!body.street, city:!!body.city, province:!!body.province, zip:!!body.zip }));
     const validation = CheckoutSchema.safeParse(body);
@@ -78,33 +127,60 @@ export async function POST(request: NextRequest) {
 
     const orderCode = generateOrderCode();
 
+    // Split items into product and accessory items
+    const productItems = items.filter((item: any) => item.type !== 'accesorio');
+    const accessoryItems = items.filter((item: any) => item.type === 'accesorio');
+
     // Fetch products from DB
-    const productIds = items.map((item: any) => item.id);
-    const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
-    const productMap = new Map(products.map((p: any) => [p.id, p]));
+    const productMap = new Map();
+    if (productItems.length > 0) {
+      const productIds = productItems.map((item: any) => item.id);
+      const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
+      for (const p of products) productMap.set(p.id, p);
+    }
+
+    // Fetch accessories from DB
+    const accessoryMap = new Map();
+    if (accessoryItems.length > 0) {
+      const accessoryIds = accessoryItems.map((item: any) => item.id);
+      const accessories = await prisma.accessory.findMany({ where: { id: { in: accessoryIds } } });
+      for (const a of accessories) accessoryMap.set(a.id, a);
+    }
 
     // Build enriched items with server-side prices
-    const enrichedItems = items.map((item: any) => {
-      const product = productMap.get(item.id);
-      if (!product) throw { status: 400, message: `Producto no encontrado: ${item.name}` };
-      if (product.stock < item.quantity) {
-        throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` };
+    const enrichedItems: any[] = [];
+    for (const item of items) {
+      if (item.type === 'accesorio') {
+        const accessory = accessoryMap.get(item.id);
+        if (!accessory) throw { status: 400, message: `Accesorio no encontrado: ${item.name}` };
+        if (accessory.stock < item.quantity) {
+          throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${accessory.stock}` };
+        }
+        const unitPrice = getEffectivePrice(accessory);
+        enrichedItems.push({ ...item, accessory, unitPrice, product: null });
+      } else {
+        const product = productMap.get(item.id);
+        if (!product) throw { status: 400, message: `Producto no encontrado: ${item.name}` };
+        if (product.stock < item.quantity) {
+          throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` };
+        }
+        const unitPrice = getEffectivePrice(product);
+        enrichedItems.push({ ...item, product, unitPrice, accessory: null });
       }
-      const unitPrice = getEffectivePrice(product);
-      return { ...item, product, unitPrice };
-    });
+    }
 
     // Recalculate totals server-side — never trust frontend amounts
     const calculatedSubtotal = enrichedItems.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0);
     const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0;
-    const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + (body.deliveryCost || 0);
+    const safeDeliveryCost = Math.max(0, body.deliveryCost || 0);
+    const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + safeDeliveryCost;
 
     // Cross-check: reject if frontend total doesn't match
     if (body.total !== calculatedTotal) {
       return NextResponse.json({ error: 'Error de validación: el total no coincide. Reintente.' }, { status: 400 });
     }
 
-    // ---- COUPON HANDLING ----
+    // ---- COUPON HANDLING (read-only validation, atomic decrement inside tx) ----
     let couponDiscount = 0;
     let validatedCoupons: Array<{ id: string; code: string; remainingAmount: number }> = [];
 
@@ -138,30 +214,37 @@ export async function POST(request: NextRequest) {
     // ---- END COUPON HANDLING ----
 
     // Build MP preference items with server-side prices
-    const mpItems = enrichedItems.map((item: any) => ({
-      title: item.product.name,
+    const mpItems: any[] = enrichedItems.map((item: any, idx: number) => ({
+      id: `${orderCode}-item-${idx}`,
+      title: (item.product || item.accessory).name,
       unit_price: item.unitPrice,
       quantity: item.quantity,
       currency_id: 'ARS',
-      picture_url: item.product.imageUrl || undefined,
-      description: `${item.product.brand || ''} ${item.product.sub || ''}`.trim() || item.product.name
+      picture_url: (item.product || item.accessory).imageUrl || undefined,
+      description: `${(item.product || item.accessory).brand || ''} ${(item.product || item.accessory).sub || ''}`.trim() || (item.product || item.accessory).name
     }));
 
     if (calculatedWarrantyCost > 0) {
       mpItems.push({
+        id: `${orderCode}-warranty`,
         title: 'Garantía extendida',
         unit_price: calculatedWarrantyCost,
         quantity: 1,
         currency_id: 'ARS',
+        picture_url: undefined,
+        description: `Garantía ${warranty}`,
       });
     }
 
-    if (body.deliveryCost > 0) {
+    if (safeDeliveryCost > 0) {
       mpItems.push({
+        id: `${orderCode}-delivery`,
         title: `Envío - ${delivery || 'Estándar'}`,
-        unit_price: body.deliveryCost,
+        unit_price: safeDeliveryCost,
         quantity: 1,
         currency_id: 'ARS',
+        picture_url: undefined,
+        description: `Costo de envío${carrier ? ' via ' + carrier : ''}`,
       });
     }
 
@@ -216,17 +299,31 @@ export async function POST(request: NextRequest) {
 
     console.log('[Checkout] Starting transaction for order:', orderCode);
     const order = await prisma.$transaction(async (tx) => {
+      // Decrement stock for products
       for (const item of enrichedItems) {
-        const updated = await tx.product.update({
-          where: { id: item.product.id },
-          data: {
-            stock: { decrement: item.quantity },
-            reserved: { increment: item.quantity }
+        if (item.product) {
+          const updated = await tx.product.update({
+            where: { id: item.product.id },
+            data: {
+              stock: { decrement: item.quantity },
+              reserved: { increment: item.quantity }
+            }
+          });
+          if (updated.stock < 0) {
+            throw new Error(`Stock insuficiente para ${item.product.name}`);
           }
-        });
-        console.log('[Checkout] Stock updated:', { productId: item.product.id, name: item.product.name, oldStock: updated.stock + item.quantity, newStock: updated.stock, reserved: updated.reserved, dec: item.quantity });
-        if (updated.stock < 0) {
-          throw new Error(`Stock insuficiente para ${item.product.name}`);
+        }
+        if (item.accessory) {
+          const updated = await tx.accessory.update({
+            where: { id: item.accessory.id },
+            data: {
+              stock: { decrement: item.quantity },
+              reserved: { increment: item.quantity }
+            }
+          });
+          if (updated.stock < 0) {
+            throw new Error(`Stock insuficiente para ${item.accessory.name}`);
+          }
         }
       }
 
@@ -242,9 +339,9 @@ export async function POST(request: NextRequest) {
           warranty: warranty || '90 dias',
           cuotas: cuotas || 1,
           subtotal: calculatedSubtotal,
-          total: isFullyPaidByCoupons ? 0 : calculatedTotal,
+          total: calculatedTotal,
           warrantyCost: calculatedWarrantyCost,
-          deliveryCost: body.deliveryCost || 0,
+          deliveryCost: safeDeliveryCost,
           clientEmail: email,
           clientPhone: phone,
           clientDni: document,
@@ -259,16 +356,16 @@ export async function POST(request: NextRequest) {
           mpPreferenceId: preferenceId,
           items: {
             create: enrichedItems.map((item: any) => ({
-              productId: item.product.id,
+              productId: item.product?.id || null,
+              accessoryId: item.accessory?.id || null,
               quantity: item.quantity,
               price: item.unitPrice
             }))
           }
         }
       });
-      console.log('[Checkout] Order created:', { id: created.id, code: created.code, status: created.status, payment: created.payment, total: created.total });
 
-      // Create OrderCoupon records and update coupon balances
+      // ---- ATOMIC coupon decrement inside transaction ----
       if (validatedCoupons.length > 0) {
         let remainingDiscount = couponDiscount;
         for (const c of validatedCoupons) {
@@ -283,17 +380,32 @@ export async function POST(request: NextRequest) {
             }
           });
 
-          const newRemaining = c.remainingAmount - amountToUse;
-          const newStatus = newRemaining <= 0 ? 'USED' : 'ACTIVE';
-
-          await tx.coupon.update({
-            where: { id: c.id },
+          const updateResult = await tx.coupon.updateMany({
+            where: {
+              id: c.id,
+              remainingAmount: { gte: amountToUse },
+              status: 'ACTIVE',
+            },
             data: {
-              remainingAmount: newRemaining,
-              status: newStatus,
-              usedAt: newStatus === 'USED' ? new Date() : undefined,
+              remainingAmount: { decrement: amountToUse },
             }
           });
+
+          if (updateResult.count === 0) {
+            throw new Error(`El cupón ${c.code} ya fue usado en otra compra`);
+          }
+
+          // Mark as USED if fully consumed
+          const updatedCoupon = await tx.coupon.findUnique({
+            where: { id: c.id },
+            select: { remainingAmount: true },
+          });
+          if (updatedCoupon && updatedCoupon.remainingAmount <= 0) {
+            await tx.coupon.update({
+              where: { id: c.id },
+              data: { status: 'USED', usedAt: new Date() },
+            });
+          }
 
           remainingDiscount -= amountToUse;
         }
@@ -313,7 +425,7 @@ export async function POST(request: NextRequest) {
         phone: phone || '',
         total: order.total,
         items: enrichedItems.map((item: any) => ({
-          name: item.product.name,
+          name: (item.product || item.accessory).name,
           quantity: item.quantity,
           price: item.unitPrice
         })),
@@ -332,7 +444,6 @@ export async function POST(request: NextRequest) {
       preferenceId: preferenceId,
       couponDiscount,
       totalAfterCoupons,
-      stockUpdated: enrichedItems.map((item: any) => ({ id: item.product.id, name: item.product.name })),
       itemCount: enrichedItems.length,
     });
 

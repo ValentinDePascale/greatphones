@@ -309,6 +309,32 @@ export async function PUT(request: Request) {
       updateData.trackingNumber = trackingNumber
       updateData.shippedAt = new Date()
     }
+
+    // Restore stock if cancelling a PENDING or PROCESSING order
+    if (status.toUpperCase() === 'CANCELLED' && (oldStatus === 'PENDING' || oldStatus === 'PROCESSING')) {
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { increment: item.quantity },
+                reserved: { decrement: item.quantity },
+              },
+            });
+          }
+          if (item.accessoryId) {
+            await tx.accessory.update({
+              where: { id: item.accessoryId },
+              data: {
+                stock: { increment: item.quantity },
+                reserved: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+      });
+    }
     
     const updatedOrder = await prisma.order.update({
       where: { id },
@@ -368,6 +394,43 @@ export async function DELETE(request: Request) {
     
     if (!id) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 })
+    }
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: {
+        items: true,
+      },
+    })
+
+    if (!order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+    }
+
+    // Release reserved stock before deleting
+    if (order.status === 'PENDING' || order.status === 'PROCESSING') {
+      await prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: {
+                stock: { increment: item.quantity },
+                reserved: { decrement: item.quantity },
+              },
+            });
+          }
+          if (item.accessoryId) {
+            await tx.accessory.update({
+              where: { id: item.accessoryId },
+              data: {
+                stock: { increment: item.quantity },
+                reserved: { decrement: item.quantity },
+              },
+            });
+          }
+        }
+      });
     }
     
     await prisma.order.delete({

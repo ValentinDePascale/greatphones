@@ -124,7 +124,8 @@ export async function POST(request: NextRequest) {
         include: {
           items: {
             include: {
-              product: true
+              product: true,
+              accessory: true
             }
           }
         }
@@ -137,7 +138,8 @@ export async function POST(request: NextRequest) {
           include: {
             items: {
               include: {
-                product: true
+                product: true,
+                accessory: true
               }
             }
           }
@@ -179,34 +181,52 @@ export async function POST(request: NextRequest) {
 
       // Deduct stock if payment approved (release reservation)
       if (status === 'approved') {
-        await Promise.all(
-          order.items
-            .filter((item: any) => item.productId)
-            .map((item: any) => prisma.product.update({
-              where: { id: item.productId },
-              data: {
-                reserved: { decrement: item.quantity },
-                sold: { increment: item.quantity }
-              }
-            }).catch((err: Error) => {
-              console.error('[MP Webhook] Error updating product:', item.productId, err);
-            }))
-        );
+        await prisma.$transaction(async (tx) => {
+          for (const item of order.items) {
+            if (item.productId) {
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  reserved: { decrement: item.quantity },
+                  sold: { increment: item.quantity }
+                }
+              });
+            }
+            if (item.accessoryId) {
+              await tx.accessory.update({
+                where: { id: item.accessoryId },
+                data: {
+                  reserved: { decrement: item.quantity },
+                  sold: { increment: item.quantity }
+                }
+              });
+            }
+          }
+        });
       } else if (status === 'rejected' || status === 'cancelled') {
         // Release reserved stock on payment failure
-        await Promise.all(
-          order.items
-            .filter((item: any) => item.productId)
-            .map((item: any) => prisma.product.update({
-              where: { id: item.productId },
-              data: {
-                stock: { increment: item.quantity },
-                reserved: { decrement: item.quantity }
-              }
-            }).catch((err: Error) => {
-              console.error('[MP Webhook] Error releasing stock for product:', item.productId, err);
-            }))
-        );
+        await prisma.$transaction(async (tx) => {
+          for (const item of order.items) {
+            if (item.productId) {
+              await tx.product.update({
+                where: { id: item.productId },
+                data: {
+                  stock: { increment: item.quantity },
+                  reserved: { decrement: item.quantity }
+                }
+              });
+            }
+            if (item.accessoryId) {
+              await tx.accessory.update({
+                where: { id: item.accessoryId },
+                data: {
+                  stock: { increment: item.quantity },
+                  reserved: { decrement: item.quantity }
+                }
+              });
+            }
+          }
+        });
       }
 
       // Update order with payment info

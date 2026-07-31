@@ -113,14 +113,20 @@ export async function PUT(request: Request) {
       // Load order with items for stock restoration
       const order = await prisma.order.findUnique({
         where: { id: arrep.orderId },
-        include: { items: { include: { product: true } } }
+        include: {
+          items: {
+            include: { product: true, accessory: true }
+          },
+          orderCoupons: { include: { coupon: true } }
+        }
       })
       if (!order) {
         return NextResponse.json({ success: false, message: 'Orden no encontrada' }, { status: 404 })
       }
 
       const payment = (order.payment || '').toLowerCase()
-      const refundTotal = order.total
+      const couponTotal = (order.orderCoupons || []).reduce((sum: number, oc: any) => sum + oc.amountUsed, 0)
+      const refundTotal = Math.max(0, order.total - couponTotal)
       let refundMethod = ''
       let couponCode = ''
       let refundNote = ''
@@ -182,6 +188,11 @@ export async function PUT(request: Request) {
           refundMethod = 'transfer'
           refundNote = `Reembolso por transferencia bancaria pendiente. Monto: $${refundTotal.toLocaleString('es-AR')}.`
 
+        } else if (payment === 'coupons' || refundTotal <= 0) {
+          // Fully paid with coupons — no money to refund
+          refundMethod = 'coupons'
+          refundNote = `La orden fue pagada completamente con cupones. No hay monto monetario a reembolsar.`
+
         } else {
           // Cash: PagoFacil, RapiPago, efectivo, ticket — create refund coupon
           const expiry = new Date()
@@ -203,26 +214,29 @@ export async function PUT(request: Request) {
           refundNote = `Recibis un cupon por $${refundTotal.toLocaleString('es-AR')} valido hasta ${expiry.toLocaleDateString('es-AR')}. Presentalo en tu proxima compra.`
         }
 
-        // Stock restoration — only if product was paid and stock was deducted
-        if (order.items && order.items.length > 0) {
+        // Stock restoration — restore stock and release reservations atomically
+        await prisma.$transaction(async (tx) => {
           for (const item of order.items) {
-            if (item.productId && item.product) {
-              await prisma.product.update({
+            if (item.productId) {
+              await tx.product.update({
                 where: { id: item.productId },
-                data: { stock: { increment: item.quantity } }
-              })
+                data: {
+                  stock: { increment: item.quantity },
+                  reserved: { decrement: item.quantity }
+                }
+              });
+            }
+            if (item.accessoryId) {
+              await tx.accessory.update({
+                where: { id: item.accessoryId },
+                data: {
+                  stock: { increment: item.quantity },
+                  reserved: { decrement: item.quantity }
+                }
+              });
             }
           }
-          // Also release reserved if still held
-          for (const item of order.items) {
-            if (item.productId && item.product && (item.product as any).reserved >= item.quantity) {
-              await prisma.product.update({
-                where: { id: item.productId },
-                data: { reserved: { decrement: item.quantity } }
-              }).catch(() => {})
-            }
-          }
-        }
+        });
 
         await prisma.order.update({
           where: { id: order.id },
