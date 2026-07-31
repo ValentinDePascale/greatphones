@@ -68,7 +68,12 @@ export async function POST(request: NextRequest) {
 
     if (!ENVIOPACK_API_KEY || !ENVIOPACK_SECRET_KEY) {
       const options = buildFallbackOptions(cpDestino)
-      return NextResponse.json({ success: true, options, fallback: true })
+      return NextResponse.json({
+        success: true,
+        options,
+        live: false,
+        note: 'Costos estimados. Configure ENVIOPACK_API_KEY y ENVIOPACK_SECRET_KEY para cotización en tiempo real.'
+      })
     }
 
     const token = await getAuthToken()
@@ -92,7 +97,12 @@ export async function POST(request: NextRequest) {
     if (!res.ok) {
       console.error('Envío Pack cotizar error:', res.status)
       const options = buildFallbackOptions(cpDestino)
-      return NextResponse.json({ success: true, options, fallback: true, note: 'API error, usando fallback' })
+      return NextResponse.json({
+        success: true,
+        options,
+        live: false,
+        note: 'Envío Pack API error, usando costos estimados. Status: ' + res.status
+      })
     }
 
     const data = await res.json()

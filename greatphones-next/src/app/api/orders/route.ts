@@ -303,15 +303,34 @@ export async function PUT(request: Request) {
     }
     
     const oldStatus = order.status
-    const updateData: any = { status: status.toUpperCase() }
+    const newStatus = status.toUpperCase()
+
+    // Validate status transition
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      PENDING: ['PROCESSING', 'CANCELLED'],
+      PROCESSING: ['SHIPPED', 'CANCELLED'],
+      SHIPPED: ['DELIVERED'],
+      DELIVERED: [],
+      CANCELLED: [],
+    }
+
+    if (newStatus !== oldStatus &&
+        (!VALID_TRANSITIONS[oldStatus] || !VALID_TRANSITIONS[oldStatus].includes(newStatus))) {
+      return NextResponse.json({
+        error: `Transición inválida: ${oldStatus} → ${newStatus}`,
+        validTransitions: VALID_TRANSITIONS[oldStatus] || [],
+      }, { status: 400 })
+    }
+
+    const updateData: any = { status: newStatus }
     
-    if (status.toUpperCase() === 'SHIPPED' && trackingNumber) {
+    if (newStatus === 'SHIPPED' && trackingNumber) {
       updateData.trackingNumber = trackingNumber
       updateData.shippedAt = new Date()
     }
 
     // Restore stock if cancelling a PENDING or PROCESSING order
-    if (status.toUpperCase() === 'CANCELLED' && (oldStatus === 'PENDING' || oldStatus === 'PROCESSING')) {
+    if (newStatus === 'CANCELLED' && (oldStatus === 'PENDING' || oldStatus === 'PROCESSING')) {
       await prisma.$transaction(async (tx) => {
         for (const item of order.items) {
           if (item.productId) {
@@ -357,13 +376,13 @@ export async function PUT(request: Request) {
     })
     
     // Send email notification if status changed
-    if (oldStatus !== status.toUpperCase()) {
+    if (oldStatus !== newStatus) {
       sendOrderStatusEmail({
         email: order.clientEmail || order.user?.email || '',
         userName: order.user?.name || 'Cliente',
         orderCode: order.code,
         oldStatus,
-        newStatus: status.toUpperCase(),
+        newStatus,
         trackingNumber: trackingNumber || updatedOrder.trackingNumber || undefined,
       }).catch((err) => console.error('[Orders] Error sending status email:', err))
     }

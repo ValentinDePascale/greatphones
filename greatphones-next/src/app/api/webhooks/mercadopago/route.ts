@@ -241,6 +241,36 @@ export async function POST(request: NextRequest) {
         }
       });
 
+      // Update payment transaction ledger
+      if (status === 'approved') {
+        await prisma.paymentTransaction.updateMany({
+          where: {
+            orderId: order.id,
+            method: { not: 'coupon' },
+            status: 'pending',
+          },
+          data: {
+            status: 'approved',
+            mpPaymentId: paymentId.toString(),
+            mpStatus: status,
+            installments: installments > 1 ? installments : 1,
+          }
+        });
+      } else if (status === 'rejected' || status === 'cancelled') {
+        await prisma.paymentTransaction.updateMany({
+          where: {
+            orderId: order.id,
+            method: { not: 'coupon' },
+            status: 'pending',
+          },
+          data: {
+            status: 'rejected',
+            mpPaymentId: paymentId.toString(),
+            mpStatus: status,
+          }
+        });
+      }
+
       productCache.clear();
 
       // Create Envío Pack shipment if carrier selected (not store pickup)

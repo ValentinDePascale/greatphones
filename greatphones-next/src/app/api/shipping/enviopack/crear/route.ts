@@ -36,12 +36,9 @@ export async function POST(request: NextRequest) {
 
     if (!ENVIOPACK_API_KEY || !ENVIOPACK_SECRET_KEY) {
       return NextResponse.json({
-        success: true,
-        trackingNumber: `EP-TEST-${orderCode}`,
-        carrier,
-        service,
-        note: 'Modo fallback — configure ENVIOPACK_API_KEY y ENVIOPACK_SECRET_KEY',
-      })
+        success: false,
+        error: 'API de Envío Pack no configurada. Configure ENVIOPACK_API_KEY y ENVIOPACK_SECRET_KEY para crear envíos reales.',
+      }, { status: 501 })
     }
 
     const token = await getAuthToken()

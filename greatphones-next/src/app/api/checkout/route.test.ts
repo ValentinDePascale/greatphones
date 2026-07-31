@@ -19,6 +19,7 @@ vi.mock('@/lib/prisma', () => ({
       order: { create: vi.fn().mockResolvedValue({ id: 'o1', code: 'GP-TEST', status: 'PENDING', payment: 'mercadopago', total: 1200000, warrantyCost: 0, deliveryCost: 0, subtotal: 1200000 }) },
       orderCoupon: { create: vi.fn() },
       coupon: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }), findUnique: vi.fn().mockResolvedValue({ remainingAmount: 0 }) },
+      paymentTransaction: { create: vi.fn(), updateMany: vi.fn() },
     })),
   },
 }))

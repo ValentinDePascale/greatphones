@@ -408,7 +408,35 @@ export async function POST(request: NextRequest) {
           }
 
           remainingDiscount -= amountToUse;
+
+          // Create payment transaction for coupon
+          await tx.paymentTransaction.create({
+            data: {
+              orderId: created.id,
+              amount: amountToUse,
+              method: 'coupon',
+              status: 'approved',
+              installments: 1,
+              notes: `Cupón ${c.code}`,
+            }
+          });
         }
+      }
+
+      // Create payment transaction for MercadoPago portion
+      const mpAmount = Math.max(0, calculatedTotal - couponDiscount);
+      if (mpAmount > 0 && preferenceId) {
+        const pmMethod = (paymentMethod || 'mercadopago');
+        await tx.paymentTransaction.create({
+          data: {
+            orderId: created.id,
+            amount: mpAmount,
+            method: pmMethod === 'tarjeta' ? 'card' : pmMethod,
+            status: 'pending',
+            installments: cuotas || 1,
+            mpPaymentId: null,
+          }
+        });
       }
 
       return created;

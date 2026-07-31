@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
       carrier: 'Andreani',
       estimatedDays: zonaCode <= 4 ? '24-48hs' : '48-72hs',
       zone: zonaCode,
+      live: false,
       note: 'Costo estimado. Configure ANDREANI_CONTRATO y ANDREANI_CUIT para precios reales.'
     })
 
