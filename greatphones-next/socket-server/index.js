@@ -1,3 +1,8 @@
+// Dev-only standalone socket server (port 3001). Used by `pnpm run dev`.
+// The production server (server.js) embeds Socket.IO on the same port as Next.
+// Keep handlers in sync between this file and server.js.
+// Production uses server.js, which sets globalThis.io for API route access.
+
 const { Server } = require('socket.io');
 const http = require('http');
 

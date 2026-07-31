@@ -1,4 +1,8 @@
 // =========== ADMIN ===========
+// NOTE: Several functions defined here are overwritten by render.js (which loads later):
+//   adminTab, renderAdminContent, editProduct, showToast
+// The render.js versions are the canonical ones; changes should be made there.
+// Functions in this file that are NOT overwritten are still active.
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 
 function adminLogin(){notAvailable();}

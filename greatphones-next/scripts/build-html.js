@@ -1,3 +1,8 @@
+// DEPRECATED — do not run. This script overwrites public/index.html with stale partials from public/pages/*.html.
+// The pages/home.html partial is outdated and would replace the current home page.
+// Index.html is now the single source of truth. Pages are inline, not assembled from partials.
+// If you need to rebuild from partials, update ALL partials first to match the current index.html content.
+
 const { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } = require('fs');
 const { join } = require('path');
 

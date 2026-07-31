@@ -1,3 +1,7 @@
+// DEPRECATED — extracts page partials from index.html into public/pages/*.html.
+// Useful for migrating from inline pages to partials, but build-html.js is not part of the pipeline.
+// Run manually only if you need to synchronize partials after editing index.html.
+
 const { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } = require('fs');
 const { join } = require('path');
 

@@ -4,13 +4,21 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
     product: { findMany: vi.fn() },
-    order: { create: vi.fn() },
+    accessory: { findMany: vi.fn().mockResolvedValue([]), update: vi.fn() },
+    order: {
+      create: vi.fn(),
+      findMany: vi.fn().mockResolvedValue([]),
+      update: vi.fn(),
+    },
+    coupon: { findMany: vi.fn().mockResolvedValue([]), update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }), findUnique: vi.fn().mockResolvedValue({ remainingAmount: 0 }) },
+    orderCoupon: { create: vi.fn() },
     $queryRaw: vi.fn().mockResolvedValue([{ count: BigInt(0), resetAt: new Date(Date.now() + 60000) }]),
     $transaction: vi.fn((fn) => fn({
       product: { update: vi.fn().mockResolvedValue({ stock: 4, reserved: 1 }) },
+      accessory: { update: vi.fn().mockResolvedValue({ stock: 4, reserved: 1 }) },
       order: { create: vi.fn().mockResolvedValue({ id: 'o1', code: 'GP-TEST', status: 'PENDING', payment: 'mercadopago', total: 1200000, warrantyCost: 0, deliveryCost: 0, subtotal: 1200000 }) },
       orderCoupon: { create: vi.fn() },
-      coupon: { update: vi.fn() },
+      coupon: { update: vi.fn(), updateMany: vi.fn().mockResolvedValue({ count: 1 }), findUnique: vi.fn().mockResolvedValue({ remainingAmount: 0 }) },
     })),
   },
 }))
