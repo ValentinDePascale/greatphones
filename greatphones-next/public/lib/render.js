@@ -623,36 +623,11 @@ function renderHomeRail(){
 function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
   if(!strip)return;
-  var now=new Date();
   var offers=PRODUCTS.filter(function(p){
     return p.isOffer&&p.discount>0;
   });
   if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';return;}
-  strip.innerHTML=offers.map(function(p){
-    var fp=Math.round(p.price*(1-p.discount/100));
-    var cuota=Math.round(fp/12);
-    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" loading="lazy" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:cover;width:100%;height:100%;transition:transform .5s"><span style="font-size:72px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:72px">'+p.ico+'</span>';
-    var isFav=favorites.indexOf(p.id)!==-1;
-    return '<article class="pcard" onclick="openDetail(\''+p.id+'\')" style="cursor:pointer">'+
-      '<div style="position:relative;aspect-ratio:1/1;background:linear-gradient(180deg,var(--cream) 0%,#fff 100%);overflow:hidden;margin:20px;border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 2px 8px rgba(0,0,0,.05)">'+
-      '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+p.id+'\')">'+(isFav?'\u2665':'\u2661')+'</button>'+
-      imgHtml+
-      '</div>'+
-      '<div class="pcard-body" style="padding:0 20px 20px">'+
-      '<div>'+
-      '<h3 class="pcard-name" style="font-size:16px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:6px">'+p.name+'</h3>'+
-      '<p class="pcard-sub" style="font-size:13px;color:var(--gray);margin-bottom:8px">'+p.sub+'</p>'+
-      '</div>'+
-      '<div style="margin-top:auto;display:flex;flex-direction:column;gap:6px">'+
-      '<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old" style="font-size:13px;color:var(--gray);text-decoration:line-through">'+fmt(p.price)+'</span><span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;flex-shrink:0">-'+p.discount+'%</span></div>'+
-      '<div class="pcard-price" style="font-size:28px;font-weight:800;color:var(--orange);font-family:\'Playfair Display\',Georgia,serif">'+fmt(fp)+'</div>'+
-      '<div class="pcard-cuota" style="font-size:13px;color:var(--green);font-weight:600">💳 12x '+fmt(cuota)+' sin interés</div>'+
-      '</div>'+
-      '<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+p.id+'\',this)" style="width:100%;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;padding:14px;border-radius:12px;border:none;cursor:pointer;margin-top:16px;transition:all .25s;box-shadow:0 6px 20px rgba(255,107,44,.4)">🛒 Agregar al carrito</button>'+
-      '</div>'+
-      '</article>';
-  }).join('');
-  if(!strip.dataset.svRevealed){strip.classList.add('pgrid-reveal');strip.dataset.svRevealed='1';}else{strip.classList.remove('pgrid-reveal');}
+  renderGrid('offerStrip',offers);
 }
 function renderShopGrid(){
   var grid=document.getElementById('shopGrid');
