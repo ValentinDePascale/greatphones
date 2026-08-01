@@ -4250,8 +4250,22 @@ function togglePromoRow(id){
   if(chk)chk.checked=!chk.checked;
 }
 function showToast(msg,type){
-  // Support both render.js (msg,type) and admin-ui.js ({title,message,type}) signatures
+  // Support admin-ui.js object signature ({title, message, type, duration})
   if(typeof msg==='object'&&msg!==null){
+    var container=document.getElementById('adminToastContainer');
+    if(container){
+      var t=msg.type||'info';var d=msg.duration||4000;
+      var toast=document.createElement('div');toast.className='admin-toast';
+      var icons={success:'\u2705',error:'\u274C',warning:'\u26A0\uFE0F',info:'\u2139\uFE0F'};
+      var iconHTML='<div class="admin-toast-icon '+t+'">'+(icons[t]||icons.info)+'</div>';
+      var contentHTML='<div class="admin-toast-content">'+(msg.title?'<div class="admin-toast-title">'+msg.title+'</div>':'')+'<div class="admin-toast-message">'+msg.message+'</div></div>';
+      var closeHTML='<button class="admin-toast-close" onclick="this.parentElement.remove()">&times;</button>';
+      var progressHTML=msg.showProgress!==false?'<div class="admin-toast-progress" style="animation-duration:'+d+'ms"></div>':'';
+      toast.innerHTML=iconHTML+contentHTML+closeHTML+progressHTML;
+      container.appendChild(toast);
+      setTimeout(function(){toast.style.opacity='0';toast.style.transform='translateX(120%)';setTimeout(function(){toast.remove();},400);},d);
+      return;
+    }
     type=msg.type||type;
     msg=msg.message||msg.title||'';
   }

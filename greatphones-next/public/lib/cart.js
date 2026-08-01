@@ -49,6 +49,16 @@ function initCart(){
 function saveCart(){
   try{Storage.set(getCartKey(),Cart);}catch(e){}
   updCartBadge();
+  syncCartToServer();
+}
+var _syncCartTimer=null;
+function syncCartToServer(){
+  if(!currentUser||!currentUser.id)return;
+  clearTimeout(_syncCartTimer);
+  _syncCartTimer=setTimeout(function(){
+    var items=Cart.map(function(item){return{id:item.id,quantity:item.qty||1,type:item.type||'producto',imei:item.imei||null};});
+    fetch(API_URL+'/api/cart',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:items})}).catch(function(){});
+  },2000);
 }
 function openCart(){
   var overlay=document.getElementById('cartOverlay');

@@ -1,7 +1,19 @@
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  title: 'Great Phones — Tecnología premium. Precio justo.',
+  description: 'Comprá celulares reacondicionados premium, accesorios y más. Garantía real de 90 días. Envíos a todo el país.',
+  openGraph: {
+    title: 'Great Phones — Tecnología premium. Precio justo.',
+    description: 'Comprá celulares reacondicionados premium con garantía de 90 días.',
+    type: 'website',
+  },
+  robots: { index: true, follow: true },
+}
 
 export default function Home() {
   const htmlPath = join(process.cwd(), 'public', 'index.html')
