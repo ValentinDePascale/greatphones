@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:3002',
-  'https://greatphones.onrender.com',
-  'https://greatphones.com.ar',
-]
+import { ALLOWED_ORIGINS } from '@/config'
 
 export async function middleware(request: NextRequest) {
   const origin = request.headers.get('origin') || ''

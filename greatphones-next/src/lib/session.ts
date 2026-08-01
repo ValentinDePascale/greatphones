@@ -1,7 +1,8 @@
 import crypto from 'crypto'
+import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_SECONDS } from '@/config'
 
-const COOKIE_NAME = 'gp-session'
-const MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
+const COOKIE_NAME = SESSION_COOKIE_NAME
+const MAX_AGE = SESSION_MAX_AGE_SECONDS
 
 function getSecret(): string {
   const secret = process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET

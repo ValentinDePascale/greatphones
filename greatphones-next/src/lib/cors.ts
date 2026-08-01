@@ -1,14 +1,9 @@
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://localhost:3002',
-  'https://greatphones.onrender.com',
-  'https://greatphones.com.ar',
-]
+import { ALLOWED_ORIGINS } from '@/config'
 
 export function getCorsHeaders(origin?: string | null) {
   const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
     ? origin
-    : 'https://greatphones.onrender.com'
+    : ALLOWED_ORIGINS[0]
 
   return {
     'Access-Control-Allow-Origin': allowedOrigin,

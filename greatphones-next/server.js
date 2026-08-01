@@ -14,12 +14,14 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
+  const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
   const io = new Server(server, {
     cors: {
       origin: [
         'http://localhost:3000',
-        'https://greatphones.onrender.com',
+        appUrl,
         'https://greatphones.com.ar',
+        'https://greatphones.onrender.com',
       ],
       methods: ['GET', 'POST'],
       credentials: true,

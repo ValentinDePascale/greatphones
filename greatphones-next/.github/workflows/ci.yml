@@ -30,6 +30,14 @@ jobs:
         working-directory: greatphones-next
         run: pnpm run lint
 
+      - name: Type check
+        working-directory: greatphones-next
+        run: pnpm run typecheck
+        env:
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+          NEXTAUTH_SECRET: ci-secret
+          MP_ACCESS_TOKEN: ci-token
+
       - name: Run tests
         working-directory: greatphones-next
         run: pnpm run test

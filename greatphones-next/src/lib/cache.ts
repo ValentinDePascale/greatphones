@@ -1,9 +1,11 @@
+import { CACHE_MAX_ENTRIES, CACHE_TTL_MS } from '@/config'
+
 interface CacheEntry<T> {
   data: T
   expiresAt: number
 }
 
-export class LRUCache<T = any> {
+export class LRUCache<T> {
   private cache = new Map<string, CacheEntry<T>>()
   private maxSize: number
   private defaultTTL: number
