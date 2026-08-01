@@ -6,37 +6,12 @@ import { sendOrderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import { rateLimit } from '@/lib/rate-limit';
 import { reserveStock } from '@/lib/stock';
+import { getEffectivePrice, generateOrderCode, WARRANTY_COST_MAP } from '@/lib/pricing';
+import { RESERVATION_TTL_MINUTES } from '@/config';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
 });
-
-const WARRANTY_COST_MAP: Record<string, number> = {
-  '90 días': 0,
-  '+12 meses': 85000,
-  '+24 meses': 150000,
-};
-
-const RESERVATION_TTL_MINUTES = 30;
-
-function getEffectivePrice(product: any): number {
-  if (product.isOffer && product.discount && product.discount > 0) {
-    const now = new Date();
-    const start = product.offerStart ? new Date(product.offerStart) : null;
-    const end = product.offerEnd ? new Date(product.offerEnd) : null;
-    if ((!start || start <= now) && (!end || end >= now)) {
-      return Math.round(product.price * (1 - product.discount / 100));
-    }
-  }
-  return product.price;
-}
-
-function generateOrderCode() {
-  const prefix = 'GP';
-  const timestamp = Date.now().toString(36).toUpperCase();
-  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `${prefix}-${timestamp}-${random}`;
-}
 
 async function findOrCreateUser(email: string, phone?: string, document?: string) {
   let user = await prisma.user.findFirst({ where: { email } });
