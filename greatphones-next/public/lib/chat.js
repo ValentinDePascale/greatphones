@@ -14,7 +14,7 @@ function initChatSocket(){
     return;
   }
   try{
-    var socketUrl=window.location.hostname==='localhost'?'http://localhost:3001':window.location.origin;
+    var socketUrl=window.location.origin;
     chatSocket=window.io(socketUrl,{
       auth:{userId:currentUser.id},
       reconnection:true,
