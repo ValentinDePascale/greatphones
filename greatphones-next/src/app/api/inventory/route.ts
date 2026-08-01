@@ -8,7 +8,7 @@ import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { productCache } from '@/lib/cache'
 import QRCode from 'qrcode'
 import { Prisma } from '@prisma/client'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 const API_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
@@ -218,10 +218,7 @@ export async function GET(request: Request) {
       total,
       totalPages: Math.ceil(total / limit),
     }, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error fetching inventory:', error)
-    return NextResponse.json({ error: 'Error al obtener inventario' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {
@@ -402,8 +399,5 @@ export async function POST(request: Request) {
 
     productCache.clear()
     return NextResponse.json(item, { status: 201, headers: corsHeaders })
-  } catch (error) {
-    console.error('Error creating inventory item:', error)
-    return NextResponse.json({ error: 'Error al crear item de inventario' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

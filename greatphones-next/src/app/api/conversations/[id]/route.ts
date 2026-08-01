@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSession } from '@/lib/auth-guard'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -31,8 +31,5 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(conversation, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error fetching conversation:', error)
-    return NextResponse.json({ error: 'Failed to fetch conversation' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

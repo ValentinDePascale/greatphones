@@ -6,7 +6,7 @@ import {
   formatZodError 
 } from '@/lib/validations'
 import { sendOrderStatusEmail } from '@/lib/email'
-import { requireAdmin, requireSession } from '@/lib/auth-guard'
+import { requireAdmin, requireSession, handleRouteError } from '@/lib/auth-guard'
 
 export async function GET(request: Request) {
   try {
@@ -171,10 +171,7 @@ export async function GET(request: Request) {
       total,
       totalPages: Math.ceil(total / limit),
     })
-  } catch (error) {
-    console.error('Error fetching orders:', error)
-    return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {
@@ -251,10 +248,7 @@ export async function POST(request: Request) {
     })
     
     return NextResponse.json(order, { status: 201 })
-  } catch (error) {
-    console.error('Error creating order:', error)
-    return NextResponse.json({ error: 'Failed to create order' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function PUT(request: Request) {
@@ -405,10 +399,7 @@ export async function PUT(request: Request) {
     }
     
     return NextResponse.json(transformed)
-  } catch (error) {
-    console.error('Error updating order:', error)
-    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function DELETE(request: Request) {
@@ -469,8 +460,5 @@ export async function DELETE(request: Request) {
     })
     
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting order:', error)
-    return NextResponse.json({ error: 'Failed to delete order' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

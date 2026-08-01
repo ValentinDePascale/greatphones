@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { SendMessageSchema, formatZodError } from '@/lib/validations'
 import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
 import { getIO } from '@/lib/socket'
-import { requireSession } from '@/lib/auth-guard'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -59,10 +59,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(messages.reverse(), {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error fetching messages:', error)
-    return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -274,8 +271,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     return NextResponse.json(message, { status: 201 })
-  } catch (error) {
-    console.error('Error sending message:', error)
-    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

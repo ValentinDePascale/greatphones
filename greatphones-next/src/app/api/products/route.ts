@@ -7,7 +7,7 @@ import {
 } from '@/lib/validations'
 import { productCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -65,10 +65,7 @@ export async function GET(request: Request) {
     productCache.set(cacheKey, response)
 
     return NextResponse.json(response, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error fetching products:', error)
-    return NextResponse.json({ error: 'Failed to fetch products' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {

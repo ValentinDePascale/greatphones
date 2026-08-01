@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { InventoryStatusSchema, formatZodError } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -58,10 +58,7 @@ export async function PATCH(
     })
 
     return NextResponse.json(updated, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error updating inventory status:', error)
-    return NextResponse.json({ error: 'Error al actualizar estado' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 function getStatusLabel(status: string): string {

@@ -71,7 +71,6 @@ export async function GET(request: Request) {
       monthlyBreakdown: (monthlyBreakdown as MonthlyRow[]) || [],
     });
   } catch (error) {
-    console.error('Error fetching quotes stats:', error);
-    return NextResponse.json({ error: 'Error al obtener estadísticas' }, { status: 500 });
+    return handleRouteError(error)
   }
 }

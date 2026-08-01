@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CreateConversationSchema, formatZodError } from '@/lib/validations'
-import { requireSession } from '@/lib/auth-guard'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -25,10 +25,7 @@ export async function GET(request: Request) {
     return NextResponse.json(conversations, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error fetching conversations:', error)
-    return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {
@@ -67,8 +64,5 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json(conversation, { status: 201 })
-  } catch (error) {
-    console.error('Error creating conversation:', error)
-    return NextResponse.json({ error: 'Failed to create conversation' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

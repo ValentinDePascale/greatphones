@@ -7,7 +7,7 @@ import {
 } from '@/lib/validations'
 import { accessoryCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -81,10 +81,7 @@ export async function GET(request: Request) {
     accessoryCache.set(cacheKey, response)
 
     return NextResponse.json(response, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error fetching accessories:', error)
-    return NextResponse.json({ error: 'Failed to fetch accessories' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {
@@ -128,10 +125,7 @@ export async function POST(request: Request) {
     accessoryCache.clear()
 
     return NextResponse.json(newAccessory, { status: 201, headers: corsHeaders })
-  } catch (error) {
-    console.error('Error creating accessory:', error)
-    return NextResponse.json({ error: 'Failed to create accessory' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function PUT(request: Request) {
@@ -187,10 +181,7 @@ export async function PUT(request: Request) {
     accessoryCache.clear()
 
     return NextResponse.json(updatedAccessory, { headers: corsHeaders })
-  } catch (error: any) {
-    console.error('Error updating accessory:', error)
-    return NextResponse.json({ error: 'Failed to update accessory' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function DELETE(request: Request) {
@@ -212,8 +203,5 @@ export async function DELETE(request: Request) {
     accessoryCache.clear()
 
     return NextResponse.json({ success: true }, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error deleting accessory:', error)
-    return NextResponse.json({ error: 'Failed to delete accessory' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -311,8 +311,5 @@ export async function GET(request: Request) {
       orderStatuses: orderStatuses.filter(s => s.count > 0),
       brandSales,
     })
-  } catch (error) {
-    console.error('Dashboard error:', error)
-    return NextResponse.json({ error: 'Failed to fetch dashboard data' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

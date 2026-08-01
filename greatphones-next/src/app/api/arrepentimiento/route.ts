@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendArrepentimientoEmail, sendArrepAcceptEmail, sendArrepRejectEmail } from '@/lib/email'
-import { requireSession, requireAdmin } from '@/lib/auth-guard'
+import { requireSession, requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 function generateCouponCode(prefix: string) {
   const ts = Date.now().toString(36).toUpperCase()
@@ -50,10 +50,7 @@ export async function GET(request: Request) {
     }))
     
     return NextResponse.json(transformed)
-  } catch (e) {
-    console.error('[ARREPENTIMIENTO] Error fetching:', e)
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 })
-  }
+  } catch (e) { return handleRouteError(e) }
 }
 
 export async function PUT(request: Request) {
@@ -414,11 +411,5 @@ export async function POST(request: Request) {
       tramite: registro.id
     })
 
-  } catch (error) {
-    console.error('[ARREPENTIMIENTO] Error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Error interno del servidor' },
-      { status: 500 }
-    )
-  }
+  } catch (error) { return handleRouteError(error) }
 }

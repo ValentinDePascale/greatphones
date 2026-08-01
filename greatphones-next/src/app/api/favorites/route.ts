@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSession } from '@/lib/auth-guard'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -39,10 +39,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(favorites.map(f => f.product))
-  } catch (error) {
-    console.error('Favorites GET error:', error)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function POST(request: Request) {
@@ -84,8 +81,5 @@ export async function DELETE(request: Request) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Favorites DELETE error:', error)
-    return NextResponse.json({ error: 'Error interno' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

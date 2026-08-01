@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -16,10 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(product, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error fetching product:', error)
-    return NextResponse.json({ error: 'Failed to fetch product' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -66,10 +63,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json(updated, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error updating product:', error)
-    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -87,8 +81,5 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     return NextResponse.json({ message: 'Product deleted' }, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })
-  } catch (error) {
-    console.error('Error deleting product:', error)
-    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

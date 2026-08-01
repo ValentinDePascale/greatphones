@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { InventoryUpdateSchema, formatZodError } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -32,10 +32,7 @@ export async function GET(
       return NextResponse.json({ error: 'Item no encontrado' }, { status: 404, headers: corsHeaders })
     }
     return NextResponse.json(item, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error fetching inventory item:', error)
-    return NextResponse.json({ error: 'Error al obtener item' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function PUT(
@@ -106,10 +103,7 @@ export async function PUT(
     }
 
     return NextResponse.json(updated, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error updating inventory item:', error)
-    return NextResponse.json({ error: 'Error al actualizar item' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
 
 export async function DELETE(
@@ -136,8 +130,5 @@ export async function DELETE(
 
     await prisma.inventoryItem.delete({ where: { id } })
     return NextResponse.json({ success: true }, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error deleting inventory item:', error)
-    return NextResponse.json({ error: 'Error al eliminar item' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }

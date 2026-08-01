@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { InventorySellSchema, formatZodError } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 
 
@@ -110,8 +110,5 @@ export async function POST(
     })
 
     return NextResponse.json(result, { headers: corsHeaders })
-  } catch (error) {
-    console.error('Error selling inventory item:', error)
-    return NextResponse.json({ error: 'Error al registrar venta' }, { status: 500, headers: corsHeaders })
-  }
+  } catch (error) { return handleRouteError(error) }
 }
