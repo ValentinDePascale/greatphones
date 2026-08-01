@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-export async function OPTIONS() {
-  return new NextResponse(null, { status: 204 })
-}
+
 
 export async function POST(request: Request) {
   try {

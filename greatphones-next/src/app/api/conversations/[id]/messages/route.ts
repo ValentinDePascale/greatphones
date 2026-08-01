@@ -5,16 +5,7 @@ import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
 import { getIO } from '@/lib/socket'
 import { requireSession } from '@/lib/auth-guard'
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
-}
+
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

@@ -12,10 +12,7 @@ import { requireAdmin } from '@/lib/auth-guard'
 
 const API_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin')
-  return corsOptions(origin)
-}
+
 
 async function generateCode(): Promise<string> {
   const last = await prisma.inventoryItem.findFirst({

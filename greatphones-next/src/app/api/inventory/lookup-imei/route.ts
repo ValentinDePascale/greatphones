@@ -5,10 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { requireAdmin } from '@/lib/auth-guard'
 
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin')
-  return corsOptions(origin)
-}
+
 
 interface ImeiResult {
   brand: string

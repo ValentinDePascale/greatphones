@@ -3,16 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { emitUnreadUpdate } from '@/lib/socket'
 import { requireSession } from '@/lib/auth-guard'
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  })
-}
+
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params

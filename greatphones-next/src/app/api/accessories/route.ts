@@ -9,10 +9,7 @@ import { accessoryCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin } from '@/lib/auth-guard'
 
-export async function OPTIONS(request: Request) {
-  const origin = request.headers.get('origin')
-  return corsOptions(origin)
-}
+
 
 export async function GET(request: Request) {
   const origin = request.headers.get('origin')
