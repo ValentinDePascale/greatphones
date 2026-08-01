@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireSession } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
 // Andreani API Configuration
 const ANDREANI_API_URL = process.env.ANDREANI_API_URL || 'https://api.andreani.com'
@@ -64,7 +65,12 @@ const BASE_COSTS: Record<number, number> = {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireSession(request)
+    const user = await requireSession(request)
+    const limit = await rateLimit(`andreani:${user.id}`, 20, 60000)
+    if (!limit.allowed) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })
+    }
+
     const body = await request.json()
     const { destProvince, destZip, weight = 1 } = body
 

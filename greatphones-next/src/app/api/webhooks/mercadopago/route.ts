@@ -29,6 +29,14 @@ function verifyWebhookSignature(request: NextRequest): boolean {
   const v1 = sigParts['v1'];
   if (!ts || !v1) return false;
 
+  // Reject requests with timestamp > 5 minutes old (anti-replay)
+  const now = Math.floor(Date.now() / 1000);
+  const tsNum = parseInt(ts);
+  if (isNaN(tsNum) || Math.abs(now - tsNum) > 300) {
+    console.error('[MP Webhook] Timestamp out of range:', { now, ts: tsNum });
+    return false;
+  }
+
   const url = new URL(request.url);
   const dataId = url.searchParams.get('data.id') || url.searchParams.get('id') || '';
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rateLimit } from '@/lib/rate-limit'
 
 export async function OPTIONS() {
   return new NextResponse(null, {
@@ -14,6 +15,12 @@ export async function OPTIONS() {
 
 export async function GET(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const limit = await rateLimit(`order-track:${ip}`, 15, 60000)
+    if (!limit.allowed) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })
+    }
+
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     const email = searchParams.get('email')

@@ -5,6 +5,7 @@ vi.mock('@/lib/prisma', () => ({
     order: {
       findFirst: vi.fn(),
     },
+    $queryRaw: vi.fn().mockResolvedValue([{ count: BigInt(0), resetAt: new Date(Date.now() + 60000) }]),
   },
 }))
 

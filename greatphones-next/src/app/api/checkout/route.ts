@@ -102,13 +102,11 @@ export async function POST(request: NextRequest) {
     releaseStaleReservations().catch(err => console.error('[Checkout] Error in releaseStaleReservations:', err));
 
     const body = await request.json();
-    console.log('[Checkout] Body:', JSON.stringify({ itemsN:body.items?.length, email:body.email, total:body.total, subtotal:body.subtotal, pm:body.paymentMethod, cids:body.coupons, doc:body.document?.substring(0,3)+'***', street:!!body.street, city:!!body.city, province:!!body.province, zip:!!body.zip }));
     const validation = CheckoutSchema.safeParse(body);
     if (!validation.success) {
-      console.error('[Checkout] Zod FAIL:', JSON.stringify(validation.error.issues));
+      console.error('[Checkout] Validation failed');
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
     }
-    console.log('[Checkout] Zod OK');
 
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
     const checkoutLimit = await rateLimit(`checkout:${ip}`, 10, 300000)
@@ -235,7 +233,6 @@ export async function POST(request: NextRequest) {
 
     const totalAfterCoupons = calculatedTotal - couponDiscount;
     const isFullyPaidByCoupons = totalAfterCoupons <= 0;
-    console.log('[Checkout] Coupons:', { count: validatedCoupons.length, discount: couponDiscount, calcTotal: calculatedTotal, afterCoupons: totalAfterCoupons, fullyPaid: isFullyPaidByCoupons });
     // ---- END COUPON HANDLING ----
 
     // Build MP preference items with server-side prices
