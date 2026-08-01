@@ -106,6 +106,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const userId = user.id;
     const isUserSender = conversation.userId === userId;
 
+    if (!isAdminSender && !isUserSender) {
+      return NextResponse.json({ error: 'No autorizado — no sos parte de esta conversación' }, { status: 403 })
+    }
+
     const message = await prisma.message.create({
       data: {
         conversationId: id,

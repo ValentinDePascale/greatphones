@@ -70,17 +70,17 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await requireSession(request)
+    const user = await requireSession(request)
     const body = await request.json()
-    const { userId, type, title, text, conversationId, messageId } = body
+    const { type, title, text, conversationId, messageId } = body
 
-    if (!userId || !type || !title || !text) {
-      return NextResponse.json({ error: 'Campos requeridos: userId, type, title, text' }, { status: 400 })
+    if (!type || !title || !text) {
+      return NextResponse.json({ error: 'Campos requeridos: type, title, text' }, { status: 400 })
     }
 
     const notification = await prisma.notification.create({
       data: {
-        userId,
+        userId: user.id,
         type,
         title,
         text,

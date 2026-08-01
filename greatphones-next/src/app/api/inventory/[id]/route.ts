@@ -16,6 +16,7 @@ export async function GET(
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
   try {
+    await requireAdmin(request)
     const { id } = await params
     const item = await prisma.inventoryItem.findUnique({
       where: { id },

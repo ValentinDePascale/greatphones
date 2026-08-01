@@ -26,7 +26,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         data: { status: 'CANCELLED' }
       })
 
-      // For catalog items: restore stock (decrement reserved too)
+      // For catalog items: restore stock. Only decrement sold if order was already PROCESSING+
+      // PENDING transfer orders never incremented sold — skip sold decrement.
+      const wasProcessingOrFurther = order.status !== 'PENDING';
       for (const item of order.items) {
         if (item.productId) {
           await tx.product.update({
@@ -34,9 +36,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
             data: {
               stock: { increment: item.quantity },
               reserved: { decrement: item.quantity },
-              sold: { decrement: item.quantity }
+              ...(wasProcessingOrFurther ? { sold: { decrement: item.quantity } } : {}),
             }
-          })
+          });
         }
       }
 

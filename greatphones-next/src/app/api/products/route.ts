@@ -213,12 +213,35 @@ export async function DELETE(request: Request) {
     if (!id) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
-    
+
+    // Find affected orders before deleting items to recalculate totals
+    const affectedItems = await prisma.orderItem.findMany({
+      where: { productId: id },
+      select: { orderId: true, quantity: true, price: true }
+    })
+
     await prisma.$transaction([
       prisma.orderItem.deleteMany({ where: { productId: id } }),
       prisma.favorite.deleteMany({ where: { productId: id } }),
       prisma.product.delete({ where: { id } }),
     ])
+
+    // Recalculate subtotal and total for each affected order
+    for (const item of affectedItems) {
+      const remainingItems = await prisma.orderItem.findMany({
+        where: { orderId: item.orderId },
+        select: { quantity: true, price: true }
+      })
+      const newSubtotal = remainingItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
+      const removedAmount = item.price * item.quantity
+      await prisma.order.update({
+        where: { id: item.orderId },
+        data: {
+          subtotal: newSubtotal,
+          total: { decrement: removedAmount },
+        }
+      })
+    }
 
     productCache.clear()
 

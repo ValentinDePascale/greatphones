@@ -39,6 +39,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const updateData: any = { unread: 0 }
 
     if (conversation) {
+      if (readerId !== conversation.userId && readerId !== conversation.adminId && user.role !== 'ADMIN') {
+        return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
+      }
       if (readerId === conversation.userId) {
         updateData.unreadByUser = 0
       } else if (readerId === conversation.adminId || user.role === 'ADMIN') {

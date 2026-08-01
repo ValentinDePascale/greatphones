@@ -60,7 +60,7 @@ export async function PATCH(request: Request) {
       )
     }
 
-    const validStates = ['PENDIENTE', 'EN PROCESO', 'RESUELTO', 'RECHAZADO', 'APROBADO']
+    const validStates = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPLETADO']
     if (!validStates.includes(estado)) {
       return NextResponse.json(
         { error: 'Estado inválido' },

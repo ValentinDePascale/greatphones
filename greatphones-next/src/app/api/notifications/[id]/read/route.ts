@@ -16,9 +16,9 @@ export async function OPTIONS() {
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   try {
-    await requireSession(request)
+    const user = await requireSession(request)
     const notification = await prisma.notification.update({
-      where: { id },
+      where: { id, userId: user.id },
       data: { read: true }
     })
 

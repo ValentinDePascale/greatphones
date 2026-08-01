@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
 const WARRANTY_COST_MAP: Record<string, number> = {
   '90 días': 0,
@@ -30,10 +29,7 @@ function generateOrderCode() {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-    }
+    const user = await requireSession(request)
 
     const body = await request.json()
     const {
@@ -101,13 +97,13 @@ export async function POST(request: NextRequest) {
       // Lock wallet row
       const walletRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
         'SELECT id FROM "Wallet" WHERE "userId" = $1 FOR UPDATE',
-        session.user.id
+        user.id
       )
 
       let wallet: any
       if (!walletRows || walletRows.length === 0) {
         wallet = await tx.wallet.create({
-          data: { userId: session.user.id }
+          data: { userId: user.id }
         })
       } else {
         wallet = await tx.wallet.findUnique({ where: { id: walletRows[0].id } })
@@ -158,7 +154,7 @@ export async function POST(request: NextRequest) {
       const order = await tx.order.create({
         data: {
           code: orderCode,
-          userId: session.user.id,
+          userId: user.id,
           status: 'PROCESSING',
           payment: 'wallet',
           warranty: warranty || '90 dias',
@@ -210,10 +206,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('[Wallet Pay] Error:', error)
-    if (error.status) {
-      return NextResponse.json({ error: 'Error al procesar el pago con saldo' }, { status: error.status })
-    }
-    return NextResponse.json({ error: 'Error al procesar el pago con saldo' }, { status: 500 })
+    return handleRouteError(error)
   }
 }

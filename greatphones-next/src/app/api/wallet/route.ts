@@ -1,24 +1,15 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { requireSession, handleRouteError } from '@/lib/auth-guard'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
-    }
+    const user = await requireSession(request)
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { wallet: true }
+    let wallet = await prisma.wallet.findUnique({
+      where: { userId: user.id }
     })
-    if (!user) {
-      return NextResponse.json({ error: 'Usuario no encontrado' }, { status: 404 })
-    }
 
-    let wallet = user.wallet
     if (!wallet) {
       wallet = await prisma.wallet.create({
         data: { userId: user.id }
@@ -29,9 +20,11 @@ export async function GET() {
       balance: wallet.balance,
       totalEarned: wallet.totalEarned,
       totalSpent: wallet.totalSpent,
+      id: wallet.id,
+      userId: wallet.userId,
+      version: wallet.version,
     })
   } catch (error) {
-    console.error('[Wallet] Error:', error)
-    return NextResponse.json({ error: 'Error al obtener wallet' }, { status: 500 })
+    return handleRouteError(error)
   }
 }
