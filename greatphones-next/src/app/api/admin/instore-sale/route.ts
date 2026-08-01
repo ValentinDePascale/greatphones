@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { productCache } from '@/lib/cache'
 import { requireAdmin } from '@/lib/auth-guard'
+import { reserveStock, releaseStock } from '@/lib/stock'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -212,27 +213,20 @@ export async function POST(request: Request) {
         }
       })
 
-      // Update catalog product stock
       if (paymentMethod === 'cash') {
-        for (const item of catalogItems) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { decrement: item.quantity },
-              sold: { increment: item.quantity }
-            }
-          })
-        }
+        await reserveStock(tx, catalogItems.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })))
+        await releaseStock(tx, catalogItems.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })), orderCode)
       } else {
-        for (const item of catalogItems) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              stock: { decrement: item.quantity },
-              reserved: { increment: item.quantity }
-            }
-          })
-        }
+        await reserveStock(tx, catalogItems.map((item: any) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+        })))
       }
 
       // Handle inventory items: mark as SOLD, update linked product stock, create history

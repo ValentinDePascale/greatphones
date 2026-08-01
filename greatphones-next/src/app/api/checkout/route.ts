@@ -5,6 +5,7 @@ import { CheckoutSchema, formatZodError } from '@/lib/validations';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import { rateLimit } from '@/lib/rate-limit';
+import { reserveStock } from '@/lib/stock';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -321,33 +322,11 @@ export async function POST(request: NextRequest) {
 
     console.log('[Checkout] Starting transaction for order:', orderCode);
     const order = await prisma.$transaction(async (tx) => {
-      // Decrement stock for products
-      for (const item of enrichedItems) {
-        if (item.product) {
-          const updated = await tx.product.update({
-            where: { id: item.product.id },
-            data: {
-              stock: { decrement: item.quantity },
-              reserved: { increment: item.quantity }
-            }
-          });
-          if (updated.stock < 0) {
-            throw new Error(`Stock insuficiente para ${item.product.name}`);
-          }
-        }
-        if (item.accessory) {
-          const updated = await tx.accessory.update({
-            where: { id: item.accessory.id },
-            data: {
-              stock: { decrement: item.quantity },
-              reserved: { increment: item.quantity }
-            }
-          });
-          if (updated.stock < 0) {
-            throw new Error(`Stock insuficiente para ${item.accessory.name}`);
-          }
-        }
-      }
+      await reserveStock(tx, enrichedItems.map((item: any) => ({
+        productId: item.product?.id || null,
+        accessoryId: item.accessory?.id || null,
+        quantity: item.quantity,
+      })))
 
       // Reserve specific inventory units (IMEI items)
       const itemInventoryMap = new Map<string, string>();

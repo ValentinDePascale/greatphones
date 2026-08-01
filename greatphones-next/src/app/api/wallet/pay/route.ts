@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, handleRouteError } from '@/lib/auth-guard'
+import { reserveStock } from '@/lib/stock'
 
 const WARRANTY_COST_MAP: Record<string, number> = {
   '90 días': 0,
@@ -113,16 +114,10 @@ export async function POST(request: NextRequest) {
         throw { status: 400, message: 'Saldo insuficiente' }
       }
 
-      // Reserve stock with server-side product data
-      for (const item of enrichedItems) {
-        await tx.product.update({
-          where: { id: item.product.id },
-          data: {
-            stock: { decrement: item.quantity },
-            reserved: { increment: item.quantity }
-          }
-        })
-      }
+      await reserveStock(tx, enrichedItems.map((item: any) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })))
 
       // Deduct from wallet
       const balanceBefore = wallet.balance

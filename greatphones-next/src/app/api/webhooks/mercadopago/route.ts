@@ -4,6 +4,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import crypto from 'crypto';
+import { releaseStock, restoreStock } from '@/lib/stock';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -190,82 +191,12 @@ export async function POST(request: NextRequest) {
       // Deduct stock if payment approved (release reservation)
       if (status === 'approved') {
         await prisma.$transaction(async (tx) => {
-          for (const item of order.items) {
-            if (item.productId) {
-              await tx.product.update({
-                where: { id: item.productId },
-                data: {
-                  reserved: { decrement: item.quantity },
-                  sold: { increment: item.quantity }
-                }
-              });
-            }
-            if (item.accessoryId) {
-              await tx.accessory.update({
-                where: { id: item.accessoryId },
-                data: {
-                  reserved: { decrement: item.quantity },
-                  sold: { increment: item.quantity }
-                }
-              });
-            }
-            if (item.inventoryItemId) {
-              await tx.inventoryItem.update({
-                where: { id: item.inventoryItemId },
-                data: { status: 'SOLD', soldAt: new Date() }
-              });
-              await tx.inventoryHistory.create({
-                data: {
-                  inventoryItemId: item.inventoryItemId,
-                  type: 'SOLD',
-                  oldValue: 'RESERVED',
-                  newValue: 'SOLD',
-                  description: `Venta confirmada — pago aprobado (order: ${order.code})`,
-                  userId: order.userId,
-                }
-              });
-            }
-          }
+          await releaseStock(tx, order.items, order.code)
         });
       } else if (status === 'rejected' || status === 'cancelled') {
         // Release reserved stock on payment failure
         await prisma.$transaction(async (tx) => {
-          for (const item of order.items) {
-            if (item.productId) {
-              await tx.product.update({
-                where: { id: item.productId },
-                data: {
-                  stock: { increment: item.quantity },
-                  reserved: { decrement: item.quantity }
-                }
-              });
-            }
-            if (item.accessoryId) {
-              await tx.accessory.update({
-                where: { id: item.accessoryId },
-                data: {
-                  stock: { increment: item.quantity },
-                  reserved: { decrement: item.quantity }
-                }
-              });
-            }
-            if (item.inventoryItemId) {
-              await tx.inventoryItem.update({
-                where: { id: item.inventoryItemId },
-                data: { status: 'IN_STOCK', salePrice: null }
-              });
-              await tx.inventoryHistory.create({
-                data: {
-                  inventoryItemId: item.inventoryItemId,
-                  type: 'STATUS_CHANGE',
-                  oldValue: 'RESERVED',
-                  newValue: 'IN_STOCK',
-                  description: `Reserva liberada — pago rechazado/cancelado (order: ${order.code})`,
-                  userId: order.userId,
-                }
-              });
-            }
-          }
+          await restoreStock(tx, order.items, false, order.code)
         });
       }
 

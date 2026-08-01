@@ -7,6 +7,7 @@ import {
 } from '@/lib/validations'
 import { sendOrderStatusEmail } from '@/lib/email'
 import { requireAdmin, requireSession, handleRouteError } from '@/lib/auth-guard'
+import { restoreStock } from '@/lib/stock'
 
 export async function GET(request: Request) {
   try {
@@ -327,32 +328,7 @@ export async function PUT(request: Request) {
     // Restore stock if cancelling a PENDING or PROCESSING order
     if (newStatus === 'CANCELLED' && (oldStatus === 'PENDING' || oldStatus === 'PROCESSING')) {
       await prisma.$transaction(async (tx) => {
-        for (const item of order.items) {
-          if (item.productId) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: {
-                stock: { increment: item.quantity },
-                reserved: { decrement: item.quantity },
-              },
-            });
-          }
-          if (item.accessoryId) {
-            await tx.accessory.update({
-              where: { id: item.accessoryId },
-              data: {
-                stock: { increment: item.quantity },
-                reserved: { decrement: item.quantity },
-              },
-            });
-          }
-          if (item.inventoryItemId) {
-            await tx.inventoryItem.update({
-              where: { id: item.inventoryItemId },
-              data: { status: 'IN_STOCK', salePrice: null },
-            });
-          }
-        }
+        await restoreStock(tx, order.items, false, order.code)
       });
     }
     
@@ -427,32 +403,7 @@ export async function DELETE(request: Request) {
     // Release reserved stock before deleting
     if (order.status === 'PENDING' || order.status === 'PROCESSING') {
       await prisma.$transaction(async (tx) => {
-        for (const item of order.items) {
-          if (item.productId) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: {
-                stock: { increment: item.quantity },
-                reserved: { decrement: item.quantity },
-              },
-            });
-          }
-          if (item.accessoryId) {
-            await tx.accessory.update({
-              where: { id: item.accessoryId },
-              data: {
-                stock: { increment: item.quantity },
-                reserved: { decrement: item.quantity },
-              },
-            });
-          }
-          if (item.inventoryItemId) {
-            await tx.inventoryItem.update({
-              where: { id: item.inventoryItemId },
-              data: { status: 'IN_STOCK', salePrice: null },
-            });
-          }
-        }
+        await restoreStock(tx, order.items, false, order.code)
       });
     }
     

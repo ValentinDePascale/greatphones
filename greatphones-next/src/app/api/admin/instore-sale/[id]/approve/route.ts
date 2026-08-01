@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
+import { releaseStock } from '@/lib/stock'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,17 +26,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         data: { status: 'DELIVERED' }
       })
 
-      for (const item of order.items) {
-        if (item.productId) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: {
-              reserved: { decrement: item.quantity },
-              sold: { increment: item.quantity }
-            }
-          })
-        }
-      }
+      await releaseStock(tx, order.items, order.code)
 
       await tx.paymentTransaction.create({
         data: {
