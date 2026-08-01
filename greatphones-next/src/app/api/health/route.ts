@@ -12,7 +12,7 @@ export async function GET() {
     await prisma.$queryRaw`SELECT 1`
     dbLatency = Date.now() - t0
     dbStatus = 'ok'
-  } catch {}
+  } catch { console.error('[Health] Database unreachable'); }
 
   return NextResponse.json({
     status: dbStatus === 'ok' ? 'healthy' : 'degraded',

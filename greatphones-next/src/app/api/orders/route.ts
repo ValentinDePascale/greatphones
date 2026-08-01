@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '20')
     
     let authUser: { id: string; role: string } | null = null
+    // Allow unauthenticated access; if auth fails, continue as anonymous
     try { authUser = await requireSession(request) } catch {}
     
     if (admin === 'true') {

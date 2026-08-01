@@ -62,6 +62,7 @@ export function getSessionFromCookies(cookieHeader: string | null): SessionPaylo
     if (!payload.id || !payload.role) return null
     return { id: payload.id, role: payload.role }
   } catch {
+    // Invalid token format — return null (no session)
     return null
   }
 }
