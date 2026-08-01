@@ -287,6 +287,16 @@ export async function POST(request: Request) {
         }
       }
 
+      await tx.paymentTransaction.create({
+        data: {
+          orderId: newOrder.id,
+          amount: total,
+          method: paymentMethod === 'transfer' ? 'transfer' : 'cash',
+          status: paymentMethod === 'transfer' ? 'pending' : 'approved',
+          installments: installmentsCount || 1,
+        }
+      })
+
       return newOrder
     })
 

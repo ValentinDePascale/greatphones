@@ -36,6 +36,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           })
         }
       }
+
+      await tx.paymentTransaction.create({
+        data: {
+          orderId: order.id,
+          amount: order.total,
+          method: 'transfer',
+          status: 'approved',
+          installments: 1,
+        }
+      })
     })
 
     return NextResponse.json({ success: true })

@@ -206,6 +206,16 @@ export async function POST(request: NextRequest) {
                 where: { id: item.inventoryItemId },
                 data: { status: 'SOLD', soldAt: new Date() }
               });
+              await tx.inventoryHistory.create({
+                data: {
+                  inventoryItemId: item.inventoryItemId,
+                  type: 'SOLD',
+                  oldValue: 'RESERVED',
+                  newValue: 'SOLD',
+                  description: `Venta confirmada — pago aprobado (order: ${order.code})`,
+                  userId: order.userId,
+                }
+              });
             }
           }
         });
@@ -235,6 +245,16 @@ export async function POST(request: NextRequest) {
               await tx.inventoryItem.update({
                 where: { id: item.inventoryItemId },
                 data: { status: 'IN_STOCK', salePrice: null }
+              });
+              await tx.inventoryHistory.create({
+                data: {
+                  inventoryItemId: item.inventoryItemId,
+                  type: 'STATUS_CHANGE',
+                  oldValue: 'RESERVED',
+                  newValue: 'IN_STOCK',
+                  description: `Reserva liberada — pago rechazado/cancelado (order: ${order.code})`,
+                  userId: order.userId,
+                }
               });
             }
           }

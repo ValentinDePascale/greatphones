@@ -195,6 +195,17 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Payment ledger
+      await tx.paymentTransaction.create({
+        data: {
+          orderId: order.id,
+          amount: calculatedTotal,
+          method: 'wallet',
+          status: 'approved',
+          installments: 1,
+        }
+      })
+
       return { orderId: order.id, orderCode }
     })
 

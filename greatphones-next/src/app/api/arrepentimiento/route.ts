@@ -131,6 +131,21 @@ export async function PUT(request: Request) {
       let couponCode = ''
       let refundNote = ''
 
+      // Restore coupon remainingAmount for each consumed coupon
+      for (const oc of (order.orderCoupons || [])) {
+        const coupon = oc.coupon
+        if (coupon && oc.amountUsed > 0) {
+          await prisma.coupon.update({
+            where: { id: coupon.id },
+            data: {
+              remainingAmount: { increment: oc.amountUsed },
+              status: 'ACTIVE',
+              usedAt: null,
+            }
+          })
+        }
+      }
+
       try {
         if (payment === 'wallet') {
           const wallet = await prisma.wallet.findUnique({ where: { userId: order.userId } })
