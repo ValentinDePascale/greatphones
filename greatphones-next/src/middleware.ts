@@ -6,6 +6,10 @@ export async function middleware(request: NextRequest) {
   const origin = request.headers.get('origin') || ''
   const response = NextResponse.next()
 
+  // Request ID for tracing
+  const requestId = request.headers.get('x-request-id') || crypto.randomUUID()
+  response.headers.set('X-Request-Id', requestId)
+
   if (ALLOWED_ORIGINS.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin)
   }
