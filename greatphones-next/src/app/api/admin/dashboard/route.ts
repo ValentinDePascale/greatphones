@@ -198,13 +198,17 @@ export async function GET(request: Request) {
       }),
     ])
 
-    // Order statuses distribution
-    const orderStatuses = await Promise.all(
-      ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'].map(async (status) => {
-        const count = await prisma.order.count({ where: { status: status as any } })
-        return { status, count }
-      })
-    )
+    // Order statuses distribution — single groupBy instead of 5 individual counts
+    const statusCounts = await prisma.order.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    })
+    const allStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+    const statusMap = new Map(statusCounts.map((s: any) => [s.status, Number(s._count.status)]))
+    const orderStatuses = allStatuses.map(status => ({
+      status,
+      count: statusMap.get(status) || 0,
+    }))
 
     // Sales by brand - optimized with groupBy
     const brandSalesData = await prisma.orderItem.groupBy({
