@@ -57,8 +57,8 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ success: true, favorite })
-  } catch (error: any) {
-    if (error.code === 'P2002') {
+  } catch (error) {
+    if (error && typeof error === 'object' && 'code' in error && (error as { code: string }).code === 'P2002') {
       return NextResponse.json({ error: 'Ya esta en favoritos' }, { status: 400 })
     }
     console.error('Favorites POST error:', error)

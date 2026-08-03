@@ -75,16 +75,15 @@ export async function POST(request: Request) {
       }
     })
 
+    const item = {
+      id: `wext-${wext.id}`,
+      title,
+      unit_price: planConfig.price,
+      quantity: 1,
+      currency_id: 'ARS',
+    };
     const preferenceData = {
-      items: [
-        {
-          id: `wext-${wext.id}`,
-          title,
-          unit_price: planConfig.price,
-          quantity: 1,
-          currency_id: 'ARS',
-        } as any,
-      ],
+      items: [item],
       payer: {
         email: order.clientEmail || '',
         name: order.clientName || 'Cliente',

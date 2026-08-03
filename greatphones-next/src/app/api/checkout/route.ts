@@ -468,10 +468,12 @@ export async function POST(request: NextRequest) {
       itemCount: enrichedItems.length,
     });
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Checkout error:', error);
-    if (error.status) {
-      return NextResponse.json({ error: error.message || 'Error al procesar el pago' }, { status: error.status });
+    const msg = (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Error al procesar el pago';
+    const status = (error as { status?: number })?.status;
+    if (status) {
+      return NextResponse.json({ error: msg }, { status });
     }
     return NextResponse.json(
       { error: 'Error al procesar el pago. Intenta novamente.' },

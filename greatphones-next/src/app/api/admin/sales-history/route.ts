@@ -112,10 +112,12 @@ export async function GET(request: Request) {
       }
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching sales history:', error)
-    if (error.status === 401 || error.status === 403) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+    const msg = (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Error al obtener historial de ventas';
+    const status = (error as { status?: number })?.status || 500;
+    if (status === 401 || status === 403) {
+      return NextResponse.json({ error: msg }, { status })
     }
     return NextResponse.json({ error: 'Error al obtener historial de ventas' }, { status: 500 })
   }

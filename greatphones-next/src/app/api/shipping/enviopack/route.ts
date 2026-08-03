@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, options })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Envío Pack error:', error)
     const { cpDestino = '1425' } = await request.json().catch(() => ({}))
     const options = buildFallbackOptions(cpDestino)

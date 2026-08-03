@@ -50,7 +50,7 @@ export async function sendArrepentimientoEmail(data: {
   motivo?: string;
   tramite: string;
 }) {
-  const adminEmail = 'contacto@greatphones.com.ar';
+  const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar';
   
   await sendEmail({
     to: adminEmail,
@@ -111,7 +111,7 @@ export async function sendArrepentimientoEmail(data: {
           para gestionar el reembolso según lo establece la Resolución 424/2020.
         </p>
         <p style="margin-top: 20px;">
-          ¿Dudas? Escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          ¿Dudas? Escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -205,7 +205,7 @@ export async function sendArrepAcceptEmail(data: {
           <li>Una vez recibido y verificado el producto, el reembolso se procesara en un maximo de <strong>10 dias habiles</strong>.</li>
         </ol>
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
-          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -239,7 +239,7 @@ export async function sendArrepRejectEmail(data: {
           Tenes derecho a reclamar ante la <strong>Defensa del Consumidor</strong> si consideras que se vulneran tus derechos.
         </p>
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
-          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -326,7 +326,7 @@ export async function sendOrderConfirmationEmail(data: {
         </ol>
 
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
-          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -408,7 +408,7 @@ export async function sendAdminReplyEmail(data: {
         </p>
 
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
-          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -465,7 +465,7 @@ export async function sendOrderStatusEmail(data: {
         ${trackingHtml}
 
         <p style="margin-top: 20px;">
-          Si tenes alguna duda, escribinos a <a href="mailto:contacto@greatphones.com.ar">contacto@greatphones.com.ar</a>
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
         </p>
         <p style="margin-top: 30px; color: #666; font-size: 12px;">
           — El equipo de Great Phones<br>
@@ -490,7 +490,7 @@ export async function sendNewQuoteEmail(data: {
   photos: string[];
   extras: string[];
 }) {
-  const adminEmail = 'contacto@greatphones.com.ar'
+  const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar';
 
   const extrasLabels: Record<string, string> = {
     pant: 'Pantalla perfecta (+6%)',

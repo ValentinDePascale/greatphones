@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       carrier,
       service,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Envío Pack crear error:', error)
     return NextResponse.json({ error: 'Error al crear envío' }, { status: 500 })
   }

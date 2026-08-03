@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { v2 as cloudinary } from 'cloudinary'
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary'
 import { requireSession } from '@/lib/auth-guard'
 
 cloudinary.config({
@@ -36,20 +36,21 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(bytes)
     const base64 = `data:${file.type};base64,${buffer.toString('base64')}`
 
-    const uploadResult = await new Promise((resolve, reject) => {
+    const uploadResult = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader.upload(base64, {
         folder: 'greatphones',
         resource_type: 'auto',
         width: MAX_DIM, height: MAX_DIM, crop: 'limit', quality: 'auto', fetch_format: 'auto',
       }, (error, result) => {
         if (error) reject(error)
+        else if (!result) reject(new Error('Upload failed'))
         else resolve(result)
       })
     })
 
     return NextResponse.json({
-      url: (uploadResult as any).secure_url,
-      publicId: (uploadResult as any).public_id,
+      url: uploadResult.secure_url,
+      publicId: uploadResult.public_id,
     }, {
       headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
     })

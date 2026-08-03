@@ -9,6 +9,8 @@
   --admin-input-bg:#252830;
   --admin-accent:#6366f1;
   --admin-accent-hover:#818cf8;
+  --admin-font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-family:var(--admin-font);
   display:flex;
   min-height:100vh;
   background:var(--admin-bg);
@@ -58,7 +60,7 @@
   flex-shrink:0
 }
 .admin-sidebar-title{
-  font-family:'Playfair Display',Georgia,serif;
+  font-family:var(--admin-font);
   font-size:16px;
   font-weight:700;
   color:var(--admin-text,#1a1208);
@@ -157,7 +159,7 @@
   z-index:50
 }
 .admin-topbar-title{
-  font-family:'Playfair Display',Georgia,serif;
+  font-family:var(--admin-font);
   font-size:20px;
   font-weight:700;
   color:var(--admin-text,#1a1208);
@@ -392,7 +394,7 @@
   text-align:center
 }
 .al-ico{font-size:32px;margin-bottom:.75rem;display:block}
-.al-t{font-family:'Playfair Display',Georgia,serif;font-size:19px;color:var(--cream);margin-bottom:.2rem}
+.al-t{font-family:var(--admin-font);font-size:19px;color:var(--cream);margin-bottom:.2rem}
 .al-s{font-size:11px;color:rgba(255,255,255,.35);margin-bottom:1.25rem}
 .admin-inp{
   width:100%;
@@ -420,7 +422,7 @@
   z-index:100;
   border-bottom:1px solid rgba(255,255,255,.06)
 }
-.admin-nav-t{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--cream)}
+.admin-nav-t{font-family:var(--admin-font);font-size:15px;color:var(--cream)}
 .admin-exit{
   padding:5px 10px;
   border:1px solid rgba(255,255,255,.12);
@@ -482,7 +484,7 @@
 .apr-body{flex:1;min-width:0}
 .apr-n{font-size:11px;font-weight:500}
 .apr-s{font-size:9px;color:var(--gray)}
-.apr-p{font-family:'Playfair Display',Georgia,serif;font-size:12px;color:var(--orange);white-space:nowrap}
+.apr-p{font-family:var(--admin-font);font-size:12px;color:var(--orange);white-space:nowrap}
 .apr-acts{display:flex;gap:4px}
 .apr-btn{
   padding:4px 8px;
@@ -538,7 +540,7 @@
 @media(min-width:580px){.stat-grid{grid-template-columns:repeat(4,1fr)}}
 .stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.875rem}
 .stat-lbl{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:.25rem}
-.stat-val{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:500}
+.stat-val{font-family:var(--admin-font);font-size:20px;font-weight:500}
 .stat-sub{font-size:9px;color:var(--gray);margin-top:.2rem}
 .stat-up{color:var(--gl)}.stat-dn{color:var(--red)}
 .chart-wrap{
@@ -588,7 +590,7 @@
   border:1px solid rgba(255,255,255,.09)
 }
 .dd-l{font-size:10px;color:rgba(255,255,255,.45)}
-.dd-v{font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#fff}
+.dd-v{font-family:var(--admin-font);font-size:20px;color:#fff}
 .pct-wrap{display:flex;align-items:center;gap:7px;margin-bottom:.75rem}
 .pct-inp{
   flex:1;
@@ -655,7 +657,7 @@
 .sale-row-t{display:flex;align-items:center;gap:9px}
 .sale-ico{width:32px;height:32px;border-radius:7px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .sale-n{flex:1;font-size:11px;font-weight:500}
-.sale-p{font-family:'Playfair Display',Georgia,serif;font-size:12px;color:var(--orange)}
+.sale-p{font-family:var(--admin-font);font-size:12px;color:var(--orange)}
 .sale-tags{display:flex;gap:.4rem;margin-top:.3rem;flex-wrap:wrap}
 .sale-tag{font-size:9px;color:var(--gray);background:var(--cream2);padding:1px 6px;border-radius:4px}
 .gv-row{display:flex;align-items:center;gap:9px;padding:.65rem 0;border-bottom:1px solid var(--border)}
@@ -669,7 +671,7 @@
 .sup-av{width:36px;height:36px;border-radius:9px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .sup-n{font-size:12px;font-weight:500}
 .sup-s{font-size:9px;color:var(--gray);margin-top:1px}
-.sup-total{font-family:'Playfair Display',Georgia,serif;font-size:13px;color:var(--orange)}
+.sup-total{font-family:var(--admin-font);font-size:13px;color:var(--orange)}
 .cotiz-row{display:flex;align-items:center;gap:9px;padding:.55rem 0;border-bottom:1px solid var(--border)}
 .cotiz-row:last-child{border-bottom:none}
 .cotiz-lbl{flex:1;font-size:11px;font-weight:500}
@@ -771,7 +773,7 @@
 .admin-modal-icon.error{background:rgba(239,68,68,.15);color:#f87171}
 .admin-modal-icon.confirm{background:rgba(99,102,241,.15);color:#818cf8}
 .admin-modal-title{
-  font-family:'Playfair Display',Georgia,serif;
+  font-family:var(--admin-font);
   font-size:20px;
   font-weight:700;
   color:var(--admin-text,#1a1208);
@@ -1008,7 +1010,7 @@
   font-size:15px;
   font-weight:700;
   color:var(--admin-text,#1a1208);
-  font-family:'Playfair Display',Georgia,serif;
+  font-family:var(--admin-font);
   letter-spacing:.2px;
   white-space:nowrap;
   overflow:hidden;
@@ -1089,7 +1091,7 @@
   font-size:18px;
   font-weight:700;
   color:var(--orange);
-  font-family:'Playfair Display',Georgia,serif
+  font-family:var(--admin-font)
 }
 
 .gp-actions{
@@ -1174,4 +1176,32 @@
   .gp-actions{margin-left:0;justify-content:stretch}
   .gp-actions .gp-btn{flex:1;justify-content:center}
   .gp-total-value{font-size:16px}
+}
+
+/* ============================================================
+   ADMIN FONT OVERRIDE — Inter replaces Playfair everywhere
+   only while an admin page is active
+   ============================================================ */
+
+/* Extend admin font to admin pages that sit outside .admin-layout
+   (login, product/accessory add forms) */
+#p-admin-login,
+#p-admin-product,
+#p-admin-acc{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif
+}
+
+/* Override inline Playfair in JS-rendered admin content */
+body:has(#p-admin.act) [style*="Playfair"],
+body:has(#p-admin-login.act) [style*="Playfair"],
+body:has(#p-admin-product.act) [style*="Playfair"],
+body:has(#p-admin-acc.act) [style*="Playfair"],
+.admin-layout [style*="Playfair"]{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif!important
+}
+
+/* .adm-item-price is defined in pages.css (shared); override in admin scope */
+body:has(#p-admin.act) .adm-item-price,
+.admin-layout .adm-item-price{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif!important
 }

@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       try {
         const mpPayment = new Payment(client)
         const paymentData = await mpPayment.get({ id: paymentId })
-        const status = (paymentData as any)?.status
+        const status = paymentData?.status
 
         if (status === 'approved') {
           await prisma.warrantyExtend.update({

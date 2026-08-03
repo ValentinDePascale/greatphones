@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { OrderStatus, WarrantyExtendStatus } from '@prisma/client';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
 import { sendOrderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
@@ -117,7 +118,7 @@ export async function POST(request: NextRequest) {
           await prisma.warrantyExtend.update({
             where: { id: wext.id },
             data: {
-              status: newStatus as any,
+              status: newStatus as WarrantyExtendStatus,
               mpPaymentId: paymentId.toString(),
               mpStatus: status,
             }
@@ -208,7 +209,7 @@ export async function POST(request: NextRequest) {
           mpStatus: status,
           payment: paymentMethod || null,
           cuotas: installments > 1 ? installments : order.cuotas,
-          status: orderStatus as any
+          status: orderStatus as OrderStatus
         }
       });
 
@@ -278,7 +279,7 @@ export async function POST(request: NextRequest) {
               },
             })
             order.trackingNumber = epData.trackingNumber || order.trackingNumber
-            order.status = 'SHIPPED' as any
+            order.status = OrderStatus.SHIPPED
             console.log('[MP Webhook] Envío Pack shipment created for order:', order.code, 'tracking:', epData.trackingNumber)
           }
         } catch (epError) {

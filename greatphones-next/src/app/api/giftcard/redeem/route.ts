@@ -87,10 +87,12 @@ export async function POST(request: Request) {
     })
 
     return NextResponse.json({ success: true, ...result })
-  } catch (error: any) {
+  } catch (error) {
     console.error('[GiftCard Redeem] Error:', error)
-    if (error.status) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+    const msg = (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Error al canjear la Gift Card';
+    const status = (error as { status?: number })?.status;
+    if (status) {
+      return NextResponse.json({ error: msg }, { status })
     }
     return NextResponse.json({ error: 'Error al canjear la Gift Card' }, { status: 500 })
   }

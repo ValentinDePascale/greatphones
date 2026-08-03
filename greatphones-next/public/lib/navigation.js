@@ -262,6 +262,31 @@ async function doLogin(){
     nav('home');
   }catch(e){showLoginError('Error de conexion');}
 }
+async function signInWithGoogle(){
+  try{
+    var csrfRes=await fetch(API_URL+'/api/auth/csrf',{credentials:'include'});
+    var csrfData=await csrfRes.json();
+    if(!csrfData.csrfToken){showLoginError('Error de conexion');return;}
+    var params=new URLSearchParams();
+    params.set('csrfToken',csrfData.csrfToken);
+    params.set('callbackUrl',window.location.origin+'/');
+    params.set('json','true');
+    var res=await fetch(API_URL+'/api/auth/signin/google',{
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      credentials:'include',
+      body:params.toString()
+    });
+    var data=await res.json();
+    if(data&&data.url){
+      window.location.href=data.url;
+    }else{
+      showLoginError('Error al iniciar con Google');
+    }
+  }catch(e){
+    showLoginError('Error de conexion');
+  }
+}
 async function doSignup(){
   initiateSignup();
 }

@@ -60,16 +60,15 @@ export async function POST(request: Request) {
     const cleanDoc = user.dni ? user.dni.replace(/[^0-9]/g, '') : ''
     const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI'
 
+    const item = {
+      id: `gc-${giftCard.id}`,
+      title,
+      unit_price: amount,
+      quantity: 1,
+      currency_id: 'ARS',
+    };
     const preferenceData = {
-      items: [
-        {
-          id: `gc-${giftCard.id}`,
-          title,
-          unit_price: amount,
-          quantity: 1,
-          currency_id: 'ARS',
-        } as any,
-      ],
+      items: [item],
       payer: {
         email: user.email,
         name: user.name || 'Great Phones',
@@ -104,9 +103,9 @@ export async function POST(request: Request) {
       gcId: giftCard.id,
       initPoint,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('[GiftCard Preference] Error:', error)
-    const status = error.status || 500
+    const status = (error as { status?: number })?.status || 500
     return NextResponse.json({ error: 'Error al crear la Gift Card' }, { status })
   }
 }

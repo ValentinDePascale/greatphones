@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
       redirectUrl: `/success?wext=${result.orderCode}`
     })
 
-  } catch (error: any) {
+  } catch (error) {
     return handleRouteError(error)
   }
 }

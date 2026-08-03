@@ -29,10 +29,12 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json({ coupons })
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Coupons] Error:', error)
-    if (error.status) {
-      return NextResponse.json({ error: error.message }, { status: error.status })
+    const msg = (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Error al obtener cupones';
+    const status = (error as { status?: number })?.status;
+    if (status) {
+      return NextResponse.json({ error: msg }, { status })
     }
     return NextResponse.json({ error: 'Error al obtener cupones' }, { status: 500 })
   }

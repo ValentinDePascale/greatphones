@@ -173,7 +173,7 @@ export async function PUT(request: Request) {
                 'X-Idempotency-Key': idempotency,
               },
             })
-            const mpData = await mpRes.json() as any
+            const mpData: { status: string; message?: string } = await mpRes.json()
             if (mpRes.ok && (mpData.status === 'approved' || mpData.status === 'refunded')) {
               refundMethod = 'mercadopago'
               refundNote = `Reembolso procesado automaticamente via MercadoPago por $${refundTotal.toLocaleString('es-AR')}.`

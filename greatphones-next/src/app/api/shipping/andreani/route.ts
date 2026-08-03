@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
       note: 'Costo estimado. Configure ANDREANI_CONTRATO y ANDREANI_CUIT para precios reales.'
     })
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Andreani shipping error:', error)
     return NextResponse.json(
       { error: 'Error al calcular envío' },
