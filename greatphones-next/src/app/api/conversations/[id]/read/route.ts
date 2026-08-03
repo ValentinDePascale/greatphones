@@ -27,7 +27,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       select: { userId: true, adminId: true }
     })
 
-    const updateData: any = { unread: 0 }
+    const updateData: any = {}
 
     if (conversation) {
       if (readerId !== conversation.userId && readerId !== conversation.adminId && user.role !== 'ADMIN') {

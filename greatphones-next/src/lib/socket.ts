@@ -18,19 +18,16 @@ export async function emitUnreadUpdate(userId: string): Promise<void> {
 
   const { prisma } = await import('@/lib/prisma')
 
-  const [asUser, asAdmin] = await Promise.all([
-    prisma.conversation.aggregate({
-      where: { userId },
-      _sum: { unreadByUser: true },
-    }),
-    prisma.conversation.aggregate({
-      where: { adminId: userId },
-      _sum: { unreadByAdmin: true },
-    }),
-  ])
+  const [row] = await prisma.$queryRaw<[{ unreadByUser: number; unreadByAdmin: number }]>`
+    SELECT
+      COALESCE(SUM(CASE WHEN "userId" = ${userId} THEN "unreadByUser" ELSE 0 END), 0)::int as "unreadByUser",
+      COALESCE(SUM(CASE WHEN "adminId" = ${userId} THEN "unreadByAdmin" ELSE 0 END), 0)::int as "unreadByAdmin"
+    FROM "Conversation"
+    WHERE "userId" = ${userId} OR "adminId" = ${userId}
+  `
 
   io.to(userId).emit('unreadUpdate', {
-    unreadByUser: asUser._sum.unreadByUser || 0,
-    unreadByAdmin: asAdmin._sum.unreadByAdmin || 0,
+    unreadByUser: Number(row.unreadByUser) || 0,
+    unreadByAdmin: Number(row.unreadByAdmin) || 0,
   })
 }

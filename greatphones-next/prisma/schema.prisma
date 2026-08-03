@@ -6,99 +6,86 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==================== USUARIOS ====================
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String?
-  phone     String?
-  dni       String?
-  direccion String?
-  piso      String?
-  cp        String?
-  provincia String?
-  ciudad    String?
-  role      Role     @default(CLIENT)
-  avatar    String?
-  location  String?
-  verified  Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  orders                Order[]
-  adminSales            Order[]           @relation("AdminSales")
-  quotes                Quote[]
-  sales                 Sale[]
-  repairs               Repair[]
-  guarantees            Guarantee[]
-  conversations         Conversation[]
-  adminConversations    Conversation[]    @relation("AdminConversations")
-  wallet                Wallet?
-  favorites             Favorite[]
+  id                    String            @id @default(cuid())
+  email                 String            @unique
+  name                  String
+  password              String?
+  phone                 String?
+  dni                   String?
+  provincia             String?
+  ciudad                String?
+  role                  Role              @default(CLIENT)
+  avatar                String?
+  location              String?
+  verified              Boolean           @default(false)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  cp                    String?
+  direccion             String?
+  piso                  String?
   accounts              Account[]
-  sessions              Session[]
   arrepentimientos      Arrepentimiento[]
-  sentMessages          Message[]
+  cart                  Cart?
+  adminConversations    Conversation[]    @relation("AdminConversations")
+  conversations         Conversation[]
+  coupons               Coupon[]
+  favorites             Favorite[]
+  redeemedGiftCards     GiftCard[]
+  guarantees            Guarantee[]
   createdInventoryItems InventoryItem[]   @relation("CreatedBy")
   soldInventoryItems    InventoryItem[]   @relation("SoldBy")
-  redeemedGiftCards     GiftCard[]
-  coupons               Coupon[]
-  cart                  Cart?
+  sentMessages          Message[]
+  adminSales            Order[]           @relation("AdminSales")
+  orders                Order[]
+  quotes                Quote[]
+  repairs               Repair[]
+  sales                 Sale[]
+  sessions              Session[]
+  wallet                Wallet?
 }
 
-enum Role {
-  CLIENT
-  ADMIN
-}
-
-// ==================== PRODUCTOS ====================
 model Product {
-  id          String   @id @default(cuid())
-  name        String
-  ico         String
-  imageUrl    String?
-  images      String[]
-  brand       String
-  sub         String?
-  description String?
-  condition   String
-  price       Int
-  cost        Int
-  battery     Int?
-  storage     String?
-  ram         String?
-  processor   String?
-  stock       Int
-  reserved    Int      @default(0)
-  score       Int?
-  color       String?
-  screen      Float?
-  type        String
-  imei        String?
-  sold        Int      @default(0)
-
-  isOffer    Boolean   @default(false)
-  discount   Int       @default(0)
-  offerStart DateTime?
-  offerEnd   DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  slug      String?
-
-  modelGroup String?
-
+  id             String          @id @default(cuid())
+  name           String
+  ico            String
+  imageUrl       String?
+  images         String[]
+  brand          String
+  sub            String?
+  condition      String
+  price          Int
+  cost           Int
+  battery        Int?
+  stock          Int
+  score          Int?
+  color          String?
+  screen         Float?
+  type           String
+  imei           String?
+  sold           Int             @default(0)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  slug           String?
   supplierId     String?
-  supplier       Supplier?       @relation(fields: [supplierId], references: [id])
-  orderItems     OrderItem[]
-  preOrders      PreOrder[]
+  discount       Int             @default(0)
+  isOffer        Boolean         @default(false)
+  offerEnd       DateTime?
+  offerStart     DateTime?
+  ram            String?
+  storage        String?
+  description    String?
+  processor      String?
+  reserved       Int             @default(0)
+  modelGroup     String?
+  cartItems      CartItem[]
   favorites      Favorite[]
   inventoryItems InventoryItem[]
-  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  preOrders      PreOrder[]
+  supplier       Supplier?       @relation(fields: [supplierId], references: [id])
 }
 
-// ==================== LOG DE PRODUCTOS (Excel export) ====================
 model ProductLog {
   id        String   @id @default(cuid())
   productId String?
@@ -115,36 +102,23 @@ model ProductLog {
   ram       String?
   battery   Int?
   imei      String?
-  source    String // "manual" | "inventory" | "duplicate"
+  source    String
   createdAt DateTime @default(now())
 }
 
-// ==================== INVENTARIO FÍSICO ====================
-enum InventoryStatus {
-  IN_STOCK
-  IN_REPAIR
-  RESERVED
-  ON_HOLD
-  SOLD
-}
-
 model InventoryItem {
-  id           String  @id @default(cuid())
-  code         String  @unique
-  imei         String  @unique
-  serialNumber String?
-
-  // Auto-completado por API IMEI
-  brand       String
-  modelName   String
-  storage     String?
-  color       String?
-  modelNumber String?
-  deviceType  String
-  specs       Json?
-  imageUrl    String?
-
-  // Datos manuales del negocio
+  id                  String             @id @default(cuid())
+  code                String             @unique
+  imei                String             @unique
+  serialNumber        String?
+  brand               String
+  modelName           String
+  storage             String?
+  color               String?
+  modelNumber         String?
+  deviceType          String
+  specs               Json?
+  imageUrl            String?
   purchasePrice       Int
   cosmeticCondition   String
   functionalCondition String?
@@ -152,59 +126,42 @@ model InventoryItem {
   notes               String?
   investor            String?
   targetPrice         Int?
-
-  // Estado
-  status InventoryStatus @default(IN_STOCK)
-
-  // QR
-  qrCode       String?
-  labelPrinted Boolean @default(false)
-
-  // Links
-  productId  String?
-  product    Product?  @relation(fields: [productId], references: [id])
-  supplierId String?
-  supplier   Supplier? @relation(fields: [supplierId], references: [id])
-
-  // Purchase tracking
-  purchasedFrom String?
-  purchaseDate  DateTime @default(now())
-
-  // Sale tracking
-  salePrice Int?
-  soldAt    DateTime?
-  soldById  String?
-  soldBy    User?     @relation("SoldBy", fields: [soldById], references: [id])
-
-  // Creator
-  createdById String
-  createdBy   User   @relation("CreatedBy", fields: [createdById], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  history    InventoryHistory[]
-  orderItems OrderItem[]
+  status              InventoryStatus    @default(IN_STOCK)
+  qrCode              String?
+  labelPrinted        Boolean            @default(false)
+  productId           String?
+  supplierId          String?
+  purchasedFrom       String?
+  purchaseDate        DateTime           @default(now())
+  salePrice           Int?
+  soldAt              DateTime?
+  soldById            String?
+  createdById         String
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  history             InventoryHistory[]
+  createdBy           User               @relation("CreatedBy", fields: [createdById], references: [id])
+  product             Product?           @relation(fields: [productId], references: [id])
+  soldBy              User?              @relation("SoldBy", fields: [soldById], references: [id])
+  supplier            Supplier?          @relation(fields: [supplierId], references: [id])
+  orderItems          OrderItem[]
 }
 
 model InventoryHistory {
   id              String        @id @default(cuid())
   inventoryItemId String
+  type            String
+  oldValue        String?
+  newValue        String?
+  description     String?
+  userId          String?
+  createdAt       DateTime      @default(now())
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
-
-  type        String // CREATED | STATUS_CHANGE | REPAIR | SOLD | LABEL_PRINTED | NOTE
-  oldValue    String?
-  newValue    String?
-  description String?
-  userId      String?
-
-  createdAt DateTime @default(now())
 }
 
-// ==================== CACHE DE IMEI (TAC) ====================
 model TacCache {
   id          String   @id @default(cuid())
-  tac         String   @unique // primeros 8 dígitos del IMEI
+  tac         String   @unique
   brand       String
   modelName   String
   storage     String?
@@ -218,382 +175,261 @@ model TacCache {
   updatedAt   DateTime @updatedAt
 }
 
-// ==================== PEDIDOS ====================
 model Order {
-  id           String      @id @default(cuid())
-  code         String      @unique
-  userId       String
-  user         User        @relation(fields: [userId], references: [id])
-  status       OrderStatus @default(PENDING)
-  warranty     String?
-  cuotas       Int         @default(1)
-  payment      String?
-  subtotal     Int
-  warrantyCost Int         @default(0)
-  deliveryCost Int         @default(0)
-  total        Int
-  notes        String?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-
-  // Shipping info
-  clientName       String?
-  clientDni        String?
-  clientCuil       String?
-  clientEmail      String?
-  clientPhone      String?
-  clientAddress    String?
-  shippingStreet   String?
-  shippingNumber   String?
-  shippingFloor    String?
-  shippingZip      String?
-  shippingCity     String?
-  shippingProvince String?
-
-  // Mercado Pago
-  mpPreferenceId String?
-  mpPaymentId    String?
-  mpStatus       String?
-
-  // Arrepentimiento
-  arrepStatus     String? // ARREP_OK, ARREP_RECHAZADO
-  arrepReason     String? // Motivo del rechazo
-  refundProcessed Boolean   @default(false)
-  refundDate      DateTime?
-
-  // Tracking
-  trackingNumber String?
-  trackingUrl    String?
-  shippedAt      DateTime?
-
-  // Carrier / Envío Pack
-  carrier        String?
-  carrierService String?
-  enviopackId    String?
-
-  // Ventas presenciales
-  cashReceived Int?
-  change       Int?
-  saleChannel  String  @default("online")
-  currency     String  @default("ARS")
-  adminId      String?
-  admin        User?   @relation("AdminSales", fields: [adminId], references: [id])
-
-  items               OrderItem[]
+  id                  String               @id @default(cuid())
+  code                String               @unique
+  userId              String
+  status              OrderStatus          @default(PENDING)
+  warranty            String?
+  cuotas              Int                  @default(1)
+  payment             String?
+  subtotal            Int
+  total               Int
+  notes               String?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  clientDni           String?
+  clientEmail         String?
+  clientName          String?
+  clientPhone         String?
+  mpPaymentId         String?
+  mpPreferenceId      String?
+  mpStatus            String?
+  shippingCity        String?
+  shippingFloor       String?
+  shippingNumber      String?
+  shippingProvince    String?
+  shippingStreet      String?
+  shippingZip         String?
+  deliveryCost        Int                  @default(0)
+  warrantyCost        Int                  @default(0)
+  arrepReason         String?
+  arrepStatus         String?
+  refundDate          DateTime?
+  refundProcessed     Boolean              @default(false)
+  shippedAt           DateTime?
+  trackingNumber      String?
+  adminId             String?
+  cashReceived        Int?
+  change              Int?
+  saleChannel         String               @default("online")
+  clientAddress       String?
+  clientCuil          String?
+  currency            String               @default("ARS")
+  carrier             String?
+  carrierService      String?
+  enviopackId         String?
+  trackingUrl         String?
   arrepentimientos    Arrepentimiento[]
-  warrantyExtends     WarrantyExtend[]
-  orderCoupons        OrderCoupon[]
-  paymentTransactions PaymentTransaction[]
   invoice             Invoice?
-}
-
-enum OrderStatus {
-  PENDING
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
+  admin               User?                @relation("AdminSales", fields: [adminId], references: [id])
+  user                User                 @relation(fields: [userId], references: [id])
+  orderCoupons        OrderCoupon[]
+  items               OrderItem[]
+  paymentTransactions PaymentTransaction[]
+  warrantyExtends     WarrantyExtend[]
 }
 
 model OrderItem {
-  id      String @id @default(cuid())
-  orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  // Producto del catálogo (opcional para ventas presenciales)
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
-
-  // Campos para productos custom
-  customName  String?
-  customPrice Int?
-
-  quantity Int @default(1)
-  price    Int
-
-  accessoryId String?
-  accessory   Accessory? @relation(fields: [accessoryId], references: [id])
-
+  id              String         @id @default(cuid())
+  orderId         String
+  productId       String?
+  quantity        Int            @default(1)
+  price           Int
+  customName      String?
+  customPrice     Int?
+  accessoryId     String?
   inventoryItemId String?
+  accessory       Accessory?     @relation(fields: [accessoryId], references: [id])
   inventoryItem   InventoryItem? @relation(fields: [inventoryItemId], references: [id])
+  order           Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product?       @relation(fields: [productId], references: [id])
 }
 
-// ==================== PREEVENTAS ====================
 model PreOrder {
-  id          String  @id @default(cuid())
-  code        String  @unique
-  clientName  String
-  clientDni   String?
-  clientPhone String?
-  clientEmail String?
-
-  // Producto del catálogo (opcional)
-  productId   String?
-  product     Product? @relation(fields: [productId], references: [id])
-  customName  String?
-  customPrice Int?
-
-  // Campos de Preventa local (modelo iPhone + specs)
-  productModelName String? // "iPhone 16 Pro Max"
-  productStorage   String? // "256 GB"
-  productColor     String? // "Titanio Natural"
-  productCondition String? // "Nuevo"
-  price            Int     @default(0)
-
-  // Pago
-  paymentMethod String? // "cash" | "transfer"
-  paymentType   String? // "single" | "installments"
-  installments  Int?
-
-  // Entrega estimada
-  expectedDeliveryStart DateTime?
-  expectedDeliveryEnd   DateTime?
+  id                    String    @id @default(cuid())
+  code                  String    @unique
+  clientName            String
+  clientDni             String?
+  clientPhone           String?
+  clientEmail           String?
+  productId             String?
+  customName            String?
+  customPrice           Int?
+  notes                 String?
+  status                String    @default("PENDING")
+  createdById           String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   deliveredAt           DateTime?
-
-  notes       String?
-  status      String   @default("PENDING") // PENDING | CONFIRMED | DELIVERED | CANCELLED
-  createdById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  expectedDeliveryEnd   DateTime?
+  expectedDeliveryStart DateTime?
+  installments          Int?
+  paymentMethod         String?
+  paymentType           String?
+  price                 Int       @default(0)
+  productColor          String?
+  productCondition      String?
+  productModelName      String?
+  productStorage        String?
+  product               Product?  @relation(fields: [productId], references: [id])
 }
 
-// ==================== COTIZACIONES ====================
 model Quote {
-  id     String @id @default(cuid())
-  code   String @unique
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  device    String
-  storage   String
-  condition String
-
-  basePrice     Int
-  finalPrice    Int
-  bonus         Int?
-  batteryHealth Int?
-
-  status QuoteStatus @default(PENDING)
-
-  envio   String?
-  payment String?
-
+  id             String      @id @default(cuid())
+  code           String      @unique
+  userId         String
+  device         String
+  storage        String
+  condition      String
+  basePrice      Int
+  finalPrice     Int
+  bonus          Int?
+  status         QuoteStatus @default(PENDING)
+  envio          String?
+  payment        String?
   clientName     String?
   clientDni      String?
   clientPhone    String?
   clientCity     String?
+  signature      String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  extras         String[]
+  photos         String[]
+  rejectReason   String?
   clientCp       String?
   clientProvince String?
-
-  photos    String[]
-  dniPhotos String[]
-  extras    String[]
-
-  rejectReason String?
-
-  signature String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  dniPhotos      String[]
+  batteryHealth  Int?
+  user           User        @relation(fields: [userId], references: [id])
 }
 
-enum QuoteStatus {
-  PENDING
-  REVIEWING
-  APPROVED
-  REJECTED
-  COMPLETED
-}
-
-// ==================== VENTAS ====================
 model Sale {
-  id     String @id @default(cuid())
-  code   String @unique
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id        String     @id @default(cuid())
+  code      String     @unique
+  userId    String
   device    String
   storage   String?
   condition String?
   imei      String?
-
-  price   Int
-  payment String
-  status  SaleStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
+  price     Int
+  payment   String
+  status    SaleStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
 }
 
-enum SaleStatus {
-  PENDING
-  PROCESSING
-  COMPLETED
-  CANCELLED
-}
-
-// ==================== REPARACIONES ====================
 model Repair {
-  id     String @id @default(cuid())
-  code   String @unique
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id        String         @id @default(cuid())
+  code      String         @unique
+  userId    String
   device    String
   issue     String
   serviceId String?
+  price     Int?
+  status    RepairStatus   @default(PENDING)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   service   RepairService? @relation(fields: [serviceId], references: [id])
-
-  price  Int?
-  status RepairStatus @default(PENDING)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum RepairStatus {
-  PENDING
-  DIAGNOSIS
-  APPROVED
-  IN_PROGRESS
-  COMPLETED
-  DELIVERED
+  user      User           @relation(fields: [userId], references: [id])
 }
 
 model RepairService {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   ico         String
   description String?
   price       Int
   category    String?
-
-  repairs Repair[]
+  repairs     Repair[]
 }
 
-// ==================== GARANTÍAS ====================
 model Guarantee {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
-  product String
-  type    String
-  price   Int?
-
+  id        String          @id @default(cuid())
+  userId    String
+  product   String
+  type      String
+  price     Int?
   startsAt  DateTime        @default(now())
   expiresAt DateTime
   status    GuaranteeStatus @default(ACTIVE)
-
-  createdAt DateTime @default(now())
+  createdAt DateTime        @default(now())
+  user      User            @relation(fields: [userId], references: [id])
 }
 
-enum GuaranteeStatus {
-  ACTIVE
-  EXPIRED
-  USED
-  CANCELLED
-}
-
-// ==================== PROVEEDORES ====================
 model Supplier {
-  id    String  @id @default(cuid())
-  name  String
-  type  String
-  phone String?
-  email String?
-  notes String?
-  total Int     @default(0)
-
-  products       Product[]
-  inventoryItems InventoryItem[]
+  id             String          @id @default(cuid())
+  name           String
+  type           String
+  phone          String?
+  email          String?
+  notes          String?
+  total          Int             @default(0)
   createdAt      DateTime        @default(now())
+  inventoryItems InventoryItem[]
+  products       Product[]
 }
 
-// ==================== CONVERSACIONES ====================
 model Conversation {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id            String         @id @default(cuid())
+  userId        String
   type          ConvType
   subject       String?
-  status        ConvStatus @default(OPEN)
-  adminId       String?
-  admin         User?      @relation("AdminConversations", fields: [adminId], references: [id])
-  unread        Int        @default(0)
-  unreadByUser  Int        @default(0)
-  unreadByAdmin Int        @default(0)
   lastMsgAt     DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  adminId       String?
   closedAt      DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  status        ConvStatus     @default(OPEN)
+  unreadByAdmin Int            @default(0)
+  unreadByUser  Int            @default(0)
+  admin         User?          @relation("AdminConversations", fields: [adminId], references: [id])
+  user          User           @relation(fields: [userId], references: [id])
   messages      Message[]
   notifications Notification[]
+
+  @@index([userId, lastMsgAt])
+  @@index([adminId, lastMsgAt])
+  @@index([status])
+  @@index([lastMsgAt])
 }
 
-enum ConvType {
-  COMPRA
-  COTIZACION
-  SERVICIO
-  REPARACION
-  GENERIC
-}
-
-enum ConvStatus {
-  OPEN
-  CLOSED
-  ARCHIVED
-}
-
-// ==================== MENSAJES ====================
 model Message {
-  id             String       @id @default(cuid())
+  id             String         @id @default(cuid())
   conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  from           String
+  text           String?
+  imageUrl       String?
+  imageCaption   String?
+  readAt         DateTime?
+  createdAt      DateTime       @default(now())
+  fromUserId     String?
+  status         MsgStatus      @default(SENT)
+  conversation   Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  fromUser       User?          @relation(fields: [fromUserId], references: [id])
+  notifications  Notification[]
 
-  from         String
-  fromUserId   String?
-  fromUser     User?     @relation(fields: [fromUserId], references: [id])
-  text         String?
-  imageUrl     String?
-  imageCaption String?
-  status       MsgStatus @default(SENT)
-
-  readAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  notifications Notification[]
+  @@index([conversationId, createdAt])
+  @@index([fromUserId])
 }
 
-enum MsgStatus {
-  SENT
-  DELIVERED
-  READ
-}
-
-// ==================== WALLET ====================
 model Wallet {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  balance     Int @default(0)
-  totalEarned Int @default(0)
-  totalSpent  Int @default(0)
-  version     Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  balance      Int                 @default(0)
+  totalEarned  Int                 @default(0)
+  totalSpent   Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  version      Int                 @default(0)
+  user         User                @relation(fields: [userId], references: [id])
   transactions WalletTransaction[]
 }
 
 model WalletTransaction {
   id            String          @id @default(cuid())
   walletId      String
-  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
   type          TransactionType
   amount        Int
   balanceBefore Int
@@ -601,43 +437,26 @@ model WalletTransaction {
   referenceId   String?
   description   String?
   createdAt     DateTime        @default(now())
-
-  giftCard GiftCard?
+  giftCard      GiftCard?
+  wallet        Wallet          @relation(fields: [walletId], references: [id], onDelete: Cascade)
 
   @@index([walletId, createdAt])
 }
 
-enum TransactionType {
-  DEPOSIT
-  WITHDRAWAL
-  PAYMENT
-  REFUND
-  GIFT_CARD_REDEEM
-  ADMIN_ADJUST
-}
-
-// ==================== COUPONS ====================
-enum CouponStatus {
-  ACTIVE
-  USED
-  EXPIRED
-}
-
 model Coupon {
-  id              String       @id @default(cuid())
+  id              String        @id @default(cuid())
   userId          String
-  user            User         @relation(fields: [userId], references: [id])
-  code            String       @unique
+  code            String        @unique
   originalAmount  Int
   remainingAmount Int
-  status          CouponStatus @default(ACTIVE)
-  source          String? // 'giftcard', 'sell', 'admin'
-  sourceId        String? // giftCardId if source='giftcard'
+  status          CouponStatus  @default(ACTIVE)
+  source          String?
+  sourceId        String?
   expiresAt       DateTime?
-  createdAt       DateTime     @default(now())
+  createdAt       DateTime      @default(now())
   usedAt          DateTime?
-
-  orderCoupons OrderCoupon[]
+  user            User          @relation(fields: [userId], references: [id])
+  orderCoupons    OrderCoupon[]
 
   @@index([userId])
   @@index([code])
@@ -647,11 +466,11 @@ model Coupon {
 model OrderCoupon {
   id         String   @id @default(cuid())
   orderId    String
-  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   couponId   String
-  coupon     Coupon   @relation(fields: [couponId], references: [id])
   amountUsed Int
   createdAt  DateTime @default(now())
+  coupon     Coupon   @relation(fields: [couponId], references: [id])
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([couponId])
@@ -673,63 +492,43 @@ model GiftCard {
   purchasedAt      DateTime           @default(now())
   redeemedAt       DateTime?
   redeemedByUserId String?
-  redeemedBy       User?              @relation(fields: [redeemedByUserId], references: [id])
   transactionId    String?            @unique
-  transaction      WalletTransaction? @relation(fields: [transactionId], references: [id])
   version          Int                @default(0)
+  redeemedBy       User?              @relation(fields: [redeemedByUserId], references: [id])
+  transaction      WalletTransaction? @relation(fields: [transactionId], references: [id])
 
   @@index([code])
   @@index([status])
 }
 
-enum GiftCardStatus {
-  PENDING
-  ACTIVE
-  REDEEMED
-  EXPIRED
-  CANCELLED
-}
-
-// ==================== FAVORITOS ====================
 model Favorite {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
   productId String
-  product   Product @relation(fields: [productId], references: [id])
-
   createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([userId, productId])
 }
 
-// ==================== NOTIFICACIONES ====================
 model Notification {
-  id     String  @id @default(cuid())
-  userId String?
-
-  type  NotifType
-  title String
-  text  String
-  read  Boolean   @default(false)
-
+  id             String        @id @default(cuid())
+  userId         String?
+  type           NotifType
+  title          String
+  text           String
+  read           Boolean       @default(false)
+  createdAt      DateTime      @default(now())
   conversationId String?
-  conversation   Conversation? @relation(fields: [conversationId], references: [id])
   messageId      String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
   message        Message?      @relation(fields: [messageId], references: [id])
 
-  createdAt DateTime @default(now())
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
 }
 
-enum NotifType {
-  OFFER
-  LOYALTY
-  ORDER
-  PROMO
-  MESSAGE
-}
-
-// ==================== ACCESORIOS ====================
 model Accessory {
   id               String      @id @default(cuid())
   name             String
@@ -737,27 +536,26 @@ model Accessory {
   description      String?
   category         String
   price            Int
-  compareAtPrice   Int?
   stock            Int         @default(0)
-  reserved         Int         @default(0)
-  sold             Int         @default(0)
-  imageUrl         String?
-  images           String[]    @default([])
+  createdAt        DateTime    @default(now())
   brand            String?
   color            String?
+  compareAtPrice   Int?
   compatibleModels String?
-  modelGroup       String?
+  imageUrl         String?
   isActive         Boolean     @default(true)
+  images           String[]    @default([])
   discount         Int?
   isOffer          Boolean     @default(false)
-  offerStart       DateTime?
   offerEnd         DateTime?
-  createdAt        DateTime    @default(now())
-  orderItems       OrderItem[]
+  offerStart       DateTime?
+  modelGroup       String?
+  reserved         Int         @default(0)
+  sold             Int         @default(0)
   cartItems        CartItem[]
+  orderItems       OrderItem[]
 }
 
-// ==================== NEXT.AUTH ====================
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -771,8 +569,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -793,7 +590,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ==================== VERIFICACION EMAIL ====================
 model EmailVerification {
   id        String   @id @default(cuid())
   email     String
@@ -805,7 +601,6 @@ model EmailVerification {
   @@unique([email, code])
 }
 
-// ==================== RESET PASSWORD ====================
 model PasswordReset {
   id        String   @id @default(cuid())
   email     String
@@ -815,32 +610,21 @@ model PasswordReset {
   createdAt DateTime @default(now())
 }
 
-// ==================== ARREPENTIMIENTO (Ley 24.240 - Resolucion 424/2020) ====================
 model Arrepentimiento {
-  id      String  @id @default(cuid())
-  orderId String
-  order   Order   @relation(fields: [orderId], references: [id])
-  userId  String?
-  user    User?   @relation(fields: [userId], references: [id])
-
-  email    String
-  telefono String?
-  motivo   String?
-  estado   ArrepEstado @default(PENDIENTE)
-  tramite  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String      @id @default(cuid())
+  orderId   String
+  userId    String?
+  email     String
+  telefono  String?
+  motivo    String?
+  estado    ArrepEstado @default(PENDIENTE)
+  tramite   String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  order     Order       @relation(fields: [orderId], references: [id])
+  user      User?       @relation(fields: [userId], references: [id])
 }
 
-enum ArrepEstado {
-  PENDIENTE
-  APROBADO
-  RECHAZADO
-  COMPLETADO
-}
-
-// ==================== RATE LIMITING (DB-based, survives restarts) ====================
 model RateLimit {
   key       String   @id
   count     Int      @default(1)
@@ -851,91 +635,196 @@ model RateLimit {
   @@index([expiresAt])
 }
 
-// ==================== EXTENSIÓN DE GARANTÍA ====================
 model WarrantyExtend {
-  id        String               @id @default(cuid())
-  orderId   String
-  order     Order                @relation(fields: [orderId], references: [id])
-  imei      String
-  plan      String // "12m" or "24m"
-  months    Int
-  price     Int
-  status    WarrantyExtendStatus @default(PENDING_PAYMENT)
-  startDate DateTime             @default(now())
-  endDate   DateTime
-  createdAt DateTime             @default(now())
-
-  mpPreferenceId String?
+  id             String               @id @default(cuid())
+  orderId        String
+  imei           String
+  plan           String
+  months         Int
+  price          Int
+  status         WarrantyExtendStatus @default(PENDING_PAYMENT)
+  startDate      DateTime             @default(now())
+  endDate        DateTime
+  createdAt      DateTime             @default(now())
   mpPaymentId    String?
+  mpPreferenceId String?
   mpStatus       String?
+  order          Order                @relation(fields: [orderId], references: [id])
 }
 
-enum WarrantyExtendStatus {
-  PENDING_PAYMENT
-  ACTIVE
-  EXPIRED
-  CANCELLED
-}
-
-// ==================== LEDGER DE PAGOS ====================
 model PaymentTransaction {
   id           String   @id @default(cuid())
   orderId      String
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount       Int
   currency     String   @default("ARS")
-  method       String // mercadopago, transfer, wallet, coupon, cash, usd
-  status       String   @default("pending") // pending, approved, rejected, refunded
+  method       String
+  status       String   @default("pending")
   mpPaymentId  String?
   mpStatus     String?
   installments Int      @default(1)
   notes        String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@index([orderId])
   @@index([mpPaymentId])
 }
 
-// ==================== FACTURA ELECTRÓNICA ====================
 model Invoice {
   id        String    @id @default(cuid())
   orderId   String    @unique
-  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  type      String    @default("C") // A (RI), B (exento/CF), C (monotributo)
+  type      String    @default("C")
   pos       Int       @default(1)
   number    Int
-  cae       String? // CAE de AFIP
+  cae       String?
   caeExpiry DateTime?
   total     Int
   netAmount Int
   ivaAmount Int
-  status    String    @default("PENDING") // PENDING, AUTHORIZED, REJECTED
+  status    String    @default("PENDING")
   pdfUrl    String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
 
-// ==================== CARRITO PERSISTIDO ====================
 model Cart {
   id        String     @id @default(cuid())
   userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  items     CartItem[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
 }
 
 model CartItem {
   id          String     @id @default(cuid())
   cartId      String
-  cart        Cart       @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId   String?
-  product     Product?   @relation(fields: [productId], references: [id])
   accessoryId String?
-  accessory   Accessory? @relation(fields: [accessoryId], references: [id])
   quantity    Int        @default(1)
   createdAt   DateTime   @default(now())
+  accessory   Accessory? @relation(fields: [accessoryId], references: [id])
+  cart        Cart       @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product     Product?   @relation(fields: [productId], references: [id])
 
   @@index([cartId])
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+enum InventoryStatus {
+  IN_STOCK
+  IN_REPAIR
+  RESERVED
+  ON_HOLD
+  SOLD
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum QuoteStatus {
+  PENDING
+  REVIEWING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
+enum SaleStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum RepairStatus {
+  PENDING
+  DIAGNOSIS
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  DELIVERED
+}
+
+enum GuaranteeStatus {
+  ACTIVE
+  EXPIRED
+  USED
+  CANCELLED
+}
+
+enum ConvType {
+  COMPRA
+  COTIZACION
+  SERVICIO
+  REPARACION
+  GENERIC
+}
+
+enum ConvStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum MsgStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PAYMENT
+  REFUND
+  GIFT_CARD_REDEEM
+  ADMIN_ADJUST
+}
+
+enum CouponStatus {
+  ACTIVE
+  USED
+  EXPIRED
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  CANCELLED
+  PENDING
+}
+
+enum NotifType {
+  OFFER
+  LOYALTY
+  ORDER
+  PROMO
+  MESSAGE
+}
+
+enum ArrepEstado {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+  COMPLETADO
+}
+
+enum WarrantyExtendStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING_PAYMENT
 }

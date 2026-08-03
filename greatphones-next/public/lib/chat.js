@@ -7,6 +7,11 @@ var chatPollInterval=null;
 var socketConnected=false;
 var chatSoundEnabled=true;
 var healthCheckInterval=null;
+var PAGE_SIZE=30;
+var _msgCursor=null;
+var _hasMoreMsgs=false;
+var _panelCursor=null;
+var _hasMorePanel=false;
 
 function initChatSocket(){
   if(!currentUser||!window.io){
@@ -289,13 +294,16 @@ function createDefaultConversation(){
 function loadMessages(convId,scrollBottom,scrollToMsgId){
   var headers={};
   if(currentUser)headers['X-User-Id']=currentUser.id;
-  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50',{headers:headers})
+  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit='+PAGE_SIZE,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');
       return r.json();
     })
     .then(function(msgs){
       renderMsgs(msgs);
+      _hasMoreMsgs=msgs.length>=PAGE_SIZE;
+      _msgCursor=msgs.length>0?msgs[0].id:null;
+      showOlderBtn(_hasMoreMsgs);
       if(scrollToMsgId){
         setTimeout(function(){
           var el=document.querySelector('[data-msg-id="'+scrollToMsgId+'"]');
@@ -317,36 +325,101 @@ function renderMsgs(msgs){
     return;
   }
   var html='';
-  var idx=0;
-  msgs.forEach(function(m){
+  for(var i=0;i<msgs.length;i++){
+    var m=msgs[i];
     var msgDate=new Date(m.createdAt);
     var dateStr=msgDate.toDateString();
     if(dateStr!==_lastMsgDate){
       html+='<div style="text-align:center;padding:8px 0 12px;position:relative"><span style="font-size:10px;font-weight:600;color:var(--gray);background:var(--cream);padding:3px 14px;border-radius:10px;letter-spacing:.3px;text-transform:uppercase">'+formatDate(msgDate)+'</span></div>';
       _lastMsgDate=dateStr;
     }
-    var isMine=currentUser&&m.from===currentUser.id;
-    var time=formatTime(msgDate);
-    var productData=m.text?parseProductData(m.text):null;
-    var content='';
-    if(productData){
-      content=renderProductCard(productData);
-    }else if(m.imageUrl){
-      content='<img src="'+escapeHtml(m.imageUrl)+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
-      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
-    }else{
-      content='<p style="margin:0;line-height:1.5">'+escapeHtml(m.text||'')+'</p>';
-    }
-    html+='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'" style="animation-delay:'+(idx*0.03)+'s">'+
-      (!isMine?'<div class="msg-avatar">GP</div>':'')+
-      '<div class="msg-bubble">'+
-        content+
-        '<div class="msg-time">'+time+'<span class="msg-status">'+getStatusHtml(m)+'</span></div>'+
-      '</div>'+
-    '</div>';
-    idx++;
-  });
+    html+=buildMsgHtml(m);
+  }
   list.innerHTML=html;
+}
+
+function buildMsgHtml(m){
+  var msgDate=new Date(m.createdAt);
+  var time=formatTime(msgDate);
+  var isMine=currentUser&&m.from===currentUser.id;
+  var productData=m.text?parseProductData(m.text):null;
+  var content='';
+  if(productData){
+    content=renderProductCard(productData);
+  }else if(m.imageUrl){
+    content='<img src="'+escapeHtml(m.imageUrl)+'" style="max-width:220px;border-radius:10px;display:block;cursor:pointer" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
+    if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
+  }else{
+    content='<p style="margin:0;line-height:1.5">'+escapeHtml(m.text||'')+'</p>';
+  }
+  return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
+    (!isMine?'<div class="msg-avatar">GP</div>':'')+
+    '<div class="msg-bubble">'+
+      content+
+      '<div class="msg-time">'+time+'<span class="msg-status">'+getStatusHtml(m)+'</span></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function showOlderBtn(visible){
+  var list=document.getElementById('chatMsgList');
+  if(!list)return;
+  var btn=list.querySelector('#olderMsgsBtn');
+  if(!visible){
+    if(btn)btn.style.display='none';
+    return;
+  }
+  if(!btn){
+    btn=document.createElement('div');
+    btn.id='olderMsgsBtn';
+    btn.style.cssText='text-align:center;padding:12px 0;position:relative;z-index:1';
+    btn.innerHTML='<button onclick="loadOlderMessages()" style="background:var(--cream2);border:1.5px solid var(--border);border-radius:10px;padding:6px 18px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s" onmouseover="this.style.background=\'var(--orange)\';this.style.color=\'#fff\';this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.background=\'var(--cream2)\';this.style.color=\'var(--gray)\';this.style.borderColor=\'var(--border)\'">Cargar mensajes anteriores</button>';
+    list.insertBefore(btn,list.firstChild);
+  }
+  btn.style.display='block';
+}
+
+function loadOlderMessages(){
+  if(!userConvId||!_msgCursor)return;
+  var btn=document.querySelector('#olderMsgsBtn');
+  if(btn)btn.innerHTML='<span style="font-size:12px;color:var(--gray)">Cargando...</span>';
+  var headers={};
+  if(currentUser)headers['X-User-Id']=currentUser.id;
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit='+PAGE_SIZE+'&cursor='+_msgCursor,{headers:headers})
+    .then(function(r){
+      if(!r.ok)throw new Error('Error al cargar mensajes');
+      return r.json();
+    })
+    .then(function(msgs){
+      prependMessages(msgs);
+      if(msgs.length<PAGE_SIZE){
+        _hasMoreMsgs=false;
+        showOlderBtn(false);
+      }else{
+        _msgCursor=msgs[0].id;
+        showOlderBtn(true);
+      }
+    })
+    .catch(function(e){
+      console.error('Error loading older messages:',e);
+      if(btn)btn.innerHTML='<button onclick="loadOlderMessages()" style="background:var(--cream2);border:1.5px solid var(--border);border-radius:10px;padding:6px 18px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer">Cargar mensajes anteriores</button>';
+    });
+}
+
+function prependMessages(msgs){
+  var list=document.getElementById('chatMsgList');
+  if(!list||!msgs||msgs.length===0)return;
+  var btn=list.querySelector('#olderMsgsBtn');
+  var refNode=btn?btn.nextSibling:list.firstChild;
+  var html='';
+  for(var i=0;i<msgs.length;i++){
+    html+=buildMsgHtml(msgs[i]);
+  }
+  var temp=document.createElement('div');
+  temp.innerHTML=html;
+  while(temp.firstChild){
+    list.insertBefore(temp.firstChild,refNode);
+  }
 }
 
 function appendMessageToChat(msg){
@@ -374,7 +447,7 @@ function appendMessageToChat(msg){
   }else{
     content='<p style="margin:0;line-height:1.5">'+escapeHtml(msg.text||'')+'</p>';
   }
-  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .2s ease">'+
     (!isMine?'<div class="msg-avatar">GP</div>':'')+
     '<div class="msg-bubble">'+
       content+
@@ -401,7 +474,6 @@ function sendMessage(){
   .then(function(msg){
     appendMessageToChat(msg);
     scrollToBottom();
-    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
     checkAndShowAutoReply(text);
   })
   .catch(function(e){console.error('Error sending message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
@@ -437,7 +509,7 @@ function checkAndShowAutoReply(text){
   // Show contextual auto-reply
   var list=document.getElementById('chatMsgList');
   if(list){
-    var autoHtml='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    var autoHtml='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
       '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border)">'+
         '<p style="margin:0 0 6px;font-size:13px;font-weight:600;color:var(--dk)">'+faq.label+'</p>'+
         '<p style="margin:0 0 8px;font-size:12px;color:var(--gray);line-height:1.6">'+faq.answer+'</p>'+
@@ -449,7 +521,7 @@ function checkAndShowAutoReply(text){
   }
   var panelList=document.getElementById('panelMsgList');
   if(panelList){
-    var panelAutoHtml='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    var panelAutoHtml='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
       '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border)">'+
         '<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:var(--dk)">'+faq.label+'</p>'+
         '<p style="margin:0;font-size:11px;color:var(--gray);line-height:1.5">'+faq.answer+'</p>'+
@@ -477,7 +549,7 @@ function showAutoReply(){
     return '<button onclick="handleFaqClick(\''+faq.id+'\')" style="display:block;width:100%;padding:10px 14px;margin-bottom:6px;background:#fff;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;text-align:left;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'#fff\'">'+faq.label+'</button>';
   }).join('');
   
-  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
     '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border);max-width:100%">'+
       '<p style="margin:0 0 8px;font-size:13px;font-weight:600;color:var(--dk)">Hola! Ac\u00E1 ten\u00E9s algunas respuestas r\u00E1pidas:</p>'+
       '<p style="margin:0 0 12px;font-size:12px;color:var(--gray)">Seleccion\u00E1 una opci\u00F3n o escribinos directamente:</p>'+
@@ -499,7 +571,7 @@ function showPanelAutoReply(){
     return '<button onclick="handleFaqClick(\''+faq.id+'\')" style="display:block;width:100%;padding:8px 12px;margin-bottom:4px;background:#fff;border:1.5px solid var(--border);border-radius:8px;font-size:11px;font-weight:600;color:var(--dk);cursor:pointer;text-align:left;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.background=\'rgba(255,107,44,.05)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.background=\'#fff\'">'+faq.label+'</button>';
   }).join('');
   
-  var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
     '<div class="msg-bubble" style="background:#fff;border:1.5px solid var(--border);max-width:100%">'+
       '<p style="margin:0 0 6px;font-size:12px;font-weight:600;color:var(--dk)">Hola! Ac\u00E1 ten\u00E9s respuestas r\u00E1pidas:</p>'+
       '<p style="margin:0 0 8px;font-size:11px;color:var(--gray)">Seleccion\u00E1 una opci\u00F3n:</p>'+
@@ -517,7 +589,7 @@ function handleFaqClick(faqId){
   
   var list=document.getElementById('chatMsgList');
   if(list){
-    var html='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    var html='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
       '<div class="msg-avatar">GP</div>'+
       '<div class="msg-bubble">'+
         '<p style="margin:0 0 4px;font-size:12px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
@@ -531,7 +603,7 @@ function handleFaqClick(faqId){
   
   var panelList=document.getElementById('panelMsgList');
   if(panelList){
-    var panelHtml='<div class="msg-wrap" style="animation:msgIn .3s ease">'+
+    var panelHtml='<div class="msg-wrap" style="animation:msgIn .2s ease">'+
       '<div class="msg-avatar" style="width:26px;height:26px;font-size:9px">GP</div>'+
       '<div class="msg-bubble">'+
         '<p style="margin:0 0 4px;font-size:11px;font-weight:600;color:var(--orange)">'+faq.label+'</p>'+
@@ -587,7 +659,6 @@ function sendChatImg(input){
       .then(function(msg){
         appendMessageToChat(msg);
         scrollToBottom();
-        if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
         checkAndShowAutoReply(file.name);
       });
     }
@@ -858,7 +929,6 @@ function sendProductMessage(product){
   .then(function(msg){
     appendMessageToChat(msg);
     scrollToBottom();
-    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
   })
   .catch(function(e){console.error('Error sending product message:',e);showErrorToast('Error','No se pudo enviar el producto');});
 }
@@ -910,7 +980,6 @@ function consultarProducto(){
       appendPanelMessage(msg);
       scrollPanelBottom();
       if(chatSocket)chatSocket.emit('joinConversation',convId);
-      if(chatSocket)chatSocket.emit('messageSent',{conversationId:convId,message:msg});
       // Load messages to show history
       if(typeof loadPanelMessages==='function')loadPanelMessages(convId,true);
     })
@@ -1218,7 +1287,6 @@ function submitQuoteFromChat(){
       .then(function(msg){
         appendMessageToChat(msg);
         scrollToBottom();
-        if(chatSocket)chatSocket.emit('messageSent',{conversationId:adminActiveConvId,message:msg});
       })
       .catch(function(e){console.error('Error sending quote message:',e);showErrorToast('Error','Error al enviar cotización');});
     }else{
@@ -1550,7 +1618,6 @@ function sendAdminMessage(){
   .then(function(msg){
     appendMessageToChat(msg);
     scrollToBottom();
-    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
   })
   .catch(function(e){console.error('Error sending admin message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
 }
@@ -1573,7 +1640,6 @@ function sendPanelMessage(){
   .then(function(msg){
     appendPanelMessage(msg);
     scrollPanelBottom();
-    if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
     checkAndShowAutoReply(text);
   })
   .catch(function(e){console.error('Error sending panel message:',e);showErrorToast('Error','No se pudo enviar el mensaje');});
@@ -1604,7 +1670,6 @@ function sendPanelImg(input){
       .then(function(msg){
         appendPanelMessage(msg);
         scrollPanelBottom();
-        if(chatSocket)chatSocket.emit('messageSent',{conversationId:userConvId,message:msg});
         checkAndShowAutoReply(file.name);
       });
     }
@@ -1633,7 +1698,7 @@ function appendPanelMessage(msg){
   }else{
     content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
   }
-  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .3s ease">'+
+  var html='<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(msg.id||'')+'" style="animation:msgIn .2s ease">'+
     (!isMine?'<div class="msg-avatar" style="width:26px;height:26px;font-size:9px">GP</div>':'')+
     '<div class="msg-bubble">'+
       content+
@@ -1673,13 +1738,16 @@ function handlePanelTyping(){
 function loadPanelMessages(convId,scrollBottom){
   var headers={};
   if(currentUser)headers['X-User-Id']=currentUser.id;
-  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit=50',{headers:headers})
+  fetch(API_URL+'/api/conversations/'+convId+'/messages?limit='+PAGE_SIZE,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');
       return r.json();
     })
     .then(function(msgs){
       renderPanelMsgs(msgs);
+      _hasMorePanel=msgs.length>=PAGE_SIZE;
+      _panelCursor=msgs.length>0?msgs[0].id:null;
+      showPanelOlderBtn(_hasMorePanel);
       if(scrollBottom)setTimeout(scrollPanelBottom,100);
     })
     .catch(function(e){console.error('Error loading panel messages:',e);});
@@ -1692,27 +1760,94 @@ function renderPanelMsgs(msgs){
     list.innerHTML='<div class="empty-state-chat"><svg viewBox="0 0 72 72" fill="none"><circle cx="36" cy="36" r="35" stroke="#E4DDD4" stroke-width="1.5" opacity="0.4"/><path d="M20 26c0-4 3-7 7-7h18c4 0 7 3 7 7v14c0 4-3 7-7 7h-4l-7 6-7-6h-4c-4 0-7-3-7-7V26z" fill="#F0EBE3"/><path d="M27 32h18M27 39h12" stroke="#D4CCC2" stroke-width="2" stroke-linecap="round"/><circle cx="56" cy="20" r="5" fill="#FF6B2C" opacity="0.12" class="fb-dot"/><circle cx="58" cy="18" r="2" fill="#FF6B2C" opacity="0.25"/></svg><h3>Hola! C\u00F3mo podemos ayudarte?</h3><p>Escrib\u00ED tu consulta y te responderemos a la brevedad.</p></div>';
     return;
   }
-  list.innerHTML=msgs.map(function(m,i){
-    var isMine=currentUser&&m.from===currentUser.id;
-    var time=formatTime(new Date(m.createdAt));
-    var productData=m.text?parseProductData(m.text):null;
-    var content='';
-    if(productData){
-      content=renderProductCard(productData);
-    }else if(m.imageUrl){
-      content='<img src="'+escapeHtml(m.imageUrl)+'" class="msg-img" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
-      if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
-    }else{
-      content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
-    }
-    return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'" style="animation-delay:'+(i*0.03)+'s">'+
-      (!isMine?'<div class="msg-avatar" style="width:26px;height:26px;font-size:9px">GP</div>':'')+
-      '<div class="msg-bubble">'+
-        content+
-        '<div class="msg-time">'+time+'<span class="msg-status">'+getStatusHtml(m)+'</span></div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  var html='';
+  for(var i=0;i<msgs.length;i++){
+    html+=buildPanelMsgHtml(msgs[i]);
+  }
+  list.innerHTML=html;
+}
+
+function buildPanelMsgHtml(m){
+  var isMine=currentUser&&m.from===currentUser.id;
+  var time=formatTime(new Date(m.createdAt));
+  var productData=m.text?parseProductData(m.text):null;
+  var content='';
+  if(productData){
+    content=renderProductCard(productData);
+  }else if(m.imageUrl){
+    content='<img src="'+escapeHtml(m.imageUrl)+'" class="msg-img" onclick="openLightbox(\''+escapeHtml(m.imageUrl)+'\')">';
+    if(m.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(m.imageCaption)+'</p>';
+  }else{
+    content='<p style="margin:0">'+escapeHtml(m.text||'')+'</p>';
+  }
+  return '<div class="msg-wrap'+(isMine?' mine':'')+'" data-msg-id="'+(m.id||'')+'">'+
+    (!isMine?'<div class="msg-avatar" style="width:26px;height:26px;font-size:9px">GP</div>':'')+
+    '<div class="msg-bubble">'+
+      content+
+      '<div class="msg-time">'+time+'<span class="msg-status">'+getStatusHtml(m)+'</span></div>'+
+    '</div>'+
+  '</div>';
+}
+
+function showPanelOlderBtn(visible){
+  var list=document.getElementById('panelMsgList');
+  if(!list)return;
+  var btn=list.querySelector('#panelOlderBtn');
+  if(!visible){
+    if(btn)btn.style.display='none';
+    return;
+  }
+  if(!btn){
+    btn=document.createElement('div');
+    btn.id='panelOlderBtn';
+    btn.style.cssText='text-align:center;padding:10px 0;position:relative;z-index:1';
+    btn.innerHTML='<button onclick="loadOlderPanelMessages()" style="background:var(--cream2);border:1.5px solid var(--border);border-radius:10px;padding:6px 18px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .15s" onmouseover="this.style.background=\'var(--orange)\';this.style.color=\'#fff\';this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.background=\'var(--cream2)\';this.style.color=\'var(--gray)\';this.style.borderColor=\'var(--border)\'">Cargar mensajes anteriores</button>';
+    list.insertBefore(btn,list.firstChild);
+  }
+  btn.style.display='block';
+}
+
+function loadOlderPanelMessages(){
+  if(!userConvId||!_panelCursor)return;
+  var btn=document.querySelector('#panelOlderBtn');
+  if(btn)btn.innerHTML='<span style="font-size:12px;color:var(--gray)">Cargando...</span>';
+  var headers={};
+  if(currentUser)headers['X-User-Id']=currentUser.id;
+  fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit='+PAGE_SIZE+'&cursor='+_panelCursor,{headers:headers})
+    .then(function(r){
+      if(!r.ok)throw new Error('Error al cargar mensajes');
+      return r.json();
+    })
+    .then(function(msgs){
+      prependPanelMessages(msgs);
+      if(msgs.length<PAGE_SIZE){
+        _hasMorePanel=false;
+        showPanelOlderBtn(false);
+      }else{
+        _panelCursor=msgs[0].id;
+        showPanelOlderBtn(true);
+      }
+    })
+    .catch(function(e){
+      console.error('Error loading older panel messages:',e);
+      if(btn)btn.innerHTML='<button onclick="loadOlderPanelMessages()" style="background:var(--cream2);border:1.5px solid var(--border);border-radius:10px;padding:6px 18px;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer">Cargar mensajes anteriores</button>';
+    });
+}
+
+function prependPanelMessages(msgs){
+  var list=document.getElementById('panelMsgList');
+  if(!list||!msgs||msgs.length===0)return;
+  var btn=list.querySelector('#panelOlderBtn');
+  var refNode=btn?btn.nextSibling:list.firstChild;
+  var html='';
+  for(var i=0;i<msgs.length;i++){
+    html+=buildPanelMsgHtml(msgs[i]);
+  }
+  var temp=document.createElement('div');
+  temp.innerHTML=html;
+  while(temp.firstChild){
+    list.insertBefore(temp.firstChild,refNode);
+  }
 }
 
 

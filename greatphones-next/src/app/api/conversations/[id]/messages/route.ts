@@ -4,6 +4,7 @@ import { SendMessageSchema, formatZodError } from '@/lib/validations'
 import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
 import { getIO } from '@/lib/socket'
 import { requireSession, handleRouteError } from '@/lib/auth-guard'
+import { enqueueEmail } from '@/lib/queue'
 
 
 
@@ -116,8 +117,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     // Update conversation with direction-aware unread counters
     const updateData: any = {
-      lastMsgAt: new Date(),
-      unread: { increment: 1 }
+      lastMsgAt: new Date()
     }
 
     if (isUserSender) {
@@ -163,20 +163,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           }
         });
 
-        // Send email to admin (non-blocking)
-        try {
+        // Queue email to admin
+        const adminEmail = targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
+        enqueueEmail({
+          type: 'admin-auto-reply',
+          to: adminEmail,
+          userName: conversation.user.name || 'Usuario',
+          messageText: text || '(solicito hablar con un asesor)',
+          conversationId: id,
+          conversationType: conversation.type,
+        }).then(queued => {
+          if (queued) return
           sendNewMessageToAdminEmail({
-            adminEmail: targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar',
+            adminEmail,
             userName: conversation.user.name || 'Usuario',
             messageText: text || '(solicito hablar con un asesor)',
             conversationId: id,
-            conversationType: conversation.type
+            conversationType: conversation.type,
           }).catch((emailError: Error) => {
-            console.error('[Messages] Error sending email to admin:', emailError);
-          });
-        } catch (emailError) {
-          console.error('[Messages] Error sending email to admin:', emailError);
-        }
+            console.error('[Messages] Error sending email to admin:', emailError)
+          })
+        })
       }
     } else if (isUserSender) {
       // Normal user message: notify admin
@@ -209,20 +216,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           }
         });
 
-        // Send email to admin (non-blocking)
-        try {
+        // Queue email to admin
+        const adminEmail = targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
+        enqueueEmail({
+          type: 'admin-new-message',
+          to: adminEmail,
+          userName: conversation.user.name || 'Usuario',
+          messageText: text || '(imagen)',
+          conversationId: id,
+          conversationType: conversation.type,
+        }).then(queued => {
+          if (queued) return
           sendNewMessageToAdminEmail({
-            adminEmail: targetAdmin.email || process.env.EMAIL_USER || 'contacto@greatphones.com.ar',
+            adminEmail,
             userName: conversation.user.name || 'Usuario',
             messageText: text || '(imagen)',
             conversationId: id,
-            conversationType: conversation.type
+            conversationType: conversation.type,
           }).catch((emailError: Error) => {
-            console.error('[Messages] Error sending email to admin:', emailError);
-          });
-        } catch (emailError) {
-          console.error('[Messages] Error sending email to admin:', emailError);
-        }
+            console.error('[Messages] Error sending email to admin:', emailError)
+          })
+        })
       }
     } else if (isAdminSender) {
       // Notify user about admin reply
@@ -237,21 +251,27 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         }
       })
 
-      // Send email to user (non-blocking)
-      try {
-        if (conversation.user.email) {
+      // Queue email to user
+      if (conversation.user.email) {
+        enqueueEmail({
+          type: 'admin-reply',
+          to: conversation.user.email,
+          userName: conversation.user.name || 'Usuario',
+          adminName: 'Great Phones',
+          messageText: text || '(imagen)',
+          conversationId: id,
+        }).then(queued => {
+          if (queued) return
           sendAdminReplyEmail({
-            userEmail: conversation.user.email,
+            userEmail: conversation.user.email!,
             userName: conversation.user.name || 'Usuario',
             adminName: 'Great Phones',
             messageText: text || '(imagen)',
-            conversationId: id
+            conversationId: id,
           }).catch((emailError: Error) => {
-            console.error('[Messages] Error sending email to user:', emailError);
-          });
-        }
-      } catch (emailError) {
-        console.error('[Messages] Error sending email to user:', emailError);
+            console.error('[Messages] Error sending email to user:', emailError)
+          })
+        })
       }
     }
 
