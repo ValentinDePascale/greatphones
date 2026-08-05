@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { NextRequest } from 'next/server'
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -21,6 +22,10 @@ vi.mock('@/lib/auth-guard', () => ({
   requireAdmin: vi.fn(),
 }))
 
+vi.mock('@/lib/rate-limit', () => ({
+  rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 30, resetAt: Date.now() + 60000 }),
+}))
+
 vi.mock('@/lib/validations', async () => {
   const original = await vi.importActual('@/lib/validations')
   return original
@@ -40,7 +45,7 @@ describe('GET /api/products', () => {
     ] as any)
 
     const { GET } = await import('./route')
-    const req = new Request('http://localhost/api/products')
+    const req = new NextRequest('http://localhost/api/products')
     const res = await GET(req)
     expect(res.status).toBe(200)
     const data = await res.json()
@@ -56,7 +61,7 @@ describe('GET /api/products', () => {
     ] as any)
 
     const { GET } = await import('./route')
-    const req = new Request('http://localhost/api/products?brand=Apple')
+    const req = new NextRequest('http://localhost/api/products?brand=Apple')
     const res = await GET(req)
     expect(res.status).toBe(200)
     const data = await res.json()
@@ -69,7 +74,7 @@ describe('GET /api/products', () => {
     vi.mocked(prisma.product.findMany).mockResolvedValue([])
 
     const { GET } = await import('./route')
-    const req = new Request('http://localhost/api/products?search=nonexistent')
+    const req = new NextRequest('http://localhost/api/products?search=nonexistent')
     const res = await GET(req)
     expect(res.status).toBe(200)
     const data = await res.json()

@@ -429,6 +429,20 @@ function showCheckoutStep(step){
   if(step===4){
     if(typeof updateCuotasMonthly==='function')updateCuotasMonthly();
     if(typeof cpnUpdateCheckoutCard==='function')cpnUpdateCheckoutCard();
+    var preorderSection=document.getElementById('preorder-agreement-section');
+    if(preorderSection){
+      var hasPreorder=Cart.some(function(item){return item.isPreorder;});
+      preorderSection.style.display=hasPreorder?'block':'none';
+      if(hasPreorder){
+        var chk=document.getElementById('preorder-agreement');
+        if(chk)chk.checked=false;
+        var btn=document.getElementById('btn-final-pay');
+        if(btn){btn.disabled=true;btn.style.opacity='0.5';}
+      }else{
+        var btn2=document.getElementById('btn-final-pay');
+        if(btn2){btn2.disabled=false;btn2.style.opacity='1';}
+      }
+    }
   }
 }
 
@@ -512,6 +526,15 @@ function submitOrder(){
     return;
   }
 
+  var hasPreorder=Cart.some(function(item){return item.isPreorder;});
+  if(hasPreorder){
+    var agreement=document.getElementById('preorder-agreement');
+    if(!agreement||!agreement.checked){
+      showToast('Debe aceptar los términos de preventa para continuar');
+      return;
+    }
+  }
+
   var btn=document.getElementById('btn-final-pay');
   if(btn){
     btn.disabled=true;
@@ -522,8 +545,8 @@ function submitOrder(){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId);
     if(p){
-      var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
-      return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty};
+      var price=isOfferValid(p)?Math.round(p.price-p.price*p.discount/100):p.price;
+      return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty,isPreorder:!!item.isPreorder,availableFrom:item.availableFrom||null};
     }
     var a=getById(window.ACCS,lookupId);
     if(a){
@@ -533,7 +556,7 @@ function submitOrder(){
   }).filter(function(i){return i;});
 
   var subtotal=cartTotal();
-  var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses':'+24 meses'):'90 días';
+  var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses cobertura completa':'+24 meses'):'12 meses';
   var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envío 24-48hs');
   if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
   if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
@@ -561,7 +584,8 @@ function submitOrder(){
     paymentMethod:actualPaymentMethod,
     carrier:checkoutState.selectedCarrier||null,
     carrierService:checkoutState.selectedService||null,
-    coupons:hasCoupons?CPN.applied.map(function(c){return c.id}):[]
+    coupons:hasCoupons?CPN.applied.map(function(c){return c.id}):[],
+    agreedToTerms: hasPreorder
   };
 
   if(hasCoupons)payload.couponDiscount=couponTotal;
@@ -610,61 +634,21 @@ function renderCheckoutSummaryStep(){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId);
     if(p){
-      var isPromo=p.isOffer&&p.discount>0;
+      var isPromo=isOfferValid(p);
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
         '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
           '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
-          '<div style="font-size:11px;color:var(--gray)">Cant: '+item.qty+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">x'+item.qty+' · '+fmt(price)+'</div>'+
         '</div>'+
-        '<div style="font-size:14px;font-weight:700;color:var(--dk);white-space:nowrap">'+fmt(price*item.qty)+'</div>'+
+        '<div style="font-size:13px;font-weight:700;white-space:nowrap">'+fmt(price*item.qty)+'</div>'+
       '</div>';
-    }
-    return '';
-  }).join('');
-
-  var subtotal=cartTotal();
-  var deliveryCost=checkoutState.delivery==='enviopack'?0:(typeof checkoutState.delivery==='number'?checkoutState.delivery:0);
-  var total=subtotal+checkoutState.warranty+deliveryCost;
-  var warrantyLabel=checkoutState.warranty===0?'90 días (incluida)':checkoutState.warranty===85000?'+12 meses':'+24 meses';
-  var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':checkoutState.delivery===5000?'Express':'Envío 24-48hs';
-  if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
-  if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
-
-  var sumWarranty=document.getElementById('sum-warranty');
-  if(sumWarranty)sumWarranty.textContent=warrantyLabel;
-  var sumDelivery=document.getElementById('sum-delivery');
-  if(sumDelivery)sumDelivery.textContent=deliveryLabel;
-  var sumSubtotal=document.getElementById('sum-subtotal');
-  if(sumSubtotal)sumSubtotal.textContent=fmt(subtotal);
-  var couponTotal=typeof CPN!=='undefined'&&CPN.applied?CPN.applied.reduce(function(s,c){return s+c.amount},0):0;
-  var displayTotal=couponTotal>0?total-couponTotal:total;
-  var sumTotal=document.getElementById('sum-total');
-  if(sumTotal)sumTotal.textContent=fmt(displayTotal);
-  var sumWarrantyLine=document.getElementById('sum-warranty-line');
-  var sumWarrantyCost=document.getElementById('sum-warranty-cost');
-  if(sumWarrantyLine){
-    sumWarrantyLine.style.display=checkoutState.warranty>0?'flex':'none';
-    if(sumWarrantyCost)sumWarrantyCost.textContent='+$'+checkoutState.warranty.toLocaleString('es-AR');
-  }
-  var sumDeliveryLine=document.getElementById('sum-delivery-line');
-  var sumDeliveryCost=document.getElementById('sum-delivery-cost');
-  if(sumDeliveryLine){
-    sumDeliveryLine.style.display=deliveryCost>0?'flex':'none';
-    if(sumDeliveryCost)sumDeliveryCost.textContent='+$'+deliveryCost.toLocaleString('es-AR');
-  }
-  var sumCouponLine=document.getElementById('sum-coupon-line');
-  var sumCouponCost=document.getElementById('sum-coupon-cost');
-  if(sumCouponLine&&sumCouponCost){
-    if(couponTotal>0){
-      sumCouponLine.style.display='flex';
-      sumCouponCost.textContent='-$'+couponTotal.toLocaleString('es-AR');
     }else{
       sumCouponLine.style.display='none';
     }
-  }
+  }).join('');
 }
 
 function closeCheckout(){
@@ -730,7 +714,7 @@ function renderCheckoutItems(items){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId);
     if(p){
-      var isPromo=p.isOffer&&p.discount>0;
+      var isPromo=isOfferValid(p);
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       var priceHtml=isPromo?
@@ -764,6 +748,20 @@ function renderCheckoutItems(items){
   if(subtotalEl)subtotalEl.textContent=fmt(subtotal);
   if(totalEl)totalEl.textContent=fmt(subtotal);
   updateCheckoutTotal();
+}
+
+function togPreorderAgreement(){
+  var chk=document.getElementById('preorder-agreement');
+  if(!chk)return;
+  var btn=document.getElementById('btn-final-pay');
+  if(!btn)return;
+  if(chk.checked){
+    btn.disabled=false;
+    btn.style.opacity='1';
+  }else{
+    btn.disabled=true;
+    btn.style.opacity='0.5';
+  }
 }
 
 function checkout(){

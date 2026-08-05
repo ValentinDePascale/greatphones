@@ -27,6 +27,7 @@
                 <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
               </div>
               <span style="font-size:16px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
+              <div id="detOfferTimer" style="display:none"><span class="offer-countdown" id="detTimerText"></span></div>
             </div>
           </div>
           <!-- Meta info -->
@@ -54,11 +55,11 @@
               <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Garantía Extendida</div>
               <div style="display:flex;flex-direction:column;gap:8px" id="warrantyOpts">
                 <div class="warranty-btn" data-w="0" onclick="selOpt(this,'w',0)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">90 días</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">12 meses</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Garantía básica incluida</div>
                 </div>
                 <div class="warranty-btn" data-w="85000" onclick="selOpt(this,'w',85000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+12 meses cobertura completa</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
                   <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total extendida</div>
                 </div>
                 <div class="warranty-btn" data-w="150000" onclick="selOpt(this,'w',150000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">

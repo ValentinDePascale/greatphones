@@ -129,7 +129,7 @@ describe('POST /api/checkout', () => {
         subtotal: 1200000,
         total: 1200000,
         paymentMethod: 'mercadopago',
-        warranty: '90 días',
+        warranty: '12 meses',
         delivery: 'Estandar',
         deliveryCost: 0,
         cuotas: 1,

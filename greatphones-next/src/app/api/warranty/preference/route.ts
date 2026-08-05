@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import { requireSession } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -14,7 +15,11 @@ const PLANS: Record<string, { months: number; price: number; label: string }> = 
 
 export async function POST(request: Request) {
   try {
-    await requireSession(request)
+    const user = await requireSession(request)
+    const rl = await rateLimit(`warr-pref:${user.id}`, 5, 60000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })
+    }
     const body = await request.json()
     const { code, imei, plan } = body
 
@@ -39,8 +44,8 @@ export async function POST(request: Request) {
 
     const createdAt = new Date(order.createdAt)
     const daysSincePurchase = Math.ceil((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-    if (daysSincePurchase > 90) {
-      return NextResponse.json({ error: 'Ya pasaron los 90 días desde la compra.' }, { status: 400 })
+    if (daysSincePurchase > 365) {
+      return NextResponse.json({ error: 'Ya pasaron los 12 meses desde la compra.' }, { status: 400 })
     }
 
     if (order.warranty?.includes('12') || order.warranty?.includes('24')) {

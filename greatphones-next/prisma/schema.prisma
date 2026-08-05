@@ -38,6 +38,7 @@ model User {
   sentMessages          Message[]
   adminSales            Order[]           @relation("AdminSales")
   orders                Order[]
+  preOrders             PreOrder[]
   quotes                Quote[]
   repairs               Repair[]
   sales                 Sale[]
@@ -78,6 +79,8 @@ model Product {
   processor      String?
   reserved       Int             @default(0)
   modelGroup     String?
+  isPreorder     Boolean         @default(false)
+  availableFrom  DateTime?
   cartItems      CartItem[]
   favorites      Favorite[]
   inventoryItems InventoryItem[]
@@ -228,6 +231,8 @@ model Order {
   items               OrderItem[]
   paymentTransactions PaymentTransaction[]
   warrantyExtends     WarrantyExtend[]
+  preOrders           PreOrder[]
+  @@index([userId])
 }
 
 model OrderItem {
@@ -272,7 +277,15 @@ model PreOrder {
   productCondition      String?
   productModelName      String?
   productStorage        String?
+  source                String    @default("local")
+  agreedToTerms         Boolean   @default(false)
+  userId                String?
+  orderId               String?
+  mpPaymentId           String?
+  mpPreferenceId        String?
   product               Product?  @relation(fields: [productId], references: [id])
+  user                  User?     @relation(fields: [userId], references: [id])
+  order                 Order?    @relation(fields: [orderId], references: [id])
 }
 
 model Quote {

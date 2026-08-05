@@ -81,7 +81,7 @@ function closeCart(){
     overlay.querySelectorAll('div')[1].style.transform='translateX(100%)';
   }
 }
-function addToCart(id,triggerEl,variant){
+function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
   var p=getById(PRODUCTS,variant?variant.productId||id:id);
   var a=getById(window.ACCS,id);
   if(!p&&!a)return;
@@ -89,7 +89,7 @@ function addToCart(id,triggerEl,variant){
   var stock=variant?1:(p?p.stock:(a?a.stock:0));
   var existing=Cart.find(function(item){return item.id===itemId;});
   var currentQty=existing?existing.qty:0;
-  if(currentQty>=stock){
+  if(!isPreorder&&!variant&&currentQty>=stock){
     showToast('Solo hay '+stock+' disponible'+(stock>1?'s':''));
     return;
   }
@@ -97,6 +97,10 @@ function addToCart(id,triggerEl,variant){
     existing.qty++;
   }else{
     var entry={id:itemId,productId:id,qty:1};
+    if(isPreorder){
+      entry.isPreorder=true;
+      if(availableFrom)entry.availableFrom=availableFrom;
+    }
     if(variant){
       entry.variantId=variant.imei;
       var cleanName=[p.brand||'',p.modelGroup||p.name,variant.color,variant.storage].filter(Boolean).join(' ');
@@ -256,13 +260,16 @@ function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
     '<div style="font-size:10px;color:var(--gray);text-decoration:line-through">'+fmt(((a||p).price)*item.qty)+'</div>'+
     '<div style="font-size:10px;color:var(--red);font-weight:600">-'+(a||p).discount+'%</div>':
     '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
-  var maxReached=(p||a).stock>0&&item.qty>=(p||a).stock;
-  var stockWarning=(p||a).stock<=5&&(p||a).stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+(p||a).stock+' disp.</div>':'';
+  var maxReached=(p||a)&&!item.isPreorder&&(p||a).stock>0&&item.qty>=(p||a).stock;
+  var stockWarning=(p||a)&&!item.isPreorder&&(p||a).stock<=5&&(p||a).stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+(p||a).stock+' disp.</div>':'';
+  var preorderBadge=item.isPreorder?'<div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(255,107,44,.1);color:var(--orange);margin-top:4px;display:inline-block">🏷️ Preventa</div>':'';
+  var preorderDate=item.availableFrom?'<div style="font-size:10px;color:#8B7355;margin-top:2px">📅 Disp. '+new Date(item.availableFrom).toLocaleDateString('es-AR',{month:'short',year:'numeric'})+'</div>':'';
   return '<div data-cart-id="'+aid+'" class="cart-item">'+
     '<div style="width:60px;height:60px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
     '<div style="flex:1;min-width:0">'+
       '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+displayName+'</div>'+
       '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">'+(sub||'')+'</div>'+
+      preorderDate+
       '<div style="display:flex;align-items:center;gap:8px">'+
         '<button onclick="updateCartQty(\''+aid+'\',-1)" class="cart-qty-btn">−</button>'+
         '<span class="cart-qty-'+qtyId+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
@@ -272,6 +279,7 @@ function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
     '</div>'+
     '<div style="text-align:right">'+
       priceHtml+
+      preorderBadge+
       '<button onclick="removeFromCart(\''+aid+'\')" class="cart-remove-btn">Eliminar</button>'+
     '</div>'+
   '</div>';

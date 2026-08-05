@@ -1,7 +1,7 @@
 // =========== WARRANTY ===========
 
 var EXTEND_PLANS=[
-  {id:'12m',label:'12 meses',months:12,price:85000,desc:'Cobertura total por 12 meses adicionales'},
+  {id:'12m',label:'12 meses cobertura completa',months:12,price:85000,desc:'Cobertura total por 12 meses adicionales'},
   {id:'24m',label:'24 meses',months:24,price:150000,desc:'Cobertura total por 24 meses adicionales'}
 ];
 
@@ -159,7 +159,7 @@ function renderGarantiaResult(data){
     html+='<div style="background:rgba(45,90,39,.06);border:1px solid rgba(45,90,39,.15);border-radius:10px;padding:12px;margin-bottom:12px;text-align:center">'+
       '<div style="font-size:12px;color:var(--green);line-height:1.6;margin-bottom:12px">'+
         '<strong>&#128737; Extendé tu garantía</strong><br>'+
-        'Todavía estás dentro de los 90 días de tu compra. Elegí el plan que prefieras:'+
+        'Todavía estás dentro de los 12 meses de tu compra. Elegí el plan que prefieras:'+
       '</div>'+
       '<div style="display:flex;gap:10px">'+
         EXTEND_PLANS.map(function(p){

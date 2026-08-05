@@ -38,8 +38,8 @@ export const RESERVATION_TTL_MINUTES = 30
 
 // ---- Warranty Costs ----
 export const WARRANTY_COST_MAP: Record<string, number> = {
-  '90 días': 0,
-  '+12 meses': 85000,
+  '12 meses': 0,
+  '+12 meses cobertura completa': 85000,
   '+24 meses': 150000,
 }
 

@@ -322,7 +322,7 @@ export async function sendOrderConfirmationEmail(data: {
         <ol style="line-height: 1.8;">
           <li>Estamos preparando tu pedido</li>
           <li>Te contactaremos cuando este listo para envio o retiro</li>
-          <li>Tu compra tiene garantia de 90 dias segun Ley 24.240</li>
+          <li>Tu compra tiene garantia de 12 meses segun Ley 24.240</li>
         </ol>
 
         <p style="margin-top: 20px; color: #666; font-size: 12px;">
@@ -474,6 +474,82 @@ export async function sendOrderStatusEmail(data: {
       </div>
     `
   })
+
+  return { success: true }
+}
+
+export async function sendPreorderConfirmationEmail(data: {
+  email: string;
+  clientName: string;
+  preOrders: Array<{
+    code: string;
+    productName: string;
+    storage: string;
+    color: string;
+    price: number;
+    availableFrom: Date | null;
+  }>;
+  paymentMethod: string;
+  installments: number;
+}) {
+  const preOrdersHtml = data.preOrders.map(po => `
+    <tr>
+      <td style="padding:12px;border-bottom:1px solid #e5e5e5;">
+        <strong>${escapeHtml(po.productName)}</strong><br>
+        <small style="color:#666">${escapeHtml(po.storage)} · ${escapeHtml(po.color)}</small><br>
+        <small style="color:#ff6b2c;font-weight:600">Código: ${escapeHtml(po.code)}</small>
+      </td>
+      <td style="padding:12px;text-align:right;border-bottom:1px solid #e5e5e5;font-weight:700">
+        $${po.price.toLocaleString('es-AR')}
+      </td>
+    </tr>
+    ${po.availableFrom ? `
+    <tr>
+      <td colspan="2" style="padding:8px 12px;font-size:12px;color:#8B7355">
+        📅 Disponibilidad estimada: ${new Date(po.availableFrom).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })}
+      </td>
+    </tr>` : ''}
+  `).join('');
+
+  await sendEmail({
+    to: data.email,
+    subject: `Confirmación de preventa - Great Phones`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">¡Reserva confirmada!</h2>
+        <p>Hola ${escapeHtml(data.clientName)},</p>
+        <p>Tu preventa ha sido registrada exitosamente. A continuación los detalles:</p>
+        
+        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <table style="width:100%;border-collapse:collapse">
+            ${preOrdersHtml}
+          </table>
+          <div style="margin-top:12px;padding-top:12px;border-top:1px solid #ddd">
+            <strong>Total abonado:</strong> $${data.preOrders.reduce((sum, po) => sum + po.price, 0).toLocaleString('es-AR')}
+            ${data.installments > 1 ? `<br><small>En ${data.installments} cuotas</small>` : ''}
+          </div>
+        </div>
+
+        <div style="background: #fff3e0; padding: 16px; border-radius: 8px; border-left: 4px solid #ff6b2c; margin: 20px 0;">
+          <strong>⚠️ Información importante:</strong>
+          <ul style="margin:8px 0 0 0;padding-left:20px;font-size:13px;color:#555">
+            <li>Este producto aún <strong>no se encuentra en stock</strong>.</li>
+            <li>Las fechas de disponibilidad son <strong>estimadas</strong> y pueden variar.</li>
+            <li>Te notificaremos por email cuando el producto esté por llegar.</li>
+            <li>No se requiere IMEI hasta que el equipo esté disponible.</li>
+          </ul>
+        </div>
+
+        <p style="margin-top: 20px;">
+          Si tenes alguna duda, escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  });
 
   return { success: true }
 }

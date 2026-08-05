@@ -534,7 +534,7 @@ function checkAndShowAutoReply(text){
 
 var faqOptions=[
   {id:'horarios',label:'Horarios de atencion',answer:'Nuestro horario de atencion es de Lunes a Viernes de 10:00 a 19:00hs y Sabados de 10:00 a 14:00hs. Estamos en Zelarrayan 179, Bahia Blanca.'},
-  {id:'garantia',label:'Garantia de productos',answer:'Todos nuestros productos tienen garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos y lo resolvemos.'},
+  {id:'garantia',label:'Garantia de productos',answer:'Todos nuestros productos tienen garantia de 12 meses segun Ley 24.240. Si tenes algun problema, contactanos y lo resolvemos.'},
   {id:'envios',label:'Informacion sobre envios',answer:'Realizamos envios a todo el pais. El tiempo de entrega es de 3 a 7 dias habiles. Tambien podes retirar en nuestro local en Zelarrayan 179, Bahia Blanca.'},
   {id:'pagos',label:'Medios de pago',answer:'Aceptamos Mercado Pago, tarjetas de credito/debito y efectivo. Podes pagar en hasta 12 cuotas sin interes.'},
   {id:'devoluciones',label:'Devoluciones y arrepentimientos',answer:'Tenes 10 dias habiles desde la recepcion para ejercer tu derecho de arrepentimiento segun Ley 24.240. El reembolso se procesa en 10 dias habiles.'},
@@ -1481,7 +1481,7 @@ var quickReplyIcons=['\u2705','\u{1F68A}','\u{1F6E1}','\u{1F3ED}','\u23F3','\u27
 var cannedReplies=[
   {label:'Confirmado',text:'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.'},
   {label:'Enviado',text:'Tu pedido fue enviado! Te compartiremos el numero de tracking para que puedas seguirlo.'},
-  {label:'Garantía',text:'Tu compra tiene garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos.'},
+  {label:'Garantía',text:'Tu compra tiene garantia de 12 meses segun Ley 24.240. Si tenes algun problema, contactanos.'},
   {label:'Retiro',text:'Tu pedido esta listo para retiro en nuestro local: Zelarrayan 179, Bahia Blanca. Horario: Lun a Vie 10-19hs.'},
   {label:'Demora',text:'Estamos teniendo una leve demora en tu pedido. Te agradecemos la paciencia y te avisaremos apenas este listo.'},
   {label:'Gracias',text:'Gracias por tu compra! Si tenes alguna consulta no dudes en escribirnos. Estamos para ayudarte.'},

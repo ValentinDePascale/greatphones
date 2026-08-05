@@ -230,7 +230,7 @@ export async function POST(request: Request) {
         shippingZip: zip,
         shippingCity: city,
         shippingProvince: province,
-        ...(warranty && { warranty: '90 dias' }),
+        ...(warranty && { warranty: '12 meses' }),
         cuotas: cuotas || 1,
         subtotal,
         total,

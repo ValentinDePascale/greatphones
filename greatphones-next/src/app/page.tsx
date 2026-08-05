@@ -6,10 +6,10 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Great Phones — Tecnología premium. Precio justo.',
-  description: 'Comprá celulares reacondicionados premium, accesorios y más. Garantía real de 90 días. Envíos a todo el país.',
+  description: 'Comprá celulares reacondicionados premium, accesorios y más. Garantía real de 12 meses. Envíos a todo el país.',
   openGraph: {
     title: 'Great Phones — Tecnología premium. Precio justo.',
-    description: 'Comprá celulares reacondicionados premium con garantía de 90 días.',
+    description: 'Comprá celulares reacondicionados premium con garantía de 12 meses.',
     type: 'website',
   },
   robots: { index: true, follow: true },

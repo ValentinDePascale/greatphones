@@ -8,6 +8,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { reserveStock } from '@/lib/stock';
 import { getEffectivePrice, generateOrderCode, WARRANTY_COST_MAP } from '@/lib/pricing';
 import { RESERVATION_TTL_MINUTES } from '@/config';
+import { AuthError } from '@/lib/auth-guard';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -93,9 +94,13 @@ export async function POST(request: NextRequest) {
     const { 
       items, email, phone, street, number, floor, zip, city, province, document,
       warranty, delivery, cuotas, carrier, carrierService, paymentMethod,
-      coupons: couponIds,
+      coupons: couponIds, agreedToTerms,
     } = body;
 
+    const hasPreorderItems = items.some((item: any) => item.isPreorder);
+    if (hasPreorderItems && !agreedToTerms) {
+      return NextResponse.json({ error: 'Debe aceptar los términos y condiciones de preventa' }, { status: 400 });
+    }
     const user = await findOrCreateUser(email, phone, document);
     const userId = user.id;
 
@@ -121,9 +126,9 @@ export async function POST(request: NextRequest) {
       for (const a of accessories) accessoryMap.set(a.id, a);
     }
 
-    // Validate IMEI items (specific inventory units)
+    // Validate IMEI items (specific inventory units) — skip for preorder items
     const imeiMap = new Map<string, any>();
-    const imeiItems = items.filter((item: any) => item.imei);
+    const imeiItems = items.filter((item: any) => item.imei && !item.isPreorder);
     if (imeiItems.length > 0) {
       const imeis = imeiItems.map((item: any) => item.imei);
       const inventoryUnits = await prisma.inventoryItem.findMany({
@@ -160,7 +165,7 @@ export async function POST(request: NextRequest) {
       } else {
         const product = productMap.get(item.id);
         if (!product) throw { status: 400, message: `Producto no encontrado: ${item.name}` };
-        if (product.stock < item.quantity) {
+        if (!item.isPreorder && product.stock < item.quantity) {
           throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` };
         }
         const unitPrice = getEffectivePrice(product);
@@ -296,12 +301,21 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[Checkout] Starting transaction for order:', orderCode);
+    const isPreorderOrder = hasPreorderItems && enrichedItems.every((item: any) => item.isPreorder);
+    const saleChannel = isPreorderOrder ? 'preorder' : 'online';
+
     const order = await prisma.$transaction(async (tx) => {
-      await reserveStock(tx, enrichedItems.map((item: any) => ({
-        productId: item.product?.id || null,
-        accessoryId: item.accessory?.id || null,
-        quantity: item.quantity,
-      })))
+      // Reserve stock only for non-preorder items
+      const stockItems = enrichedItems
+        .filter((item: any) => !item.isPreorder)
+        .map((item: any) => ({
+          productId: item.product?.id || null,
+          accessoryId: item.accessory?.id || null,
+          quantity: item.quantity,
+        }));
+      if (stockItems.length > 0) {
+        await reserveStock(tx, stockItems);
+      }
 
       // Reserve specific inventory units (IMEI items)
       const itemInventoryMap = new Map<string, string>();
@@ -328,7 +342,7 @@ export async function POST(request: NextRequest) {
           userId: userId,
           status: orderStatus,
           payment: orderPayment,
-          warranty: warranty || '90 dias',
+          warranty: warranty || '12 meses',
           cuotas: cuotas || 1,
           subtotal: calculatedSubtotal,
           total: calculatedTotal,
@@ -345,6 +359,7 @@ export async function POST(request: NextRequest) {
           shippingProvince: province,
           carrier: carrier || null,
           carrierService: carrierService || null,
+          saleChannel,
           mpPreferenceId: preferenceId,
           items: {
             create: enrichedItems.map((item: any) => ({
@@ -432,6 +447,38 @@ export async function POST(request: NextRequest) {
         });
       }
 
+      // Create PreOrder records for preorder items
+      if (hasPreorderItems && saleChannel === 'preorder') {
+        for (const item of enrichedItems) {
+          if (item.isPreorder && item.product) {
+            const preCode = `PRE-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+            await tx.preOrder.create({
+              data: {
+                code: preCode,
+                clientName: user.name || email.split('@')[0],
+                clientDni: document || null,
+                clientPhone: phone || null,
+                clientEmail: email,
+                productId: item.product.id,
+                productModelName: item.product.name,
+                productStorage: item.product.storage || null,
+                productColor: item.product.color || null,
+                productCondition: item.product.condition || 'Nuevo',
+                price: item.unitPrice,
+                paymentMethod: paymentMethod || 'mercadopago',
+                installments: cuotas || 1,
+                status: isFullyPaidByCoupons ? 'CONFIRMED' : 'PENDING',
+                source: 'online',
+                agreedToTerms: true,
+                userId: userId,
+                orderId: created.id,
+                mpPreferenceId: preferenceId,
+              }
+            });
+          }
+        }
+      }
+
       return created;
     });
     console.log('[Checkout] Transaction committed. Order:', { id: order.id, code: order.code, status: order.status });
@@ -466,18 +513,18 @@ export async function POST(request: NextRequest) {
       couponDiscount,
       totalAfterCoupons,
       itemCount: enrichedItems.length,
+      isPreorder: saleChannel === 'preorder',
     });
 
   } catch (error) {
-    console.error('Checkout error:', error);
-    const msg = (error instanceof Error ? error.message : (error as { message?: string })?.message) || 'Error al procesar el pago';
-    const status = (error as { status?: number })?.status;
-    if (status) {
-      return NextResponse.json({ error: msg }, { status });
+    if (error instanceof AuthError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
     }
-    return NextResponse.json(
-      { error: 'Error al procesar el pago. Intenta novamente.' },
-      { status: 500 }
-    );
+    if (error !== null && typeof error === 'object' && 'status' in error && 'message' in error) {
+      const err = error as { status: number; message: string }
+      return NextResponse.json({ error: err.message }, { status: err.status })
+    }
+    console.error('Checkout error:', error)
+    return NextResponse.json({ error: 'Error al procesar el pago' }, { status: 500 })
   }
 }

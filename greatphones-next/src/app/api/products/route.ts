@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import {
   ProductCreateSchema,
@@ -7,21 +7,28 @@ import {
 } from '@/lib/validations'
 import { productCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
-import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { requireAdmin, handleRouteError, AuthError } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
-
-
-export async function GET(request: Request) {
-  const origin = request.headers.get('origin')
+export async function GET(request: NextRequest) {
+  const origin = request.headers.get('origin') || '*'
   const corsHeaders = getCorsHeaders(origin)
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rl = await rateLimit(`products:${ip}`, 30, 60000)
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes. Reintenta en ' + Math.ceil((rl.resetAt - Date.now()) / 1000) + 's' }, { status: 429 })
+  }
   const { searchParams } = new URL(request.url)
   const brand = searchParams.get('brand')
   const offer = searchParams.get('offer')
   const search = searchParams.get('search')
+  const preorder = searchParams.get('preorder')
   const page = parseInt(searchParams.get('page') || '1')
   const limit = parseInt(searchParams.get('limit') || '20')
 
-  const cacheKey = `products:${brand||''}:${offer||''}:${search||''}:${page}:${limit}`
+  const isAdmin = request.headers.get('x-user-id') && request.headers.get('x-admin-request') === '1'
+
+  const cacheKey = `products:${brand||''}:${offer||''}:${search||''}:${preorder||''}:${page}:${limit}`
   const cached = productCache.get(cacheKey)
   if (cached) {
     return NextResponse.json(cached, { headers: corsHeaders })
@@ -44,6 +51,12 @@ export async function GET(request: Request) {
         { brand: { contains: search, mode: 'insensitive' } },
         { sub: { contains: search, mode: 'insensitive' } },
       ]
+    }
+
+    if (preorder === 'true') {
+      where.isPreorder = true
+    } else if (!isAdmin) {
+      where.isPreorder = { not: true }
     }
 
     const total = await prisma.product.count({ where })
@@ -107,6 +120,8 @@ export async function POST(request: Request) {
         discount: Number(body.discount) || 0,
         offerStart: body.offerStart ? new Date(body.offerStart) : null,
         offerEnd: body.offerEnd ? new Date(body.offerEnd) : null,
+        isPreorder: Boolean(body.isPreorder),
+        availableFrom: body.availableFrom ? new Date(body.availableFrom) : null,
       },
     })
 
@@ -134,8 +149,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newProduct, { status: 201, headers: corsHeaders })
   } catch (error) {
-    console.error('Error creating product:', error)
-    const status = (error as { status?: number })?.status || 500
+    const status = error instanceof AuthError ? error.status : 500
     return NextResponse.json({ error: 'Error al crear producto' }, { status, headers: corsHeaders })
   }
 }
@@ -183,6 +197,8 @@ export async function PUT(request: Request) {
         ...(body.discount !== undefined && { discount: Number(body.discount) }),
         ...(body.offerStart && { offerStart: new Date(body.offerStart) }),
         ...(body.offerEnd && { offerEnd: new Date(body.offerEnd) }),
+        ...(body.isPreorder !== undefined && { isPreorder: Boolean(body.isPreorder) }),
+        ...(body.availableFrom !== undefined && { availableFrom: body.availableFrom ? new Date(body.availableFrom) : null }),
       },
     })
 
@@ -190,8 +206,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json(updatedProduct, { headers: corsHeaders })
   } catch (error) {
-    console.error('Error updating product:', error)
-    const status = (error as { status?: number })?.status || 500
+    const status = error instanceof AuthError ? error.status : 500
     return NextResponse.json({ error: 'Error al actualizar producto' }, { status, headers: corsHeaders })
   }
 }
@@ -241,8 +256,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true }, { headers: corsHeaders })
   } catch (error) {
-    console.error('Error deleting product:', error)
-    const status = (error as { status?: number })?.status || 500
+    const status = error instanceof AuthError ? error.status : 500
     return NextResponse.json({ error: 'Error al eliminar producto' }, { status, headers: corsHeaders })
   }
 }

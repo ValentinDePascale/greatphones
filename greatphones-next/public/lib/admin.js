@@ -60,6 +60,9 @@ function renderAdminContent(tab){
     loadPendingOrders();
   }else if(tab==='inventory'){
     content.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:40px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
+  }else if(tab==='preventa'){
+    content.innerHTML='<div id="preventa-view"></div>';
+    if(typeof renderPreventaTab==='function')renderPreventaTab('catalogo');
   }else if(tab==='instore'){
     loadInStoreHistory();
   }else{
@@ -886,6 +889,10 @@ function saveAccessory(){
     compatibleModels:collectCompatModels()||null,
     ico:document.getElementById('accIco')?document.getElementById('accIco').value:'📦',
     images:window.accAdditionalImages||[],
+    discount:parseInt(document.getElementById('accDiscount').value)||0,
+    isOffer:document.getElementById('accIsOffer').checked||false,
+    offerStart:document.getElementById('accOfferStart').value||null,
+    offerEnd:document.getElementById('accOfferEnd').value||null,
   };
 
   // If editing an existing record, just PUT the first row's data
@@ -897,7 +904,7 @@ function saveAccessory(){
     data.imageUrl=firstRow&&firstRow.querySelector('.var-img-val')?firstRow.querySelector('.var-img-val').value||(document.getElementById('accImageUrl').value):document.getElementById('accImageUrl').value;
     fetch(API_URL+'/api/accessories?id='+id,{method:'PUT',headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},body:JSON.stringify(data)})
     .then(function(r){if(!r.ok)throw new Error('Error '+r.status);return r.json();})
-    .then(function(){showSuccessToast('Actualizado','Accesorio guardado');resetAccessoryForm();loadAccessories();nav('admin');renderAdminContent('acc');})
+    .then(function(){showSuccessToast('Actualizado','Accesorio guardado');resetAccessoryForm();nav('admin');refreshAdmin();})
     .catch(function(e){showErrorToast('Error',e.message||'No se pudo guardar');});
     return;
   }
@@ -970,6 +977,10 @@ function fillAccForm(a){
   document.getElementById('accImageUrl').value=a.imageUrl||'';
   document.getElementById('accColor').value=a.color||'';
   document.getElementById('accModelGroup').value=a.modelGroup||'';
+  var disEl=document.getElementById('accDiscount'); if(disEl){disEl.value=a.discount||0; disEl.disabled=!a.isOffer;}
+  var isoEl=document.getElementById('accIsOffer'); if(isoEl)isoEl.checked=!!a.isOffer;
+  var asEl=document.getElementById('accOfferStart'); if(asEl)asEl.value=a.offerStart?toDatetimeLocal(new Date(a.offerStart)):'';
+  var aeEl=document.getElementById('accOfferEnd'); if(aeEl)aeEl.value=a.offerEnd?toDatetimeLocal(new Date(a.offerEnd)):'';
   buildCompatGrid(a.compatibleModels||'');
   window.accAdditionalImages=Array.isArray(a.images)?a.images.slice():[];
   var prevImg=document.getElementById('accImagePreview');if(prevImg&&a.imageUrl)prevImg.innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
@@ -1040,23 +1051,20 @@ function deleteAccessory(id){
     closeDeleteAccessoryModal();
     fetch(API_URL+'/api/accessories?id='+id,{method:'DELETE',headers:{'X-User-Id': currentUser.id}}).then(function(r){return r.json();}).then(function(){
       showUndoToast('Accesorio eliminado', aname, function(){
-        // Undo: restore accessory con datos originales
         if(accessoryBackup){
           fetch(API_URL+'/api/accessories',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
             body:JSON.stringify(accessoryBackup)
-          }).then(function(){
-            loadAccessories();
-            loadAdminAccessories();
+          })          .then(function(){
+            if(typeof refreshAdmin==='function')refreshAdmin();
             showSuccessToast('Accesorio restaurado', aname);
           }).catch(function(){
             showErrorToast('Error', 'No se pudo restaurar el accesorio');
           });
         }
       });
-      loadAccessories();
-      loadAdminAccessories();
+      if(typeof refreshAdmin==='function')refreshAdmin();
     }).catch(function(){showToast('Error eliminando');});
   };
   modal.style.display='flex';
@@ -1350,23 +1358,20 @@ function deleteProduct(id){
       return r.json();
     }).then(function(){
       showUndoToast('Producto eliminado', pname, function(){
-        // Undo: restore product con datos originales
         if(productBackup){
           fetch(API_URL+'/api/products',{
             method:'POST',
             headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
             body:JSON.stringify(productBackup)
-          }).then(function(){
-            loadProducts();
-            loadAdminProducts();
+          })          .then(function(){
+            if(typeof refreshAdmin==='function')refreshAdmin();
             showSuccessToast('Producto restaurado', pname);
           }).catch(function(){
             showErrorToast('Error', 'No se pudo restaurar el producto');
           });
         }
       });
-      loadProducts();
-      loadAdminProducts();
+      if(typeof refreshAdmin==='function')refreshAdmin();
     }).catch(function(e){showToast('Error eliminando: '+e.message);});
   };
   modal.style.display='flex';

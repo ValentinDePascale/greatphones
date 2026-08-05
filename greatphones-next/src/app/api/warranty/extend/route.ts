@@ -38,8 +38,8 @@ export async function POST(request: Request) {
 
     const createdAt = new Date(order.createdAt)
     const daysSincePurchase = Math.ceil((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24))
-    if (daysSincePurchase > 90) {
-      return NextResponse.json({ error: 'Ya pasaron los 90 días desde la compra. No es posible extender la garantía.' }, { status: 400 })
+    if (daysSincePurchase > 365) {
+      return NextResponse.json({ error: 'Ya pasaron los 12 meses desde la compra. No es posible extender la garantía.' }, { status: 400 })
     }
 
     if (order.warranty?.includes('12') || order.warranty?.includes('24')) {

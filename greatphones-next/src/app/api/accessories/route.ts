@@ -8,12 +8,18 @@ import {
 import { accessoryCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
 
 
 export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
+  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const rl = await rateLimit(`accessories:${ip}`, 30, 60000)
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Demasiadas solicitudes' }, { status: 429 })
+  }
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const category = searchParams.get('category')

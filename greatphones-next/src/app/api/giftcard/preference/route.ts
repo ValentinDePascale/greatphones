@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import crypto from 'crypto'
 import { requireSession } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -22,6 +23,10 @@ const MAX_AMOUNT = 3000000
 export async function POST(request: Request) {
   try {
     const auth = await requireSession(request)
+    const rl = await rateLimit(`gc-pref:${auth.id}`, 5, 60000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Demasiadas solicitudes. Espera un momento.' }, { status: 429 })
+    }
 
     const body = await request.json()
     let { amount, recipientEmail, message } = body

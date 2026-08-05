@@ -1,0 +1,73 @@
+<div class="page" id="p-preventas">
+  <div class="sh-hdr" style="background:linear-gradient(135deg,#1A1208 0%,#2D2520 50%,#1A1208 100%);position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;right:0;width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,44,.08) 0%,transparent 70%);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-80px;left:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(255,107,44,.05) 0%,transparent 70%);pointer-events:none"></div>
+    <div class="ctr" style="position:relative;z-index:2;padding:3rem var(--pad)">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,107,44,.15);border:1px solid rgba(255,107,44,.3);padding:4px 12px;border-radius:20px;margin-bottom:1rem">
+        <span style="font-size:14px">&#x2B50;</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange)">Preventa Exclusiva</span>
+      </div>
+      <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,5vw,44px);color:#fff;margin-bottom:.5rem;line-height:1.1;letter-spacing:-.5px">Reservá los próximos<br>lanzamientos</h1>
+      <p style="font-size:14px;color:rgba(255,255,255,.45);max-width:480px;line-height:1.6">Asegurá tu equipo antes que nadie. Productos que están por llegar, con pago online seguro y sin vueltas.</p>
+      <div style="display:flex;gap:8px;margin-top:1.25rem">
+        <button class="btn-gl" onclick="scrollToPreorderGrid()" style="display:inline-flex;align-items:center;gap:6px;font-size:13px">
+          Ver productos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="btn-gl" onclick="togglePreorderInfo()" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;opacity:.7">¿Cómo funciona?</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="preorder-info-panel" style="display:none;background:#fff;border-bottom:1px solid var(--border)">
+    <div class="ctr" style="padding:2rem var(--pad)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem">
+        <div style="display:flex;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F4C5;</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Fecha estimada</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Cada producto indica cuándo esperamos recibirlo. Esta fecha es orientativa y puede variar.</div></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F512;</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Sin IMEI requerido</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Como el equipo aún no llegó, no necesitamos IMEI. Se te asignará uno cuando ingrese.</div></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F6A8;</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Notificaciones</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Te avisamos por email cuando el producto esté por llegar y cualquier novedad sobre tu pedido.</div></div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x2705;</div>
+          <div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Garantía incluida</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Todos los productos de preventa incluyen 12 meses de garantía como cualquier compra en Great Phones.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="preorder-grid-section" style="background:var(--cream);min-height:400px">
+    <div class="ctr" style="padding:2rem var(--pad)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--dk);margin-bottom:2px">Próximos lanzamientos</h2>
+          <p style="font-size:12px;color:var(--gray)">Productos que estarán disponibles próximamente</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <select class="sort-sel" id="preorderSortSel" onchange="renderPreorderGrid()" style="font-size:12px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff">
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="rel">Más recientes</option>
+          </select>
+        </div>
+      </div>
+      <div id="preorderLoading" style="display:none;text-align:center;padding:3rem;color:var(--gray)">
+        <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>
+        <p style="font-size:13px">Cargando productos...</p>
+      </div>
+      <div id="preorderGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem"></div>
+      <div id="preorderEmpty" style="display:none;text-align:center;padding:4rem 2rem;color:var(--gray)">
+        <div style="font-size:60px;margin-bottom:1rem">&#x1F4E6;</div>
+        <p style="font-family:'Playfair Display',serif;font-size:22px;color:var(--dk);margin-bottom:.5rem">No hay productos en preventa</p>
+        <p style="font-size:13px;margin-bottom:1.5rem">Estamos preparando nuevos lanzamientos. Volvé pronto para ver las novedades.</p>
+        <button class="btn btn-o" onclick="nav('shop')">Ver catálogo disponible</button>
+      </div>
+    </div>
+  </div>
+</div>

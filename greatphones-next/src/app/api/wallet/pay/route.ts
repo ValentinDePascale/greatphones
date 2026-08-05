@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           status: 'PROCESSING',
           payment: 'wallet',
-          warranty: warranty || '90 dias',
+          warranty: warranty || '12 meses',
           cuotas: cuotas || 1,
           subtotal: calculatedSubtotal,
           total: calculatedTotal,

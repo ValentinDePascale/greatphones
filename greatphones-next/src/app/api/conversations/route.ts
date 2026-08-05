@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CreateConversationSchema, formatZodError } from '@/lib/validations'
 import { requireSession, handleRouteError } from '@/lib/auth-guard'
+import { rateLimit } from '@/lib/rate-limit'
 
 
 
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
     }
 
     const user = await requireSession(request)
+    const rl = await rateLimit(`conv-create:${user.id}`, 5, 60000)
+    if (!rl.allowed) {
+      return NextResponse.json({ error: 'Has creado muchas conversaciones. Espera un momento.' }, { status: 429 })
+    }
     const { type, subject, firstMessage } = validation.data
 
     const conversation = await prisma.conversation.create({

@@ -32,7 +32,15 @@ function buildSpecsForProduct(p){
     if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
     if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
   }
-  if(p.stock!==undefined){var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F4E6}',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});}
+  if(p.stock!==undefined){
+    if(p.isPreorder){
+      var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
+      specs.push({ico:'📅',label:'Disponibilidad',val:dateStr,color:'var(--orange)'});
+    }else{
+      var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
+      specs.push({ico:'📦',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
+    }
+  }
   return specs;
 }
 
@@ -53,11 +61,11 @@ function renderDetBadges(p,extraCond){
   var type=(p.type||'').toLowerCase();
   var badges=[];
   // Discount badge
-  var isPromo=p.isOffer&&p.discount>0;
+  var isPromo=isOfferValid(p);
   if(isPromo){
     badges.push({ico:'\uD83C\uDFF7',text:p.discount+'% OFF',color:'var(--red)',bg:'rgba(192,57,43,.1)'});
   }
-  badges.push({ico:'\u2713',text:'90 Dias Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'\u2713',text:'12 Meses Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   badges.push({ico:'\u2713',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   badges.push({ico:'\u2713',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   if(type==='celular')badges.splice(2,0,{ico:'\u2713',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
@@ -157,6 +165,18 @@ function loadAccessories(){
       renderAdminContent(currentTab);
     }
   }).catch(function(e){console.error('Error loading accessories:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los accesorios');});
+}
+
+function refreshAdmin(){
+  window._productsLoaded=false;
+  window._accLoaded=false;
+  if(typeof invalidateCache==='function'){
+    invalidateCache('/api/products');
+    invalidateCache('/api/accessories');
+    invalidateCache('/api/inventory');
+  }
+  loadProducts();
+  loadAccessories();
 }
 
 function loadDashboard(){
@@ -515,7 +535,7 @@ function renderGrid(gid,prods){
     // Badge
     function badgeHTML(p,oos){
       if(oos)return'<div class="pcard-badge pcard-badge--gray">Agotado</div>';
-      var isPromo=p.isOffer&&p.discount>0;
+      var isPromo=isOfferValid(p);
       if(isPromo)return'<div class="pcard-badge">-'+p.discount+'%</div>';
       return'';
     }
@@ -553,10 +573,21 @@ function renderGrid(gid,prods){
     }
 
     // === SINGLE PRODUCT CARD ===
-    var isPromoActive=p.isOffer&&p.discount>0;
+    var isPromoActive=isOfferValid(p);
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var cuota=Math.round(finalPrice/12);
     var badge=badgeHTML(p,isOutOfStock);
+    var timerBadge='';
+    if(isPromoActive&&p.offerEnd){
+      var endD=new Date(p.offerEnd);
+      var diff=Math.max(0,Math.floor((endD-new Date())/1000));
+      if(diff>0){
+        var dd=Math.floor(diff/86400);
+        var dh=Math.floor((diff%86400)/3600);
+        var label=dd>0?dd+'d '+dh+'h':dh+'h '+(Math.floor((diff%3600)/60))+'m';
+        timerBadge='<span class="offer-countdown-pill">🔥 '+label+'</span>';
+      }
+    }
     // Subtitle: storage / color
     var subtParts=[];
     if(p.storage)subtParts.push(p.storage);
@@ -574,6 +605,7 @@ function renderGrid(gid,prods){
         '<div class="pcard-name">'+p.name+'</div>'+
         (subtitle?'<div class="pcard-subtitle">'+subtitle+'</div>':'')+
         condPillsHTML(p)+
+        (timerBadge?'<div style="margin-bottom:4px">'+timerBadge+'</div>':'')+
         '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
         '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
         '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(cuota)+' sin interes</span>'+
@@ -595,7 +627,7 @@ function renderHomeRail(){
   var items=sorted.slice(0,8);
   var now=new Date();
   rail.innerHTML=items.map(function(p){
-    var isPromoActive=p.isOffer&&p.discount>0;
+    var isPromoActive=isOfferValid(p);
     var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
     var isOutOfStock=p.stock===0;
     var isFav=isFavorite(p.id);
@@ -624,9 +656,28 @@ function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
   if(!strip)return;
   var offers=PRODUCTS.filter(function(p){
-    return p.isOffer&&p.discount>0;
+return isOfferValid(p);
   });
-  if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';return;}
+  if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';var tb=document.getElementById('offerTimerBanner');if(tb)tb.style.display='none';return;}
+
+  // Show earliest-ending offer countdown
+  var earliest=offers.reduce(function(best,p){
+    if(!p.offerEnd)return best;
+    var d=new Date(p.offerEnd);
+    return(!best||d<best)?d:best;
+  },null);
+  var tb=document.getElementById('offerTimerBanner');
+  if(tb&&earliest){
+    var diff=Math.max(0,Math.floor((earliest-new Date())/1000));
+    if(diff>0){
+      var dd=Math.floor(diff/86400);
+      var dh=Math.floor((diff%86400)/3600);
+      var dm=Math.floor((diff%3600)/60);
+      var label=dd>0?dd+'d '+dh+'h '+dm+'m':dh+'h '+dm+'m';
+      tb.innerHTML='<span class="offer-countdown">🔥 La oferta termina en '+label+'</span>';
+      tb.style.display='';
+    }else{tb.style.display='none';}
+  }else if(tb)tb.style.display='none';
   renderGrid('offerStrip',offers);
 }
 function renderShopGrid(){
@@ -732,8 +783,8 @@ function renderShopGrid(){
 function renderOfertasGrid(){
   var grid=document.getElementById('ofertasGrid');
   if(!grid)return;
-  var offers=PRODUCTS.filter(function(p){return p.isOffer;});
-  var accOffers=(window.ACCS||[]).filter(function(a){return a.isOffer;});
+  var offers=PRODUCTS.filter(function(p){return isOfferValid(p);});
+  var accOffers=(window.ACCS||[]).filter(function(a){return isOfferValid(a);});
   var allOffers=offers.concat(accOffers);
   renderGrid('ofertasGrid',allOffers);
   var og=document.getElementById('ofertasGrid');if(og)og.dataset.svRevealed='1';
@@ -800,7 +851,7 @@ function renderAccGrid(){
 
   grid.innerHTML=grouped.map(function(g){
     var now=new Date();
-    var isPromoActive=g.type==='single'?g.acc.isOffer&&g.acc.discount>0:g.isOffer&&g.discount>0;
+    var isPromoActive=g.type==='single'?isOfferValid(g.acc):isOfferValid(g);
     var finalPrice=g.type==='single'?(isPromoActive?Math.round(g.acc.price*(1-g.acc.discount/100)):g.acc.price):(isPromoActive?Math.round(g.price*(1-g.discount/100)):g.price);
     var isOutOfStock=g.type==='single'?g.acc.stock===0:g.stock===0;
     var isFav=g.type==='single'?isFavorite(g.acc.id):isFavorite(g.id);
@@ -860,7 +911,7 @@ function openAccDetail(id){
   currentProd=null;
   currentAcc=getById(window.ACCS,id);if(!currentAcc)return;
   var now=new Date();
-  var isPromoActive=currentAcc.isOffer&&currentAcc.discount>0;
+  var isPromoActive=isOfferValid(currentAcc);
   var finalPrice=isPromoActive?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   var cuota12=Math.round(finalPrice/12);
 
@@ -962,7 +1013,7 @@ function switchAccMainImg(idx){
 function selectAccVariant(id){
   var v=getById(window.ACCS||[],id);if(!v)return;
   currentAcc=v;
-  var isPromoActive=currentAcc.isOffer&&currentAcc.discount>0;
+  var isPromoActive=isOfferValid(currentAcc);
   var finalPrice=isPromoActive?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentAcc.name;
   var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
@@ -1027,7 +1078,7 @@ function openDetail(id, variantId){
     window._detailVariants=window._variantCache[cacheKey].filter(function(v){return v.status!=='SOLD';});
     window._variantsLoaded=true;
     renderDetailVariants();
-    var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
+    var isPromoActive=isOfferValid(currentProd);
     // For variant products, use the minimum variant targetPrice
     var basePrice=currentProd.price;
     if(window._detailVariants.length>0){
@@ -1056,6 +1107,7 @@ function openDetail(id, variantId){
     }else{if(oldEl)oldEl.style.display='none';}
     renderDetailImages();updDetTotal();
     renderDetBadges(currentProd);
+    startOfferTimer(currentProd);
     var fb=document.getElementById('detFavBtn');
     if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
     // Select variant AFTER base render so it can override specs/name/badges
@@ -1093,7 +1145,7 @@ function openDetail(id, variantId){
     window._variantsLoaded=true;
     renderDetailVariants();
     // Update price to show minimum variant price with discount
-    var isPromo=currentProd.isOffer&&currentProd.discount>0;
+    var isPromo=isOfferValid(currentProd);
     var minTarget=Infinity;
     for(var mi=0;mi<window._detailVariants.length;mi++){
       if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
@@ -1129,7 +1181,7 @@ function openDetail(id, variantId){
   });
 
   var now=new Date();
-  var isPromoActive=currentProd.isOffer&&currentProd.discount>0;
+  var isPromoActive=isOfferValid(currentProd);
   var finalPrice=isPromoActive?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
   var cuota12=Math.round(finalPrice/12);
 
@@ -1149,10 +1201,20 @@ function openDetail(id, variantId){
 
   renderSpecsGrid(buildSpecsForProduct(currentProd));
   renderDetBadges(currentProd);
+  startOfferTimer(currentProd);
 
   var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
-  if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartFromDetail();};}
-  if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){buyNow();};}
+  if(currentProd.isPreorder){
+    if(addCartBtn){addCartBtn.style.display='';addCartBtn.textContent='Reservar';addCartBtn.onclick=function(){addToCart(currentProd.id,addCartBtn,null,true,currentProd.availableFrom);};}
+    if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.textContent='Reservar Ahora';buyNowBtn.onclick=function(){addToCart(currentProd.id,null,null,true,currentProd.availableFrom);setTimeout(function(){nav('checkout');},400);};}
+    var variantsEl=document.getElementById('detVariants');
+    if(variantsEl)variantsEl.style.display='none';
+    var imeiSection=document.querySelector('.det-imei-section');
+    if(imeiSection)imeiSection.style.display='none';
+  }else{
+    if(addCartBtn){addCartBtn.style.display='';addCartBtn.textContent='Agregar al carrito';addCartBtn.onclick=function(){addToCartFromDetail();};}
+    if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.textContent='Comprar ahora';buyNowBtn.onclick=function(){buyNow();};}
+  }
   var consultBtn=document.getElementById('detConsultBtn');
   if(consultBtn)consultBtn.style.display='flex';
 
@@ -1264,7 +1326,7 @@ function selectDetailVariant(idx){
     }
   }
   
-  var isPromo=variantProd&&variantProd.isOffer&&variantProd.discount>0;
+  var isPromo=isOfferValid(variantProd);
   var bestDiscount=isPromo?variantProd.discount:0;
   var basePrice=v.targetPrice||currentProd.price;
   var finalPrice=isPromo?Math.round(basePrice*(1-bestDiscount/100)):basePrice;
@@ -1318,6 +1380,7 @@ function selectDetailVariant(idx){
   }else{
     renderDetBadges(mergedProd);
   }
+  startOfferTimer(variantProd||currentProd);
 
   // Show variant-specific image
   if(v.imageUrl){
@@ -1461,7 +1524,7 @@ function renderDetailVariants(){
           if(PRODUCTS[pi].id===v.productId){variantProd=PRODUCTS[pi];break;}
         }
       }
-      var isPromo=variantProd&&variantProd.isOffer&&variantProd.discount>0;
+      var isPromo=isOfferValid(variantProd);
       var pillPrice=isPromo?Math.round(v.targetPrice*(1-variantProd.discount/100)):v.targetPrice;
       if(isPromo)label+=' — <span style="text-decoration:line-through;opacity:.5">'+fmt(v.targetPrice)+'</span> <strong>'+fmt(pillPrice)+'</strong>';
       else label+=' — '+fmt(v.targetPrice);
@@ -1525,12 +1588,12 @@ function updDetTotal(){
   var total=0;
   if(currentProd){
     var now=new Date();
-    var isPromo=currentProd.isOffer&&currentProd.discount>0;
+    var isPromo=isOfferValid(currentProd);
     var base=isPromo?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
     total=base+detWMult+detDExtra;
   }else if(currentAcc){
     var now2=new Date();
-    var isPromo2=currentAcc.isOffer&&currentAcc.discount>0;
+    var isPromo2=isOfferValid(currentAcc);
     total=isPromo2?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   }
   var totalEl=document.getElementById('detTotal');
@@ -1730,7 +1793,7 @@ function renderRelatedAccs(){
       '<div class="det-related-title">'+title+'</div>'+
       '<div class="det-related-scroll">'+
         related.map(function(item){
-          var isPromo=item.isOffer&&item.discount>0;
+          var isPromo=isOfferValid(item);
           var fp=isPromo?Math.round(item.price*(1-item.discount/100)):item.price;
           var img=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:contain">':'<span>'+(item.ico||'\u{1F4E6}')+'</span>';
           return '<div class="det-related-card" onclick="'+clickFn+'(\''+item.id+'\')">'+
@@ -1983,6 +2046,51 @@ function renderFeaturedGrid(){
 
 // =========== TIMER ===========
 var _timerInterval=null;
+var _detailTimerInterval=null;
+function startOfferTimer(p){
+  var timerEl=document.getElementById('detOfferTimer');
+  var textEl=document.getElementById('detTimerText');
+  if(!timerEl||!textEl)return;
+  if(_detailTimerInterval){clearInterval(_detailTimerInterval);_detailTimerInterval=null;}
+  if(!p||!p.offerEnd){timerEl.style.display='none';return;}
+  var end=new Date(p.offerEnd);
+  if(end<=new Date()){timerEl.style.display='none';return;}
+  function tick(){
+    var now=new Date();
+    var diff=Math.max(0,Math.floor((end-now)/1000));
+    if(diff<=0){timerEl.style.display='none';clearInterval(_detailTimerInterval);_detailTimerInterval=null;return;}
+    var d=Math.floor(diff/86400);
+    var h=Math.floor((diff%86400)/3600);
+    var m=Math.floor((diff%3600)/60);
+    var s=diff%60;
+    var parts=[];
+    if(d>0)parts.push(d+'d');
+    parts.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'));
+    textEl.textContent='🔥 Oferta termina en '+parts.join(' ');
+    timerEl.style.display='';
+  }
+  tick();
+  _detailTimerInterval=setInterval(tick,1000);
+}
+function combineDateTime(dateId, timeId){
+  var d=document.getElementById(dateId);
+  var t=document.getElementById(timeId);
+  var dateVal=d?d.value:'';
+  var timeVal=t?t.value:'';
+  if(!dateVal)return null;
+  return dateVal+'T'+(timeVal||'23:59');
+}
+function toDatetimeLocal(d){
+  var tz=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+  return tz.toISOString().slice(0,16);
+}
+function isOfferValid(p){
+  if(!p||!p.isOffer||!p.discount||p.discount<=0)return false;
+  var now=new Date();
+  if(p.offerStart&&new Date(p.offerStart)>now)return false;
+  if(p.offerEnd&&new Date(p.offerEnd)<now)return false;
+  return true;
+}
 function startTimer(){
   if(_timerInterval)clearInterval(_timerInterval);
   var end=new Date();
@@ -2206,13 +2314,22 @@ function saveProduct(){
     imei:document.getElementById('prodImei').value.trim()||null,
     imageUrl:document.getElementById('prodImageUrl').value.trim()||null,
     images:getAdditionalImages(),
-    ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1'
+    ico:originalProduct?originalProduct.ico:'\uD83D\uDCF1',
+    discount:parseInt(document.getElementById('prodDiscount').value)||0,
+    isOffer:document.getElementById('prodIsOffer').checked||false,
+    offerStart:combineDateTime('prodOfferStartDate','prodOfferStartTime'),
+    offerEnd:combineDateTime('prodOfferEndDate','prodOfferEndTime'),
   };
   if(!data.name||!data.price){
     showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
     return;
   }
-  console.log('Saving product:', {isEdit:isEdit, prodId:prodId, data:data});
+  var offerEndRaw=combineDateTime('prodOfferEndDate','prodOfferEndTime')||'';
+  var offerStartRaw=combineDateTime('prodOfferStartDate','prodOfferStartTime')||'';
+  if(data.isOffer){
+    alert('Oferta: '+data.discount+'%\nInicio raw: '+offerStartRaw+'\nFin raw: '+offerEndRaw+'\n\nEn data: offerEnd='+data.offerEnd+' offerStart='+data.offerStart);
+  }
+  console.log('SAVE PRODUCT — isEdit:'+isEdit+' offerEnd:'+offerEndRaw+' isOffer:'+data.isOffer+' discount:'+data.discount);
   var method=isEdit?'PUT':'POST';
   var url=isEdit?API_URL+'/api/products/'+prodId:API_URL+'/api/products';
   fetch(url,{
@@ -2230,8 +2347,16 @@ function saveProduct(){
       }
       throw new Error(errMsg);
     }
+    // Update PRODUCTS[] directly with the saved result
+    if(isEdit){
+      for(var i=0;i<PRODUCTS.length;i++){
+        if(PRODUCTS[i].id===prodId){PRODUCTS[i]=result;break;}
+      }
+    }else{
+      PRODUCTS.unshift(result);
+    }
     nav('admin');
-    loadProducts();
+    refreshAdmin();
     showSuccessToast(isEdit?'Producto actualizado':'Producto agregado', 'Los cambios han sido guardados');
   }).catch(function(e){showErrorToast('Error', e.message || 'No se pudo guardar el producto');});
 }
@@ -2351,6 +2476,12 @@ function editProduct(id){
   }else{
     container.innerHTML='<div id="addImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
   }
+  var discountEl=document.getElementById('prodDiscount'); if(discountEl){discountEl.value=p.discount||0; discountEl.disabled=!p.isOffer;}
+  var isOfferEl=document.getElementById('prodIsOffer'); if(isOfferEl)isOfferEl.checked=!!p.isOffer;
+  var startEl=document.getElementById('prodOfferStartDate'); if(startEl)startEl.value=p.offerStart?toDatetimeLocal(new Date(p.offerStart)).split('T')[0]:'';
+  var startTime=document.getElementById('prodOfferStartTime'); if(startTime)startTime.value=p.offerStart?toDatetimeLocal(new Date(p.offerStart)).split('T')[1]||'':'';
+  var endEl=document.getElementById('prodOfferEndDate'); if(endEl)endEl.value=p.offerEnd?toDatetimeLocal(new Date(p.offerEnd)).split('T')[0]:'';
+  var endTime=document.getElementById('prodOfferEndTime'); if(endTime)endTime.value=p.offerEnd?toDatetimeLocal(new Date(p.offerEnd)).split('T')[1]||'':'';
   isEditingProduct=true;
   nav('admin-product');
   // Fetch variants for this product on demand
@@ -2417,6 +2548,8 @@ window.showQrDownloadModal=function(qrDataUrl,code,label){
 };
 function getUniqueBrands(){
   var brands={};
+  var fallback=['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Apple','Google','OnePlus','Nokia'];
+  fallback.forEach(function(b){brands[b]=true;});
   (PRODUCTS||[]).forEach(function(p){if(p.brand)brands[p.brand]=true;});
   return Object.keys(brands).sort();
 }
@@ -3321,7 +3454,7 @@ function showImeiProductModal(existingProductId){
 }
 
 function renderAdminContent(tab){
-  if(!tab)tab='prods';
+  window.currentAdminTab=tab;
   var el=document.getElementById('adminContent');
   if(!el)return;
   window.currentAdminTab=tab;
@@ -3542,6 +3675,10 @@ function renderAdminContent(tab){
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brandsHtml+'</select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Categoría</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas</option></select></div>'+
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Inicio oferta (opcional)</label><input class="inp-f" id="promoOfferStart" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Fin oferta</label><input class="inp-f" id="promoOfferEnd" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
       '</div>'+
       '<div style="margin-bottom:1rem">'+
         '<input type="text" id="promoSearch" placeholder="🔍 Buscar por nombre..." oninput="renderPromoProducts()" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'">'+
@@ -4098,6 +4235,8 @@ function applyPromo(){
   if(discount<=0){showAlert('Descuento inválido', 'Ingresa un descuento mayor a 0', 'warning');return;}
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
   if(checkboxes.length===0){showAlert('Selección requerida', 'Selecciona al menos un producto', 'warning');return;}
+  var offerStart=document.getElementById('promoOfferStart')?.value||null;
+  var offerEnd=document.getElementById('promoOfferEnd')?.value||null;
   var promises=[];
   var prodCount=0,accCount=0;
   checkboxes.forEach(function(chk){
@@ -4106,15 +4245,17 @@ function applyPromo(){
     var realId=isAcc?rawId.replace('acc-',''):rawId;
     var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
     if(isAcc)accCount++;else prodCount++;
+    var body={discount:discount,isOffer:discount>0};
+    if(offerStart)body.offerStart=offerStart;
+    if(offerEnd)body.offerEnd=offerEnd;
     promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
       headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
-      body:JSON.stringify({discount:discount,isOffer:discount>0})
+      body:JSON.stringify(body)
     }));
   });
   Promise.all(promises).then(function(){
-    loadProducts();
-    loadAccessories();
+    refreshAdmin();
     var msg='Promo aplicada';
     if(prodCount>0&&accCount>0)msg+=' a '+prodCount+' producto(s) y '+accCount+' accesorio(s)';
     else if(prodCount>0)msg+=' a '+prodCount+' producto(s)';
@@ -4131,24 +4272,26 @@ function renderActivePromos(){
   var now=new Date();
   var allOffers=[];
   if(filterType==='todos'||filterType==='productos'){
-    PRODUCTS.filter(function(p){return p.isOffer&&p.discount>0;}).forEach(function(p){
-      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'\uD83D\uDCF1'});
+    PRODUCTS.filter(function(p){return isOfferValid(p);}).forEach(function(p){
+      allOffers.push({id:p.id,name:p.name,sub:p.sub,brand:p.brand,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'\uD83D\uDCF1',offerStart:p.offerStart,offerEnd:p.offerEnd});
     });
   }
   if(filterType==='todos'||filterType==='accesorios'){
-    (window.ACCS||[]).filter(function(a){return a.isOffer&&a.discount>0;}).forEach(function(a){
-      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'\uD83D\uDCE6'});
+    (window.ACCS||[]).filter(function(a){return isOfferValid(a);}).forEach(function(a){
+      allOffers.push({id:a.id,name:a.name,sub:a.category||'',brand:a.brand,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'\uD83D\uDCE6',offerStart:a.offerStart,offerEnd:a.offerEnd});
     });
   }
   var offers=allOffers.filter(function(p){
     if(filterBrand&&p.brand!==filterBrand)return false;
+    if(filterStatus==='activa'){var oe=p.offerEnd?new Date(p.offerEnd):null;var os=p.offerStart?new Date(p.offerStart):null;if(!oe||oe<=new Date())return false;if(os&&os>new Date())return false;}
+    if(filterStatus==='programada'){var ps=p.offerStart?new Date(p.offerStart):null;if(!ps||ps<=new Date())return false;}
     return true;
   });
   
   var brands=[...new Set(allOffers.map(function(p){return p.brand;}).filter(function(b){return b;}))];
   
   tbody.innerHTML='<tr>'+
-    '<td colspan="5" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
+    '<td colspan="6" style="padding:16px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<select id="activePromoFilterType" onchange="renderActivePromos()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">'+
           '<option value="todos" '+(filterType==='todos'?'selected':'')+'>Todos</option>'+
@@ -4170,11 +4313,25 @@ function renderActivePromos(){
   '</tr>';
   
   if(offers.length===0){
-    tbody.innerHTML+='<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
+    tbody.innerHTML+='<tr><td colspan="6" style="padding:32px;text-align:center;color:var(--gray)">No hay promociones activas</td></tr>';
     return;
   }
   tbody.innerHTML+=offers.map(function(p){
     var chkVal=p.type==='accesorio'?'acc-'+p.id:p.id;
+    var now=new Date();
+    var offerEnd=p.offerEnd?new Date(p.offerEnd):null;
+    var offerStart=p.offerStart?new Date(p.offerStart):null;
+    var isScheduled=!!offerStart&&offerStart>now;
+    var isActive=true;
+    if(offerEnd&&offerEnd<=now)isActive=false;
+    if(offerStart&&offerStart>now)isActive=false;
+    if(!offerEnd&&!offerStart)isActive=true;
+    var statusHtml='';
+    if(isScheduled){statusHtml='<span style="background:rgba(245,158,11,.1);color:#d97706;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">PROGRAMADA</span>';}
+    else if(isActive){statusHtml='<span style="background:rgba(45,90,39,.1);color:var(--green);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">ACTIVA</span>';}
+    else{statusHtml='<span style="background:rgba(192,57,43,.1);color:var(--red);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">VENCIDA</span>';}
+    var endDateStr=offerEnd?offerEnd.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+    var endTimeStr=offerEnd?offerEnd.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
     return'<tr onclick="togglePromoRow(\''+chkVal+'\')" style="border-top:1px solid var(--border);cursor:pointer;transition:background .15s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
       '<td style="padding:12px;width:40px">'+
         '<input type="checkbox" class="promo-del-chk" value="'+chkVal+'" style="width:18px;height:18px;cursor:pointer" onclick="event.stopPropagation()">'+
@@ -4189,9 +4346,8 @@ function renderActivePromos(){
       '</td>'+
       '<td style="padding:12px"><span style="font-size:10px;font-weight:600;background:var(--cream2);padding:4px 10px;border-radius:20px">'+p.brand+'</span></td>'+
       '<td style="padding:12px"><span style="font-size:14px;font-weight:700;color:var(--orange)">-'+p.discount+'%</span></td>'+
-      '<td style="padding:12px">'+
-        '<div style="font-size:10px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:currentColor"></span>ACTIVA</div>'+
-      '</td>'+
+      '<td style="padding:12px">'+statusHtml+'</td>'+
+      '<td style="padding:12px;font-size:11px;color:var(--gray)">'+(endDateStr?endDateStr+' '+endTimeStr:'—')+'</td>'+
     '</tr>';
   }).join('');
 }
@@ -4204,10 +4360,8 @@ function removePromo(id){
     headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
     body:JSON.stringify({discount:0,isOffer:false})
   }).then(function(){
-    loadProducts();
-    loadAccessories();
-    renderActivePromos();
-    showSuccessToast('Promoción eliminada', 'La promoción ha sido eliminada');
+    refreshAdmin();
+    showSuccessToast('Promoci&oacute;n eliminada', 'La promoci&oacute;n ha sido eliminada');
   }).catch(function(){showErrorToast('Error', 'No se pudo eliminar la promoción');});
 }
 var promoDeleteIds=[];
@@ -4233,10 +4387,8 @@ function deleteSelectedPromos(){
       }));
     });
     Promise.all(promises).then(function(){
-      loadProducts();
-      loadAccessories();
-      renderActivePromos();
-      showSuccessToast('Promociones eliminadas', promoDeleteIds.length+' promoción(es) eliminada(s)');
+      refreshAdmin();
+      showSuccessToast('Promociones eliminadas', promoDeleteIds.length+' promoci&oacute;n(es) eliminada(s)');
     }).catch(function(){showErrorToast('Error', 'No se pudieron eliminar las promociones');});
     promoDeleteIds=[];
   });

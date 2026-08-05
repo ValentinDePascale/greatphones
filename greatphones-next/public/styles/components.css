@@ -600,6 +600,10 @@
 .ocard-price{font-family:'Playfair Display',Georgia,serif;font-size:14px;color:var(--orange)}
 .timer-val{font-family:'Playfair Display',Georgia,serif;font-size:20px;color:#fff;background:rgba(255,107,44,.15);border:1px solid rgba(255,107,44,.3);padding:4px 12px;border-radius:8px;letter-spacing:2px;font-variant-numeric:tabular-nums;display:inline-block}
 
+/* Offer countdown */
+.offer-countdown{font-size:12px;font-weight:600;color:var(--red);background:rgba(192,57,43,.08);padding:4px 12px;border-radius:8px;display:inline-flex;align-items:center;gap:4px;font-variant-numeric:tabular-nums}
+.offer-countdown-pill{font-size:10px;font-weight:700;color:var(--red);background:rgba(192,57,43,.1);padding:2px 8px;border-radius:10px;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+
 /* OFFER STRIP */
 .offer-strip{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none;margin:0 -1rem;padding:0 1rem 4px}
 .offer-strip::-webkit-scrollbar{display:none}

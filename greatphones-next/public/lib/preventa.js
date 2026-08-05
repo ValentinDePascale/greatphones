@@ -6,14 +6,16 @@ function renderPreventaTab(subtab) {
   if (!el) return
   el.innerHTML =
     '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="instore-tabs">' +
+      '<button class="ord-btn' + (subtab === 'catalogo' || !subtab ? ' ord-btn-act' : '') + '" id="prevTabCatalogo" onclick="renderPreventaTab(\'catalogo\')">Catalogo Preventa</button>' +
+      '<button class="ord-btn' + (subtab === 'online' ? ' ord-btn-act' : '') + '" id="prevTabOnline" onclick="renderPreventaTab(\'online\')">Preventas Online</button>' +
       '<button class="ord-btn' + (subtab === 'local' ? ' ord-btn-act' : '') + '" id="prevTabLocal" onclick="renderPreventaTab(\'local\')">Preventa Local</button>' +
       '<button class="ord-btn' + (subtab === 'history' ? ' ord-btn-act' : '') + '" id="prevTabHistory" onclick="renderPreventaTab(\'history\')">Historial</button>' +
-      '<button class="ord-btn' + (subtab === 'online' ? ' ord-btn-act' : '') + '" id="prevTabOnline" onclick="renderPreventaTab(\'online\')" style="opacity:0.5">Preventa Online</button>' +
     '</div>' +
     '<div id="preventa-subview"></div>'
   if (subtab === 'local') renderPreventaLocal()
   else if (subtab === 'history') renderPreventaHistory()
-  else renderPreventaOnline()
+  else if (subtab === 'online') renderPreventaOnlineLive()
+  else renderPreventaCatalogo()
 }
 
 function renderPreventaLocal() {
@@ -428,16 +430,265 @@ function refreshPreventaView() {
   }
 }
 
-// =========== PREVENTA ONLINE ===========
+// =========== PREVENTA CATALOGO (admin manage preorder products) ===========
 
-function renderPreventaOnline() {
+function renderPreventaCatalogo() {
   var sub = document.getElementById('preventa-subview')
   if (!sub) return
   sub.innerHTML =
-    '<div style="text-align:center;padding:3rem;color:var(--gray)">' +
-      '<div style="font-size:48px;margin-bottom:1rem">🌐</div>' +
-      '<p style="font-size:16px;font-weight:600;margin-bottom:8px">Preventa Online</p>' +
-      '<p style="font-size:13px;margin-bottom:1.5rem;max-width:400px;margin-left:auto;margin-right:auto">Esta sección estará disponible próximamente. Permitirá gestionar preventas realizadas desde la web.</p>' +
-      '<span style="font-size:11px;font-weight:600;padding:4px 12px;border-radius:10px;background:var(--orange);color:#fff">PRÓXIMAMENTE</span>' +
+    '<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">' +
+      '<button class="btn btn-o" onclick="openPreventaForm()">+ Nueva Preventa</button>' +
+    '</div>' +
+    '<div id="prevCatalogGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>' +
+    '<div id="prevCatalogLoading" style="text-align:center;padding:3rem;color:var(--gray)">Cargando...</div>'
+  loadPreventaProducts()
+}
+
+function loadPreventaProducts() {
+  var grid = document.getElementById('prevCatalogGrid')
+  var loading = document.getElementById('prevCatalogLoading')
+  if (!grid) return
+  grid.innerHTML = ''
+  if (loading) loading.style.display = 'block'
+
+  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id; hdrs['X-Admin-Request'] = '1'; }
+  fetch(API_URL + '/api/products?preorder=true&limit=50', { headers: hdrs })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (loading) loading.style.display = 'none'
+      var prods = res.data || res || []
+      if (prods.length === 0) {
+        grid.innerHTML = '<div style="text-align:center;padding:3rem;grid-column:1/-1;color:var(--gray)"><p style="font-size:40px;margin-bottom:1rem">&#x1F4E6;</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">No hay productos de preventa</p><p style="font-size:13px">Crea el primer producto desde el boton "Nueva Preventa"</p></div>'
+        return
+      }
+      grid.innerHTML = prods.map(function(p) {
+        var img = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:40px">' + (p.ico || '&#x1F4F1;') + '</span>'
+        var dateStr = p.availableFrom ? new Date(p.availableFrom).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }) : 'Sin fecha'
+        return '<div class="acard" style="padding:1rem">' +
+          '<div style="display:flex;gap:12px;align-items:flex-start">' +
+            '<div style="width:64px;height:64px;background:var(--admin-input-bg);border-radius:10px;overflow:hidden;flex-shrink:0">' + img + '</div>' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + p.name + '</div>' +
+              '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">' + (p.storage || '') + ' ' + (p.color || '') + ' · ' + (p.condition || '') + '</div>' +
+              '<div style="font-size:12px;color:var(--orange);font-weight:600">Disponible: ' + dateStr + '</div>' +
+              '<div style="font-size:16px;font-weight:700;margin:4px 0">' + fmt(p.price) + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;gap:6px;margin-top:10px">' +
+            '<button class="admin-btn" onclick="editPreventaProduct(\'' + p.id + '\')" style="flex:1;font-size:11px;justify-content:center">&#x270F; Editar</button>' +
+            '<button class="admin-btn" onclick="deletePreventaProduct(\'' + p.id + '\')" style="color:var(--red);font-size:11px;justify-content:center">&#x1F5D1; Eliminar</button>' +
+          '</div>' +
+        '</div>';
+      }).join('')
+    })
+    .catch(function() {
+      if (loading) loading.style.display = 'none'
+      grid.innerHTML = '<div style="text-align:center;padding:3rem;grid-column:1/-1;color:var(--red)">Error cargando productos</div>'
+    })
+}
+
+function openPreventaForm(editData) {
+  var existing = document.getElementById('preventa-modal')
+  if (existing) existing.remove()
+  var isEdit = !!editData
+  var overlay = document.createElement('div')
+  overlay.id = 'preventa-modal'
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center'
+  overlay.innerHTML =
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)" onclick="closePreventaModal()"></div>' +
+    '<div style="position:relative;background:var(--admin-surface);border-radius:16px;width:min(560px,92vw);max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.4);z-index:1">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
+        '<div style="font-size:18px;font-weight:700;color:var(--admin-text)">' + (isEdit ? 'Editar Preventa' : 'Nueva Preventa') + '</div>' +
+        '<button onclick="closePreventaModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>' +
+      '</div>' +
+      '<div style="display:grid;gap:12px">' +
+        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Nombre *</label><input type="text" id="prevf-name" value="' + (isEdit ? (editData.name || '') : '') + '" placeholder="iPhone 16 Pro Max" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><input type="text" id="prevf-brand" value="' + (isEdit ? (editData.brand || 'Apple') : 'iPhone') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Almacenamiento</label><select id="prevf-storage" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"><option value="">Seleccionar...</option><option value="64 GB"' + (isEdit && editData.storage === '64 GB' ? ' selected' : '') + '>64 GB</option><option value="128 GB"' + (isEdit && editData.storage === '128 GB' ? ' selected' : '') + '>128 GB</option><option value="256 GB"' + (isEdit && editData.storage === '256 GB' ? ' selected' : '') + '>256 GB</option><option value="512 GB"' + (isEdit && editData.storage === '512 GB' ? ' selected' : '') + '>512 GB</option><option value="1 TB"' + (isEdit && editData.storage === '1 TB' ? ' selected' : '') + '>1 TB</option></select></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Color</label><input type="text" id="prevf-color" value="' + (isEdit ? (editData.color || '') : '') + '" placeholder="Titanio Natural" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Condicion</label><select id="prevf-condition" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"><option value="Nuevo"' + (isEdit && editData.condition === 'Nuevo' ? ' selected' : '') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition === 'Impecable' ? ' selected' : '') + '>Impecable</option></select></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio *</label><input type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Disp. desde</label><input type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+        '</div>' +
+        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">URL Imagen</label><input type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..." style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">' +
+        '<button class="admin-btn" onclick="closePreventaModal()">Cancelar</button>' +
+        '<button class="admin-btn-primary" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
+      '</div>' +
     '</div>'
+  document.body.appendChild(overlay)
+}
+
+function closePreventaModal() {
+  var modal = document.getElementById('preventa-modal')
+  if (modal) modal.remove()
+}
+
+function savePreventaProduct(id) {
+  var isEdit = !!id
+  var data = {
+    name: document.getElementById('prevf-name').value,
+    brand: document.getElementById('prevf-brand').value || 'iPhone',
+    storage: document.getElementById('prevf-storage').value,
+    color: document.getElementById('prevf-color').value,
+    condition: document.getElementById('prevf-condition').value || 'Nuevo',
+    price: parseInt(document.getElementById('prevf-price').value) || 0,
+    availableFrom: document.getElementById('prevf-availableFrom').value || null,
+    imageUrl: document.getElementById('prevf-imageUrl').value || null,
+    isPreorder: true,
+    type: 'celular',
+    stock: 0,
+    cost: 0,
+    ico: '&#x1F4F1;',
+    images: document.getElementById('prevf-imageUrl').value ? [document.getElementById('prevf-imageUrl').value] : []
+  }
+
+  if (!data.name) { showToast({ title: 'Error', message: 'El nombre es obligatorio', type: 'error' }); return }
+  if (!data.price || data.price <= 0) { showToast({ title: 'Error', message: 'El precio es obligatorio', type: 'error' }); return }
+
+  var url = API_URL + '/api/products'
+  var method = 'POST'
+  if (isEdit) { url += '?id=' + id; method = 'PUT' }
+
+  var hdrs = { 'Content-Type': 'application/json' }
+  if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+
+  fetch(url, { method: method, headers: hdrs, body: JSON.stringify(data) })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
+      showToast({ title: 'Exito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
+      closePreventaModal()
+      loadPreventaProducts()
+    })
+    .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
+}
+
+function editPreventaProduct(id) {
+  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id; hdrs['X-Admin-Request'] = '1'; }
+  fetch(API_URL + '/api/products?preorder=true&limit=50', { headers: hdrs })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      var prods = res.data || res || []
+      var p = prods.find(function(x) { return x.id === id; })
+      if (p) openPreventaForm(p)
+      else showToast({ title: 'Error', message: 'Producto no encontrado', type: 'error' })
+    })
+    .catch(function() { showToast({ title: 'Error', message: 'Error al cargar producto', type: 'error' }) })
+}
+
+function deletePreventaProduct(id) {
+  if (!confirm('Eliminar este producto de preventa?')) return
+  var hdrs = {}; if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+  fetch(API_URL + '/api/products?id=' + id, { method: 'DELETE', headers: hdrs })
+    .then(function(r) { return r.json(); })
+    .then(function(res) {
+      if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
+      showToast({ title: 'Eliminado', message: 'Producto eliminado', type: 'success' })
+      loadPreventaProducts()
+    })
+    .catch(function() { showToast({ title: 'Error', message: 'Error al eliminar', type: 'error' }) })
+}
+
+// =========== PREVENTAS ONLINE (customer web orders) ===========
+
+var _onlinePreventaStatusFilter = '';
+
+function renderPreventaOnlineLive() {
+  var sub = document.getElementById('preventa-subview')
+  if (!sub) return
+  _onlinePreventaStatusFilter = ''
+  sub.innerHTML =
+    '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">' +
+      '<button class="ord-btn ord-btn-act" id="btnOnlineAll" onclick="filterOnlinePreventas(\'\',this)">Todas</button>' +
+      '<button class="ord-btn" id="btnOnlinePending" onclick="filterOnlinePreventas(\'PENDING\',this)">Pendientes</button>' +
+      '<button class="ord-btn" id="btnOnlineConfirmed" onclick="filterOnlinePreventas(\'CONFIRMED\',this)">Confirmadas</button>' +
+      '<button class="ord-btn" id="btnOnlineDelivered" onclick="filterOnlinePreventas(\'DELIVERED\',this)">Entregadas</button>' +
+      '<button class="ord-btn" id="btnOnlineCancelled" onclick="filterOnlinePreventas(\'CANCELLED\',this)">Canceladas</button>' +
+    '</div>' +
+    '<div id="onlinePreventasList"></div>'
+  loadOnlinePreventas()
+}
+
+function filterOnlinePreventas(status, btn) {
+  _onlinePreventaStatusFilter = status
+  document.querySelectorAll('#preventa-subview .ord-btn').forEach(function(b) { b.classList.remove('ord-btn-act'); });
+  if (btn) btn.classList.add('ord-btn-act')
+  loadOnlinePreventas()
+}
+
+function loadOnlinePreventas() {
+  var list = document.getElementById('onlinePreventasList')
+  if (!list) return
+  list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>'
+  var url = API_URL + '/api/admin/preorders?source=online&limit=50'
+  if (_onlinePreventaStatusFilter) url += '&status=' + _onlinePreventaStatusFilter
+  var hdrs = {}; if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+
+  fetch(url, { headers: hdrs })
+    .then(function(r) { return r.json(); })
+    .then(function(preOrders) {
+      if (!Array.isArray(preOrders) || preOrders.length === 0) {
+        list.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:40px;margin-bottom:1rem">&#x1F310;</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">No hay preventas online' + (_onlinePreventaStatusFilter ? ' ' + _onlinePreventaStatusFilter : '') + '</p><p style="font-size:13px">Cuando los clientes realicen preventas desde la web, apareceran aqui.</p></div>'
+        return
+      }
+      var statusColors = { PENDING: 'var(--orange)', CONFIRMED: 'var(--green)', DELIVERED: 'var(--gray)', CANCELLED: 'var(--red)' }
+      list.innerHTML = preOrders.map(function(po) {
+        var productName = po.product ? po.product.name : (po.productModelName || 'Sin nombre')
+        var sc = statusColors[po.status] || 'var(--gray)'
+        var availableFrom = po.product && po.product.availableFrom ? new Date(po.product.availableFrom).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }) : null
+        var actionsHtml = ''
+        if (po.status === 'PENDING') actionsHtml =
+          '<button class="admin-btn" style="font-size:10px;justify-content:center;background:var(--green);color:#fff;border:none" onclick="updateOnlinePreventa(\'' + po.id + '\',\'CONFIRMED\')">Confirmar</button>' +
+          '<button class="admin-btn" style="font-size:10px;justify-content:center;color:var(--red)" onclick="updateOnlinePreventa(\'' + po.id + '\',\'CANCELLED\')">Cancelar</button>'
+        else if (po.status === 'CONFIRMED') actionsHtml =
+          '<button class="admin-btn" style="font-size:10px;justify-content:center;background:var(--green);color:#fff;border:none" onclick="updateOnlinePreventa(\'' + po.id + '\',\'DELIVERED\')">Entregar</button>' +
+          '<button class="admin-btn" style="font-size:10px;justify-content:center;color:var(--red)" onclick="updateOnlinePreventa(\'' + po.id + '\',\'CANCELLED\')">Cancelar</button>'
+
+        return '<div class="acard" style="padding:1rem">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+            '<div style="font-size:12px;font-weight:700;color:var(--orange)">' + po.code + '</div>' +
+            '<span style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;background:' + sc + ';color:#fff">' + po.status + '</span>' +
+          '</div>' +
+          '<div style="display:flex;gap:12px">' +
+            '<div style="flex:1;min-width:0">' +
+              '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + productName + '</div>' +
+              '<div style="font-size:11px;color:var(--gray);margin-bottom:4px">' + (po.productStorage || '') + ' · ' + (po.productColor || '') + '</div>' +
+              '<div style="font-size:11px;margin-bottom:4px">' +
+                '<span style="color:var(--gray)">Cliente:</span> ' + po.clientName + ' · ' + (po.clientEmail || '') + ' · ' + (po.clientPhone || '') +
+              '</div>' +
+              (availableFrom ? '<div style="font-size:10px;color:#8B7355;margin-bottom:4px">&#x1F4C5; Disp: ' + availableFrom + '</div>' : '') +
+              '<div style="font-size:16px;font-weight:700;margin-top:4px">' + fmt(po.price) + (po.installments > 1 ? ' · ' + po.installments + ' cuotas' : '') + ' · ' + (po.paymentMethod || '') + '</div>' +
+            '</div>' +
+          '</div>' +
+          (actionsHtml ? '<div style="display:flex;gap:6px;margin-top:10px">' + actionsHtml + '</div>' : '') +
+        '</div>'
+      }).join('')
+    })
+    .catch(function() { list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando preventas online</div>' })
+}
+
+function updateOnlinePreventa(id, newStatus) {
+  var msg = newStatus === 'DELIVERED' ? 'Marcar como entregada? Esto creara una orden asociada.' : 'Cambiar estado a ' + newStatus + '?'
+  if (!confirm(msg)) return
+  fetch(API_URL + '/api/admin/preorders/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser && currentUser.id },
+    body: JSON.stringify({ status: newStatus })
+  }).then(function(r) { return r.json(); }).then(function(res) {
+    if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
+    showToast({ title: 'Actualizado', message: 'Preventa ' + newStatus.toLowerCase(), type: 'success' })
+    loadOnlinePreventas()
+  }).catch(function() { showToast({ title: 'Error', message: 'Error al actualizar', type: 'error' }) })
+}
+
+// =========== PREVENTA ONLINE (legacy placeholder) ===========
+function renderPreventaOnline() {
+  renderPreventaOnlineLive()
 }

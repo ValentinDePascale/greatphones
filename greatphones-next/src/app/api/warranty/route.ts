@@ -67,8 +67,8 @@ export async function GET(request: Request) {
 
     // Calculate warranty info
     const createdAt = new Date(order.createdAt)
-    let daysTotal = 90
-    let warrantyType = 'Garantía legal 90 días'
+    let daysTotal = 365
+    let warrantyType = 'Garantía legal 12 meses'
 
     if (order.warranty) {
       const w = order.warranty.toLowerCase()

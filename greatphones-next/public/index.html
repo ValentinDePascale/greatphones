@@ -119,6 +119,7 @@
     <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
     <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
     <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
+    <button class="cni" id="cn-preventas" onclick="nav('preventas');setCN('preventas');if(typeof loadPreorderProducts==='function')loadPreorderProducts()" style="color:var(--orange);font-weight:600">Preventas</button>
     <button class="cni" id="cn-notebooks" style="display:none" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
     <button class="cni" id="cn-mayorista" style="display:none" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
     <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantías</button>
@@ -294,6 +295,7 @@
         </div>
         <button class="sec-more" style="color:rgba(255,255,255,.6)" onclick="navShop('ofertas')">Ver todas</button>
       </div>
+      <div id="offerTimerBanner" style="display:none;text-align:center;padding-bottom:12px"></div>
       <div class="pgrid" id="offerStrip" style="padding-top:4px"></div>
     </div>
   </section>
@@ -516,7 +518,7 @@
             <span>Como funciona la garantia extendida?</span>
             <svg class="faq-arr-new" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="faq-a-new">Disponible dentro de los primeros 90 dias de tu compra. Ingresa tu codigo de compra e IMEI en la seccion Garantias para ver las opciones disponibles para tu equipo.</div>
+           <div class="faq-a-new">Disponible dentro de los primeros 12 meses de tu compra. Ingresa tu codigo de compra e IMEI en la seccion Garantias para ver las opciones disponibles para tu equipo.</div>
         </div>
       </div>
     </div>
@@ -807,6 +809,7 @@
             <span style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
             <span style="font-size:16px;color:var(--gray);text-decoration:line-through;margin-left:10px;display:none" id="detOld"></span>
           </div>
+          <div id="detOfferTimer" style="display:none;margin-bottom:10px"><span class="offer-countdown" id="detTimerText"></span></div>
           <!-- Installment Price -->
           <div id="detCuotaInfo" style="font-size:14px;color:var(--green);font-weight:600;margin-bottom:20px;padding:10px 14px;background:rgba(45,90,39,.06);border-radius:10px;display:inline-block">
             <span id="detCuotaText">12x $100.000 sin interes</span>
@@ -852,7 +855,7 @@
   <div class="sh-hdr">
     <div class="ctr gar-hdr-content">
       <h1 class="gar-hdr-title">Garantías y seguros</h1>
-      <p class="gar-hdr-sub">Disponible dentro de los primeros 90 días de tu compra</p>
+      <p class="gar-hdr-sub">Disponible dentro de los primeros 12 meses de tu compra</p>
     </div>
   </div>
   <div class="gar-body">
@@ -867,7 +870,7 @@
         </div>
         <div class="gar-card-info-content">
           <strong>Garantía extendida</strong>
-          <p>Solo disponible si ya compraste un equipo en Great Phones. Podés agregarla hasta <strong>90 días después</strong> de tu compra usando tu <strong>código de compra + IMEI</strong>.</p>
+          <p>Solo disponible si ya compraste un equipo en Great Phones. Podés agregarla hasta <strong>12 meses después</strong> de tu compra usando tu <strong>código de compra + IMEI</strong>.</p>
         </div>
       </div>
 
@@ -897,7 +900,7 @@
           </div>
         </div>
         <button class="btn btn-o btn-full" id="garVerBtn" disabled onclick="garVerificar()">
-          <span class="material-symbols-outlined" style="font-size:16px">verify</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
           Verificar compra
         </button>
       </div>
@@ -913,8 +916,8 @@
           </svg>
         </div>
         <div class="gar-badge-body">
-          <div class="gar-badge-title">Garantía de 90 días incluida</div>
-          <p>Todos los equipos incluyen 90 días de garantía sin cargo desde la fecha de compra.</p>
+          <div class="gar-badge-title">Garantía de 12 meses incluida</div>
+          <p>Todos los equipos incluyen 12 meses de garantía sin cargo desde la fecha de compra.</p>
           <button class="btn btn-ghost btn-sm" onclick="navShop('todos')" style="display:inline-flex;align-items:center;gap:6px;margin-top:4px">
             Ver equipos disponibles
             <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
@@ -931,7 +934,7 @@
         </div>
         <div class="gar-faq-item" onclick="this.classList.toggle('open')">
           <div class="gar-faq-q">¿Cómo activo mi garantía extendida? <span class="material-symbols-outlined">expand_more</span></div>
-          <div class="gar-faq-a">Usá el formulario de arriba con tu código de compra e IMEI. Tenés hasta 90 días desde la compra para activarla.</div>
+          <div class="gar-faq-a">Usá el formulario de arriba con tu código de compra e IMEI. Tenés hasta 12 meses desde la compra para activarla.</div>
         </div>
         <div class="gar-faq-item" onclick="this.classList.toggle('open')">
           <div class="gar-faq-q">¿Puedo transferir la garantía? <span class="material-symbols-outlined">expand_more</span></div>
@@ -1354,6 +1357,67 @@
     <div class="ctr">
       <div style="background:rgba(45,90,39,.07);border-radius:var(--rsm);padding:.65rem 1rem;font-size:11px;color:var(--green);margin:1rem 0">&#127873; Todo equipo comprado incluye cable USB-C + funda transparente de regalo.</div>
       <div class="shop-content"><div class="pgrid" id="accGrid"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: PREVENTAS ============================= -->
+<div class="page" id="p-preventas">
+  <div class="sh-hdr" style="background:linear-gradient(135deg,#1A1208 0%,#2D2520 50%,#1A1208 100%);position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;right:0;width:400px;height:400px;background:radial-gradient(circle,rgba(255,107,44,.08) 0%,transparent 70%);pointer-events:none"></div>
+    <div style="position:absolute;bottom:-80px;left:-80px;width:300px;height:300px;background:radial-gradient(circle,rgba(255,107,44,.05) 0%,transparent 70%);pointer-events:none"></div>
+    <div class="ctr" style="position:relative;z-index:2;padding:3rem var(--pad)">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(255,107,44,.15);border:1px solid rgba(255,107,44,.3);padding:4px 12px;border-radius:20px;margin-bottom:1rem">
+        <span style="font-size:14px">&#x2B50;</span>
+        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--orange)">Preventa Exclusiva</span>
+      </div>
+      <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,5vw,44px);color:#fff;margin-bottom:.5rem;line-height:1.1;letter-spacing:-.5px">Reservá los próximos<br>lanzamientos</h1>
+      <p style="font-size:14px;color:rgba(255,255,255,.45);max-width:480px;line-height:1.6">Asegurá tu equipo antes que nadie. Productos que están por llegar, con pago online seguro y sin vueltas.</p>
+      <div style="display:flex;gap:8px;margin-top:1.25rem">
+        <button class="btn-gl" onclick="scrollToPreorderGrid()" style="display:inline-flex;align-items:center;gap:6px;font-size:13px">
+          Ver productos
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button class="btn-gl" onclick="togglePreorderInfo()" style="display:inline-flex;align-items:center;gap:4px;font-size:12px;opacity:.7">Como funciona?</button>
+      </div>
+    </div>
+  </div>
+  <div id="preorder-info-panel" style="display:none;background:#fff;border-bottom:1px solid var(--border)">
+    <div class="ctr" style="padding:2rem var(--pad)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.5rem">
+        <div style="display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F4C5;</div><div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Fecha estimada</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Cada producto indica cuando esperamos recibirlo. Esta fecha es orientativa y puede variar.</div></div></div>
+        <div style="display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F512;</div><div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Sin IMEI requerido</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Como el equipo aun no llego, no necesitamos IMEI. Se te asignara uno cuando ingrese.</div></div></div>
+        <div style="display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x1F514;</div><div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Notificaciones</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Te avisamos por email cuando el producto este por llegar y cualquier novedad sobre tu pedido.</div></div></div>
+        <div style="display:flex;gap:12px"><div style="width:44px;height:44px;border-radius:12px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">&#x2705;</div><div><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">Garantia incluida</div><div style="font-size:11px;color:var(--gray);line-height:1.5">Todos los productos de preventa incluyen 12 meses de garantia como cualquier compra en Great Phones.</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div id="preorder-grid-section" style="background:var(--cream);min-height:400px">
+    <div class="ctr" style="padding:2rem var(--pad)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--dk);margin-bottom:2px">Proximos lanzamientos</h2>
+          <p style="font-size:12px;color:var(--gray)">Productos que estaran disponibles proximamente</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <select class="sort-sel" id="preorderSortSel" onchange="renderPreorderGrid()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:12px;color:var(--dk)">
+            <option value="asc">Menor precio</option>
+            <option value="desc">Mayor precio</option>
+            <option value="rel">Mas recientes</option>
+          </select>
+        </div>
+      </div>
+      <div id="preorderLoading" style="display:none;text-align:center;padding:3rem;color:var(--gray)">
+        <div style="width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>
+        <p style="font-size:13px">Cargando productos...</p>
+      </div>
+      <div id="preorderGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.25rem"></div>
+      <div id="preorderEmpty" style="display:none;text-align:center;padding:4rem 2rem;color:var(--gray)">
+        <div style="font-size:60px;margin-bottom:1rem">&#x1F4E6;</div>
+        <p style="font-family:'Playfair Display',serif;font-size:22px;color:var(--dk);margin-bottom:.5rem">No hay productos en preventa</p>
+        <p style="font-size:13px;margin-bottom:1.5rem">Estamos preparando nuevos lanzamientos. Volve pronto para ver las novedades.</p>
+        <button class="btn btn-o" onclick="nav('shop')">Ver catalogo disponible</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1801,6 +1865,15 @@
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Otros">Otros</option></select></div>
         </div>
         <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:10px">🏷️ Oferta / Descuento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="accIsOffer" onchange="var d=document.getElementById('accDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="accDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="accOfferStart" type="datetime-local"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="accOfferEnd" type="datetime-local"></div>
+          </div>
+        </div>
         <input type="hidden" id="accColor">
         <input type="hidden" id="accCompatibleModels">
         <div>
@@ -1986,6 +2059,15 @@
         </div>
         <div style="display:grid;grid-template-columns:1fr;gap:12px">
           <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">IMEI</label><input class="inp-f" id="prodImei" placeholder="353456789012345" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:10px">🏷️ Oferta / Descuento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="prodIsOffer" onchange="var d=document.getElementById('prodDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="prodDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="prodOfferStartDate" type="date" style="margin-bottom:4px" oninput="console.log('prodOfferStart date: '+this.value)"><input class="inp-f" id="prodOfferStartTime" type="time" oninput="console.log('prodOfferStart time: '+this.value)"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="prodOfferEndDate" type="date" style="margin-bottom:4px" oninput="console.log('prodOfferEnd date: '+this.value)"><input class="inp-f" id="prodOfferEndTime" type="time" oninput="console.log('prodOfferEnd time: '+this.value)"></div>
+          </div>
         </div>
         <div id="variantsSection" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -2579,11 +2661,11 @@
             </div>
             <div id="checkout-warranty" style="display:flex;flex-direction:column;gap:8px" data-testid="checkout-warranty">
               <div class="warranty-btn" data-w="0" onclick="selCheckoutWarranty(this,0)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">90 días</span><span style="color:var(--green);font-weight:700;font-size:14px">GRATIS</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">12 meses</span><span style="color:var(--green);font-weight:700;font-size:14px">GRATIS</span></div>
                 <div style="font-size:12px;color:var(--gray);margin-top:3px">Cobertura básica incluida en tu compra</div>
               </div>
               <div class="warranty-btn" data-w="85000" onclick="selCheckoutWarranty(this,85000)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">+12 meses</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$85.000</span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">+12 meses cobertura completa</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$85.000</span></div>
                 <div style="font-size:12px;color:var(--gray);margin-top:3px">Protección extendida por un año adicional</div>
               </div>
               <div class="warranty-btn" data-w="150000" onclick="selCheckoutWarranty(this,150000)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
@@ -2644,7 +2726,7 @@
             <div id="checkout-summary-items" style="margin-bottom:16px"></div>
             <div style="height:1px;background:var(--border);margin:16px 0"></div>
             <div id="checkout-summary-details" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-              <div><span style="color:var(--gray)">Garantía:</span> <strong id="sum-warranty">90 días</strong></div>
+              <div><span style="color:var(--gray)">Garantía:</span> <strong id="sum-warranty">12 meses</strong></div>
               <div><span style="color:var(--gray)">Entrega:</span> <strong id="sum-delivery">Retiro en tienda</strong></div>
             </div>
             <div style="height:1px;background:var(--border);margin:16px 0"></div>
@@ -2818,10 +2900,26 @@
               </div>
             </div>
           </section>
+          <div id="preorder-agreement-section" style="display:none;background:var(--cream);border:1.5px solid var(--orange);border-radius:14px;padding:18px;margin-top:16px">
+            <label style="display:flex;align-items:flex-start;gap:14px;cursor:pointer">
+              <input type="checkbox" id="preorder-agreement" style="width:22px;height:22px;margin-top:2px;flex-shrink:0;accent-color:var(--orange)" onchange="togPreorderAgreement()">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:6px">Terminos de preventa</div>
+                <div style="font-size:12px;color:#8B7355;line-height:1.6">
+                  Entiendo y acepto que:
+                  <ul style="margin:6px 0 0 16px;padding:0">
+                    <li>Este producto <strong>aun no se encuentra en stock</strong> y su disponibilidad es futura.</li>
+                    <li>La fecha de disponibilidad es <strong>estimada</strong> y puede variar segun stock del proveedor.</li>
+                    <li>Recibire actualizaciones por email sobre el estado de mi preventa.</li>
+                  </ul>
+                </div>
+              </div>
+            </label>
+          </div>
           <div style="display:flex;justify-content:space-between;margin-top:16px">
             <button onclick="checkoutPrevStep(3)" style="padding:14px 24px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s" onmouseover="this.style.borderColor='var(--dk)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Atrás
+              Atras
             </button>
             <button onclick="submitOrder()" id="btn-final-pay" style="padding:14px 36px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 16px rgba(255,107,44,.35)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(255,107,44,.45)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(255,107,44,.35)'">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
@@ -3130,6 +3228,7 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/favorites.js?v=2"></script>
 <script defer src="/lib/cart.js?v=2"></script>
 <script defer src="/lib/checkout.js?v=2"></script>
+<script defer src="/lib/preorder.js?v=1"></script>
 <script defer src="/lib/wallet.js?v=2"></script>
 <script defer src="/lib/giftcard.js?v=2"></script>
 <script defer src="/lib/coupons.js?v=2"></script>

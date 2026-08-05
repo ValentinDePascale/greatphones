@@ -10,7 +10,7 @@ function getDefaultReplies() {
   return [
     { label: 'Confirmado', text: 'Tu pedido ha sido confirmado y estamos preparandolo. Te avisaremos cuando este listo para envio.' },
     { label: 'Enviado', text: 'Tu pedido fue enviado! Te compartiremos el numero de tracking para que puedas seguirlo.' },
-    { label: 'Garantía', text: 'Tu compra tiene garantia de 90 dias segun Ley 24.240. Si tenes algun problema, contactanos.' },
+    { label: 'Garantía', text: 'Tu compra tiene garantia de 12 meses segun Ley 24.240. Si tenes algun problema, contactanos.' },
     { label: 'Retiro', text: 'Tu pedido esta listo para retiro en nuestro local: Zelarrayan 179, Bahia Blanca. Horario: Lun a Vie 10-19hs.' },
     { label: 'Demora', text: 'Estamos teniendo una leve demora en tu pedido. Te agradecemos la paciencia y te avisaremos apenas este listo.' },
     { label: 'Gracias', text: 'Gracias por tu compra! Si tenes alguna consulta no dudes en escribirnos. Estamos para ayudarte.' },

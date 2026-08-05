@@ -70,6 +70,7 @@ function nav(id){
   if(id==='ofertas'){renderOfertasGrid();setCN('ofertas');}
   if(id==='compare'){setCN('compare');}
   if(id==='accesorios'){renderAccGrid();setCN('accesorios');}
+  if(id==='preventas'){if(typeof loadPreorderProducts==='function')loadPreorderProducts();setCN('preventas');}
   if(id==='favoritos')renderFavGrid();
   if(id==='chats'){
     if(!chatPanelOpen)toggleChatPanel();
@@ -129,6 +130,23 @@ function nav(id){
       document.getElementById('prodImagePreview').innerHTML='📷';
       document.getElementById('prodAdditionalImages').innerHTML='<div id="addImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>';
       window.additionalImages=[];
+      // Repopulate brand dropdown dynamically
+      var brandSel=document.getElementById('prodBrand');
+      if(brandSel&&typeof getUniqueBrands==='function'){
+        var brands=getUniqueBrands();
+        var currentBrand=brandSel.value||(brandSel.options[brandSel.selectedIndex]?brandSel.options[brandSel.selectedIndex].value:'');
+        brandSel.innerHTML='<option value="">Seleccioná marca...</option>'+brands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('')+'<option value="__other__">Otra...</option>';
+        brandSel.value=currentBrand||'';
+        var otherInput=document.getElementById('prodBrandOther');
+        if(otherInput)otherInput.style.display='none';
+      }
+      // Reset offer fields
+      var disEl=document.getElementById('prodDiscount');if(disEl){disEl.value='';disEl.disabled=true;}
+      var isoEl=document.getElementById('prodIsOffer');if(isoEl)isoEl.checked=false;
+      var osEl=document.getElementById('prodOfferStartDate');if(osEl)osEl.value='';
+      var ostEl=document.getElementById('prodOfferStartTime');if(ostEl)ostEl.value='';
+      var oeEl=document.getElementById('prodOfferEndDate');if(oeEl)oeEl.value='';
+      var oetEl=document.getElementById('prodOfferEndTime');if(oetEl)oetEl.value='';
       // Reset header for new product
       var h1=document.querySelector('#p-admin-product .sh-hdr h1');
       var hp=document.querySelector('#p-admin-product .sh-hdr p');
@@ -335,6 +353,7 @@ function doLogout(){
   Storage.remove('user');
   Storage.remove('remember');
   fetch(API_URL+'/api/auth/logout',{method:'POST'}).catch(function(){});
+  fetch('/api/auth/signout',{method:'GET'}).catch(function(){});
   document.querySelector('button[onclick="nav(\'cuenta\')"]').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
   if(adminLink)adminLink.remove();

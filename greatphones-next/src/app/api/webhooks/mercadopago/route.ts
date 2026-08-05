@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus, WarrantyExtendStatus } from '@prisma/client';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { sendOrderConfirmationEmail } from '@/lib/email';
+import { sendOrderConfirmationEmail, sendPreorderConfirmationEmail } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import crypto from 'crypto';
 import { releaseStock, restoreStock } from '@/lib/stock';
@@ -54,6 +54,15 @@ function verifyWebhookSignature(request: NextRequest): boolean {
   );
 }
 
+interface MPWebhookPayment {
+  preference_id?: string
+  external_reference?: string
+  status?: string
+  payment_method_id?: string
+  installments?: number
+  card?: { installments?: number }
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!verifyWebhookSignature(request)) {
@@ -76,7 +85,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ received: true });
       }
 
-      const pd = paymentData as any;
+      const pd = paymentData as MPWebhookPayment;
       const preferenceId = pd.preference_id;
       const externalReference = pd.external_reference;
       const status = pd.status;
@@ -290,9 +299,40 @@ export async function POST(request: NextRequest) {
       // Send confirmation email if payment approved
       if (status === 'approved' && order.clientEmail) {
         try {
-          await sendOrderConfirmationEmail({
-            orderCode: order.code,
-            email: order.clientEmail,
+          if (order.saleChannel === 'preorder') {
+            // Update PreOrder records
+            const preOrderUpdates = await prisma.preOrder.updateMany({
+              where: { orderId: order.id, source: 'online' },
+              data: {
+                status: 'CONFIRMED',
+                mpPaymentId: paymentId.toString(),
+              }
+            });
+            // Fetch preorder data for email
+            const preOrders = await prisma.preOrder.findMany({
+              where: { orderId: order.id, source: 'online' },
+              include: { product: true }
+            });
+            if (preOrders.length > 0) {
+              await sendPreorderConfirmationEmail({
+                email: order.clientEmail,
+                clientName: order.clientName || order.clientEmail?.split('@')[0] || 'Cliente',
+                preOrders: preOrders.map(po => ({
+                  code: po.code,
+                  productName: po.product?.name || po.productModelName || 'Producto',
+                  storage: po.productStorage || '',
+                  color: po.productColor || '',
+                  price: po.price,
+                  availableFrom: po.product?.availableFrom || null,
+                })),
+                paymentMethod: paymentMethod || 'Mercado Pago',
+                installments,
+              });
+            }
+          } else {
+            await sendOrderConfirmationEmail({
+              orderCode: order.code,
+              email: order.clientEmail,
             phone: order.clientPhone || '',
             total: order.total,
             items: order.items.map(item => ({
@@ -306,6 +346,7 @@ export async function POST(request: NextRequest) {
             trackingNumber: order.trackingNumber || undefined,
             carrier: order.carrier || undefined,
           });
+          }
         } catch (emailError) {
           console.error('[MP Webhook] Error sending confirmation email:', emailError);
         }

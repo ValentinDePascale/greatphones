@@ -133,7 +133,7 @@ export const CheckoutSchema = z.object({
   zip: z.string().min(4, 'Código postal requerido'),
   city: z.string().min(1, 'Ciudad requerida'),
   province: z.string().min(1, 'Provincia requerida'),
-  warranty: z.string().optional().default('90 dias'),
+  warranty: z.string().optional().default('12 meses'),
   delivery: z.string().optional().default('Retiro en tienda'),
   cuotas: z.number().int().min(1).max(24).optional().default(1),
   subtotal: z.number().int().positive(),

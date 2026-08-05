@@ -190,7 +190,7 @@ export function SuccessContent() {
             <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '12px', marginBottom: '2rem', textAlign: 'left' }}>
               <p style={{ fontSize: '13px', color: '#374151', marginBottom: '8px' }}>📧 Te enviamos un email con los detalles de tu compra</p>
               <p style={{ fontSize: '13px', color: '#374151', marginBottom: '8px' }}>📦 Estamos preparando tu pedido</p>
-              <p style={{ fontSize: '13px', color: '#374151' }}>🛡️ Tu compra tiene garantía de 90 días</p>
+              <p style={{ fontSize: '13px', color: '#374151' }}>🛡️ Tu compra tiene garantía de 12 meses</p>
             </div>
             <button onClick={() => router.push('/')} style={{ width: '100%', padding: '14px', background: '#ff6b2c', color: '#fff', border: 'none', borderRadius: '12px', fontSize: '15px', fontWeight: 700, cursor: 'pointer' }}>
               Seguir comprando
