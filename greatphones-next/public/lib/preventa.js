@@ -488,46 +488,47 @@ function loadPreventaProducts() {
 }
 
 function openPreventaForm(editData) {
-  var existing = document.getElementById('preventa-modal')
-  if (existing) existing.remove()
+  var sub = document.getElementById('preventa-subview')
+  if (!sub) return
   var isEdit = !!editData
-  var overlay = document.createElement('div')
-  overlay.id = 'preventa-modal'
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center'
-  overlay.innerHTML =
-    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.6)" onclick="closePreventaModal()"></div>' +
-    '<div style="position:relative;background:var(--admin-surface);border-radius:16px;width:min(560px,92vw);max-height:90vh;overflow-y:auto;padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.4);z-index:1">' +
+  var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','Apple']
+  var currentBrand = isEdit ? (editData.brand || 'iPhone') : 'iPhone'
+  var brandOpts = brands.map(function(b) { return '<option value="' + b + '"' + (b === currentBrand ? ' selected' : '') + '>' + b + '</option>' }).join('')
+
+  sub.innerHTML =
+    '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.5rem;max-width:700px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
-        '<div style="font-size:18px;font-weight:700;color:var(--admin-text)">' + (isEdit ? 'Editar Preventa' : 'Nueva Preventa') + '</div>' +
-        '<button onclick="closePreventaModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>' +
+        '<div style="font-size:18px;font-weight:700;color:var(--dk)">' + (isEdit ? 'Editar producto de preventa' : 'Nuevo producto de preventa') + '</div>' +
+        '<button onclick="renderPreventaCatalogo()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px">← Volver al listado</button>' +
       '</div>' +
       '<div style="display:grid;gap:12px">' +
-        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px">Nombre *</label><input type="text" id="prevf-name" value="' + (isEdit ? (editData.name || '') : '') + '" placeholder="iPhone 16 Pro Max" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Marca</label><input type="text" id="prevf-brand" value="' + (isEdit ? (editData.brand || 'Apple') : 'iPhone') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Almacenamiento</label><select id="prevf-storage" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"><option value="">Seleccionar...</option><option value="64 GB"' + (isEdit && editData.storage === '64 GB' ? ' selected' : '') + '>64 GB</option><option value="128 GB"' + (isEdit && editData.storage === '128 GB' ? ' selected' : '') + '>128 GB</option><option value="256 GB"' + (isEdit && editData.storage === '256 GB' ? ' selected' : '') + '>256 GB</option><option value="512 GB"' + (isEdit && editData.storage === '512 GB' ? ' selected' : '') + '>512 GB</option><option value="1 TB"' + (isEdit && editData.storage === '1 TB' ? ' selected' : '') + '>1 TB</option></select></div>' +
+        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" type="text" id="prevf-name" value="' + (isEdit ? (editData.name || '') : '') + '" placeholder="iPhone 16 Pro Max"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prevf-brand">' + brandOpts + '</select></div>' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prevf-type"><option value="celular"' + (isEdit && editData.type==='celular'?' selected':'') + '>Celular</option><option value="tablet"' + (isEdit && editData.type==='tablet'?' selected':'') + '>Tablet</option><option value="laptop"' + (isEdit && editData.type==='laptop'?' selected':'') + '>Laptop</option><option value="smartwatch"' + (isEdit && editData.type==='smartwatch'?' selected':'') + '>Smartwatch</option></select></div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Color</label><input type="text" id="prevf-color" value="' + (isEdit ? (editData.color || '') : '') + '" placeholder="Titanio Natural" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Condicion</label><select id="prevf-condition" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"><option value="Nuevo"' + (isEdit && editData.condition === 'Nuevo' ? ' selected' : '') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition === 'Impecable' ? ' selected' : '') + '>Impecable</option></select></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><select class="sel-f" id="prevf-storage"><option value="">Seleccionar...</option><option value="64 GB"' + (isEdit && editData.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (isEdit && editData.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (isEdit && editData.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (isEdit && editData.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (isEdit && editData.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condición</label><select class="sel-f" id="prevf-condition"><option value="Nuevo"' + (isEdit && editData.condition==='Nuevo'?' selected':'') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition==='Impecable'?' selected':'') + '>Impecable</option></select></div>' +
         '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio *</label><input type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
-          '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Disp. desde</label><input type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '" style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" type="text" id="prevf-color" value="' + (isEdit ? (editData.color || '') : '') + '" placeholder="Titanio Natural"></div>' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" placeholder="0"></div>' +
         '</div>' +
-        '<div><label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">URL Imagen</label><input type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..." style="width:100%;padding:10px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-input-bg);color:var(--admin-text);box-sizing:border-box"></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Disponible desde</label><input class="inp-f" type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '"></div>' +
+          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">URL Imagen</label><input class="inp-f" type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..."></div>' +
+        '</div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">' +
-        '<button class="admin-btn" onclick="closePreventaModal()">Cancelar</button>' +
-        '<button class="admin-btn-primary" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
+        '<button class="btn btn-g" onclick="renderPreventaCatalogo()">Cancelar</button>' +
+        '<button class="btn btn-o" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
       '</div>' +
     '</div>'
-  document.body.appendChild(overlay)
 }
 
 function closePreventaModal() {
-  var modal = document.getElementById('preventa-modal')
-  if (modal) modal.remove()
+  renderPreventaCatalogo()
 }
 
 function savePreventaProduct(id) {
@@ -535,17 +536,18 @@ function savePreventaProduct(id) {
   var data = {
     name: document.getElementById('prevf-name').value,
     brand: document.getElementById('prevf-brand').value || 'iPhone',
+    type: document.getElementById('prevf-type')?.value || 'celular',
     storage: document.getElementById('prevf-storage').value,
     color: document.getElementById('prevf-color').value,
     condition: document.getElementById('prevf-condition').value || 'Nuevo',
     price: parseInt(document.getElementById('prevf-price').value) || 0,
     availableFrom: document.getElementById('prevf-availableFrom').value || null,
     imageUrl: document.getElementById('prevf-imageUrl').value || null,
+    sub: (document.getElementById('prevf-color').value||'') + ' ' + (document.getElementById('prevf-storage').value||''),
     isPreorder: true,
-    type: 'celular',
     stock: 0,
     cost: 0,
-    ico: '&#x1F4F1;',
+    ico: '📱',
     images: document.getElementById('prevf-imageUrl').value ? [document.getElementById('prevf-imageUrl').value] : []
   }
 
@@ -564,20 +566,17 @@ function savePreventaProduct(id) {
     .then(function(res) {
       if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
       showToast({ title: 'Exito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
-      closePreventaModal()
-      loadPreventaProducts()
+      renderPreventaCatalogo()
     })
     .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
 }
 
 function editPreventaProduct(id) {
-  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id; hdrs['X-Admin-Request'] = '1'; }
-  fetch(API_URL + '/api/products?preorder=true&limit=50', { headers: hdrs })
+  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id }
+  fetch(API_URL + '/api/products/' + id, { headers: hdrs })
     .then(function(r) { return r.json(); })
-    .then(function(res) {
-      var prods = res.data || res || []
-      var p = prods.find(function(x) { return x.id === id; })
-      if (p) openPreventaForm(p)
+    .then(function(p) {
+      if (p && !p.error) openPreventaForm(p)
       else showToast({ title: 'Error', message: 'Producto no encontrado', type: 'error' })
     })
     .catch(function() { showToast({ title: 'Error', message: 'Error al cargar producto', type: 'error' }) })
