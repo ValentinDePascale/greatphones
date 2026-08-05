@@ -102,8 +102,3 @@ function togglePreorderInfo() {
     panel.style.display = 'none';
   }
 }
-
-// Load preorder products when navigating to preventas
-if (typeof loadPreorderProducts === 'function') {
-  var origNav = nav;
-}
