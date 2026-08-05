@@ -90,6 +90,6 @@ function loadScript(src, crossOrigin) {
   const script = document.createElement('script');
   script.src = src;
   script.async = true;
-  script.crossOrigin = 'anonymous';
+  if (crossOrigin) script.crossOrigin = crossOrigin;
   document.head.appendChild(script);
 }

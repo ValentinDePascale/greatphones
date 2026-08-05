@@ -31,7 +31,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https://res.cloudinary.com https://http2.mlstatic.com",
-              "connect-src 'self' https://api.mercadopago.com https://greatphones.onrender.com https://*.neon.tech",
+              "connect-src 'self' https://api.mercadopago.com https://greatphones.onrender.com https://*.neon.tech https://connect.facebook.net https://www.facebook.com",
               "frame-src https://www.mercadopago.com",
               "base-uri 'self'",
               "form-action 'self'",
