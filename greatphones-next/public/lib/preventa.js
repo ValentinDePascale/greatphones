@@ -494,6 +494,9 @@ function openPreventaForm(editData) {
   var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','Apple']
   var currentBrand = isEdit ? (editData.brand || 'iPhone') : 'iPhone'
   var brandOpts = brands.map(function(b) { return '<option value="' + b + '"' + (b === currentBrand ? ' selected' : '') + '>' + b + '</option>' }).join('')
+  var iphoneModels = (window.SELL_MODELS && window.SELL_MODELS['iPhone']) || []
+  var currentModel = isEdit ? (editData.modelGroup || editData.name || '') : ''
+  var currentColor = isEdit ? (editData.color || '') : ''
 
   sub.innerHTML =
     '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.5rem;max-width:700px">' +
@@ -502,7 +505,8 @@ function openPreventaForm(editData) {
         '<button onclick="renderPreventaCatalogo()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px">← Volver al listado</button>' +
       '</div>' +
       '<div style="display:grid;gap:12px">' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" type="text" id="prevf-name" value="' + (isEdit ? (editData.name || '') : '') + '" placeholder="iPhone 16 Pro Max"></div>' +
+        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo *</label><select class="sel-f" id="prevf-model" onchange="onPrevModelSelect()"><option value="">Seleccionar modelo...</option>' + iphoneModels.map(function(m) { return '<option value="' + m + '"' + (m === currentModel ? ' selected' : '') + '>' + m + '</option>' }).join('') + '</select></div>' +
+        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><div id="prevf-colorCircles" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px;align-items:center;margin-bottom:4px"></div><input type="hidden" id="prevf-color-hidden" value="' + currentColor + '"></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
           '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prevf-brand">' + brandOpts + '</select></div>' +
           '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prevf-type"><option value="celular"' + (isEdit && editData.type==='celular'?' selected':'') + '>Celular</option><option value="tablet"' + (isEdit && editData.type==='tablet'?' selected':'') + '>Tablet</option><option value="laptop"' + (isEdit && editData.type==='laptop'?' selected':'') + '>Laptop</option><option value="smartwatch"' + (isEdit && editData.type==='smartwatch'?' selected':'') + '>Smartwatch</option></select></div>' +
@@ -512,38 +516,72 @@ function openPreventaForm(editData) {
           '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condición</label><select class="sel-f" id="prevf-condition"><option value="Nuevo"' + (isEdit && editData.condition==='Nuevo'?' selected':'') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition==='Impecable'?' selected':'') + '>Impecable</option></select></div>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" type="text" id="prevf-color" value="' + (isEdit ? (editData.color || '') : '') + '" placeholder="Titanio Natural"></div>' +
           '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" placeholder="0"></div>' +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
           '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Disponible desde</label><input class="inp-f" type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '"></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">URL Imagen</label><input class="inp-f" type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..."></div>' +
         '</div>' +
+        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">URL Imagen</label><input class="inp-f" type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..."></div>' +
       '</div>' +
       '<div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">' +
         '<button class="btn btn-g" onclick="renderPreventaCatalogo()">Cancelar</button>' +
         '<button class="btn btn-o" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
       '</div>' +
     '</div>'
+
+  // Render color circles for current model
+  if (currentModel) renderPreventaColorCircles(currentModel, currentColor)
 }
 
 function closePreventaModal() {
   renderPreventaCatalogo()
 }
 
+function onPrevModelSelect(){
+  var model=document.getElementById('prevf-model')?.value
+  renderPreventaColorCircles(model, '')
+}
+
+function renderPreventaColorCircles(model, currentColor){
+  var container=document.getElementById('prevf-colorCircles')
+  if(!container)return
+  if(!model||!window.MODEL_COLORS||!window.MODEL_COLORS[model]){
+    container.innerHTML='<span style="font-size:11px;color:var(--gray)">Selecciona un modelo para ver colores</span>'
+    return
+  }
+  var colors=window.MODEL_COLORS[model]
+  var hexMap=window.COLOR_HEX||{}
+  var hiddenColor=document.getElementById('prevf-color-hidden')
+  if(!hiddenColor)return
+  window._preventaColorSelected=currentColor||''
+  container.innerHTML=colors.map(function(c){
+    var hex=hexMap[c]||'#ccc'
+    var sel=c===currentColor
+    return '<div onclick="selectPreventaColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(sel?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
+  }).join('')
+}
+
+function selectPreventaColor(color, el){
+  window._preventaColorSelected=color
+  var hidden=document.getElementById('prevf-color-hidden')
+  if(hidden)hidden.value=color
+  document.querySelectorAll('#prevf-colorCircles div').forEach(function(d){d.style.borderColor='transparent'})
+  if(el)el.style.borderColor='var(--orange)'
+}
+
 function savePreventaProduct(id) {
   var isEdit = !!id
+  var model=document.getElementById('prevf-model')?.value||''
   var data = {
-    name: document.getElementById('prevf-name').value,
+    name: model,
+    modelGroup: model,
     brand: document.getElementById('prevf-brand').value || 'iPhone',
     type: document.getElementById('prevf-type')?.value || 'celular',
     storage: document.getElementById('prevf-storage').value,
-    color: document.getElementById('prevf-color').value,
+    color: document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'',
     condition: document.getElementById('prevf-condition').value || 'Nuevo',
     price: parseInt(document.getElementById('prevf-price').value) || 0,
     availableFrom: document.getElementById('prevf-availableFrom').value || null,
     imageUrl: document.getElementById('prevf-imageUrl').value || null,
-    sub: (document.getElementById('prevf-color').value||'') + ' ' + (document.getElementById('prevf-storage').value||''),
+    sub: (document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'') + ' ' + (document.getElementById('prevf-storage').value||''),
     isPreorder: true,
     stock: 0,
     cost: 0,
@@ -551,7 +589,7 @@ function savePreventaProduct(id) {
     images: document.getElementById('prevf-imageUrl').value ? [document.getElementById('prevf-imageUrl').value] : []
   }
 
-  if (!data.name) { showToast({ title: 'Error', message: 'El nombre es obligatorio', type: 'error' }); return }
+  if (!data.name) { showToast({ title: 'Error', message: 'Selecciona un modelo', type: 'error' }); return }
   if (!data.price || data.price <= 0) { showToast({ title: 'Error', message: 'El precio es obligatorio', type: 'error' }); return }
 
   var url = API_URL + '/api/products'
