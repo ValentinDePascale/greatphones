@@ -1870,8 +1870,8 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="accIsOffer" onchange="var d=document.getElementById('accDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
             <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="accDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
-            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="accOfferStart" type="datetime-local"></div>
-            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="accOfferEnd" type="datetime-local"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="accOfferStartDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="accOfferStartTime" type="time"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="accOfferEndDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="accOfferEndTime" type="time"></div>
           </div>
         </div>
         <input type="hidden" id="accColor">
@@ -2065,8 +2065,8 @@
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="prodIsOffer" onchange="var d=document.getElementById('prodDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
             <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="prodDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
-            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="prodOfferStartDate" type="date" style="margin-bottom:4px" oninput="console.log('prodOfferStart date: '+this.value)"><input class="inp-f" id="prodOfferStartTime" type="time" oninput="console.log('prodOfferStart time: '+this.value)"></div>
-            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="prodOfferEndDate" type="date" style="margin-bottom:4px" oninput="console.log('prodOfferEnd date: '+this.value)"><input class="inp-f" id="prodOfferEndTime" type="time" oninput="console.log('prodOfferEnd time: '+this.value)"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="prodOfferStartDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="prodOfferStartTime" type="time"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="prodOfferEndDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="prodOfferEndTime" type="time"></div>
           </div>
         </div>
         <div id="variantsSection" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">

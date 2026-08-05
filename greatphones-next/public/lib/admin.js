@@ -891,8 +891,8 @@ function saveAccessory(){
     images:window.accAdditionalImages||[],
     discount:parseInt(document.getElementById('accDiscount').value)||0,
     isOffer:document.getElementById('accIsOffer').checked||false,
-    offerStart:document.getElementById('accOfferStart').value||null,
-    offerEnd:document.getElementById('accOfferEnd').value||null,
+    offerStart:combineDateTime('accOfferStartDate','accOfferStartTime'),
+    offerEnd:combineDateTime('accOfferEndDate','accOfferEndTime'),
   };
 
   // If editing an existing record, just PUT the first row's data
@@ -979,8 +979,10 @@ function fillAccForm(a){
   document.getElementById('accModelGroup').value=a.modelGroup||'';
   var disEl=document.getElementById('accDiscount'); if(disEl){disEl.value=a.discount||0; disEl.disabled=!a.isOffer;}
   var isoEl=document.getElementById('accIsOffer'); if(isoEl)isoEl.checked=!!a.isOffer;
-  var asEl=document.getElementById('accOfferStart'); if(asEl)asEl.value=a.offerStart?toDatetimeLocal(new Date(a.offerStart)):'';
-  var aeEl=document.getElementById('accOfferEnd'); if(aeEl)aeEl.value=a.offerEnd?toDatetimeLocal(new Date(a.offerEnd)):'';
+  var asEl=document.getElementById('accOfferStartDate'); if(asEl)asEl.value=a.offerStart?toDatetimeLocal(new Date(a.offerStart)).split('T')[0]:'';
+  var astEl=document.getElementById('accOfferStartTime'); if(astEl)astEl.value=a.offerStart?toDatetimeLocal(new Date(a.offerStart)).split('T')[1]||'':'';
+  var aeEl=document.getElementById('accOfferEndDate'); if(aeEl)aeEl.value=a.offerEnd?toDatetimeLocal(new Date(a.offerEnd)).split('T')[0]:'';
+  var aetEl=document.getElementById('accOfferEndTime'); if(aetEl)aetEl.value=a.offerEnd?toDatetimeLocal(new Date(a.offerEnd)).split('T')[1]||'':'';
   buildCompatGrid(a.compatibleModels||'');
   window.accAdditionalImages=Array.isArray(a.images)?a.images.slice():[];
   var prevImg=document.getElementById('accImagePreview');if(prevImg&&a.imageUrl)prevImg.innerHTML='<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';

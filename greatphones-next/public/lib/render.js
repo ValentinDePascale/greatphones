@@ -2324,12 +2324,6 @@ function saveProduct(){
     showAlert('Campos requeridos', 'Nombre y precio son requeridos', 'warning');
     return;
   }
-  var offerEndRaw=combineDateTime('prodOfferEndDate','prodOfferEndTime')||'';
-  var offerStartRaw=combineDateTime('prodOfferStartDate','prodOfferStartTime')||'';
-  if(data.isOffer){
-    alert('Oferta: '+data.discount+'%\nInicio raw: '+offerStartRaw+'\nFin raw: '+offerEndRaw+'\n\nEn data: offerEnd='+data.offerEnd+' offerStart='+data.offerStart);
-  }
-  console.log('SAVE PRODUCT — isEdit:'+isEdit+' offerEnd:'+offerEndRaw+' isOffer:'+data.isOffer+' discount:'+data.discount);
   var method=isEdit?'PUT':'POST';
   var url=isEdit?API_URL+'/api/products/'+prodId:API_URL+'/api/products';
   fetch(url,{
@@ -3677,8 +3671,8 @@ function renderAdminContent(tab){
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Inicio oferta (opcional)</label><input class="inp-f" id="promoOfferStart" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Fin oferta</label><input class="inp-f" id="promoOfferEnd" type="datetime-local" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Inicio oferta (opcional)</label><input class="inp-f" id="promoOfferStartDate" type="date" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:4px"><input class="inp-f" id="promoOfferStartTime" type="time" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Fin oferta</label><input class="inp-f" id="promoOfferEndDate" type="date" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:4px"><input class="inp-f" id="promoOfferEndTime" type="time" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
       '</div>'+
       '<div style="margin-bottom:1rem">'+
         '<input type="text" id="promoSearch" placeholder="🔍 Buscar por nombre..." oninput="renderPromoProducts()" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'">'+
@@ -4235,8 +4229,8 @@ function applyPromo(){
   if(discount<=0){showAlert('Descuento inválido', 'Ingresa un descuento mayor a 0', 'warning');return;}
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
   if(checkboxes.length===0){showAlert('Selección requerida', 'Selecciona al menos un producto', 'warning');return;}
-  var offerStart=document.getElementById('promoOfferStart')?.value||null;
-  var offerEnd=document.getElementById('promoOfferEnd')?.value||null;
+  var offerStart=combineDateTime('promoOfferStartDate','promoOfferStartTime');
+  var offerEnd=combineDateTime('promoOfferEndDate','promoOfferEndTime');
   var promises=[];
   var prodCount=0,accCount=0;
   checkboxes.forEach(function(chk){
