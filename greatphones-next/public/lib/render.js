@@ -140,7 +140,7 @@ function loadProducts(){
     renderShopGrid();
     renderOfertasGrid();
     renderFeaturedGrid();
-    if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
@@ -157,8 +157,8 @@ function loadAccessories(){
     window._accLoaded=true;
     if(useCache)return;
     if(document.getElementById('accGrid'))renderAccGrid();
-    if(document.getElementById('p-detail').classList.contains('act')){renderRelatedAccs();}
-    if(document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-detail')&&document.getElementById('p-detail').classList.contains('act')){renderRelatedAccs();}
+    if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
     if(document.getElementById('adminContent')){
       var currentTab=window.currentAdminTab||'prods';
