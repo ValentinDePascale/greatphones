@@ -543,7 +543,7 @@ function submitOrder(){
 
   var items=Cart.map(function(item){
     var lookupId=item.productId||item.id;
-    var p=getById(PRODUCTS,lookupId);
+    var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
       var price=isOfferValid(p)?Math.round(p.price-p.price*p.discount/100):p.price;
       return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty,isPreorder:!!item.isPreorder,availableFrom:item.availableFrom||null};
@@ -632,7 +632,7 @@ function renderCheckoutSummaryStep(){
   }
   container.innerHTML=Cart.map(function(item, idx){
     var lookupId=item.productId||item.id;
-    var p=getById(PRODUCTS,lookupId);
+    var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
       var isPromo=isOfferValid(p);
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
@@ -679,7 +679,7 @@ function renderCheckoutSummary(){
 
   var validItems=Cart.filter(function(item){
     var lookupId=item.productId||item.id;
-    var p=getById(PRODUCTS,lookupId);
+    var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     var a=getById(window.ACCS,lookupId);
     return p||a;
   });
@@ -712,7 +712,7 @@ function renderCheckoutItems(items){
 
   var html=items.map(function(item, idx){
     var lookupId=item.productId||item.id;
-    var p=getById(PRODUCTS,lookupId);
+    var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
       var isPromo=isOfferValid(p);
       var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;

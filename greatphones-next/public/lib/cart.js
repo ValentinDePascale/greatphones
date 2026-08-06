@@ -83,6 +83,7 @@ function closeCart(){
 }
 function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
   var p=getById(PRODUCTS,variant?variant.productId||id:id);
+  if(!p) p=getById(PREORDER_PRODUCTS,variant?variant.productId||id:id);
   var a=getById(window.ACCS,id);
   if(!p&&!a)return;
   var itemId=variant?id+'::'+variant.imei:id;

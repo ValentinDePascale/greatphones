@@ -1056,7 +1056,9 @@ function selectAccVariant(id){
 function openDetail(id, variantId){
   var activePage=document.querySelector('.page.act');
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
-  currentProd=getById(PRODUCTS,id);if(!currentProd)return;
+  currentProd=getById(PRODUCTS,id);
+  if(!currentProd)currentProd=getById(PREORDER_PRODUCTS,id);
+  if(!currentProd)return;
   currentAcc=null;
   window._detailVariants=[];
   window._selectedVariantIdx=-1;

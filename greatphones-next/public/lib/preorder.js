@@ -14,6 +14,11 @@ function loadPreorderProducts() {
     .then(function(r) { return r.json(); })
     .then(function(res) {
       PREORDER_PRODUCTS = res.data || res || [];
+      // Merge into PRODUCTS[] so addToCart/checkout/detail can find them
+      for (var i = 0; i < PREORDER_PRODUCTS.length; i++) {
+        var exists = getById(PRODUCTS, PREORDER_PRODUCTS[i].id);
+        if (!exists) PRODUCTS.push(PREORDER_PRODUCTS[i]);
+      }
       if (loading) loading.style.display = 'none';
       if (PREORDER_PRODUCTS.length === 0) {
         if (empty) empty.style.display = 'block';
