@@ -4768,14 +4768,27 @@ function deleteQuote(id){
 (function initSSRDetail(){
   if(window.__INITIAL_DETAIL_ID__&&window.__INITIAL_DETAIL__){
     var id=window.__INITIAL_DETAIL_ID__;
-    // Wait for PRODUCTS to be populated first
     var checkInterval=setInterval(function(){
       if(window._productsLoaded||(window.__INITIAL_PRODUCTS__&&window.__INITIAL_PRODUCTS__.length>0)){
         clearInterval(checkInterval);
         openDetail(id);
       }
     },50);
-    // Safety timeout
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();
+
+// SSR support: auto-open catalog when pre-fetched data is available
+(function initSSRCatalog(){
+  if(window.__INITIAL_CATALOG__){
+    delete window.__INITIAL_CATALOG__;
+    var checkInterval=setInterval(function(){
+      if(typeof nav === 'function' && typeof renderShopGrid === 'function'){
+        clearInterval(checkInterval);
+        nav('shop');
+        window.history.replaceState({page:'shop'}, '', '/productos');
+      }
+    },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
   }
 })();
