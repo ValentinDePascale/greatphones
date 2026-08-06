@@ -4792,3 +4792,63 @@ function deleteQuote(id){
     setTimeout(function(){clearInterval(checkInterval);},5000);
   }
 })();
+
+// SSR support: auto-navigate to accesorios page
+(function initSSRAcc(){
+  if(window.__INITIAL_ACC_PAGE__){
+    delete window.__INITIAL_ACC_PAGE__;
+    var checkInterval=setInterval(function(){
+      if(typeof nav === 'function'){
+        clearInterval(checkInterval);
+        nav('accesorios');
+        window.history.replaceState({page:'accesorios'}, '', '/accesorios');
+      }
+    },50);
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();
+
+// SSR support: auto-navigate to ofertas page
+(function initSSROfertas(){
+  if(window.__INITIAL_OFERTAS__){
+    delete window.__INITIAL_OFERTAS__;
+    var checkInterval=setInterval(function(){
+      if(typeof nav === 'function'){
+        clearInterval(checkInterval);
+        nav('ofertas');
+        window.history.replaceState({page:'ofertas'}, '', '/ofertas');
+      }
+    },50);
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();
+
+// SSR support: auto-navigate to garantias page
+(function initSSRGarantias(){
+  if(window.__INITIAL_GARANTIAS__){
+    delete window.__INITIAL_GARANTIAS__;
+    var checkInterval=setInterval(function(){
+      if(typeof nav === 'function'){
+        clearInterval(checkInterval);
+        nav('garantias');
+        window.history.replaceState({page:'garantias'}, '', '/garantias');
+      }
+    },50);
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();
+
+// SSR support: auto-navigate to preventas page
+(function initSSRPreventas(){
+  if(window.__INITIAL_PREVENTAS__){
+    delete window.__INITIAL_PREVENTAS__;
+    var checkInterval=setInterval(function(){
+      if(typeof nav === 'function' && typeof loadPreorderProducts === 'function'){
+        clearInterval(checkInterval);
+        nav('preventas');
+        window.history.replaceState({page:'preventas'}, '', '/preventas');
+      }
+    },50);
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();

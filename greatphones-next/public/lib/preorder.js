@@ -10,6 +10,20 @@ function loadPreorderProducts() {
   if (loading) loading.style.display = 'block';
   if (empty) empty.style.display = 'none';
 
+  // Use server pre-fetched data if available
+  if (window.__INITIAL_PREORDER_PRODUCTS__ && window.__INITIAL_PREORDER_PRODUCTS__.length > 0) {
+    PREORDER_PRODUCTS = window.__INITIAL_PREORDER_PRODUCTS__;
+    delete window.__INITIAL_PREORDER_PRODUCTS__;
+    if (loading) loading.style.display = 'none';
+    if (PREORDER_PRODUCTS.length === 0) {
+      if (empty) empty.style.display = 'block';
+      return;
+    }
+    grid.style.display = 'grid';
+    renderPreorderGrid();
+    return;
+  }
+
   fetch(API_URL + '/api/products?preorder=true&limit=50')
     .then(function(r) { return r.json(); })
     .then(function(res) {
