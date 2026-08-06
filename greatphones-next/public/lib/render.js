@@ -1886,7 +1886,7 @@ function renderOrderHistory(){
     var ords=res.data||res;
     var countEl=document.getElementById('orderCount');
     if(!ords||ords.length===0){
-      list.innerHTML='<div class="cu-empty"><p>Todavía no hiciste ningún pedido</p><a href="/shop" onclick="event.preventDefault();nav(\'shop\')" class="cu-empty-link">Ir a la tienda</a></div>';
+      list.innerHTML='<div class="cu-empty"><p>Todavía no hiciste ningún pedido</p><a href="/productos" onclick="event.preventDefault();nav(\'shop\')" class="cu-empty-link">Ir a la tienda</a></div>';
       if(countEl)countEl.style.display='none';
     }else{
       if(countEl){countEl.textContent=ords.length;countEl.style.display='inline';}
@@ -4786,7 +4786,6 @@ function deleteQuote(id){
       if(typeof nav === 'function' && typeof renderShopGrid === 'function'){
         clearInterval(checkInterval);
         nav('shop');
-        window.history.replaceState({page:'shop'}, '', '/productos');
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
@@ -4801,7 +4800,6 @@ function deleteQuote(id){
       if(typeof nav === 'function'){
         clearInterval(checkInterval);
         nav('accesorios');
-        window.history.replaceState({page:'accesorios'}, '', '/accesorios');
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
@@ -4816,7 +4814,6 @@ function deleteQuote(id){
       if(typeof nav === 'function'){
         clearInterval(checkInterval);
         nav('ofertas');
-        window.history.replaceState({page:'ofertas'}, '', '/ofertas');
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
@@ -4831,7 +4828,6 @@ function deleteQuote(id){
       if(typeof nav === 'function'){
         clearInterval(checkInterval);
         nav('garantias');
-        window.history.replaceState({page:'garantias'}, '', '/garantias');
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
@@ -4846,7 +4842,6 @@ function deleteQuote(id){
       if(typeof nav === 'function' && typeof loadPreorderProducts === 'function'){
         clearInterval(checkInterval);
         nav('preventas');
-        window.history.replaceState({page:'preventas'}, '', '/preventas');
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);

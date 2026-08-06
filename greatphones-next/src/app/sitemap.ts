@@ -5,16 +5,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticPages = [
     '',
-    '/shop',
+    '/productos',
     '/ofertas',
     '/accesorios',
-    '/notebooks',
-    '/servicio',
     '/garantias',
+    '/preventas',
     '/sell',
     '/compare',
-    '/mayorista',
-    '/chats',
     '/track-order',
     '/terminos',
     '/privacidad',
