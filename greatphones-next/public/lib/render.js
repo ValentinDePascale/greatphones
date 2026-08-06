@@ -3767,7 +3767,8 @@ function renderAdminContent(tab){
       '<button class="ord-btn" id="arrepBtnAceptados" onclick="loadArrepAceptados()">Aceptados</button>'+
       '<button class="ord-btn" id="arrepBtnRechazados" onclick="loadArrepRechazados()">Rechazados</button>'+
     '</div>'+
-    '<div class="loader-spinner"><span>Cargando...</span></div>';
+    '<div class="loader-spinner"><span>Cargando...</span></div>'+
+    '<div id="arrepList"></div>';
     loadArrepPendientes();
   }else if(tab==='chat'){
     el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+

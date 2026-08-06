@@ -593,7 +593,10 @@ function loadArrepPendientes(){
     window._allArreps=list;
     var pendientes=list.filter(function(a){return a.estado==='PENDIENTE';});
     renderArrepList(pendientes,'pendientes');
-  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+  }).catch(function(){
+    var el=document.getElementById('arrepList');if(el)el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';
+    var loader=document.querySelector('#adminContent .loader-spinner');if(loader)loader.style.display='none';
+  });
 }
 
 function loadArrepAceptados(){
@@ -602,7 +605,10 @@ function loadArrepAceptados(){
     window._allArreps=list;
     var aceptados=list.filter(function(a){return a.estado==='APROBADO';});
     renderArrepList(aceptados,'aceptados');
-  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+  }).catch(function(){
+    var el=document.getElementById('arrepList');if(el)el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';
+    var loader=document.querySelector('#adminContent .loader-spinner');if(loader)loader.style.display='none';
+  });
 }
 
 function loadArrepRechazados(){
@@ -611,12 +617,17 @@ function loadArrepRechazados(){
     window._allArreps=list;
     var rechazados=list.filter(function(a){return a.estado==='RECHAZADO';});
     renderArrepList(rechazados,'rechazados');
-  }).catch(function(){document.getElementById('arrepList').innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';});
+  }).catch(function(){
+    var el=document.getElementById('arrepList');if(el)el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando</div>';
+    var loader=document.querySelector('#adminContent .loader-spinner');if(loader)loader.style.display='none';
+  });
 }
 
 function renderArrepList(list,tab){
   var el=document.getElementById('arrepList');
   if(!el)return;
+  var loader=document.querySelector('#adminContent .loader-spinner');
+  if(loader)loader.style.display='none';
 
   if(!list||list.length===0){
     var msgs={
