@@ -166,6 +166,8 @@ function nav(id){
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
   var urlMap={home:'',shop:'productos',sell:'sell',detail:'productos',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
+  var titles={home:'Great Phones',shop:'Productos — Great Phones',sell:'Vender — Great Phones',detail:'Producto — Great Phones',favoritos:'Favoritos — Great Phones',accesorios:'Accesorios — Great Phones',garantias:'Garantías — Great Phones',ofertas:'Ofertas — Great Phones',preventas:'Preventas — Great Phones',chats:'Chats — Great Phones',admin:'Admin — Great Phones',cuenta:'Mi Cuenta — Great Phones',checkout:'Checkout — Great Phones',terminos:'Términos — Great Phones',privacidad:'Privacidad — Great Phones',login:'Iniciar Sesión — Great Phones',register:'Registro — Great Phones','track-order':'Seguimiento — Great Phones'};
+  if(titles[id])document.title=titles[id];
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
