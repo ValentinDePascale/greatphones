@@ -23,7 +23,6 @@ export default async function OfertasPage() {
     const now = new Date()
     const products = await prisma.product.findMany({
       where: {
-        isActive: true,
         isPreorder: { not: true },
         isOffer: true,
         discount: { gt: 0 },

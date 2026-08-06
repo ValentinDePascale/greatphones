@@ -21,7 +21,7 @@ export default async function AccesoriosPage() {
 
   try {
     const accessories = await prisma.accessory.findMany({
-      where: { isActive: true, stock: { gt: 0 } },
+      where: { stock: { gt: 0 } },
       orderBy: { createdAt: 'desc' },
       take: 200,
     })

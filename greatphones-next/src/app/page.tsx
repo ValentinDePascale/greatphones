@@ -26,7 +26,7 @@ export default async function Home() {
     // Pre-fetch initial data for faster first paint
     const [products, accessories] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true, isPreorder: { not: true } },
+        where: { isPreorder: { not: true } },
         orderBy: { createdAt: 'desc' },
         take: 200,
       }),

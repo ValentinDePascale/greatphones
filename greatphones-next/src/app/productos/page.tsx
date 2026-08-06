@@ -1,7 +1,6 @@
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
+import { ProductGrid } from '@/components/ProductCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,27 +14,31 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function ShopPage() {
-  const htmlPath = join(process.cwd(), 'public', 'index.html')
-  let html = existsSync(htmlPath)
-    ? readFileSync(htmlPath, 'utf-8')
-    : '<h1>Loading...</h1>'
-
-  try {
-    const products = await prisma.product.findMany({
-      where: { isActive: true, isPreorder: { not: true }, stock: { gt: 0 } },
-      orderBy: [{ sold: 'desc' }, { score: 'desc' }],
-      take: 200,
-    })
-
-    const dataScript = `<script>window.__INITIAL_PRODUCTS__=${JSON.stringify(products)};window.__INITIAL_CATALOG__=true;</script>`
-
-    html = html.replace('</body>', dataScript + '</body>')
-  } catch {
-    html = html.replace('</body>', '<script>window.__INITIAL_CATALOG__=true;</script></body>')
-  }
+export default async function ProductosPage() {
+  const products = await prisma.product.findMany({
+    where: { isPreorder: { not: true }, stock: { gt: 0 } },
+    orderBy: [{ sold: 'desc' }, { score: 'desc' }],
+    take: 200,
+  })
 
   return (
-    <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
+    <div style={{ padding: '2rem', maxWidth: 1400, margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{
+          fontFamily: "'Playfair Display', Georgia, serif",
+          fontSize: 'clamp(28px, 4vw, 40px)',
+          fontWeight: 700,
+          color: '#1a1a1a',
+          marginBottom: 8,
+        }}>
+          Catálogo
+        </h1>
+        <p style={{ fontSize: 14, color: '#9A9186' }}>
+          {products.length} productos disponibles
+        </p>
+      </div>
+
+      <ProductGrid products={JSON.parse(JSON.stringify(products))} />
+    </div>
   )
 }

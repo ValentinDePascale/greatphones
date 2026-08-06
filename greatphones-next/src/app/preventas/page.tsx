@@ -21,7 +21,7 @@ export default async function PreventasPage() {
 
   try {
     const products = await prisma.product.findMany({
-      where: { isActive: true, isPreorder: true },
+      where: { isPreorder: true },
       orderBy: { createdAt: 'desc' },
       take: 50,
     })
