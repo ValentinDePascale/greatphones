@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface Product {
+export interface Product {
   id: string
   name: string
   brand: string
@@ -12,6 +12,7 @@ interface Product {
   isOffer: boolean
   discount: number
   imageUrl?: string
+  images?: string[]
   ico?: string
   stock: number
   sold?: number
@@ -19,6 +20,16 @@ interface Product {
   storage?: string
   color?: string
   type?: string
+  screen?: number
+  ram?: string
+  processor?: string
+  battery?: number
+  isPreorder?: boolean
+  availableFrom?: string
+  offerEnd?: string
+  offerStart?: string
+  modelGroup?: string
+  description?: string
 }
 
 function fmt(n: number) {

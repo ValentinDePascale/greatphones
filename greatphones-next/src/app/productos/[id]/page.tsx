@@ -1,8 +1,8 @@
-import { existsSync, readFileSync } from 'fs'
-import { join } from 'path'
-import { prisma } from '@/lib/prisma'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { prisma } from '@/lib/prisma'
+import ProductDetail from '@/components/ProductDetail'
+import type { Product } from '@/components/ProductCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,35 +20,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function ProductDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProductDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const htmlPath = join(process.cwd(), 'public', 'index.html')
-  let html = existsSync(htmlPath)
-    ? readFileSync(htmlPath, 'utf-8')
-    : '<h1>Loading...</h1>'
+  const product = await prisma.product.findUnique({ where: { id } })
 
-  try {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { inventoryItems: { take: 50, orderBy: { createdAt: 'desc' } } }
-    })
+  if (!product) notFound()
 
-    if (!product) notFound()
-
-    const dataScript = `<script>
-window.__INITIAL_DETAIL__=${JSON.stringify({
-  product,
-  variants: product.inventoryItems || []
-})};
-window.__INITIAL_DETAIL_ID__="${id}";
-</script>`
-
-    html = html.replace('</body>', dataScript + '</body>')
-  } catch {
-    html = html.replace('</body>', `<script>window.__INITIAL_DETAIL_ID__="${id}";</script></body>`)
-  }
-
-  return (
-    <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
-  )
+  return <ProductDetail product={product as unknown as Product} />
 }
