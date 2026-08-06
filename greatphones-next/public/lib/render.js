@@ -69,6 +69,10 @@ function renderDetBadges(p,extraCond){
   badges.push({ico:'\u2713',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   badges.push({ico:'\u2713',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   if(type==='celular')badges.splice(2,0,{ico:'\u2713',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(p.isPreorder){
+    var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
+    badges.unshift({ico:'\u2B50',text:'Preventa — Disponible '+dateStr,color:'var(--orange)',bg:'rgba(255,107,44,.12)'});
+  }
   if(extraCond)badges.unshift({ico:'\uD83D\uDCF1',text:extraCond,color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   el.innerHTML=badges.map(function(b){
     var c=b.color||'var(--green)';
@@ -1207,6 +1211,12 @@ function openDetail(id, variantId){
 
   var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
   if(currentProd.isPreorder){
+    var availStr=currentProd.availableFrom?'Disponible '+new Date(currentProd.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
+    var timerEl=document.getElementById('detOfferTimer');var textEl=document.getElementById('detTimerText');
+    if(timerEl&&textEl&&!isOfferValid(currentProd)){
+      textEl.textContent='⏳ '+availStr;
+      timerEl.style.display='';
+    }
     if(addCartBtn){addCartBtn.style.display='';addCartBtn.textContent='Reservar';addCartBtn.onclick=function(){addToCart(currentProd.id,addCartBtn,null,true,currentProd.availableFrom);};}
     if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.textContent='Reservar Ahora';buyNowBtn.onclick=function(){addToCart(currentProd.id,null,null,true,currentProd.availableFrom);setTimeout(function(){nav('checkout');},400);};}
     var variantsEl=document.getElementById('detVariants');
@@ -1767,11 +1777,12 @@ function renderRelatedAccs(){
   if(currentProd){
     // Product detail → show compatible accessories
     var modelName=currentProd.name.replace(/iPhone\s*/,'').trim();
+    var prodNameLower=currentProd.name.toLowerCase();
     related=(window.ACCS||[]).filter(function(a){
       if(!a.compatibleModels||a.stock<=0)return false;
-      var models=a.compatibleModels.split(',').map(function(s){return s.trim();});
+      var models=a.compatibleModels.split(',').map(function(s){return s.trim().toLowerCase();});
       return models.some(function(m){
-        return modelName.indexOf(m)>=0||(m&&modelName&&m.indexOf(modelName.split(' ').pop())>=0);
+        return prodNameLower.indexOf(m)>=0||m.indexOf('iphone '+modelName.toLowerCase())>=0;
       });
     }).slice(0,8);
     title='Accesorios compatibles';
@@ -3847,6 +3858,7 @@ function renderAdminProductsFiltered(q){
   q=(q||'').toLowerCase().trim();
   var sort=document.getElementById('admProdsSort')?document.getElementById('admProdsSort').value:'name';
   var list=PRODUCTS.filter(function(p){
+    if(p.isPreorder)return false;
     var matchesQ=!q||(p.name||'').toLowerCase().indexOf(q)>=0||(p.sub||'').toLowerCase().indexOf(q)>=0||(p.brand||'').toLowerCase().indexOf(q)>=0;
     if(!matchesQ)return false;
     if(window.admProdFilter==='offer')return !!p.isOffer;
