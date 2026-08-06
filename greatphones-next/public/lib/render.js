@@ -125,6 +125,25 @@ function renderSkeletonGrid(gid,count){
 }
 
 function loadProducts(){
+  // Use server pre-fetched data if available on first load
+  if(!window._productsLoaded&&window.__INITIAL_PRODUCTS__&&window.__INITIAL_PRODUCTS__.length>0){
+    PRODUCTS=window.__INITIAL_PRODUCTS__;
+    window._productsLoaded=true;
+    delete window.__INITIAL_PRODUCTS__;
+    hideLoadingBar();
+    renderHomeRail();
+    renderOfferStrip();
+    renderShopGrid();
+    renderOfertasGrid();
+    renderFeaturedGrid();
+    if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
+    if(document.getElementById('adminContent')){
+      var currentTab=window.currentAdminTab||'prods';
+      renderAdminContent(currentTab);
+    }
+    return Promise.resolve();
+  }
   var useCache=!!window._productsLoaded;
   if(!useCache){
     renderSkeletonGrid('homeRail',4);
@@ -154,6 +173,17 @@ function loadProducts(){
 }
 
 function loadAccessories(){
+  // Use server pre-fetched data if available on first load
+  if(!window._accLoaded&&window.__INITIAL_ACCESSORIES__&&window.__INITIAL_ACCESSORIES__.length>0){
+    window.ACCS=window.__INITIAL_ACCESSORIES__;
+    window._accLoaded=true;
+    delete window.__INITIAL_ACCESSORIES__;
+    if(document.getElementById('accGrid'))renderAccGrid();
+    if(document.getElementById('p-detail')&&document.getElementById('p-detail').classList.contains('act')){renderRelatedAccs();}
+    if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
+    if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
+    return;
+  }
   var useCache=!!window._accLoaded;
   if(!useCache)renderSkeletonGrid('accGrid',8);
   cachedFetch(API_URL+'/api/accessories',null,60000).then(function(res){

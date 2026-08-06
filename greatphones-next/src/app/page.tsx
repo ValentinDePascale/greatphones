@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'fs'
 import { join } from 'path'
 import type { Metadata } from 'next'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,11 +16,37 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 }
 
-export default function Home() {
+export default async function Home() {
   const htmlPath = join(process.cwd(), 'public', 'index.html')
-  const html = existsSync(htmlPath)
+  let html = existsSync(htmlPath)
     ? readFileSync(htmlPath, 'utf-8')
     : '<h1>Loading...</h1>'
+
+  try {
+    // Pre-fetch initial data for faster first paint
+    const [products, accessories] = await Promise.all([
+      prisma.product.findMany({
+        where: { isActive: true, isPreorder: { not: true } },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+      prisma.accessory.findMany({
+        where: { isActive: true },
+        orderBy: { createdAt: 'desc' },
+        take: 200,
+      }),
+    ])
+
+    const dataScript = `<script>window.__INITIAL_PRODUCTS__=${JSON.stringify(products)};window.__INITIAL_ACCESSORIES__=${JSON.stringify(accessories)};window.__INITIAL_DATA_LOADED__=true;</script>`
+
+    // Inject before </body>
+    html = html.replace('</body>', dataScript + '</body>')
+  } catch {
+    // If DB fails, still serve the page with empty initial data
+    const fallback = '<script>window.__INITIAL_PRODUCTS__=[];window.__INITIAL_ACCESSORIES__=[];window.__INITIAL_DATA_LOADED__=true;</script>'
+    html = html.replace('</body>', fallback + '</body>')
+  }
+
   return (
     <div
       dangerouslySetInnerHTML={{ __html: html }}
