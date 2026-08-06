@@ -1,18 +1,5 @@
 // =========== CONSTANTS ===========
-var PRODUCTS = [
-  {id:0,ico:'&#128241;',name:'iPhone 15 Pro',brand:'iPhone',sub:'256 GB Titanio Natural',cond:'Impecable',cls:'celular',price:1320000,cost:980000,bat:91,stock:3,score:97,offer:false,disc:0,color:'Titanio Natural',screen:'6.1',type:'celular',imei:'354821093847561',sold:34,cpu:'A17 Pro',ram:'8 GB',cam:'48MP'},
-  {id:1,ico:'&#128187;',name:'MacBook Air M2',brand:'MacBook',sub:'8 GB RAM / 256 GB SSD',cond:'Nuevo',cls:'laptop',price:1850000,cost:1400000,bat:0,stock:2,score:99,offer:false,disc:0,color:'Midnight',screen:'13.6',type:'laptop',imei:'FVFXQ2BQ3C',sold:18,cpu:'M2',ram:'8 GB',cam:'1080p FaceTime'},
-  {id:2,ico:'&#128241;',name:'iPhone 14',brand:'iPhone',sub:'128 GB Azul',cond:'Muy bueno',cls:'celular',price:890000,cost:650000,bat:86,stock:5,score:88,offer:true,disc:12,color:'Azul',screen:'6.1',type:'celular',imei:'354821093847562',sold:51,cpu:'A15 Bionic',ram:'6 GB',cam:'12MP'},
-  {id:3,ico:'&#127756;',name:'Galaxy S24 Ultra',brand:'Samsung',sub:'256 GB Titanio Negro',cond:'Nuevo',cls:'celular',price:1580000,cost:1200000,bat:0,stock:1,score:96,offer:false,disc:0,color:'Titanio Negro',screen:'6.8',type:'celular',imei:'354821093847563',sold:12,cpu:'Snapdragon 8 Gen 3',ram:'12 GB',cam:'200MP'},
-  {id:4,ico:'&#11035;',name:'iPad Pro M4',brand:'iPad',sub:'11" 256 GB WiFi',cond:'Nuevo',cls:'tablet',price:1420000,cost:1080000,bat:0,stock:2,score:98,offer:false,disc:0,color:'Plata',screen:'11',type:'tablet',imei:'DMPRX2BQ1A',sold:9,cpu:'M4',ram:'8 GB',cam:'12MP'},
-  {id:5,ico:'&#128241;',name:'iPhone 13 Pro',brand:'iPhone',sub:'256 GB Graphite',cond:'Impecable',cls:'celular',price:980000,cost:720000,bat:89,stock:4,score:92,offer:true,disc:15,color:'Graphite',screen:'6.1',type:'celular',imei:'354821093847565',sold:67,cpu:'A15 Bionic',ram:'6 GB',cam:'12MP ProRAW'},
-  {id:6,ico:'&#128241;',name:'iPhone 12 Pro',brand:'iPhone',sub:'128 GB Pacific Blue',cond:'Muy bueno',cls:'celular',price:680000,cost:490000,bat:84,stock:6,score:82,offer:false,disc:0,color:'Pacific Blue',screen:'6.1',type:'celular',imei:'354821093847566',sold:43,cpu:'A14 Bionic',ram:'6 GB',cam:'12MP'},
-  {id:7,ico:'&#128421;',name:'iMac 24" M3',brand:'MacBook',sub:'8 GB RAM / 256 GB SSD',cond:'Nuevo',cls:'desktop',price:2680000,cost:2100000,bat:0,stock:1,score:99,offer:false,disc:0,color:'Azul',screen:'24',type:'desktop',imei:'FVFXQ2BQ3D',sold:4,cpu:'M3',ram:'8 GB',cam:'12MP Center Stage'},
-  {id:8,ico:'&#128241;',name:'iPhone 16 Pro',brand:'iPhone',sub:'256 GB Titanio Desierto',cond:'Nuevo',cls:'celular',price:1680000,cost:1280000,bat:0,stock:2,score:99,offer:false,disc:0,color:'Titanio Desierto',screen:'6.3',type:'celular',imei:'354821093847568',sold:8,cpu:'A18 Pro',ram:'8 GB',cam:'48MP'},
-  {id:9,ico:'&#127756;',name:'Galaxy S23+',brand:'Samsung',sub:'256 GB Cream',cond:'Muy bueno',cls:'celular',price:780000,cost:570000,bat:87,stock:3,score:85,offer:true,disc:10,color:'Cream',screen:'6.6',type:'celular',imei:'354821093847569',sold:29,cpu:'Snapdragon 8 Gen 2',ram:'8 GB',cam:'50MP'},
-  {id:10,ico:'&#12349;',name:'Moto Edge 50 Pro',brand:'Motorola',sub:'256 GB Black Beauty',cond:'Nuevo',cls:'celular',price:520000,cost:380000,bat:0,stock:4,score:78,offer:false,disc:0,color:'Black Beauty',screen:'6.7',type:'celular',imei:'354821093847570',sold:15,cpu:'Snapdragon 7 Gen 3',ram:'12 GB',cam:'50MP'},
-  {id:11,ico:'&#128308;',name:'Xiaomi 13T',brand:'Xiaomi',sub:'256 GB Alpine Blue',cond:'Nuevo',cls:'celular',price:480000,cost:340000,bat:0,stock:5,score:75,offer:false,disc:0,color:'Alpine Blue',screen:'6.67',type:'celular',imei:'354821093847571',sold:21,cpu:'Dimensity 8200 Ultra',ram:'8 GB',cam:'50MP'}
-];
+var PRODUCTS = [];
 
 var REPAIRS = [
   {ico:'&#128241;',name:'Pantalla iPhone',range:'$45.000 - $180.000'},
@@ -204,22 +191,7 @@ var NB_DATA = {
   ]
 };
 
-var ACCS = [
-  {id:0,ico:'&#128268;',name:'Cargador USB-C 30W',sub:'Carga rapida certificada',price:22000,cat:'cargadores'},
-  {id:1,ico:'&#128268;',name:'Cargador MagSafe 15W',sub:'Original Apple',price:38000,cat:'cargadores'},
-  {id:2,ico:'&#128268;',name:'Cargador Anker 65W GaN',sub:'Triple puerto, ultra compacto',price:52000,cat:'cargadores'},
-  {id:3,ico:'&#127911;',name:'AirPods Pro 2da Gen',sub:'ANC + Modo Transparencia',price:280000,cat:'auriculares'},
-  {id:4,ico:'&#127911;',name:'JBL Tune 720BT',sub:'Over-ear Pure Bass 76hs',price:120000,cat:'auriculares'},
-  {id:5,ico:'&#127911;',name:'EarPods USB-C',sub:'Original Apple',price:28000,cat:'auriculares'},
-  {id:6,ico:'&#128266;',name:'JBL Flip 7',sub:'Portatil 20hs IP68',price:165000,cat:'parlantes'},
-  {id:7,ico:'&#128266;',name:'JBL Charge 5',sub:'Resistente al agua 20hs',price:235000,cat:'parlantes'},
-  {id:8,ico:'&#128266;',name:'JBL Go 4',sub:'Ultra compacto IP67',price:68000,cat:'parlantes'},
-  {id:9,ico:'&#128737;',name:'Funda MagSafe transparente',sub:'Todos los modelos iPhone',price:14000,cat:'fundas'},
-  {id:10,ico:'&#128737;',name:'Vidrio templado 9H',sub:'iPhone y Samsung',price:8500,cat:'fundas'},
-  {id:11,ico:'&#128737;',name:'Funda silicona Apple',sub:'Todos los modelos',price:28000,cat:'fundas'},
-  {id:12,ico:'&#128279;',name:'Cable USB-C trenzado 2m',sub:'Carga rapida + datos',price:9500,cat:'cables'},
-  {id:13,ico:'&#128279;',name:'Cable MagSafe 1m',sub:'Original Apple',price:16000,cat:'cables'}
-];
+var ACCS = [];
 
 var MODEL_COLORS = {
   'iPhone 6':         ['Gris Espacial', 'Plateado', 'Dorado'],
