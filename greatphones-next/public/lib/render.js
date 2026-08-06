@@ -1088,6 +1088,20 @@ function selectAccVariant(id){
 }
 
 function openDetail(id, variantId){
+  // Use server pre-fetched detail data if available
+  if(window.__INITIAL_DETAIL__&&window.__INITIAL_DETAIL_ID__===id){
+    var detailData=window.__INITIAL_DETAIL__;
+    if(detailData.product){
+      // Merge product into cache so subsequent lookups work
+      var cached=getById(PRODUCTS,id);
+      if(!cached)PRODUCTS.push(detailData.product);
+    }
+    if(detailData.variants&&detailData.variants.length>0){
+      window._detailVariants=detailData.variants;
+      window._variantsLoaded=true;
+    }
+    delete window.__INITIAL_DETAIL__;
+  }
   var activePage=document.querySelector('.page.act');
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
   currentProd=getById(PRODUCTS,id);
@@ -4749,3 +4763,19 @@ function deleteQuote(id){
     }
   }).catch(function(){showErrorToast('Error','No se pudo eliminar la cotización');});
 }
+
+// SSR support: auto-open detail when pre-fetched data is available
+(function initSSRDetail(){
+  if(window.__INITIAL_DETAIL_ID__&&window.__INITIAL_DETAIL__){
+    var id=window.__INITIAL_DETAIL_ID__;
+    // Wait for PRODUCTS to be populated first
+    var checkInterval=setInterval(function(){
+      if(window._productsLoaded||(window.__INITIAL_PRODUCTS__&&window.__INITIAL_PRODUCTS__.length>0)){
+        clearInterval(checkInterval);
+        openDetail(id);
+      }
+    },50);
+    // Safety timeout
+    setTimeout(function(){clearInterval(checkInterval);},5000);
+  }
+})();
