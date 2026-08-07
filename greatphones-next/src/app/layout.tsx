@@ -1,48 +1,24 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
-import { readFileSync, existsSync } from 'fs'
-import { join } from 'path'
 import './globals.css'
 
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-playfair',
-})
+const playfair = Playfair_Display({ subsets: ['latin'], display: 'swap', variable: '--font-playfair' })
+const dmSans = DM_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-dm-sans' })
 
-const dmSans = DM_Sans({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-dm-sans',
-})
-
-export const viewport: Viewport = {
-  width: 'device-width',
-  initialScale: 1,
-}
+export const viewport: Viewport = { width: 'device-width', initialScale: 1 }
 
 export const metadata: Metadata = {
   title: 'Great Phones - Tienda de Celulares',
   description: 'Tienda online de celulares y accesorios',
 }
 
-function getHeadHtml(): string {
-  const htmlPath = join(process.cwd(), 'public', 'index.html')
-  if (!existsSync(htmlPath)) return ''
-  const html = readFileSync(htmlPath, 'utf-8')
-  const headMatch = html.match(/<head>([\s\S]*?)<\/head>/)
-  if (!headMatch) return ''
-  // Remove <title> (Next.js handles it via metadata) and keep the rest
-  return headMatch[1].replace(/<title>[\s\S]*?<\/title>\s*/g, '')
-}
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const headHtml = getHeadHtml()
-
   return (
     <html lang="es" className={`${playfair.variable} ${dmSans.variable}`} suppressHydrationWarning>
-      {headHtml ? <head dangerouslySetInnerHTML={{ __html: headHtml }} /> : null}
-      <body>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+      </head>
+      <body style={{ background: 'var(--cream)', color: 'var(--dk)', fontFamily: 'var(--font-dm-sans), DM Sans, system-ui, sans-serif', margin: 0 }}>
         {children}
       </body>
     </html>
