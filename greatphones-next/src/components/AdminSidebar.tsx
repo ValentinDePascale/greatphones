@@ -9,6 +9,7 @@ const tabs = [
   { href: '/admin/accesorios', label: 'Accesorios', icon: '📦' },
   { href: '/admin/promos', label: 'Promociones', icon: '🏷️' },
   { href: '/admin/pedidos', label: 'Pedidos', icon: '📋' },
+  { href: '/admin/cotizaciones', label: 'Cotizaciones', icon: '💵' },
   { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: '↩️' },
 ]
 
