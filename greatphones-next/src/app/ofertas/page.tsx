@@ -1,28 +1,24 @@
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
 import type { Metadata } from 'next'
-import { prisma } from '@/lib/prisma'
-import { ProductGrid } from '@/components/ProductCard'
-import type { Product } from '@/components/ProductCard'
 
-export const dynamic = 'force-dynamic'
-
-export const metadata: Metadata = {
-  title: 'Ofertas — Great Phones',
-  description: 'Las mejores ofertas en celulares reacondicionados.',
-  openGraph: { title: 'Ofertas — Great Phones', description: 'Las mejores ofertas en celulares reacondicionados.', type: 'website' },
+const meta: Record<string, Metadata> = {
+  ofertas: { title: 'Ofertas — Great Phones', description: 'Las mejores ofertas en celulares reacondicionados.' },
+  accesorios: { title: 'Accesorios — Great Phones', description: 'Cargadores, fundas, auriculares y más.' },
+  preventas: { title: 'Preventas — Great Phones', description: 'Reservá los próximos lanzamientos.' },
+  garantias: { title: 'Garantías — Great Phones', description: '12 meses de garantía incluida.' },
+  checkout: { title: 'Checkout — Great Phones', robots: { index: false, follow: false } as const },
+  cuenta: { title: 'Mi Cuenta — Great Phones', robots: { index: false, follow: false } as const },
+  login: { title: 'Iniciar Sesión — Great Phones', robots: { index: false, follow: false } as const },
+  favoritos: { title: 'Favoritos — Great Phones', robots: { index: false, follow: false } as const },
+  terminos: { title: 'Términos — Great Phones' },
+  privacidad: { title: 'Privacidad — Great Phones' },
+  'track-order': { title: 'Seguimiento — Great Phones', robots: { index: false, follow: false } as const },
 }
 
-export default async function OfertasPage() {
-  const now = new Date()
-  const products = await prisma.product.findMany({
-    where: { isPreorder: { not: true }, stock: { gt: 0 }, isOffer: true, discount: { gt: 0 }, OR: [{ offerEnd: null }, { offerEnd: { gt: now } }], AND: [{ OR: [{ offerStart: null }, { offerStart: { lte: now } }] }] },
-    orderBy: { discount: 'desc' }, take: 200,
-  })
-
-  return (
-    <div className="page-xl">
-      <h1 className="page-h1">Ofertas</h1>
-      <p className="page-sub">{products.length} productos en oferta</p>
-      <ProductGrid products={JSON.parse(JSON.stringify(products)) as Product[]} />
-    </div>
-  )
+export default function Page() {
+  const html = existsSync(join(process.cwd(), 'public', 'index.html'))
+    ? readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8')
+    : '<h1>Loading...</h1>'
+  return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
 }

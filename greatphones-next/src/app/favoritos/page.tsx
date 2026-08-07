@@ -1,19 +1,12 @@
-'use client'
+import { readFileSync, existsSync } from 'fs'
+import { join } from 'path'
+import type { Metadata } from 'next'
 
-import { useRouter } from 'next/navigation'
+export const metadata: Metadata = { title: 'Favoritos — Great Phones', robots: { index: false, follow: false } }
 
-export default function FavoritosPage() {
-  const router = useRouter()
-
-  return (
-    <div className="page-xl">
-      <h1 className="page-h1">Favoritos</h1>
-      <div className="pgrid-empty" style={{ borderRadius: 0, border: 'none' }}>
-        <div className="pgrid-empty-ico">♡</div>
-        <div className="pgrid-empty-t">Nada guardado aún</div>
-        <p className="pgrid-empty-sub">Tocá el corazón en cualquier producto para guardarlo acá.</p>
-        <button className="btn-orange" onClick={() => router.push('/productos')}>Ver catálogo</button>
-      </div>
-    </div>
-  )
+export default function Page() {
+  const html = existsSync(join(process.cwd(), 'public', 'index.html'))
+    ? readFileSync(join(process.cwd(), 'public', 'index.html'), 'utf-8')
+    : '<h1>Loading...</h1>'
+  return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
 }
