@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 
 export interface Product {
@@ -27,7 +28,7 @@ export function ProductCard({ p }: { p: Product }) {
   return (
     <div className="pc" onClick={() => router.push(`/productos/${p.id}`)}>
       <div className="pc-img">
-        {p.imageUrl ? <img src={p.imageUrl} alt={p.name} /> : <span className="pc-ico">{p.ico || '📱'}</span>}
+        {p.imageUrl ? <Image src={p.imageUrl} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" style={{ objectFit: 'contain', padding: 8 }} /> : <span className="pc-ico">{p.ico || '📱'}</span>}
         {p.condition && (
           <span className="pc-badge-cond" style={{ background: p.condition === 'Nuevo' ? 'rgba(45,90,39,.12)' : 'rgba(255,107,44,.08)', color: p.condition === 'Nuevo' ? '#2D5A27' : '#FF6B2C' }}>
             {p.condition}

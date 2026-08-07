@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface Accessory {
   id: string; name: string; brand?: string; category?: string; price: number
@@ -20,7 +21,7 @@ function AccCard({ a }: { a: Accessory }) {
   return (
     <div className="ac">
       <div className="ac-img">
-        {a.imageUrl ? <img src={a.imageUrl} alt={a.name} /> : <span className="ac-ico">{a.ico || '📦'}</span>}
+        {a.imageUrl ? <Image src={a.imageUrl} alt={a.name} fill sizes="(max-width: 768px) 50vw, 20vw" style={{ objectFit: 'contain', padding: 12 }} /> : <span className="ac-ico">{a.ico || '📦'}</span>}
         {isPromo && <span className="ac-disc">-{a.discount}%</span>}
       </div>
       <div className="ac-info">

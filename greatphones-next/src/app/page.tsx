@@ -73,6 +73,13 @@ export default async function HomePage() {
         </div>
         <ProductGrid products={JSON.parse(JSON.stringify(products)) as Product[]} />
       </div>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'Organization',
+        name: 'Great Phones', url: 'https://greatphones.com.ar',
+        logo: 'https://greatphones.com.ar/icons/539432645_17922071475132461_1228687370142381845_n.jpg',
+        description: 'Celulares reacondicionados premium con garantía de 12 meses',
+        address: { '@type': 'PostalAddress', addressLocality: 'Bahía Blanca', addressCountry: 'AR' }
+      }) }} />
     </div>
   )
 }

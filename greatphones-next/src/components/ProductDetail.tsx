@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import type { Product } from './ProductCard'
 
@@ -23,7 +24,7 @@ function DetailImages({ product }: { product: Product }) {
   return (
     <div className="dt-imgs">
       <div className="dt-main">
-        <img src={current} alt={product.name} />
+        <Image src={current} alt={product.name} fill sizes="50vw" style={{ objectFit: 'contain', padding: 16 }} />
         {images.length > 1 && (
           <>
             <button className="dt-nav dt-prev" onClick={() => setIdx(i => i > 0 ? i - 1 : images.length - 1)}>←</button>
@@ -35,7 +36,7 @@ function DetailImages({ product }: { product: Product }) {
         <div className="dt-thumbs">
           {images.map((img, i) => (
             <div key={i} className={`dt-thumb${i === idx ? ' dt-thumb-on' : ''}`} onClick={() => setIdx(i)}>
-              <img src={img} alt="" />
+              <Image src={img} alt="" fill sizes="10vw" style={{ objectFit: 'cover' }} />
             </div>
           ))}
         </div>
