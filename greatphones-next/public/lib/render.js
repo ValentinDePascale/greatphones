@@ -2214,7 +2214,8 @@ function adminTab(tab,btn){
     arrep:'Arrepentimientos',
     chat:'Chat',
     quotes:'Cotizaciones',
-    instore:'Venta en Tienda'
+    instore:'Venta en Tienda',
+    users:'Usuarios'
   };
   var titleEl=document.getElementById('adminPageTitle');
   if(titleEl&&titles[tab])titleEl.textContent=titles[tab];
@@ -2237,7 +2238,7 @@ function adminTab(tab,btn){
 function initAdminHashRouting(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
   var hashTab=location.hash.replace('#','');
-  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','users'].indexOf(hashTab)!==-1){
     // Find sidebar button
     var btn=document.getElementById('adm-'+hashTab);
     if(btn)adminTab(hashTab,btn);
@@ -2246,7 +2247,7 @@ function initAdminHashRouting(){
 window.addEventListener('hashchange',function(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
   var hashTab=location.hash.replace('#','');
-  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+  if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','users'].indexOf(hashTab)!==-1){
     var btn=document.getElementById('adm-'+hashTab);
     if(btn&&hashTab!==window.currentAdminTab)adminTab(hashTab,btn);
   }
@@ -3520,7 +3521,7 @@ function renderAdminContent(tab){
   }
   
   // Reset tab buttons
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa,#adm-sales').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa,#adm-sales,#adm-users').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
   if(tab==='dashboard'){
@@ -3814,6 +3815,9 @@ function renderAdminContent(tab){
     '<div class="loader-spinner"><span>Cargando...</span></div>'+
     '<div id="arrepList"></div>';
     loadArrepPendientes();
+  }else if(tab==='users'){
+    el.innerHTML='<div class="loader-spinner"><span>Cargando...</span></div><div id="adminUsersList"></div>';
+    loadAdminUsers();
   }else if(tab==='chat'){
     el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
       '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto" class="chat-conv-side">'+
@@ -4847,3 +4851,88 @@ function deleteQuote(id){
     setTimeout(function(){clearInterval(checkInterval);},5000);
   }
 })();
+
+// ===== ADMIN USERS =====
+function loadAdminUsers(){
+  fetch(API_URL+'/api/admin/users',{headers:{'X-User-Id':currentUser?.id||''}})
+    .then(function(r){return r.json();})
+    .then(function(users){
+      renderAdminUsers(users);
+    }).catch(function(){
+      var el=document.getElementById('adminUsersList');
+      if(el)el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando usuarios</div>';
+    });
+}
+
+function renderAdminUsers(users){
+  var el=document.getElementById('adminUsersList');
+  if(!el)return;
+  var loader=document.querySelector('#adminContent .loader-spinner');
+  if(loader)loader.style.display='none';
+
+  if(!users||users.length===0){
+    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)">No hay usuarios</div>';
+    return;
+  }
+
+  var html='<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+    '<thead><tr style="border-bottom:2px solid var(--border)">'+
+      '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Usuario</th>'+
+      '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Email</th>'+
+      '<th style="text-align:center;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Rol</th>'+
+      '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Teléfono</th>'+
+      '<th style="text-align:right;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Registro</th>'+
+      '<th style="text-align:center;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Acciones</th>'+
+    '</tr></thead><tbody>';
+
+  users.forEach(function(u){
+    var roleColor=u.role==='ADMIN'?'var(--orange)':'var(--green)';
+    var roleBg=u.role==='ADMIN'?'rgba(255,107,44,.1)':'rgba(45,90,39,.1)';
+    var date=new Date(u.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    html+='<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
+      '<td style="padding:10px 16px"><div style="font-weight:600">'+escapeHtml(u.name||'Sin nombre')+'</div></td>'+
+      '<td style="padding:10px 16px;font-size:12px;color:var(--gray)">'+escapeHtml(u.email||'—')+'</td>'+
+      '<td style="padding:10px 16px;text-align:center">'+
+        '<select onchange="changeUserRole(\''+u.id+'\',this.value)" style="padding:4px 8px;border-radius:8px;border:1px solid var(--border);background:'+roleBg+';color:'+roleColor+';font-weight:700;font-size:11px;cursor:pointer;font-family:inherit;outline:none">'+
+          '<option value="CLIENT"'+ (u.role==='CLIENT'?' selected':'') +'>Cliente</option>'+
+          '<option value="ADMIN"'+ (u.role==='ADMIN'?' selected':'') +'>Admin</option>'+
+        '</select>'+
+      '</td>'+
+      '<td style="padding:10px 16px;font-size:12px;color:var(--gray)">'+escapeHtml(u.phone||'—')+'</td>'+
+      '<td style="padding:10px 16px;text-align:right;font-size:12px;color:var(--gray)">'+date+'</td>'+
+      '<td style="padding:10px 16px;text-align:center">'+
+        '<button onclick="deleteAdminUser(\''+u.id+'\',\''+escapeHtml(u.name||'Usuario').replace(/'/g,"\\'")+'\')" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;font-family:inherit">Eliminar</button>'+
+      '</td>'+
+    '</tr>';
+  });
+
+  html+='</tbody></table>';
+  el.innerHTML=html;
+}
+
+function changeUserRole(userId,newRole){
+  if(!currentUser||!currentUser.id)return showToast({title:'Error',message:'No autorizado',type:'error'});
+  fetch(API_URL+'/api/admin/users',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+    body:JSON.stringify({id:userId,role:newRole})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
+    showToast({title:'Exito',message:'Rol actualizado',type:'success'});
+  }).catch(function(){showToast({title:'Error',message:'Error al actualizar',type:'error'});});
+}
+
+function deleteAdminUser(userId,userName){
+  if(!currentUser||!currentUser.id)return showToast({title:'Error',message:'No autorizado',type:'error'});
+  if(userId===currentUser.id)return showToast({title:'Error',message:'No podes eliminarte a vos mismo',type:'error'});
+  if(!confirm('¿Eliminar a '+userName+'? Esta accion no se puede deshacer.'))return;
+
+  fetch(API_URL+'/api/admin/users?id='+userId,{
+    method:'DELETE',
+    headers:{'X-User-Id':currentUser.id}
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
+    showToast({title:'Exito',message:'Usuario eliminado',type:'success'});
+    loadAdminUsers();
+  }).catch(function(){showToast({title:'Error',message:'Error al eliminar',type:'error'});});
+}
