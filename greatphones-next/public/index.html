@@ -1728,8 +1728,10 @@
             
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Contraseña</label>
-              <input type="password" disabled placeholder="••••••••" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
-              <p style="font-size:11px;color:var(--gray);margin-top:4px">Para cambiar la contraseña, solicitá ayuda al soporte</p>
+              <button onclick="openChangePassword()" style="width:100%;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:12px;font-size:14px;color:var(--dk);cursor:pointer;text-align:left;box-sizing:border-box;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+                Cambiar contraseña →
+              </button>
+            </div>
             </div>
           </div>
         </div>
@@ -1815,7 +1817,7 @@
       <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)">
         <h3 style="font-size:18px;font-weight:600;color:var(--dk);margin-bottom:1rem">Seguridad y Otros</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-          <div onclick="showToast('Próximamente: Seguridad de cuenta')" style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.25rem;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div onclick="openSecurityPanel()" style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.25rem;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
             <div style="display:flex;align-items:center;gap:1rem">
               <div style="background:var(--cream);padding:12px;border-radius:10px">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>

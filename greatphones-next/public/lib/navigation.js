@@ -1109,3 +1109,107 @@ document.addEventListener('keydown',function(e){
     if(notifPanel&&notifPanel.style.display==='block'){notifPanel.style.display='none';return;}
   }
 });
+
+// ===== CHANGE PASSWORD =====
+function openChangePassword(){
+  var existing=document.getElementById('changePwModal');
+  if(existing)existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='changePwModal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML=
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="document.getElementById(\'changePwModal\').remove()"></div>'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(440px,92vw);padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:1">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">'+
+        '<div style="font-size:18px;font-weight:700;color:var(--dk)">Cambiar contraseña</div>'+
+        '<button onclick="document.getElementById(\'changePwModal\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>'+
+      '</div>'+
+      '<div style="display:grid;gap:12px">'+
+        '<div style="position:relative"><input type="password" id="cpCurrent" placeholder="Contraseña actual" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpCurrent\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+        '<div style="position:relative"><input type="password" id="cpNew" placeholder="Nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpNew\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+        '<div style="position:relative"><input type="password" id="cpConfirm" placeholder="Confirmar nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpConfirm\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+      '</div>'+
+      '<div id="cpError" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>'+
+      '<button onclick="doChangePassword()" style="width:100%;padding:14px;margin-top:16px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'translateY(0)\'">Cambiar contraseña</button>'+
+    '</div>';
+  document.body.appendChild(overlay);
+
+  var first=document.getElementById('cpCurrent');
+  if(first)setTimeout(function(){first.focus();},100);
+}
+
+function togglePw(id){var el=document.getElementById(id);if(el)el.type=el.type==='password'?'text':'password';}
+function doChangePassword(){
+  var curr=document.getElementById('cpCurrent')?.value||'';
+  var newPw=document.getElementById('cpNew')?.value||'';
+  var conf=document.getElementById('cpConfirm')?.value||'';
+  var err=document.getElementById('cpError');
+  if(err)err.style.display='none';
+  if(!curr||!newPw||!conf){if(err){err.textContent='Todos los campos son requeridos';err.style.display='block';};return;}
+  if(newPw.length<6){if(err){err.textContent='La contraseña debe tener al menos 6 caracteres';err.style.display='block';};return;}
+  if(newPw!==conf){if(err){err.textContent='Las contraseñas no coinciden';err.style.display='block';};return;}
+
+  fetch(API_URL+'/api/auth/change-password',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({currentPassword:curr,newPassword:newPw})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error){if(err){err.textContent=res.error;err.style.display='block';};return;}
+    showToast({title:'Exito',message:'Contraseña actualizada',type:'success'});
+    var modal=document.getElementById('changePwModal');if(modal)modal.remove();
+  }).catch(function(){if(err){err.textContent='Error de conexión';err.style.display='block';}});
+}
+
+function openSecurityPanel(){
+  var existing=document.getElementById('securityPanel');
+  if(existing)existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='securityPanel';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML=
+    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="document.getElementById(\'securityPanel\').remove()"></div>'+
+    '<div style="position:relative;background:#fff;border-radius:20px;width:min(480px,92vw);padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:1;max-height:90vh;overflow-y:auto">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">'+
+        '<div style="font-size:18px;font-weight:700;color:var(--dk)">Seguridad de la Cuenta</div>'+
+        '<button onclick="document.getElementById(\'securityPanel\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>'+
+      '</div>'+
+      '<div style="background:var(--cream);border-radius:14px;padding:1rem;margin-bottom:1rem">'+
+        '<div style="font-weight:600;color:var(--dk);margin-bottom:8px">Cambiar contraseña</div>'+
+        '<p style="font-size:12px;color:var(--gray);margin-bottom:12px">Elegí una contraseña segura que no uses en otros sitios.</p>'+
+        '<div style="display:grid;gap:8px">'+
+          '<div style="position:relative"><input type="password" id="spCurrent" placeholder="Contraseña actual" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spCurrent\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+          '<div style="position:relative"><input type="password" id="spNew" placeholder="Nueva contraseña" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spNew\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+          '<div style="position:relative"><input type="password" id="spConfirm" placeholder="Confirmar nueva contraseña" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spConfirm\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+        '</div>'+
+        '<div id="spError" style="font-size:11px;color:var(--red);margin-top:8px;display:none"></div>'+
+        '<button onclick="doSecurityChangePassword()" style="width:100%;padding:12px;margin-top:12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Actualizar contraseña</button>'+
+      '</div>'+
+      '<div style="background:var(--cream);border-radius:14px;padding:1rem">'+
+        '<div style="font-weight:600;color:var(--dk);margin-bottom:4px">Sesiones activas</div>'+
+        '<p style="font-size:12px;color:var(--gray);margin-bottom:8px">Si ves actividad sospechosa, cerrá sesión en todos los dispositivos.</p>'+
+        '<button onclick="doLogout();document.getElementById(\'securityPanel\').remove();nav(\'login\')" style="padding:10px 20px;background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cerrar sesión en todos lados</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
+function doSecurityChangePassword(){
+  var curr=document.getElementById('spCurrent')?.value||'';
+  var newPw=document.getElementById('spNew')?.value||'';
+  var conf=document.getElementById('spConfirm')?.value||'';
+  var err=document.getElementById('spError');
+  if(err)err.style.display='none';
+  if(!curr||!newPw||!conf){if(err){err.textContent='Todos los campos son requeridos';err.style.display='block';};return;}
+  if(newPw.length<6){if(err){err.textContent='Al menos 6 caracteres';err.style.display='block';};return;}
+  if(newPw!==conf){if(err){err.textContent='No coinciden';err.style.display='block';};return;}
+
+  fetch(API_URL+'/api/auth/change-password',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({currentPassword:curr,newPassword:newPw})
+  }).then(function(r){return r.json();}).then(function(res){
+    if(res.error){if(err){err.textContent=res.error;err.style.display='block';};return;}
+    showToast({title:'Exito',message:'Contraseña actualizada',type:'success'});
+    document.getElementById('securityPanel').remove();
+  }).catch(function(){if(err){err.textContent='Error de conexión';err.style.display='block';}});
+}

@@ -44,19 +44,21 @@
             
             <div>
               <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">Contraseña</label>
-              <input type="password" disabled placeholder="••••••••" style="width:100%;padding:12px 14px;background:var(--cream2);border:none;border-radius:12px;font-size:14px;color:var(--gray);cursor:not-allowed;box-sizing:border-box">
+              <button onclick="openChangePassword()" style="width:100%;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:12px;font-size:14px;color:var(--dk);cursor:pointer;text-align:left;box-sizing:border-box;transition:border-color .15s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">
+                Cambiar contraseña →
+              </button>
             </div>
           </div>
         </div>
 
-        <div onclick="showToast('Próximamente: Configuración de seguridad')" style="grid-column:span 6;background:var(--cream);border:1px solid var(--border);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='var(--cream)'">
+        <div onclick="openSecurityPanel()" style="grid-column:span 6;background:var(--cream);border:1px solid var(--border);border-radius:18px;padding:1rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fff'" onmouseout="this.style.background='var(--cream)'">
           <div style="display:flex;align-items:center;gap:1rem">
             <div style="background:var(--cream3);padding:10px;border-radius:8px;color:var(--dk2)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
             <div>
               <h3 style="font-size:16px;font-weight:600;color:var(--dk)">Seguridad de la Cuenta</h3>
-              <p style="font-size:12px;color:var(--gray)">Contraseña, 2FA y sesiones</p>
+              <p style="font-size:12px;color:var(--gray)">Cambiar contraseña y gestionar sesiones</p>
             </div>
           </div>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
