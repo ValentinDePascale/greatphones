@@ -131,9 +131,12 @@ function cpnOpenModal() {
         '</div>' : '') +
       '</div>'
 
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) cpnCloseModal()
-    })
+    // Delay click listener to prevent the opening click from closing the modal
+    setTimeout(function() {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === overlay) cpnCloseModal()
+      })
+    }, 0)
 
     document.body.appendChild(overlay)
   })
