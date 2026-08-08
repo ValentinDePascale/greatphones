@@ -20,8 +20,8 @@ export default async function AdminCotizaciones() {
     prisma.quote.findMany({ orderBy: { createdAt: 'desc' }, take: 10, select: { code: true, device: true, storage: true, condition: true, finalPrice: true, status: true, clientName: true, createdAt: true } }),
   ])
 
-  const statusMap: Record<string, string> = { PENDING: 'Pendiente', ACCEPTED: 'Aceptada', REJECTED: 'Rechazada', COMPLETED: 'Completada', CANCELLED: 'Cancelada' }
-  const acceptance = monthQuotes._count > 0 ? Math.round(((byStatus.find(s => s.status === 'ACCEPTED')?._count || 0) / monthQuotes._count) * 100) + '%' : '—'
+  const statusMap: Record<string, string> = { PENDING: 'Pendiente', REVIEWING: 'Revisando', APPROVED: 'Aprobada', REJECTED: 'Rechazada', COMPLETED: 'Completada' }
+  const acceptance = monthQuotes._count > 0 ? Math.round(((byStatus.find(s => s.status === 'APPROVED')?._count || 0) / monthQuotes._count) * 100) + '%' : '—'
   const maxDeviceCount = Math.max(...byDevice.map(b => b._count), 1)
 
   const kpisHTML = [
@@ -52,7 +52,7 @@ export default async function AdminCotizaciones() {
   const statusCardsHTML = byStatus.length === 0
     ? '<p style="font-size:13px;color:var(--gray)">Sin datos</p>'
     : byStatus.map(s => {
-        const color = s.status === 'ACCEPTED' ? '#2D5A27' : s.status === 'PENDING' ? '#FF6B2C' : '#c0392b'
+        const color = s.status === 'APPROVED' ? '#2D5A27' : s.status === 'PENDING' ? '#FF6B2C' : '#c0392b'
         return `<div style="padding:16px 24px;background:var(--cream);border-radius:12px;border:1px solid var(--border);text-align:center">
           <div style="font-size:22px;font-weight:700;font-family:'Playfair Display',serif;color:${color}">${s._count}</div>
           <div style="font-size:11px;color:var(--gray);margin-top:2px">${statusMap[s.status] || s.status}</div>
@@ -72,13 +72,13 @@ export default async function AdminCotizaciones() {
           <th style="text-align:right;padding:8px 12px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Fecha</th>
         </tr></thead>
         <tbody>${recentQuotes.map(q => {
-          const sc = q.status === 'ACCEPTED' ? 'rgba(45,90,39,.1)' : q.status === 'PENDING' ? 'rgba(255,107,44,.1)' : q.status === 'REJECTED' ? 'rgba(192,57,43,.1)' : 'rgba(107,98,89,.1)'
-          const scColor = q.status === 'ACCEPTED' ? '#2D5A27' : q.status === 'PENDING' ? '#FF6B2C' : q.status === 'REJECTED' ? '#c0392b' : '#6B6259'
+          const sc = q.status === 'APPROVED' ? 'rgba(45,90,39,.1)' : q.status === 'PENDING' ? 'rgba(255,107,44,.1)' : q.status === 'REJECTED' ? 'rgba(192,57,43,.1)' : 'rgba(107,98,89,.1)'
+          const scColor = q.status === 'APPROVED' ? '#2D5A27' : q.status === 'PENDING' ? '#FF6B2C' : q.status === 'REJECTED' ? '#c0392b' : '#6B6259'
           return `<tr style="border-bottom:1px solid #F0EBE3">
             <td style="padding:10px 12px;font-weight:600;font-family:monospace;font-size:11px">${q.code}</td>
             <td style="padding:10px 12px;font-size:12px">${q.device} ${q.storage ? q.storage+' ' : ''}${q.condition ? '· '+q.condition : ''}</td>
             <td style="padding:10px 12px">${q.clientName || '—'}</td>
-            <td style="padding:10px 12px;text-align:right;font-weight:700;color:${q.status==='ACCEPTED'?'#2D5A27':'var(--dk)'}">${fmt(q.finalPrice)}</td>
+            <td style="padding:10px 12px;text-align:right;font-weight:700;color:${q.status==='APPROVED'?'#2D5A27':'var(--dk)'}">${fmt(q.finalPrice)}</td>
             <td style="padding:10px 12px;text-align:center"><span style="padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700;background:${sc};color:${scColor}">${statusMap[q.status]||q.status}</span></td>
             <td style="padding:10px 12px;text-align:right;font-size:11px;color:var(--gray)">${new Date(q.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})}</td>
           </tr>`
