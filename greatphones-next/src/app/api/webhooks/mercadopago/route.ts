@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { OrderStatus, WarrantyExtendStatus } from '@prisma/client';
 import { MercadoPagoConfig, Payment } from 'mercadopago';
-import { sendOrderConfirmationEmail, sendPreorderConfirmationEmail } from '@/lib/email';
+import { sendOrderConfirmationEmail, sendPreorderConfirmationEmail, sendNewOrderAdminNotification, sendLowStockAlert } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import crypto from 'crypto';
 import { releaseStock, restoreStock } from '@/lib/stock';
@@ -347,9 +347,35 @@ export async function POST(request: NextRequest) {
             carrier: order.carrier || undefined,
           });
           }
-        } catch (emailError) {
+          } catch (emailError) {
           console.error('[MP Webhook] Error sending confirmation email:', emailError);
         }
+
+        // Notify admin of new order
+        try {
+          await sendNewOrderAdminNotification({
+            orderCode: order.code,
+            clientName: order.clientName || 'Cliente',
+            total: order.total,
+            itemCount: order.items.length,
+            paymentMethod: paymentMethod || 'Mercado Pago',
+          })
+        } catch { /* non-blocking */ }
+
+        // Check low stock
+        try {
+          const lowStockItems = order.items.filter(item => {
+            const productStock = item.product?.stock ?? 0
+            return productStock >= 0 && productStock <= 3
+          })
+          for (const item of lowStockItems) {
+            await sendLowStockAlert({
+              productName: item.product?.name || 'Producto',
+              stock: item.product?.stock ?? 0,
+              productId: item.productId,
+            })
+          }
+        } catch { /* non-blocking */ }
       }
 
       console.log('[MP Webhook] Order', order.code, 'updated to', orderStatus, 'payment:', status);

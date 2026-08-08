@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
-import { sendOrderConfirmationEmail } from '@/lib/email';
+import { sendOrderConfirmationEmail, sendNewOrderAdminNotification } from '@/lib/email';
 import { productCache } from '@/lib/cache';
 import { rateLimit } from '@/lib/rate-limit';
 import { reserveStock } from '@/lib/stock';
@@ -501,6 +501,14 @@ export async function POST(request: NextRequest) {
         paymentMethod: validatedCoupons.map(c => c.code).join(', ') || 'Cupón',
         installments: 1,
       }).catch((err) => console.error('[Checkout] Error sending confirmation email:', err));
+
+      sendNewOrderAdminNotification({
+        orderCode: order.code,
+        clientName,
+        total: order.total,
+        itemCount: enrichedItems.length,
+        paymentMethod: validatedCoupons.map(c => c.code).join(', ') || 'Cupón',
+      }).catch(() => {});
     }
 
     console.log('[Checkout] SUCCESS — Returning response. OrderId:', order.id, 'OrderCode:', order.code);

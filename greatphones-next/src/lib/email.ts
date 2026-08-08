@@ -554,6 +554,62 @@ export async function sendPreorderConfirmationEmail(data: {
   return { success: true }
 }
 
+export async function sendNewOrderAdminNotification(data: {
+  orderCode: string
+  clientName: string
+  total: number
+  itemCount: number
+  paymentMethod: string
+}) {
+  const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
+
+  await sendEmail({
+    to: adminEmail,
+    subject: `📦 Nueva venta: ${data.orderCode} — $${data.total.toLocaleString('es-AR')}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #059669;">🎉 Nueva venta confirmada</h2>
+        <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border-left: 4px solid #059669; margin: 20px 0;">
+          <strong>Orden:</strong> ${data.orderCode}<br>
+          <strong>Cliente:</strong> ${escapeHtml(data.clientName)}<br>
+          <strong>Total:</strong> $${data.total.toLocaleString('es-AR')}<br>
+          <strong>Productos:</strong> ${data.itemCount}<br>
+          <strong>Método de pago:</strong> ${escapeHtml(data.paymentMethod)}
+        </div>
+        <p style="color: #666; font-size: 12px;">Revisá el pedido en el panel de administración.</p>
+      </div>
+    `
+  })
+
+  return { success: true }
+}
+
+export async function sendLowStockAlert(data: {
+  productName: string
+  stock: number
+  productId: string
+}) {
+  const adminEmail = process.env.EMAIL_USER || 'contacto@greatphones.com.ar'
+
+  await sendEmail({
+    to: adminEmail,
+    subject: `⚠️ Stock bajo: ${data.productName} (${data.stock} unidades)`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #e65100;">⚠️ Alerta de stock bajo</h2>
+        <p>El siguiente producto tiene stock bajo:</p>
+        <div style="background: #fff3e0; padding: 16px; border-radius: 8px; border-left: 4px solid #e65100; margin: 20px 0;">
+          <strong>Producto:</strong> ${escapeHtml(data.productName)}<br>
+          <strong>Stock actual:</strong> ${data.stock} unidades
+        </div>
+        <p style="color: #666; font-size: 12px;">Revisá el inventario desde el panel de administración.</p>
+      </div>
+    `
+  })
+
+  return { success: true }
+}
+
 export async function sendNewQuoteEmail(data: {
   code: string;
   device: string;
