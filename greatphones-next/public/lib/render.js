@@ -3767,12 +3767,12 @@ function renderAdminContent(tab){
     var content=document.getElementById('adminContent');
     if(content){
       content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center" class="ord-tabs">'+
-        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="loadPendingOrders()">Pedidos en Espera</button>'+
-        '<button class="ord-btn" id="btnAcceptedOrders" onclick="loadAcceptedOrders()">Pedidos Aceptados</button>'+
-        '<button class="ord-btn" id="btnHistoryOrders" onclick="loadOrderHistory()">Historial</button>'+
+        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="typeof loadPendingOrders===\'function\'&&loadPendingOrders()">Pedidos en Espera</button>'+
+        '<button class="ord-btn" id="btnAcceptedOrders" onclick="typeof loadAcceptedOrders===\'function\'&&loadAcceptedOrders()">Pedidos Aceptados</button>'+
+        '<button class="ord-btn" id="btnHistoryOrders" onclick="typeof loadOrderHistory===\'function\'&&loadOrderHistory()">Historial</button>'+
       '</div>'+
       '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="searchOrders(this.value)" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="typeof searchOrders===\'function\'&&searchOrders(this.value)" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '</div>'+
       '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
       if(typeof loadPendingOrders==='function'){
@@ -3808,9 +3808,9 @@ function renderAdminContent(tab){
     renderAdminAccFiltered("");
   }else if(tab==='arrep'){
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
-      '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="loadArrepPendientes()">Pendientes</button>'+
-      '<button class="ord-btn" id="arrepBtnAceptados" onclick="loadArrepAceptados()">Aceptados</button>'+
-      '<button class="ord-btn" id="arrepBtnRechazados" onclick="loadArrepRechazados()">Rechazados</button>'+
+      '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="typeof loadArrepPendientes===\'function\'&&loadArrepPendientes()">Pendientes</button>'+
+      '<button class="ord-btn" id="arrepBtnAceptados" onclick="typeof loadArrepAceptados===\'function\'&&loadArrepAceptados()">Aceptados</button>'+
+      '<button class="ord-btn" id="arrepBtnRechazados" onclick="typeof loadArrepRechazados===\'function\'&&loadArrepRechazados()">Rechazados</button>'+
     '</div>'+
     '<div class="loader-spinner"><span>Cargando...</span></div>'+
     '<div id="arrepList"></div>';
