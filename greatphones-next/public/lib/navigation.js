@@ -13,13 +13,13 @@ function nav(id){
   var chatBtn=document.getElementById('chatWidgetBtn');
   if(chatBtn)chatBtn.style.display=(id==='admin')?'none':'';
   if(id==='sell'){
-    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='';});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='none';});
     var el=document.getElementById('p-'+id);
     if(el){el.classList.add('act');el.style.display='block';}
     window.scrollTo({top:0,behavior:'smooth'});
     if(typeof svStep==='function')svStep(0);
   }else{
-    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='';});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='none';});
     var el=document.getElementById('p-'+id);
     if(el){el.classList.add('act');el.style.display='block';}
     window.scrollTo({top:0,behavior:'smooth'});
@@ -33,7 +33,7 @@ function nav(id){
   }
   if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
   if(id==='register'){
-    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='';});
+    document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.display='none';});
     document.getElementById('p-register').classList.add('act');
     document.getElementById('p-register').style.display='block';
     window.scrollTo({top:0,behavior:'smooth'});

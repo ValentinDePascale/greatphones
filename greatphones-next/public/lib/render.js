@@ -3863,8 +3863,8 @@ function renderAdminContent(tab){
         '</div>'+
       '</div>'+
     '</div>';
-    loadAdminConversations();
-    initChatSocket();
+    if(typeof loadAdminConversations==='function'){loadAdminConversations();}else{el.innerHTML='<div style="padding:2rem;color:var(--gray);text-align:center">Chat no disponible</div>';}
+    if(typeof initChatSocket==='function')initChatSocket();
   }else if(tab==='quotes'){
     el.innerHTML=
     '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
