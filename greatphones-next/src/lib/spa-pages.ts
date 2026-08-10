@@ -71,14 +71,25 @@ export function serveSpa(targetPage?: string): string {
     return serveSpa('home')
   }
 
-  let html = _shell.replace('</body>', `<div class="page act" id="p-${targetPage}">${pageContent}</div></body>`)
+  // Replace class="page" with class="page act" for the target page
+  const pageContentAct = pageContent.replace(
+    `class="page" id="p-${targetPage}"`,
+    `class="page act" id="p-${targetPage}"`
+  )
+
+  let html = _shell.replace('</body>', pageContentAct + '</body>')
   return removeAdminStuff(html)
 }
 
 export function serveAdminSpa(): string {
   loadShell()
   if (!_shell) return '<h1>Loading...</h1>'
-  const allPages = loadAllPages()
+  let allPages = loadAllPages()
+  // Keep home as hidden, admin page doesn't need to be visible initially
+  // The SPA JS handles the tab navigation
   let html = _shell.replace('</body>', allPages + '</body>')
+  // Make admin page the active one
+  html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
+  html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
   return html
 }
