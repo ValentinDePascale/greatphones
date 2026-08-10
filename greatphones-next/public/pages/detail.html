@@ -1,103 +1,72 @@
 <div class="page" id="p-detail">
-  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="nav('shop')">&#8592; Volver al catalogo</button></div>
-  <div style="background:var(--cream);padding:2rem var(--pad);min-height:100vh">
+  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="goBackFromDetail()">← Volver</button></div>
+  <div style="background:var(--cream);padding:1.5rem var(--pad) 3rem;min-height:100vh;position:relative;z-index:1">
     <div style="max-width:1200px;margin:0 auto">
-      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:48px;align-items:start">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
         <!-- Column 1: Image Gallery -->
-        <div style="display:flex;flex-direction:column;gap:16px;height:calc(100vh - 200px);position:sticky;top:120px">
-          <div class="det-main-img" id="detImgMain" style="flex:1;background:var(--cream2);border-radius:16px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative">
-            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:12px;right:12px;width:40px;height:40px;border-radius:50%;background:#fff;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;z-index:100;color:var(--gray)">♡</button>
-            <span id="detIco" style="font-size:90px">&#128241;</span>
+        <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:120px">
+          <div class="det-main-img" id="detImgMain" style="height:720px;background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">♡</button>
+            <button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>
+            <button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>
+            <span id="detIco" style="font-size:80px">📱</span>
           </div>
-          <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;height:100px"></div>
+          <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
         </div>
         <!-- Column 2: Product Info -->
-        <div style="display:flex;flex-direction:column;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:0">
           <!-- Breadcrumb -->
-          <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--gray)">
-            <span id="detBrand">Apple</span><span style="color:var(--gray2)">›</span>
+          <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);margin-bottom:16px">
+            <span id="detBrand" style="color:var(--green);font-weight:600">Apple</span><span style="color:var(--gray2)">›</span>
             <span id="detType">iPhone</span><span style="color:var(--gray2)">›</span>
-            <span style="color:var(--dk)" id="detName2">iPhone 16 Pro</span>
+            <span style="color:var(--dk);font-weight:600" id="detName2">iPhone 16 Pro</span>
           </nav>
-          <!-- Name & Price -->
-          <div>
-            <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:42px;font-weight:700;line-height:1.1;margin-bottom:12px" id="detName">iPhone 16 Pro</h1>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              <div style="display:flex;align-items:center;gap:8px" id="detPriceWrap">
-                <span style="font-family:'Playfair Display',Georgia,serif;font-size:32px;font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
-              </div>
-              <span style="font-size:16px;color:var(--gray);text-decoration:line-through" id="detOld"></span>
-              <div id="detOfferTimer" style="display:none"><span class="offer-countdown" id="detTimerText"></span></div>
-            </div>
+          <!-- Name -->
+          <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:16px" id="detName">iPhone 16 Pro</h1>
+          <!-- Price Block -->
+          <div id="detPriceWrap" style="margin-bottom:4px">
+            <span style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
+            <span style="font-size:16px;color:var(--gray);text-decoration:line-through;margin-left:10px;display:none" id="detOld"></span>
           </div>
-          <!-- Meta info -->
-          <div style="font-size:13px;color:var(--gray)" id="detMeta">256 GB — Bateria 94%</div>
+          <div id="detOfferTimer" style="display:none;margin-bottom:10px"><span class="offer-countdown" id="detTimerText"></span></div>
+          <!-- Installment Price -->
+          <div id="detCuotaInfo" style="font-size:14px;color:var(--green);font-weight:600;margin-bottom:20px;padding:10px 14px;background:rgba(45,90,39,.06);border-radius:10px;display:inline-block">
+            <span id="detCuotaText">12x $100.000 sin interes</span>
+          </div>
+          <!-- Description -->
+          <div id="detDesc" style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);display:none"></div>
+          <!-- Specs Section -->
+          <div style="margin-bottom:24px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Caracteristicas</div>
+            <div id="detSpecs" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+          </div>
           <!-- Trust Badges -->
-          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> 90 Días Garantía</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> IMEI Verificado</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> Cable + funda gratis</div>
-            <div style="display:flex;align-items:center;gap:6px;background:var(--cream2);padding:8px 12px;border-radius:8px;font-size:10px;font-weight:600"><span style="color:var(--green)">✓</span> Dev. 7 días</div>
-          </div>
-          <!-- Installments -->
-          <div>
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Plan de Cuotas</div>
-            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="cuotaOpts">
-              <button class="cuota-btn" data-cuota="1" onclick="selCuota(this,1)" style="padding:10px;border-radius:10px;background:var(--green);color:#fff;text-align:center;border:2px solid var(--green)"><span style="font-size:14px;font-weight:700;display:block">1</span><span style="font-size:8px;text-transform:uppercase">Sin Int.</span></button>
-              <button class="cuota-btn" data-cuota="3" onclick="selCuota(this,3)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">3</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="6" onclick="selCuota(this,6)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">6</span><span style="font-size:8px;text-transform:uppercase">Cuotas</span></button>
-              <button class="cuota-btn" data-cuota="12" onclick="selCuota(this,12)" style="padding:10px;border-radius:10px;background:var(--cream2);color:var(--dk);text-align:center;border:2px solid var(--border);cursor:pointer"><span style="font-size:14px;font-weight:700;display:block">12</span><span style="font-size:8px;text-transform:uppercase">Fijas</span></button>
-            </div>
-          </div>
-          <!-- Options -->
-          <div style="display:flex;flex-direction:column;gap:12px">
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Garantía Extendida</div>
-              <div style="display:flex;flex-direction:column;gap:8px" id="warrantyOpts">
-                <div class="warranty-btn" data-w="0" onclick="selOpt(this,'w',0)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">12 meses</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Garantía básica incluida</div>
-                </div>
-                <div class="warranty-btn" data-w="85000" onclick="selOpt(this,'w',85000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+12 meses cobertura completa</span><span style="color:var(--orange);font-weight:700">+$85.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total extendida</div>
-                </div>
-                <div class="warranty-btn" data-w="150000" onclick="selOpt(this,'w',150000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700">+$150.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Cobertura total premium</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Entrega</div>
-              <div style="display:flex;flex-direction:column;gap:8px" id="deliveryOpts">
-                <div class="delivery-btn" data-d="0" onclick="selOpt(this,'d',0)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--green);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Retiro en tienda</span><span style="color:var(--green);font-weight:700">GRATIS</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Bahía Blanca</div>
-                </div>
-                <div class="delivery-btn" data-d="5000" onclick="selOpt(this,'d',5000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700">+$5.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">Entrega hoy</div>
-                </div>
-                <div class="delivery-btn" data-d="8000" onclick="selOpt(this,'d',8000)" style="padding:12px;border-radius:10px;background:#fff;border:2px solid var(--border);cursor:pointer">
-                  <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:600">Envío 24-48hs</span><span style="color:var(--orange);font-weight:700">+$8.000</span></div>
-                  <div style="font-size:10px;color:var(--gray);margin-top:2px">A todo el país</div>
-                </div>
-              </div>
-            </div>
+          <div id="detBadges" style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)"></div>
+          <!-- Variant Selector -->
+          <div id="detVariants" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Variantes disponibles</div>
+            <div id="detVariantsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
           </div>
           <!-- Total & Buttons -->
-          <div style="padding-top:16px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
+          <div style="padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
             <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-size:9px;font-weight:700;color:var(--gray);text-transform:uppercase">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700" id="detTotal">$1.200.000</div></div>
+              <div><div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700" id="detTotal">$1.200.000</div></div>
             </div>
             <div style="display:flex;gap:10px">
-              <button onclick="if(currentProd)addToCart(currentProd.id)" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">Agregar al carrito</button>
-              <button onclick="if(currentProd){addToCart(currentProd.id);openCart()}" style="flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer">Comprar ahora</button>
+              <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Agregar al carrito</button>
+              <button class="det-btn det-btn-buy" id="detBuyNow" onclick="buyNow()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Comprar ahora</button>
             </div>
+            <button onclick="consultarProducto()" id="detConsultBtn" style="width:100%;padding:10px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)';this.style.background='rgba(255,107,44,.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)';this.style.background='transparent'">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+              Consultar por chat
+            </button>
           </div>
         </div>
       </div>
+      <!-- Related accessories -->
+      <div id="detRelated" style="display:none"></div>
     </div>
   </div>
 </div>
+
+<!-- ============================= PAGE: GARANTIAS ============================= -->

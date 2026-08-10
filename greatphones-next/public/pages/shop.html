@@ -1,61 +1,126 @@
 <div class="page" id="p-shop">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff;margin-bottom:.25rem" id="shopTitle">Catálogo</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="shopSub">Todos los equipos verificados con garantia incluida</p></div>
-  </div>
-  <div class="filter-bar">
-    <div class="ctr">
-      <div class="frow" id="filterBar">
-        <button class="fchip act" onclick="filterShop('todos',this)">Todos</button>
-        <button class="fchip" onclick="filterShop('iPhone',this)">iPhone</button>
-        <button class="fchip" onclick="filterShop('iPad',this)">iPad</button>
-        <button class="fchip" onclick="filterShop('MacBook',this)">MacBook</button>
-        <button class="fchip" onclick="filterShop('iMac',this)">iMac</button>
-        <button class="fchip" onclick="filterShop('Samsung',this)">Samsung</button>
-        <button class="fchip" onclick="filterShop('Motorola',this)">Motorola</button>
-        <button class="fchip" onclick="filterShop('Xiaomi',this)">Xiaomi</button>
-        <button class="fchip" onclick="filterShop('ofertas',this)">Ofertas</button>
-        <button class="fchip" onclick="filterShop('fav',this)">Favoritos</button>
+    <div class="ctr" style="display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <h1 class="sh-title" id="shopTitle">Catálogo</h1>
+        <p class="sh-sub" id="shopSub">Todos los equipos verificados con garantía incluida</p>
       </div>
-      <button class="adv-btn" onclick="toggleAdvF()">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
-        Filtros avanzados
-        <svg id="afArr" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-    </div>
-    <div class="adv-panel" id="advPanel">
-      <div class="ctr">
-        <div class="af-row">
-          <div class="af-grp"><span class="af-lbl">Almacenamiento</span><select class="af-sel" id="af-st" onchange="renderShopGrid()"><option value="">Cualquiera</option><option>64 GB</option><option>128 GB</option><option>256 GB</option><option>512 GB</option><option>1 TB</option></select></div>
-          <div class="af-grp"><span class="af-lbl">Estado</span><select class="af-sel" id="af-cd" onchange="renderShopGrid()"><option value="">Cualquiera</option><option>Nuevo</option><option>Impecable</option><option>Muy bueno</option><option>Bueno</option></select></div>
-          <div class="af-grp"><span class="af-lbl">Tipo</span><select class="af-sel" id="af-ty" onchange="renderShopGrid()"><option value="">Cualquiera</option><option value="celular">Celulares</option><option value="tablet">Tablets</option><option value="laptop">Laptops</option><option value="desktop">Desktop</option></select></div>
-        </div>
-        <div class="af-row">
-          <div class="af-grp"><span class="af-lbl">Precio min</span><input class="af-inp" type="number" id="af-p1" placeholder="$0" oninput="renderShopGrid()"></div>
-          <div class="af-grp"><span class="af-lbl">Precio max</span><input class="af-inp" type="number" id="af-p2" placeholder="Sin limite" oninput="renderShopGrid()"></div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-o btn-sm" onclick="renderShopGrid()">Aplicar</button>
-          <button class="btn btn-s btn-sm" onclick="clearAdvF()">Limpiar</button>
-        </div>
-      </div>
+      <div class="sh-accent">⌘</div>
     </div>
   </div>
-  <div style="background:#fff;border-bottom:1px solid var(--border)">
+  <div class="sh-filterbar">
     <div class="ctr">
-      <div class="sort-row">
-        <div class="sort-inner">
-          <select class="sort-sel" id="sortSel" onchange="renderShopGrid()">
-            <option value="rel">Relevancia</option><option value="asc">Menor precio</option>
-            <option value="desc">Mayor precio</option><option value="new">Mas nuevos</option><option value="bat">Mayor bateria</option>
-          </select>
-          <span class="sort-count" id="shopCount"></span>
+      <div class="sh-filter-inner">
+        <div class="sh-chips">
+          <button class="fchip act" onclick="filterShop('todos',this)">Todos</button>
+          <button class="fchip" onclick="filterShop('iPhone',this)">iPhone</button>
+          <button class="fchip" onclick="filterShop('iPad',this)">iPad</button>
+          <button class="fchip" onclick="filterShop('MacBook',this)">MacBook</button>
+          <button class="fchip" onclick="filterShop('Samsung',this)">Samsung</button>
+          <button class="fchip" onclick="filterShop('Motorola',this)">Motorola</button>
+          <button class="fchip" onclick="filterShop('Xiaomi',this)">Xiaomi</button>
+          <button class="fchip" onclick="filterShop('fav',this)">Favoritos</button>
         </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <div style="position:relative">
+            <button id="sortBtn" onclick="toggleSortMenu()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;border:1px solid var(--border);background:#fff;font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M6 12h12M9 18h6"/></svg>
+              <span id="sortLabel">Relevantes</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div id="sortMenu" style="display:none;position:absolute;top:calc(100%+8px);right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:200;min-width:180px;overflow:hidden">
+              <div onclick="setSort('rel',this)" class="sort-opt act">Relevantes</div>
+              <div onclick="setSort('asc',this)" class="sort-opt">Menor precio ↑</div>
+              <div onclick="setSort('desc',this)" class="sort-opt">Mayor precio ↓</div>
+              <div onclick="setSort('new',this)" class="sort-opt">Más nuevos</div>
+              <div onclick="setSort('disc',this)" class="sort-opt">Mayor descuento</div>
+              <div onclick="setSort('bat',this)" class="sort-opt">Mayor batería</div>
+            </div>
+          </div>
+          <button onclick="toggleFilterPanel()" style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:100px;background:var(--cream);border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--dk);cursor:pointer;transition:all .2s;white-space:nowrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M6 12h12M8 18h8"/></svg>
+            Filtros
+            <span id="filterCount" style="display:none;background:var(--orange);color:#fff;border-radius:10px;padding:2px 6px;font-size:10px;font-weight:600">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="filterOverlay" onclick="toggleFilterPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1400;backdrop-filter:blur(4px)"></div>
+  <div id="filterPanel" style="display:none;position:fixed;top:0;right:0;width:100%;max-width:400px;height:100%;background:#fff;z-index:1500;box-shadow:-8px 0 32px rgba(0,0,0,.2);overflow-y:auto;animation:slideIn .3s ease">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--orange),#FF8F5E)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        <h3 style="font-size:18px;font-weight:700;color:#fff">Filtros</h3>
+      </div>
+      <button onclick="toggleFilterPanel()" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">�</button>
+    </div>
+    <div style="padding:24px">
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Condición</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" id="chk-nuevo"><span>Nuevo</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-impecable"><span>Impecable</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-muybueno"><span>Muy bueno</span></label>
+          <label class="filter-chk"><input type="checkbox" id="chk-bueno"><span>Bueno</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Almacenamiento</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" value="64 GB"><span>64 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="128 GB"><span>128 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="256 GB"><span>256 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="512 GB"><span>512 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" value="1 TB"><span>1 TB</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Memoria RAM</h4>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label class="filter-chk"><input type="checkbox" id="ram-4"><span>4 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-6"><span>6 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-8"><span>8 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-12"><span>12 GB</span></label>
+          <label class="filter-chk"><input type="checkbox" id="ram-16"><span>16 GB</span></label>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Batería mínima</h4>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="range" id="batteryMin" min="0" max="100" value="0" step="5" style="flex:1;accent-color:var(--orange)" oninput="document.getElementById('batteryMinVal').textContent=this.value+'%'">
+          <span id="batteryMinVal" style="font-size:13px;font-weight:600;color:var(--dk);min-width:36px;text-align:right">0%</span>
+        </div>
+      </div>
+      <div style="margin-bottom:28px">
+        <h4 style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px"><span style="width:4px;height:4px;border-radius:50%;background:var(--orange)"></span>Rango de Precio</h4>
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="number" id="priceMin" placeholder="$0" style="flex:1;width:0;min-width:0;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--cream2);font-size:13px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)';this.style.background='#fff'">
+          <span style="color:var(--gray);flex-shrink:0">�</span>
+          <input type="number" id="priceMax" placeholder="Sin l�mite" style="flex:1;width:0;min-width:0;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--cream2);font-size:13px;outline:none;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)';this.style.background='#fff'">
+        </div>
+      </div>
+      <div style="margin-bottom:28px;padding:16px;background:var(--cream);border-radius:12px;border:1px solid rgba(0,0,0,.04)">
+        <label style="display:flex;align-items:center;justify-content:space-between;cursor:pointer">
+          <span style="font-weight:600;font-size:13px">Ocultar productos sin stock</span>
+          <div style="position:relative;width:48px;height:26px">
+            <input type="checkbox" id="hideNoStock" style="opacity:0;width:100%;height:100%;position:absolute;cursor:pointer">
+            <span style="position:absolute;inset:0;border-radius:13px;background:var(--border);transition:.2s"></span>
+            <span style="position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.2);transition:.2s"></span>
+          </div>
+        </label>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="clearFilters()" style="flex:1;padding:14px;background:#fff;color:var(--dk);border:1.5px solid var(--border);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">Limpiar</button>
+        <button onclick="applyFilters()" style="flex:1;padding:14px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 16px rgba(255,107,44,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 12px rgba(255,107,44,.3)'">Ver resultados</button>
       </div>
     </div>
   </div>
   <div style="background:var(--cream)">
-    <div class="ctr">
+    <div class="ctr" style="padding:24px var(--pad)">
       <div class="shop-content"><div class="pgrid" id="shopGrid"></div></div>
     </div>
   </div>
 </div>
+
+<!-- ============================= PAGE: OFERTAS ============================= -->

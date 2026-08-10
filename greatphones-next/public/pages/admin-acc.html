@@ -1,0 +1,58 @@
+<div class="page" id="p-admin-acc">
+  <div class="sh-hdr">
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff" id="accFormTitle">Agregar Accesorio</h1><p style="font-size:12px;color:rgba(255,255,255,.4)" id="accFormSubtitle">Completa los datos del nuevo accesorio</p></div>
+  </div>
+  <div style="background:var(--cream);padding:1.5rem 0">
+    <div class="ctr" style="max-width:620px">
+      <input type="hidden" id="accId">
+      <input type="hidden" id="accImageUrl">
+      <input type="hidden" id="accImages">
+      <input type="hidden" id="accStock" value="0">
+      <div style="display:grid;gap:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="accName" placeholder="AirPods Pro"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><input class="inp-f" id="accBrand" placeholder="Apple"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" id="accPrice" type="number" placeholder="25000"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo / Grupo</label><input class="inp-f" id="accModelGroup" placeholder="funda-iphone-14"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Categoria</label><select class="sel-f" id="accCategory"><option value="Cargadores">Cargadores</option><option value="Auriculares">Auriculares</option><option value="Fundas">Fundas</option><option value="Bandas">Bandas</option><option value="Cables">Cables</option><option value="Parlantes">Parlantes</option><option value="Otros">Otros</option></select></div>
+        </div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="accDescription" placeholder="Auriculares wireless con cancelacion de ruido" style="height:80px;resize:none"></textarea></div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:10px">🏷️ Oferta / Descuento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="accIsOffer" onchange="var d=document.getElementById('accDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="accDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="accOfferStartDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="accOfferStartTime" type="time"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="accOfferEndDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="accOfferEndTime" type="time"></div>
+          </div>
+        </div>
+        <input type="hidden" id="accColor">
+        <input type="hidden" id="accCompatibleModels">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:var(--dk);display:block;margin-bottom:8px">Colores / Variantes <span style="font-size:10px;color:var(--gray);font-weight:400">(cada fila es un registro independiente)</span></label>
+          <div id="accColorRows"></div>
+          <button onclick="addColorRow()" style="margin-top:8px;padding:10px 16px;border:1.5px dashed var(--border);border-radius:10px;background:var(--cream);font-size:12px;color:var(--gray);cursor:pointer;display:flex;align-items:center;gap:6px;transition:all .15s;width:100%;justify-content:center" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Agregar variante</button>
+        </div>
+        <div style="margin-top:.5rem">
+          <label style="font-size:11px;font-weight:500;display:block;margin-bottom:6px">Dispositivos compatibles</label>
+          <button onclick="openCompatModal()" style="display:flex;align-items:center;gap:8px;width:100%;padding:14px 16px;border:2px dashed var(--border);border-radius:12px;background:var(--cream);cursor:pointer;text-align:left;font-size:13px;color:var(--gray);transition:all .15s" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'" id="compatTriggerBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            <span id="compatTriggerLabel">Seleccionar modelos compatibles</span>
+            <span id="compatTriggerCount" style="margin-left:auto;font-size:11px;color:var(--orange);font-weight:600;display:none"></span>
+          </button>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:1rem">
+          <button class="btn btn-o" style="flex:1" onclick="saveAccessory()">Guardar Accesorio</button>
+          <button class="btn btn-g" style="flex:1" onclick="resetAccessoryForm();nav('admin');window.currentAdminTab='acc';renderAdminContent('acc')">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: ADMIN ============================= -->

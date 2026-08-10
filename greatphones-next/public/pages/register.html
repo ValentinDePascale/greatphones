@@ -12,15 +12,8 @@
             <input type="text" id="regName" placeholder="Nombre *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
             <input type="text" id="regLastname" placeholder="Apellido *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <input type="email" id="regEmail" placeholder="Email *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="tel" id="regPhone" placeholder="WhatsApp" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-            <input type="text" id="regDni" placeholder="DNI" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="text" id="regProvincia" placeholder="Provincia" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-            <input type="text" id="regCiudad" placeholder="Ciudad" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box">
-          </div>
+          <input type="email" id="regEmail" placeholder="Email *" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;margin-bottom:12px">
+          
           <div style="position:relative;height:48px;margin-bottom:6px">
             <input type="password" id="regPassword" placeholder="Contraseña *" oninput="checkPasswordStrength()" style="width:100%;padding:14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:0;box-sizing:border-box;height:48px">
             <button type="button" onclick="togglePassword('regPassword','regPasswordToggle')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:0">
@@ -41,6 +34,11 @@
             <div style="font-size:12px;color:var(--green)">Usando Great Phones vas a poder comprar con garantia, cotizar tu equipo usado y acceder a precios exclusivos.</div>
           </div>
           
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:1rem">
+            <input type="checkbox" id="regTyC" style="margin-top:3px;width:16px;height:16px">
+            <label for="regTyC" style="font-size:11px;color:var(--gray);line-height:1.5">Acepto los <a onclick="nav('terminos')" style="color:var(--orange);cursor:pointer">Terminos y Condiciones</a> y las <a onclick="nav('privacidad')" style="color:var(--orange);cursor:pointer">Politicas de Privacidad</a>. Conozco y acepto la garantia legal de 6 meses y el derecho de arrepentimiento segun Resolucion 424/2020.</label>
+          </div>
+          
           <button onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
           
           <p style="text-align:center;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="openLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
@@ -49,7 +47,7 @@
         <div id="pageVerifyStep" style="display:none">
           <h3 style="font-size:16px;margin-bottom:8px;text-align:center">Verificá tu email</h3>
           <p style="font-size:13px;color:var(--gray);text-align:center;margin-bottom:4px">Te enviamos un código a <span id="pageVerifyEmail" style="font-weight:600"></span></p>
-          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">10:00</span></p>
+          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">05:00</span></p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
             <input type="text" id="pv1" maxlength="1" oninput="moveToNext(this,'pv2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700;outline:none">
             <input type="text" id="pv2" maxlength="1" oninput="moveToNext(this,'pv3')" onkeydown="moveBack(event,'pv1')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
@@ -59,9 +57,14 @@
             <input type="text" id="pv6" maxlength="1" onkeydown="moveBack(event,'pv5')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">
           </div>
           <button onclick="verifyAndCompleteRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Verificar y crear cuenta</button>
-          <button onclick="showPageRegisterStep()" style="width:100%;padding:10px;border:none;background:none;color:var(--gray);font-size:12px;cursor:pointer">Volver</button>
+          <div style="display:flex;gap:8px;margin-bottom:1rem">
+            <button onclick="resendVerificationCode()" style="flex:1;padding:10px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">Reenviar codigo</button>
+            <button onclick="showPageRegisterStep()" style="flex:1;padding:10px;background:none;color:var(--orange);border:1px dashed var(--orange);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer">¿Escribiste mal tu mail?</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ============================= PAGE: CUENTA ============================= -->

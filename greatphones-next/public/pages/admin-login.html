@@ -1,0 +1,98 @@
+<div class="page" id="p-admin-login">
+    <div class="admin-login-card">
+      <span class="al-ico">&#128295;</span>
+      <div class="al-t" style="font-family:'Playfair Display',Georgia,serif">Panel de administracion</div>
+      <div class="al-s">Great Phones — Acceso restringido</div>
+      <input class="admin-inp" type="text" id="adUser" placeholder="Usuario" autocomplete="off">
+      <input class="admin-inp" type="password" id="adPass" placeholder="Contrasena" onkeydown="if(event.key==='Enter')adminLogin()">
+      <button class="btn-fo" style="margin-top:4px" onclick="adminLogin()">Entrar</button>
+      <button class="btn-fout" style="margin-top:6px;border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.45)" onclick="nav('home')">Volver a la tienda</button>
+    </div>
+  <div id="adminPanel" class="admin-panel hidden">
+    <div class="admin-nav">
+      <div class="admin-nav-t" style="font-family:'Playfair Display',Georgia,serif">Admin — Great Phones</div>
+      <div style="display:flex;gap:6px">
+        <button class="admin-exit" onclick="nav('home')">Ver tienda</button>
+        <button class="admin-exit" onclick="adminLogout()">Salir</button>
+      </div>
+    </div>
+    <div class="admin-tabs">
+      <button class="atab act" onclick="adminTab('dashboard',this)">Dashboard</button>
+      <button class="atab" onclick="adminTab('prods',this)">Productos</button>
+      <button class="atab" onclick="adminTab('ventas',this)">Ventas</button>
+      <button class="atab" onclick="adminTab('guar',this)">Garantias</button>
+      <button class="atab" onclick="adminTab('chat',this)" style="position:relative">Chat<span id="adminChatBadge" style="display:none;position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--orange);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">0</span></button>
+    </div>
+    <div class="admin-sec act" id="as-dash">
+      <div class="stat-grid" id="dashStats"></div>
+    </div>
+    <div class="admin-sec" id="as-prods">
+      <div class="acard"><div class="acard-t">Catálogo</div><div id="adProdList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-ventas">
+      <div class="acard"><div class="acard-t">Historial de ventas</div><div id="ventasList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-guar">
+      <div class="acard"><div class="acard-t">Garantias vigentes</div><div id="guarList"></div></div>
+    </div>
+    <div class="admin-sec" id="as-chat" style="display:flex;gap:0;height:calc(100vh - 200px);background:#fff;border-radius:0;overflow:hidden">
+      <!-- Sidebar: Conversation List -->
+      <div style="width:340px;min-width:340px;border-right:1px solid var(--border);display:flex;flex-direction:column;background:#fcfcfc">
+        <!-- Search header -->
+        <div style="padding:20px 18px 16px;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:15px;font-weight:700;color:var(--dk);letter-spacing:-.2px;font-family:'Playfair Display',Georgia,serif">Conversaciones</h3>
+            <span id="adminConvCount" style="font-size:11px;color:var(--gray);font-weight:500">0</span>
+          </div>
+          <div style="position:relative">
+            <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray);pointer-events:none" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input type="text" id="adminConvSearch" placeholder="Buscar por nombre, email o DNI..." oninput="searchAdminConvs(this.value)" style="width:100%;padding:10px 12px 10px 36px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;outline:none;background:#fff;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+        </div>
+        <!-- Conversation list -->
+        <div id="adminConvList" style="flex:1;overflow-y:auto;padding:6px 0"></div>
+      </div>
+      <!-- Chat Area -->
+      <div style="flex:1;display:flex;flex-direction:column;background:var(--cream)">
+        <!-- Chat Header -->
+        <div id="adminChatHeader" style="padding:16px 20px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;min-height:64px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div id="adminChatAvatar" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--orange),#e55a1a);display:none;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">GP</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div id="adminChatName" style="font-size:14px;font-weight:600;color:var(--dk)">Seleccioná una conversación</div>
+                <span id="adminOnlineDot" style="width:7px;height:7px;border-radius:50%;background:var(--green);display:none" title="En línea"></span>
+              </div>
+              <div id="adminChatSub" style="font-size:11px;color:var(--gray);margin-top:1px"></div>
+            </div>
+          </div>
+          <div id="adminChatActions" style="display:flex;gap:6px">
+            <button id="chatSoundToggle" onclick="toggleChatSound()" title="Silenciar notificaciones" style="padding:7px 10px;font-size:14px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:8px;cursor:pointer;line-height:1">🔊</button>
+            <button id="adminCloseConvBtn" onclick="closeAdminConv(adminActiveConvId)" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.2);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.background='rgba(239,68,68,.2)'" onmouseout="this.style.background='rgba(239,68,68,.1)'">Cerrar</button>
+            <button id="adminDeleteConvBtn" onclick="deleteAdminConv(adminActiveConvId)" style="display:none;padding:7px 14px;font-size:11px;font-weight:600;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">Eliminar</button>
+          </div>
+        </div>
+        <!-- Messages -->
+        <div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:16px 20px;scroll-behavior:smooth"></div>
+        <!-- Typing indicator -->
+        <div id="typingIndicator" style="padding:2px 20px 6px;font-size:11px;color:var(--gray);font-style:italic;display:none"></div>
+        <!-- Quick replies -->
+        <div id="quickReplies" class="wa-quick-replies" style="padding:6px 16px;display:none;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)"></div>
+        <!-- Input area - WhatsApp style -->
+        <div class="wa-chat-input-bar">
+          <button class="wa-attach-btn" onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+          </button>
+          <div class="wa-input-wrap">
+            <textarea id="adminChatInput" rows="1" placeholder="Escribí un mensaje..." onkeydown="adminChatKeydown(event)" oninput="autoResizeChatInput(this);handleAdminTyping();toggleSendBtn()"></textarea>
+          </div>
+          <button class="wa-send-btn" id="adminSendBtn" onclick="sendAdminMessage()" title="Enviar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN PAGE ===== -->

@@ -1,0 +1,80 @@
+<div class="page" id="p-admin-product">
+  <div class="sh-hdr">
+    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Agregar Producto</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Completa los datos del nuevo producto</p></div>
+  </div>
+  <div style="background:var(--cream);padding:1.5rem 0">
+    <div class="ctr" style="max-width:600px">
+      <input type="hidden" id="prodId">
+      <input type="hidden" id="prodImageUrl">
+      <input type="hidden" id="prodImages">
+      <div style="text-align:center;margin-bottom:1rem">
+        <div id="prodImagePreview" style="width:120px;height:120px;margin:0 auto;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:40px;border:2px dashed var(--border);cursor:pointer" ondragover="event.preventDefault();this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,0.1)'" ondragleave="this.style.borderColor='var(--border)';this.style.background='var(--cream2)'" ondrop="event.preventDefault();this.style.borderColor='var(--border)';this.style.background='var(--cream2)';handleImageDrop(event)">📷</div>
+        <div style="margin-top:8px">
+          <label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:var(--rsm);font-size:12px;cursor:pointer;margin-right:8px">
+            Imagen principal
+            <input type="file" id="prodImageInput" accept="image/*" style="display:none" onchange="uploadProductImage(this)">
+          </label>
+          <span style="font-size:11px;color:var(--gray)">o arrastra una imagen aqui</span>
+        </div>
+      </div>
+      <div style="margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:500;margin-bottom:8px">Imagenes adicionales (opcional)</div>
+        <div id="prodAdditionalImages" style="display:flex;gap:8px;flex-wrap:wrap;min-height:60px;padding:10px;background:var(--cream2);border-radius:var(--rsm);border:1px dashed var(--border)">
+          <div id="addImgPlaceholder" style="color:var(--gray);font-size:11px;padding:10px">Arrastra imagenes adicionales aqui</div>
+        </div>
+        <input type="file" id="prodAdditionalImagesInput" accept="image/*" multiple style="display:none" onchange="uploadAdditionalImages(this)">
+        <button onclick="document.getElementById('prodAdditionalImagesInput').click()" style="margin-top:8px;padding:6px 12px;font-size:11px;background:#fff;border:1px solid var(--border);border-radius:var(--rsm);cursor:pointer">+ Agregar mas imagenes</button>
+      </div>
+      <div style="display:grid;gap:16px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Nombre *</label><input class="inp-f" id="prodName" placeholder="iPhone 15 Pro"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prodBrand"><option value="iPhone">iPhone</option><option value="Samsung">Samsung</option><option value="MacBook">MacBook</option><option value="iPad">iPad</option><option value="Motorola">Motorola</option><option value="Xiaomi">Xiaomi</option><option value="Otro">Otro</option></select></div>
+          <div id="prodIphoneModelField" style="display:none"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo iPhone</label><select class="sel-f" id="prodIphoneModel" onchange="onAdminIphoneModelChange()"><option value="">Seleccionar...</option></select></div>
+        </div>
+        <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Descripcion</label><textarea class="inp-f" id="prodDescription" placeholder="Descripcion completa del producto..." style="height:80px;resize:none"></textarea></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio Venta *</label><input class="inp-f" id="prodPrice" type="text" placeholder="1320000" oninput="formatPriceInput(this)"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio Compra</label><input class="inp-f" id="prodBuyPrice" type="text" placeholder="980000" oninput="formatPriceInput(this)"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Stock</label><input class="inp-f" id="prodStock" type="number" min="0" placeholder="3"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condicion</label><select class="sel-f" id="prodCondition"><option value="Nuevo">Nuevo</option><option value="Impecable">Impecable</option><option value="Muy bueno">Muy bueno</option><option value="Bueno">Bueno</option></select></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prodType" onchange="updateProductFields()"><option value="celular">Celular</option><option value="laptop">Laptop</option><option value="tablet">Tablet</option><option value="desktop">Desktop</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><input class="inp-f" id="prodColor" placeholder="Titanio Natural"></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Pantalla (")</label><input class="inp-f" id="prodScreen" type="number" step="0.1" min="1" max="40" placeholder="6.1"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><select class="sel-f" id="prodStorage"><option value="">Seleccionar...</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option><option value="2 TB">2 TB</option></select></div>
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">RAM</label><select class="sel-f" id="prodRam"><option value="">Seleccionar...</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option><option value="24 GB">24 GB</option><option value="32 GB">32 GB</option><option value="64 GB">64 GB</option></select></div>
+          <div id="prodBatteryField"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Bateria (%)</label><input class="inp-f" id="prodBattery" type="number" min="0" max="100" placeholder="91"></div>
+          <div id="prodProcessorField" style="display:none"><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Procesador</label><input class="inp-f" id="prodProcessor" placeholder="M3 Pro"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr;gap:12px">
+          <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">IMEI</label><input class="inp-f" id="prodImei" placeholder="353456789012345" maxlength="15" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="font-size:12px;font-weight:600;color:var(--orange);margin-bottom:10px">🏷️ Oferta / Descuento</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:11px;font-weight:500;display:flex;align-items:center;gap:8px"><input type="checkbox" id="prodIsOffer" onchange="var d=document.getElementById('prodDiscount');d.disabled=!this.checked;if(!this.checked)d.value=0"><span>Es oferta</span></label></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">% Descuento</label><input class="inp-f" id="prodDiscount" type="number" min="0" max="100" placeholder="30" disabled></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Inicio oferta (opcional)</label><input class="inp-f" id="prodOfferStartDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="prodOfferStartTime" type="time"></div>
+            <div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Fin oferta</label><input class="inp-f" id="prodOfferEndDate" type="date" style="margin-bottom:4px"><input class="inp-f" id="prodOfferEndTime" type="time"></div>
+          </div>
+        </div>
+        <div id="variantsSection" style="display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:12px;font-weight:600;color:var(--gray)">📦 Variantes / IMEIs vinculados</div>
+            <button class="btn btn-o btn-sm" onclick="showImeiProductModal(document.getElementById('prodId').value)">+ Agregar variante</button>
+          </div>
+          <div id="variantsList"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:1rem">
+          <button class="btn btn-o" onclick="saveProduct()">Guardar Producto</button>
+          <button class="btn btn-g" onclick="nav('admin')">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: CHATS ============================= -->

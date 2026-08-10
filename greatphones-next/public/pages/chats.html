@@ -1,0 +1,58 @@
+<div class="page" id="p-chats" style="background:linear-gradient(180deg,var(--cream) 0%,#fff 100%)">
+  <div style="max-width:720px;margin:0 auto;height:100dvh;display:flex;flex-direction:column">
+    <!-- Header -->
+    <div style="background:#fff;border-bottom:1px solid var(--border);padding:16px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0">
+      <button onclick="nav('home')" style="background:none;border:none;cursor:pointer;padding:8px;border-radius:10px;transition:background .15s;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='none'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7 7"/></svg>
+      </button>
+      <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">GP</div>
+      <div style="flex:1">
+        <div style="font-size:16px;font-weight:700;color:var(--dk);font-family:'Playfair Display',Georgia,serif">Great Phones</div>
+        <div style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:4px">
+          <span id="chatOnlineDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block"></span>
+          <span id="chatOnlineText">En línea</span>
+        </div>
+      </div>
+      <div style="padding:8px;border-radius:10px;background:var(--cream2);cursor:pointer" onclick="nav('home')" title="Cerrar chat">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </div>
+    </div>
+    
+    <!-- Messages Area -->
+    <div class="msg-list-wrap">
+      <div class="msg-list" id="chatMsgList" style="flex:1;min-height:0;padding:20px;overflow-y:auto;background:transparent;scroll-behavior:smooth"></div>
+      <button class="scroll-fab" id="scrollFab" onclick="clickScrollFab()" title="Ir al último mensaje">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 9l-6 6-6-6"/></svg>
+        <span class="scroll-fab-badge" id="scrollFabBadge">0</span>
+      </button>
+    </div>
+    
+    <!-- Typing Indicator -->
+    <div id="typingIndicator" style="display:none;padding:6px 20px;font-size:12px;color:var(--gray);background:transparent"></div>
+    
+    <!-- Toolbar -->
+    <div class="chat-toolbar">
+      <button class="chat-toolbar-btn" onclick="showAutoReply()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Preguntas frecuentes
+      </button>
+    </div>
+    
+    <!-- Input Area -->
+    <div style="background:#fff;border-top:1px solid var(--border);padding:12px 20px 16px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px;background:var(--cream2);border-radius:16px;padding:8px 12px;border:1.5px solid var(--border);transition:border-color .2s" onfocus-within="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+        <button class="msg-img-btn" onclick="document.getElementById('chatImgIn').click()" title="Enviar foto" style="background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;font-size:18px;color:var(--gray);transition:color .15s" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--gray)'">
+          &#128247;
+        </button>
+        <input type="file" id="chatImgIn" accept="image/*" style="display:none" onchange="sendChatImg(this)">
+        <input class="msg-inp" id="chatInput" type="text" placeholder="Escribe un mensaje..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendMessage()" style="flex:1;background:none;border:none;font-size:14px;color:var(--dk);outline:none;padding:4px">
+        <button class="msg-send" onclick="sendMessage()" style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;transition:transform .15s,box-shadow .15s;box-shadow:0 2px 8px rgba(255,107,44,.3)" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          &#10148;
+        </button>
+      </div>
+      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--gray)">Great Phones te responderá a la brevedad</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================= PAGE: TERMINOS ============================= -->

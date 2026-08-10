@@ -1,24 +1,96 @@
 <div class="page" id="p-garantias">
   <div class="sh-hdr">
-    <div class="ctr"><h1 style="font-family:'Playfair Display',Georgia,serif;font-size:28px;color:#fff">Garantias y seguros</h1><p style="font-size:12px;color:rgba(255,255,255,.4)">Disponible dentro de los primeros 12 meses de tu compra</p></div>
+    <div class="ctr gar-hdr-content">
+      <h1 class="gar-hdr-title">Garantías y seguros</h1>
+      <p class="gar-hdr-sub">Disponible dentro de los primeros 12 meses de tu compra</p>
+    </div>
   </div>
-  <div style="background:var(--cream);padding:2rem 0">
+  <div class="gar-body">
     <div class="ctr" style="max-width:680px">
-      <div style="background:rgba(45,90,39,.08);border:1px solid rgba(45,90,39,.2);border-radius:var(--r);padding:1rem;margin-bottom:1.5rem;font-size:12px;color:var(--green);line-height:1.7">
-        <strong>&#128737; Garantia extendida</strong><br>Solo disponible si ya compraste un equipo en Great Phones. Podes agregarla hasta <strong>12 meses despues</strong> de tu compra usando tu <strong>codigo de compra + IMEI</strong>.
+      <!-- Extendida info -->
+      <div class="gar-card gar-card-info gar-anim-1">
+        <div class="gar-card-info-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2D5A27" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="gar-card-info-content">
+          <strong>Garantía extendida</strong>
+          <p>Solo disponible si ya compraste un equipo en Great Phones. Podés agregarla hasta <strong>12 meses después</strong> de tu compra usando tu <strong>código de compra + IMEI</strong>.</p>
+        </div>
       </div>
-      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--rlg);padding:1.5rem;margin-bottom:1.5rem">
-        <div style="font-family:'Playfair Display',Georgia,serif;font-size:17px;margin-bottom:.25rem">Verificar mi compra</div>
-        <div style="font-size:11px;color:var(--gray);margin-bottom:1.1rem">Ingresa tu codigo de compra e IMEI para ver las garantias disponibles</div>
-        <input class="inp-f" id="garCodigo" placeholder="Codigo de compra (ej: GP-2026-0001)" oninput="garChk()">
-        <input class="inp-f" id="garImei" placeholder="IMEI del equipo (15 digitos)" oninput="garChk()" maxlength="15">
-        <button class="btn btn-o btn-full" id="garVerBtn" disabled onclick="garVerificar()">Verificar compra</button>
+
+      <!-- Verify form -->
+      <div class="gar-card gar-card-form gar-anim-2">
+        <div class="gar-form-hdr">
+          <span class="material-symbols-outlined">verified</span>
+          <div>
+            <div class="gar-form-title">Verificar mi compra</div>
+            <div class="gar-form-sub">Ingresá tu código de compra e IMEI para ver las garantías disponibles</div>
+          </div>
+        </div>
+        <div class="gar-form-fields">
+          <div class="gar-field gar-field-codigo">
+            <label for="garCodigo">Código de compra</label>
+            <div class="gar-input-wrap">
+              <span class="material-symbols-outlined">receipt_long</span>
+              <input class="inp-f" id="garCodigo" placeholder="Ej: GP-2026-0001" oninput="garChk()">
+            </div>
+          </div>
+          <div class="gar-field gar-field-imei">
+            <label for="garImei">IMEI del equipo</label>
+            <div class="gar-input-wrap">
+              <span class="material-symbols-outlined">qr_code_scanner</span>
+              <input class="inp-f" id="garImei" placeholder="15 dígitos" oninput="garChk()" maxlength="15" inputmode="numeric">
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-o btn-full" id="garVerBtn" disabled onclick="garVerificar()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Verificar compra
+        </button>
       </div>
-      <div style="background:var(--dk2);border-radius:var(--r);padding:1.25rem;margin-top:1.5rem">
-        <div style="font-size:11px;font-weight:700;color:#fff;margin-bottom:.875rem">&#128737; Garantia de 12 meses incluida en toda compra</div>
-        <div style="font-size:10px;color:rgba(255,255,255,.45);line-height:1.7;margin-bottom:.875rem">Todos los equipos incluyen 12 meses de garantia sin cargo desde la fecha de compra.</div>
-        <button class="btn btn-ghost btn-sm" onclick="navShop('todos')">Ver equipos disponibles</button>
+
+      <div id="garResult" style="display:none"></div>
+
+      <!-- 90 days guarantee -->
+      <div class="gar-card gar-card-badge gar-anim-3">
+        <div class="gar-badge-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B2C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </div>
+        <div class="gar-badge-body">
+          <div class="gar-badge-title">Garantía de 12 meses incluida</div>
+          <p>Todos los equipos incluyen 12 meses de garantía sin cargo desde la fecha de compra.</p>
+          <button class="btn btn-ghost btn-sm" onclick="navShop('todos')" style="display:inline-flex;align-items:center;gap:6px;margin-top:4px">
+            Ver equipos disponibles
+            <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+          </button>
+        </div>
       </div>
+
+      <!-- Additional info -->
+      <div class="gar-faq gar-anim-4">
+        <div class="gar-faq-title">Preguntas frecuentes</div>
+        <div class="gar-faq-item" onclick="this.classList.toggle('open')">
+          <div class="gar-faq-q">¿Qué cubre la garantía? <span class="material-symbols-outlined">expand_more</span></div>
+          <div class="gar-faq-a">La garantía cubre defectos de fábrica en hardware y software. No cubre daños por accidentes, líquidos, o mal uso.</div>
+        </div>
+        <div class="gar-faq-item" onclick="this.classList.toggle('open')">
+          <div class="gar-faq-q">¿Cómo activo mi garantía extendida? <span class="material-symbols-outlined">expand_more</span></div>
+          <div class="gar-faq-a">Usá el formulario de arriba con tu código de compra e IMEI. Tenés hasta 12 meses desde la compra para activarla.</div>
+        </div>
+        <div class="gar-faq-item" onclick="this.classList.toggle('open')">
+          <div class="gar-faq-q">¿Puedo transferir la garantía? <span class="material-symbols-outlined">expand_more</span></div>
+          <div class="gar-faq-a">No, la garantía está asociada al comprador original y no es transferible a terceros.</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
+
+<!-- ============================= PAGE: COMPARE ============================= -->
