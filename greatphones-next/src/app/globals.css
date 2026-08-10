@@ -61,6 +61,10 @@ body {
   display: none !important;
 }
 
+/* SPA pages — hidden by default, shown when active */
+.page { display: none; min-height: 100vh; position: relative; }
+.page.act { display: block; }
+
 /* Page transition */
 .page-enter {
   animation: fadeIn 0.18s ease;
