@@ -55,6 +55,10 @@ function hideNonActivePages(html: string): string {
   return html
 }
 
+function wrapMain(html: string): string {
+  return html.replace('<body>', '<body><main id="main-content">').replace('</body>', '</main></body>')
+}
+
 export function serveSpa(targetPage?: string): string {
   loadShell()
   if (!_shell) return '<h1>Loading...</h1>'
@@ -63,6 +67,7 @@ export function serveSpa(targetPage?: string): string {
     const allPages = loadAllPages()
     let fullSpa = _shell.replace('</body>', allPages + '</body>')
     fullSpa = hideNonActivePages(fullSpa)
+    fullSpa = wrapMain(fullSpa)
     return removeAdminStuff(fullSpa)
   }
 
@@ -76,6 +81,7 @@ export function serveSpa(targetPage?: string): string {
 
   let html = _shell.replace('</body>', pageContentAct + '</body>')
   html = hideNonActivePages(html)
+  html = wrapMain(html)
   return removeAdminStuff(html)
 }
 
@@ -87,5 +93,6 @@ export function serveAdminSpa(): string {
   html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
   html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
   html = hideNonActivePages(html)
+  html = wrapMain(html)
   return html
 }

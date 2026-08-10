@@ -745,12 +745,7 @@
 .shop-content{padding:1.25rem 0 2.5rem}
 
 /* GIFT CARD */
-.gift-card{background:linear-gradient(135deg,var(--orange),#FF3D00);border-radius:var(--rlg);padding:1.5rem;position:relative;overflow:hidden;cursor:pointer;transition:transform .2s}
-.gift-card:hover{transform:translateY(-2px)}
-.gift-card::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.1)}
-.gift-card-t{font-family:'Playfair Display',Georgia,serif;font-size:18px;color:#fff;margin-bottom:.375rem}
-.gift-card-s{font-size:11px;color:rgba(255,255,255,.7);line-height:1.5}
-.gift-card-ico{font-size:48px;position:absolute;right:1.25rem;top:50%;transform:translateY(-50%);opacity:.22}
+
 
 /* CART v7 */
 .cart-overlay{position:fixed;inset:0;z-index:800;pointer-events:none}
