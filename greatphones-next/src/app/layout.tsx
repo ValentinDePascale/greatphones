@@ -30,7 +30,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Preload critical CSS */}
         <link rel="preload" href="/styles/globals.css?v=2" as="style" />
         <link rel="preload" href="/styles/components.css?v=2" as="style" />
-        {/* Load fonts + CSS */}
+        {/* Apply critical CSS immediately */}
+        <link rel="stylesheet" href="/styles/globals.css?v=2" />
+        <link rel="stylesheet" href="/styles/components.css?v=2" />
+        {/* Load fonts */}
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
       </head>
       <body style={{ margin: 0 }}>
