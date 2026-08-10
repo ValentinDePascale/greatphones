@@ -54,7 +54,6 @@ function hideNonActivePages(html: string): string {
   
   return html
 }
-}
 
 export function serveSpa(targetPage?: string): string {
   loadShell()
