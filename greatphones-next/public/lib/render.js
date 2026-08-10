@@ -3814,7 +3814,7 @@ function renderAdminContent(tab){
     '</div>'+
     '<div class="loader-spinner"><span>Cargando...</span></div>'+
     '<div id="arrepList"></div>';
-    loadArrepPendientes();
+    if(typeof loadArrepPendientes==='function'){loadArrepPendientes();}else{el.innerHTML='<div style="padding:2rem;color:var(--gray);text-align:center">Arrepentimientos no disponible</div>';}
   }else if(tab==='users'){
     el.innerHTML='<div class="loader-spinner"><span>Cargando...</span></div><div id="adminUsersList"></div>';
     loadAdminUsers();
