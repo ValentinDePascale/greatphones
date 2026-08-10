@@ -571,7 +571,7 @@ function toggleMobileSearch(){
   </div>
 </div>
 
-<script>window.onerror=function(m,s,l,c,e){console.error('GP Error:',m,'at',s+':'+l);document.body.innerHTML='<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:#FDF8F3;font-family:sans-serif;text-align:center;padding:2rem"><div><div style="font-size:80px;color:#FF6B2C;margin-bottom:1rem">:(</div><h1 style="font-size:22px;color:#1a1a1a;margin-bottom:.5rem">Algo salio mal</h1><p style="font-size:14px;color:#666;margin-bottom:2rem">Ocurrio un error inesperado. Recarga la pagina para continuar.</p><button onclick="location.reload()" style="padding:14px 32px;background:#FF6B2C;color:#fff;font-size:15px;font-weight:700;border-radius:12px;border:none;cursor:pointer">Recargar pagina</button></div></div>';return true};window.addEventListener('unhandledrejection',function(e){console.error('GP Unhandled rejection:',e.reason)})</script>
+<script>window.addEventListener('error',function(e){console.error('GP Error:',e.message,'at',e.filename+':'+e.lineno);return false});window.addEventListener('unhandledrejection',function(e){console.error('GP Unhandled rejection:',e.reason)})</script>
 
 </body>
 </html>
