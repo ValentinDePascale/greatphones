@@ -45,13 +45,7 @@ function removeAdminStuff(html: string): string {
 }
 
 function hideNonActivePages(html: string): string {
-  // Add inline display:none to .page divs that DON'T have 'act' class
-  html = html.replace(/class="page"(?! act)/g, 'class="page" style="display:none"')
-  
-  // Remove any second style attribute resulting from the merge
-  // style="display:none" ...anything... style="any" → style="display:none" ...anything...
-  html = html.replace(/(style="display:none"[^>]*?)\s+style="[^"]*"/g, '$1')
-  
+  // CSS handles display:none via .page{display:none!important} and .page.act{display:block!important}
   return html
 }
 
