@@ -3889,7 +3889,7 @@ function renderAdminContent(tab){
     el.innerHTML='<div id="preventa-view"></div>';
     renderPreventaTab('local');
   }else if(tab==='sales'){
-    loadSalesHistory();
+    var el2=document.getElementById('adminContent');if(el2)el2.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)">Historial de ventas — disponible en el dashboard</div>';
   }
 }
 

@@ -446,7 +446,7 @@ function updateChatWidget(){
   wrap.style.display='flex';
 }
 document.addEventListener('click',function(e){
-  if(!e.target.closest('.nav-search'))document.getElementById('searchDD').classList.remove('open');
+  var dd=document.getElementById('searchDD');if(dd&&!e.target.closest('.nav-search'))dd.classList.remove('open');
   if(!e.target.closest('.notif-wrap'))closeNotifPanel();
 });
 (function(){
