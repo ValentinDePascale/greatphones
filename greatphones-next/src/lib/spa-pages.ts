@@ -78,7 +78,7 @@ export function serveSpa(targetPage?: string): string {
   return removeAdminStuff(html)
 }
 
-export function serveAdminSpa(): string {
+export function serveAdminSpa(activeTab?: string): string {
   loadShell()
   if (!_shell) return '<h1>Loading...</h1>'
   let allPages = loadAllPages()
@@ -87,5 +87,24 @@ export function serveAdminSpa(): string {
   html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
   html = hideNonActivePages(html)
   html = wrapMain(html)
+  if (activeTab && activeTab !== 'dashboard') {
+    const tabFnMap: Record<string, string> = {
+      prods: 'renderAdminContent("prods")',
+      acc: 'renderAdminContent("acc")',
+      stock: 'renderAdminContent("stock")',
+      promos: 'renderAdminContent("promos")',
+      orders: 'renderAdminContent("orders")',
+      arrep: 'renderAdminContent("arrep")',
+      chat: 'renderAdminContent("chat")',
+      quotes: 'renderAdminContent("quotes")',
+      instore: 'renderAdminContent("instore")',
+      preventa: 'renderAdminContent("preventa")',
+      users: 'renderAdminContent("users")',
+    }
+    const fn = tabFnMap[activeTab]
+    if (fn) {
+      html = html.replace('</body>', `<script>setTimeout(function(){if(typeof ${fn.split('("')[0]}==="function")${fn}},200)</script></body>`)
+    }
+  }
   return html
 }
