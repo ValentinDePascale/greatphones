@@ -248,8 +248,8 @@
                   <div style="font-size:11px;color:var(--gray);line-height:1.7" id="svConfMsg"></div>
                 </div>
                 <div class="track-steps" id="svTrack"></div>
-                <button class="btn btn-o btn-full" style="margin-bottom:6px" onclick="nav('chats')">Abrir chat con GP</button>
-                <button class="btn btn-g btn-full" onclick="nav('cuenta')">Ver mi cuenta</button>
+                <a href="/chats" class="btn btn-o btn-full" style="margin-bottom:6px;text-decoration:none;text-align:center;display:block">Abrir chat con GP</a>
+                <a href="/cuenta" class="btn btn-g btn-full" style="text-decoration:none;text-align:center;display:block">Ver mi cuenta</a>
                 <button class="btn btn-s btn-full" style="margin-top:6px" onclick="svReset()">Nueva tasacion</button>
               </div>
             </div>
@@ -281,5 +281,6 @@
     </div>
   </div>
 </div>
+<script>setTimeout(function(){if(typeof svStep==='function')svStep(0)},300)</script>
 
 <!-- ============================= PAGE: SERVICIO ============================= -->
