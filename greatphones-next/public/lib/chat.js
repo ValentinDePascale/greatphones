@@ -246,7 +246,7 @@ function initChatSound(){
 }
 
 function openUserChat(){
-  if(!currentUser){openLogin();return;}
+  if(!currentUser){window.location.href='/login';return;}
   initChatSocket();
   initChatScrollListeners();
   getUserConversation();
@@ -935,7 +935,7 @@ function sendProductMessage(product){
 
 // =========== SEND PRODUCT FROM DETAIL (USER SIDE) ===========
 function consultarProducto(){
-  if(!currentUser){openLogin();return;}
+  if(!currentUser){window.location.href='/login';return;}
   if(!window.currentProd)return;
   var p=window.currentProd;
   var v=window._selectedVariant;

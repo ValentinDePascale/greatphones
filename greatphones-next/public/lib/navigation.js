@@ -327,7 +327,7 @@ async function sendForgotCode(){
     if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
     sucEl.textContent='Codigo enviado. Revisa tu email.';sucEl.style.display='block';
     document.getElementById('resetEmail').value=email;
-    setTimeout(function(){nav('reset-password');},1500);
+    setTimeout(function(){window.location.href='/reset-password';},1500);
   }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }
 async function doResetPassword(){
@@ -470,7 +470,7 @@ function checkGoogleSession(){
           loadUserFavorites();
           initCart();
           loadProducts();
-          if(window.location.pathname==='/login')nav('home');
+          if(window.location.pathname==='/login')window.location.href='/';
           if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
             renderCheckoutSummary();
             resetCheckoutSelections();
@@ -715,7 +715,7 @@ async function verifyAndCompleteRegister(){
     showToast('Cuenta creada, bienvenido '+(currentUser.name||''));
     if(registerCodeTimer)clearInterval(registerCodeTimer);
     registerTempData=null;
-    nav('home');
+    window.location.href='/';
   }catch(e){showToast('Error de conexion');}
 }
 function openArrepentimiento(){
@@ -1191,7 +1191,7 @@ function openSecurityPanel(){
       '<div style="background:var(--cream);border-radius:14px;padding:1rem">'+
         '<div style="font-weight:600;color:var(--dk);margin-bottom:4px">Sesiones activas</div>'+
         '<p style="font-size:12px;color:var(--gray);margin-bottom:8px">Si ves actividad sospechosa, cerrá sesión en todos los dispositivos.</p>'+
-        '<button onclick="doLogout();document.getElementById(\'securityPanel\').remove();nav(\'login\')" style="padding:10px 20px;background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cerrar sesión en todos lados</button>'+
+        '<button onclick="doLogout();document.getElementById(\'securityPanel\').remove();window.location.href=\'/login\'" style="padding:10px 20px;background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cerrar sesión en todos lados</button>'+
       '</div>'+
     '</div>';
   document.body.appendChild(overlay);
