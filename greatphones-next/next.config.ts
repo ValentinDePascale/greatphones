@@ -20,6 +20,19 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || [],
   async headers() {
     return [
+      // Static assets: short cache in dev, immutable in prod
+      {
+        source: '/lib/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=3600' }],
+      },
+      {
+        source: '/styles/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=3600' }],
+      },
+      {
+        source: '/icons/:path*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
       {
         source: '/:path*',
         headers: [
