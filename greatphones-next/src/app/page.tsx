@@ -1,7 +1,3 @@
-import type { Metadata } from 'next'
-import { serveSpa } from '@/lib/spa-pages'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-export const metadata: Metadata = { title: 'Great Phones — Tecnología premium. Precio justo.', description: 'Comprá celulares reacondicionados premium y más. Garantía real de 12 meses.', robots: { index: true, follow: true } }
-
-export default function Home() { return <div dangerouslySetInnerHTML={{ __html: serveSpa('home') }} suppressHydrationWarning /> }
+export default function Page() { redirect('/home') }

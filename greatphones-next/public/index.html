@@ -63,7 +63,7 @@
 <!-- ===== MAIN NAV ===== -->
 <div class="mainnav">
   <div class="nav">
-    <a class="nav-logo" href="/" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px">
+    <a class="nav-logo" href="/home" style="text-decoration:none;color:inherit;display:flex;align-items:center;gap:10px">
       <img src="/icons/539432645_17922071475132461_1228687370142381845_n.jpg" alt="Great Phones" style="width:36px;height:36px;border-radius:10px;object-fit:cover">
       <div><span class="nav-txt">Great Phones</span><span class="nav-sub">Bahia Blanca</span></div>
     </a>
@@ -114,7 +114,7 @@
 <!-- ===== CATEGORY NAV ===== -->
 <div class="catnav" style="background:#fff;border-bottom:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.04)">
   <div class="catnav-inner" style="max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;height:48px;align-items:center;overflow-x:auto;scrollbar-width:none">
-    <a href="/" class="cni act" id="cn-home">Inicio</a>
+    <a href="/home" class="cni act" id="cn-home">Inicio</a>
     <a href="/productos" class="cni" id="cn-shop">Catálogo</a>
     <a href="/sell" class="cni" id="cn-sell">Vender</a>
     <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
@@ -134,7 +134,7 @@
 (function(){
   var p=window.location.pathname;
   document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
-  if(p==='/'||p===''){var b=document.getElementById('cn-home');if(b)b.classList.add('act');}
+  if(p==='/home'||p==='/'||p===''){var b=document.getElementById('cn-home');if(b)b.classList.add('act');}
   else if(p.startsWith('/productos')){var b=document.getElementById('cn-shop');if(b)b.classList.add('act');}
   else if(p.startsWith('/sell')){var b=document.getElementById('cn-sell');if(b)b.classList.add('act');}
   else if(p.startsWith('/accesorios')){var b=document.getElementById('cn-accesorios');if(b)b.classList.add('act');}
@@ -502,7 +502,7 @@ function toggleMobileSearch(){
   </div>
   <div class="mm-body">
     <div class="mm-section">
-      <a class="mm-item" href="/" onclick="closeMobileMenu()">Inicio</a>
+      <a class="mm-item" href="/home" onclick="closeMobileMenu()">Inicio</a>
       <a class="mm-item" onclick="closeMobileMenu()" style="display:none">Vender</a>
       <a class="mm-item" href="/sell" onclick="closeMobileMenu()">Vender</a>
       <a class="mm-item" href="/accesorios" onclick="closeMobileMenu()">Accesorios</a>
