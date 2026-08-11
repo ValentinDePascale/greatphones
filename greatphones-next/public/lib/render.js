@@ -3767,12 +3767,12 @@ function renderAdminContent(tab){
     var content=document.getElementById('adminContent');
     if(content){
       content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center" class="ord-tabs">'+
-        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="typeof loadPendingOrders===\'function\'&&loadPendingOrders()">Pedidos en Espera</button>'+
-        '<button class="ord-btn" id="btnAcceptedOrders" onclick="typeof loadAcceptedOrders===\'function\'&&loadAcceptedOrders()">Pedidos Aceptados</button>'+
-        '<button class="ord-btn" id="btnHistoryOrders" onclick="typeof loadOrderHistory===\'function\'&&loadOrderHistory()">Historial</button>'+
+        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="waitForAdmin.call(this,\'loadPendingOrders\')">Pedidos en Espera</button>'+
+        '<button class="ord-btn" id="btnAcceptedOrders" onclick="waitForAdmin.call(this,\'loadAcceptedOrders\')">Pedidos Aceptados</button>'+
+        '<button class="ord-btn" id="btnHistoryOrders" onclick="waitForAdmin.call(this,\'loadOrderHistory\')">Historial</button>'+
       '</div>'+
       '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="typeof searchOrders===\'function\'&&searchOrders(this.value)" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="window.__adminLoaded&&typeof searchOrders==='function'?searchOrders(this.value):null" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '</div>'+
       '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
       if(typeof loadPendingOrders==='function'){
@@ -3808,9 +3808,9 @@ function renderAdminContent(tab){
     renderAdminAccFiltered("");
   }else if(tab==='arrep'){
     el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
-      '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="typeof loadArrepPendientes===\'function\'&&loadArrepPendientes()">Pendientes</button>'+
-      '<button class="ord-btn" id="arrepBtnAceptados" onclick="typeof loadArrepAceptados===\'function\'&&loadArrepAceptados()">Aceptados</button>'+
-      '<button class="ord-btn" id="arrepBtnRechazados" onclick="typeof loadArrepRechazados===\'function\'&&loadArrepRechazados()">Rechazados</button>'+
+      '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="waitForAdmin.call(this,\'loadArrepPendientes\')">Pendientes</button>'+
+      '<button class="ord-btn" id="arrepBtnAceptados" onclick="waitForAdmin.call(this,\'loadArrepAceptados\')">Aceptados</button>'+
+      '<button class="ord-btn" id="arrepBtnRechazados" onclick="waitForAdmin.call(this,\'loadArrepRechazados\')">Rechazados</button>'+
     '</div>'+
     '<div class="loader-spinner"><span>Cargando...</span></div>'+
     '<div id="arrepList"></div>';
@@ -3891,6 +3891,22 @@ function renderAdminContent(tab){
   }else if(tab==='sales'){
     var el2=document.getElementById('adminContent');if(el2)el2.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)">Historial de ventas — disponible en el dashboard</div>';
   }
+}
+
+// Polling helper: waits for admin.js to load before calling function
+function waitForAdmin(fnName){
+  var btn=this&&this.nodeType?this:null;
+  if(window.__adminLoaded&&typeof window[fnName]==='function'){window[fnName]();return;}
+  if(!btn){setTimeout(function(){waitForAdmin(fnName);},200);return;}
+  var orig=btn.getAttribute('data-orig-text')||btn.textContent;
+  btn.setAttribute('data-orig-text',orig);
+  btn.textContent='Cargando...';btn.disabled=true;
+  var iv=setInterval(function(){
+    if(window.__adminLoaded&&typeof window[fnName]==='function'){
+      clearInterval(iv);btn.textContent=orig;btn.disabled=false;window[fnName]();
+    }
+  },200);
+  setTimeout(function(){clearInterval(iv);btn.textContent=orig;btn.disabled=false;},15000);
 }
 
 // =========== ADMIN PRODUCT CARDS (search + filters + full info) ===========

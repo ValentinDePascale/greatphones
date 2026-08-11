@@ -729,3 +729,4 @@ function updateOnlinePreventa(id, newStatus) {
 function renderPreventaOnline() {
   renderPreventaOnlineLive()
 }
+window.__preventaLoaded = true;

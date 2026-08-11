@@ -1788,3 +1788,4 @@ function showToast(msg, type) {
     window.showToast(msg, type || 'info')
   }
 }
+window.__adminLoaded = true;

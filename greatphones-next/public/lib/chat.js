@@ -1898,3 +1898,4 @@ document.addEventListener('keydown',function(e){
     return;
   }
 });
+window.__chatLoaded = true;
