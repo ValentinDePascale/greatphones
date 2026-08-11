@@ -3772,7 +3772,7 @@ function renderAdminContent(tab){
         '<button class="ord-btn" id="btnHistoryOrders" onclick="waitForAdmin.call(this,\'loadOrderHistory\')">Historial</button>'+
       '</div>'+
       '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="window.__adminLoaded&&typeof searchOrders==='function'?searchOrders(this.value):null" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="window.__adminLoaded&&typeof searchOrders===\'function\'?searchOrders(this.value):null" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
       '</div>'+
       '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
       if(typeof loadPendingOrders==='function'){
