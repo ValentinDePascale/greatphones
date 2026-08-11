@@ -130,6 +130,19 @@
     </button>
   </div>
 </div>
+<script>
+(function(){
+  var p=window.location.pathname;
+  document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
+  if(p==='/'||p===''){var b=document.getElementById('cn-home');if(b)b.classList.add('act');}
+  else if(p.startsWith('/productos')){var b=document.getElementById('cn-shop');if(b)b.classList.add('act');}
+  else if(p.startsWith('/sell')){var b=document.getElementById('cn-sell');if(b)b.classList.add('act');}
+  else if(p.startsWith('/accesorios')){var b=document.getElementById('cn-accesorios');if(b)b.classList.add('act');}
+  else if(p.startsWith('/preventas')){var b=document.getElementById('cn-preventas');if(b)b.classList.add('act');}
+  else if(p.startsWith('/garantias')){var b=document.getElementById('cn-garantias');if(b)b.classList.add('act');}
+  else if(p.startsWith('/compare')){var b=document.getElementById('cn-compare');if(b)b.classList.add('act');}
+  else if(p.startsWith('/ofertas')){var b=document.getElementById('cn-ofertas');if(b)b.classList.add('act');}
+})();</script>
 
 <!-- ============================= PAGE: HOME ============================= -->
 <script>
