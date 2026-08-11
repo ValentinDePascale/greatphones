@@ -1,15 +1,24 @@
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import AdminSidebar from '@/components/AdminSidebar'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { cookies } from 'next/headers'
 
 async function checkAdmin() {
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.email) redirect('/login')
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get('__Secure-next-auth.session-token')?.value
+    || cookieStore.get('next-auth.session-token')?.value
+
+  if (!sessionToken) redirect('/login?callbackUrl=/admin')
+
+  const session = await prisma.session.findFirst({
+    where: { sessionToken, expires: { gt: new Date() } },
+    select: { userId: true },
+  })
+
+  if (!session) redirect('/login?callbackUrl=/admin')
 
   const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
+    where: { id: session.userId },
     select: { role: true },
   })
 
