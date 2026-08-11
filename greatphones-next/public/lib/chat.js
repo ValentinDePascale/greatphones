@@ -1858,9 +1858,11 @@ function updateMsgBadge(){
     .then(function(r){return r.json();})
     .then(function(convs){
       var totalUnread=0;
-      convs.forEach(function(c){
-        totalUnread+=(c.unreadByUser||0);
-      });
+      if(Array.isArray(convs)){
+        convs.forEach(function(c){
+          totalUnread+=(c.unreadByUser||0);
+        });
+      }
       var badge=document.getElementById('msgBadge');
       if(badge){
         if(totalUnread>0){
