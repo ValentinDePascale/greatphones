@@ -33,6 +33,16 @@ async function getAuthenticatedUser(request?: Request) {
       })
       if (user) return user
     }
+
+    // Fallback: X-User-Id header
+    const userId = request.headers.get('X-User-Id')
+    if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, name: true, phone: true, dni: true, direccion: true, piso: true, cp: true, provincia: true, ciudad: true, role: true }
+      })
+      if (user) return user
+    }
   }
 
   return null
