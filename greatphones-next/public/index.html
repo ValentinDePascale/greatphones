@@ -177,7 +177,7 @@ function toggleDeleteBtn(){
 <div id="cookieBanner">
   <div class="cb-container">
     <div class="cb-text">
-      <p>Utilizamos cookies para mejorar tu experiencia. Algunas son esenciales para el funcionamiento del sitio, mientras que otras nos ayudan a analizar el tráfico y personalizar el contenido. <a onclick="nav('privacidad')" href="/privacidad" style="color:var(--orange);cursor:pointer">Leer Política de Privacidad</a></p>
+      <p>Utilizamos cookies para mejorar tu experiencia. Algunas son esenciales para el funcionamiento del sitio, mientras que otras nos ayudan a analizar el tráfico y personalizar el contenido. <a href="/privacidad" style="color:var(--orange);cursor:pointer">Leer Política de Privacidad</a></p>
     </div>
     <div class="cb-buttons">
       <button class="cb-btn cb-btn-primary" onclick="acceptAllCookies()">Aceptar todas</button>
@@ -334,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
 var chatPanelOpen=false;
 function toggleChatPanel(){
-  if(!currentUser){openLogin();return;}
+  if(!currentUser){window.location.href='/login';return;}
   chatPanelOpen=!chatPanelOpen;
   var panel=document.getElementById('chatPanel');
   var wrap=document.getElementById('chatWidgetWrap');
