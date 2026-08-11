@@ -1,6 +1,11 @@
 // =========== NAVIGATION ===========
 var currentUser=null;
 var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
+function navRedirect(id){
+  var routes={home:'/',shop:'/productos',ofertas:'/ofertas',accesorios:'/accesorios',garantias:'/garantias',preventas:'/preventas',chats:'/chats',admin:'/admin',cuenta:'/cuenta',checkout:'/checkout',terminos:'/terminos',privacidad:'/privacidad',favoritos:'/favoritos',login:'/login',register:'/register',sell:'/sell',compare:'/compare','edit-profile':'/cuenta','track-order':'/track-order'};
+  var url=routes[id]||('/'+id);
+  window.location.href=url;
+}
 function nav(id){
   ['homeRail','offerStrip','shopGrid','ofertasGrid','accGrid'].forEach(function(gid){var g=document.getElementById(gid);if(g)delete g.dataset.svRevealed;});
   var _cf=document.querySelector('.cat-flex');if(_cf)_cf.classList.remove('cat-reveal');
@@ -15,13 +20,13 @@ function nav(id){
   if(id==='sell'){
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.removeProperty('display');});
     var el=document.getElementById('p-'+id);
-    if(el){el.classList.add('act');el.style.display='block';}
+    if(el){el.classList.add('act');el.style.display='block';}else{navRedirect(id);}
     window.scrollTo({top:0,behavior:'smooth'});
     if(typeof svStep==='function')svStep(0);
   }else{
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.removeProperty('display');});
     var el=document.getElementById('p-'+id);
-    if(el){el.classList.add('act');el.style.display='block';}
+    if(el){el.classList.add('act');el.style.display='block';}else{navRedirect(id);}
     window.scrollTo({top:0,behavior:'smooth'});
   }
   if(id==='admin'&&typeof loadAdminTheme==='function'){loadAdminTheme();}
