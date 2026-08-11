@@ -45,8 +45,6 @@ function removeAdminStuff(html: string): string {
 }
 
 function hideNonActivePages(html: string): string {
-  // CSS .page{display:none!important} hides non-active pages
-  // nav() in navigation.js handles showing the active page via style.display override
   return html
 }
 

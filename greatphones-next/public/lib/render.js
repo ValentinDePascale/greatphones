@@ -3884,10 +3884,10 @@ function renderAdminContent(tab){
       '<button class="ord-btn" id="instoreTabHist" onclick="loadInStoreHistory()">Historial</button>'+
     '</div>'+
     '<div id="instore-subview"></div>';
-    renderInStoreSale();
+    if(typeof renderInStoreSale==='function'){renderInStoreSale();}else{el.innerHTML+='<div style="padding:2rem;color:var(--gray);text-align:center">Venta en Tienda — esperando carga de scripts...</div>';}
   }else if(tab==='preventa'){
     el.innerHTML='<div id="preventa-view"></div>';
-    renderPreventaTab('local');
+    if(typeof renderPreventaTab==='function'){renderPreventaTab('local');}else{el.innerHTML+='<div style="padding:2rem;color:var(--gray);text-align:center">Preventa — esperando carga de scripts...</div>';}
   }else if(tab==='sales'){
     var el2=document.getElementById('adminContent');if(el2)el2.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)">Historial de ventas — disponible en el dashboard</div>';
   }
