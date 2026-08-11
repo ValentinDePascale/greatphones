@@ -348,7 +348,7 @@ async function doResetPassword(){
     var data=await res.json();
     if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
     sucEl.textContent='Contraseña actualizada! Redirigiendo...';sucEl.style.display='block';
-    setTimeout(function(){nav('login');},2000);
+    setTimeout(function(){window.location.href='/login';},2000);
   }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }
 function doLogout(){
@@ -357,7 +357,8 @@ function doLogout(){
   Storage.remove('remember');
   fetch(API_URL+'/api/auth/logout',{method:'POST'}).catch(function(){});
   fetch('/api/auth/signout',{method:'GET'}).catch(function(){});
-  document.querySelector('button[onclick="nav(\'cuenta\')"]').innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
+  var cuentaLink=document.querySelector('a[href="/cuenta"]');
+  if(cuentaLink)cuentaLink.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
   if(adminLink)adminLink.remove();
   favorites=[];
@@ -366,13 +367,13 @@ function doLogout(){
   Cart=[];
   saveCart();
   initCart();
-  nav('home');
+  window.location.href='/';
 }
 function updateUserUI(){
-  var btn=document.querySelector('button[onclick="nav(\'cuenta\')"]');
-  if(btn&&currentUser){
-    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span></span>';
-    btn.querySelector('span').textContent=currentUser.name||currentUser.email;
+  var cuentaLink=document.querySelector('a[href="/cuenta"]');
+  if(cuentaLink&&currentUser){
+    cuentaLink.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span></span>';
+    cuentaLink.querySelector('span').textContent=currentUser.name||currentUser.email;
   }
   var chatBtn=document.getElementById('chatNavBtn');
   if(chatBtn){
