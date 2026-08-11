@@ -114,17 +114,17 @@
 <!-- ===== CATEGORY NAV ===== -->
 <div class="catnav" style="background:#fff;border-bottom:1px solid var(--border);box-shadow:0 2px 8px rgba(0,0,0,.04)">
   <div class="catnav-inner" style="max-width:1240px;margin:0 auto;padding:0 1.5rem;display:flex;gap:0;height:48px;align-items:center;overflow-x:auto;scrollbar-width:none">
-    <button class="cni act" id="cn-home" onclick="nav('home');setCN('home')">Inicio</button>
-    <button class="cni" id="cn-shop" onclick="navShop('todos');setCN('shop')">Catálogo</button>
-    <button class="cni" id="cn-sell" onclick="nav('sell');setCN('sell')">Vender</button>
+    <a href="/" class="cni act" id="cn-home">Inicio</a>
+    <a href="/productos" class="cni" id="cn-shop">Catálogo</a>
+    <a href="/sell" class="cni" id="cn-sell">Vender</a>
     <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
-    <button class="cni" id="cn-accesorios" onclick="nav('accesorios');setCN('accesorios')">Accesorios</button>
-    <button class="cni" id="cn-preventas" onclick="nav('preventas');setCN('preventas');if(typeof loadPreorderProducts==='function')loadPreorderProducts()" style="color:var(--orange);font-weight:600">Preventas</button>
+    <a href="/accesorios" class="cni" id="cn-accesorios">Accesorios</a>
+    <a href="/preventas" class="cni" id="cn-preventas" style="color:var(--orange);font-weight:600">Preventas</a>
     <button class="cni" id="cn-notebooks" style="display:none" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
     <button class="cni" id="cn-mayorista" style="display:none" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
-    <button class="cni" id="cn-garantias" onclick="nav('garantias');setCN('garantias')">Garantías</button>
-    <button class="cni" id="cn-compare" onclick="nav('compare');setCN('compare')">Comparar</button>
-    <button class="cni" id="cn-ofertas" onclick="navShop('ofertas');setCN('ofertas')" style="color:var(--orange)">Ofertas</button>
+    <a href="/garantias" class="cni" id="cn-garantias">Garantías</a>
+    <a href="/compare" class="cni" id="cn-compare">Comparar</a>
+    <a href="/ofertas" class="cni" id="cn-ofertas" style="color:var(--orange)">Ofertas</a>
     <button class="cni" id="cn-scan" onclick="window.location.href='/scan'" style="color:var(--green);font-weight:700;display:none">
       <span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px">qr_code_scanner</span> Escanear
     </button>
