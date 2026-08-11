@@ -2236,6 +2236,7 @@ function adminTab(tab,btn){
 
 // Open admin tab from URL hash on page load or hash change
 function initAdminHashRouting(){
+  return; // Obsolete: admin uses native routes
   if(!currentUser||currentUser.role!=='ADMIN')return;
   var hashTab=location.hash.replace('#','');
   if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','users'].indexOf(hashTab)!==-1){

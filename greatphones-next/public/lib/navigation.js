@@ -1071,6 +1071,7 @@ window.addEventListener('popstate',function(e){
 });
 var pendingDetailId=null;
 function handleInitialRoute(){
+  return; // Obsolete: native navigation handles routing
   var path=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
   if(!path||path==='index.html'){return;}
   if(path==='shop'){nav('shop');return;}
