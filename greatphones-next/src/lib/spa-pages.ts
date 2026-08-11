@@ -45,8 +45,9 @@ function removeAdminStuff(html: string): string {
 }
 
 function hideNonActivePages(html: string): string {
-  // Double safety: inline display:none on pages without 'act' class
-  return html.replace(/class="page"(?! act)/g, 'class="page" style="display:none;visibility:hidden;position:absolute;width:0;height:0;overflow:hidden"')
+  // CSS .page{display:none!important} hides non-active pages
+  // nav() in navigation.js handles showing the active page via style.display override
+  return html
 }
 
 function wrapMain(html: string): string {
