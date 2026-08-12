@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { rateLimit } from '@/lib/rate-limit'
 import { createSessionCookie, clearSessionCookie } from '@/lib/session'
+import { ALLOWED_ORIGINS } from '@/config'
 
 
 
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
       }
     }, {
       headers: {
-        'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
+        'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0],
         'Set-Cookie': cookie,
       }
     })

@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import { SignupSchema, formatZodError } from '@/lib/validations'
 import { rateLimit } from '@/lib/rate-limit'
 import { createSessionCookie } from '@/lib/session'
+import { ALLOWED_ORIGINS } from '@/config'
 
 export async function GET() {
   return NextResponse.json({ 
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     }, { 
       status: 201,
       headers: {
-        'Access-Control-Allow-Origin': 'https://greatphones.onrender.com',
+        'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0],
         'Set-Cookie': cookie,
       }
     })

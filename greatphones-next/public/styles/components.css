@@ -774,10 +774,10 @@
 .cuota-tbl{width:100%;border-collapse:collapse;font-size:11px;margin:.4rem 0 .75rem;border-radius:var(--rsm);overflow:hidden;border:1px solid var(--border)}
 .ct-th{background:var(--dk);color:#fff;padding:.45rem .65rem;text-align:left;font-size:9px;font-weight:600}
 .ct-td{padding:.45rem .65rem;border-bottom:1px solid var(--border)}
-.ctr:last-child .ct-td{border-bottom:none}
-.ctr{cursor:pointer;transition:background .12s}
-.ctr:hover .ct-td{background:var(--cream2)}
-.ctr.sel .ct-td{background:rgba(45,90,39,.06);font-weight:600;color:var(--green)}
+.ct-row:last-child .ct-td{border-bottom:none}
+.ct-row{cursor:pointer;transition:background .12s}
+.ct-row:hover .ct-td{background:var(--cream2)}
+.ct-row.sel .ct-td{background:rgba(45,90,39,.06);font-weight:600;color:var(--green)}
 
 /* CART ANIMATIONS */
 .ci-enter{animation:ciIn .35s cubic-bezier(.2,.8,.2,1) both}

@@ -5,20 +5,7 @@
 .filter-panel{background:var(--dk2);border-bottom:1px solid rgba(255,255,255,.05)}
 .filter-row{display:flex;gap:5px;padding:.5rem 1rem;overflow-x:auto;scrollbar-width:none}
 .filter-row::-webkit-scrollbar{display:none}
-.fchip{
-  flex-shrink:0;
-  padding:5px 12px;
-  border-radius:18px;
-  border:1px solid var(--border);
-  background:var(--cream);
-  font-size:11px;
-  cursor:pointer;
-  color:var(--dk);
-  transition:all .15s;
-  white-space:nowrap
-}
-.fchip:hover{border-color:var(--orange);color:var(--orange)}
-.fchip.act{background:var(--orange);border-color:var(--orange);color:#fff}
+
 .ord-btn{
   padding:8px 16px;
   border-radius:8px;

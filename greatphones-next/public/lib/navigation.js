@@ -24,7 +24,6 @@ function nav(id){
     if(el){el.classList.add('act');el.style.display='block';}
     window.scrollTo({top:0,behavior:'smooth'});
   }
-  if(id==='admin'&&typeof loadAdminTheme==='function'){loadAdminTheme();}
   if(id==='cuenta'||id==='checkout'||id==='admin'||id==='terminos'||id==='privacidad'||id==='edit-profile'){
     document.querySelectorAll('.cni').forEach(function(b){b.classList.remove('act');});
   }
@@ -98,13 +97,13 @@ function nav(id){
   }
   if(id==='admin'){
     var hashTab=location.hash.replace('#','');
-    if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa'].indexOf(hashTab)!==-1){
+    if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','sales'].indexOf(hashTab)!==-1){
       window.currentAdminTab=hashTab;
       var btn=document.getElementById('adm-'+hashTab);
       if(btn&&typeof adminTab==='function'){adminTab(hashTab,btn);}else{renderAdminContent(hashTab);}
     }else{
-      window.currentAdminTab='prods';
-      renderAdminContent('prods');
+      window.currentAdminTab='dashboard';
+      renderAdminContent('dashboard');
     }
   }
   if(id==='home'){renderHomeRail();renderOfferStrip();var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
@@ -166,12 +165,15 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'productos',sell:'sell',detail:'productos',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
+  var urlMap={home:'',shop:'productos',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
   var titles={home:'Great Phones',shop:'Productos — Great Phones',sell:'Vender — Great Phones',detail:'Producto — Great Phones',favoritos:'Favoritos — Great Phones',accesorios:'Accesorios — Great Phones',garantias:'Garantías — Great Phones',ofertas:'Ofertas — Great Phones',preventas:'Preventas — Great Phones',chats:'Chats — Great Phones',admin:'Admin — Great Phones',cuenta:'Mi Cuenta — Great Phones',checkout:'Checkout — Great Phones',terminos:'Términos — Great Phones',privacidad:'Privacidad — Great Phones',login:'Iniciar Sesión — Great Phones',register:'Registro — Great Phones','track-order':'Seguimiento — Great Phones'};
   if(titles[id])document.title=titles[id];
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
-    if(id==='detail'&&window.currentProd)path='detail/'+window.currentProd.id;
+    if(id==='detail'){
+      if(window.currentProd)path='detail/'+window.currentProd.id;
+      else if(window.currentAcc)path='detail/'+window.currentAcc.id;
+    }
     var currentPath=window.location.pathname.replace(/^\//,'');
     if(currentPath!==path){
       var stateData={page:id};
@@ -280,7 +282,7 @@ async function doLogin(){
     loadUserFavorites();
     initCart();
     loadProducts();
-    nav('home');
+    window.location.href = '/';
   }catch(e){showLoginError('Error de conexion');}
 }
 async function signInWithGoogle(){

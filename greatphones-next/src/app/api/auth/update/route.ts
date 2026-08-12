@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSelfOrAdmin, handleRouteError } from '@/lib/auth-guard'
+import { ALLOWED_ORIGINS } from '@/config'
 
 
 
@@ -36,7 +37,7 @@ export async function PUT(request: Request) {
       user: { id: user.id, email: user.email, name: user.name, phone: user.phone, dni: user.dni, direccion: user.direccion, piso: user.piso, cp: user.cp, provincia: user.provincia, ciudad: user.ciudad, avatar: user.avatar }
     }, { 
       status: 200,
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: { 'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0] }
     })
   } catch (error) {
     return handleRouteError(error)

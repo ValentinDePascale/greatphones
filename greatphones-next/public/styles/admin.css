@@ -1,24 +1,5 @@
-/* ADMIN - DARK THEME VARIABLES (default) */
+/* ADMIN - LIGHT THEME VARIABLES (default) */
 .admin-layout{
-  --admin-bg:#0f1117;
-  --admin-surface:#1a1d27;
-  --admin-surface-hover:#252830;
-  --admin-border:#2a2d3a;
-  --admin-text:#e4e4e7;
-  --admin-text-muted:#9ca3af;
-  --admin-input-bg:#252830;
-  --admin-accent:#6366f1;
-  --admin-accent-hover:#818cf8;
-  --admin-font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
-  font-family:var(--admin-font);
-  display:flex;
-  min-height:100vh;
-  background:var(--admin-bg);
-  transition:background .3s ease
-}
-
-/* ADMIN - LIGHT THEME VARIABLES */
-.admin-layout.admin-theme-light{
   --admin-bg:#f9f6f1;
   --admin-surface:#ffffff;
   --admin-surface-hover:#f0ebe3;
@@ -27,7 +8,13 @@
   --admin-text-muted:#6b6259;
   --admin-input-bg:#f0ebe3;
   --admin-accent:#6366f1;
-  --admin-accent-hover:#818cf8
+  --admin-accent-hover:#818cf8;
+  --admin-font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-family:var(--admin-font);
+  display:flex;
+  min-height:100vh;
+  background:var(--admin-bg);
+  transition:background .3s ease
 }
 .admin-sidebar{
   width:240px;

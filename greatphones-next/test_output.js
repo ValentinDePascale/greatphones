@@ -19,7 +19,7 @@ console.log('2. edit-profile has page class:', homeSpa.match(/id="p-edit-profile
 console.log('3. edit-profile exact start:', homeSpa.substring(homeSpa.indexOf('id="p-edit-profile"')-30, homeSpa.indexOf('id="p-edit-profile"')+60))
 console.log('4. navRedirect present:', homeSpa.includes('navRedirect'))
 console.log('5. navigation.js script:', homeSpa.match(/navigation.js\?v=4/)?.[0] || 'NOT FOUND')
-console.log('6. render.js script:', homeSpa.match(/render.js\?v=4/)?.[0] || 'NOT FOUND')
+console.log('6. render.js script:', homeSpa.match(/render.js\?v=6/)?.[0] || 'NOT FOUND')
 console.log('7. admin.js script:', homeSpa.match(/admin.js\?v=4/)?.[0] || 'NOT FOUND')
 console.log('8. Total HTML size:', homeSpa.length)
 console.log('9. Has <main id="main-content">:', homeSpa.includes('main-content'))

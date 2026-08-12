@@ -80,7 +80,7 @@ function buildPreorderCard(p) {
 
   var specsParts = [p.storage, p.condition].filter(Boolean).join(' · ');
 
-  return '<div class="preorder-card" onclick="openDetail(\'' + p.id + '\');nav(\'detail\')" style="background:#fff;border-radius:16px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);position:relative">' +
+  return '<a href="/detail/' + p.id + '" style="text-decoration:none;color:inherit;display:block"><div class="preorder-card" style="background:#fff;border-radius:16px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:all .3s cubic-bezier(.2,.8,.2,1);position:relative">' +
     '<div style="position:absolute;top:12px;left:12px;z-index:2;display:inline-flex;align-items:center;gap:4px;background:rgba(255,107,44,.12);border:1px solid rgba(255,107,44,.25);padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;color:var(--orange);letter-spacing:.3px">&#x2B50; Próximamente</div>' +
     '<div style="aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden" onmouseover="var img=this.querySelector(\'img\');if(img)img.style.transform=\'scale(1.05)\'" onmouseout="var img=this.querySelector(\'img\');if(img)img.style.transform=\'scale(1)\'">' +
       '<div style="position:absolute;inset:0;opacity:.06;background:' + bgGradient + '"></div>' +
@@ -94,12 +94,12 @@ function buildPreorderCard(p) {
         '<span>Disponible ' + dateStr + '</span>' +
       '</div>' +
       '<div style="font-family:\'Playfair Display\',Georgia,serif;font-size:24px;font-weight:700;color:var(--orange);margin-bottom:10px">' + fmt(p.price) + '</div>' +
-      '<button onclick="event.stopPropagation();addToCart(\'' + p.id + '\',this,null,true,\'' + (p.availableFrom || '') + '\')" class="preorder-reserve-btn" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px">' +
+      '<button onclick="event.stopPropagation();event.preventDefault();addToCart(\'' + p.id + '\',this,null,true,\'' + (p.availableFrom || '') + '\')" class="preorder-reserve-btn" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' +
         'Reservar' +
       '</button>' +
     '</div>' +
-  '</div>';
+  '</div></a>';
 }
 
 function scrollToPreorderGrid() {

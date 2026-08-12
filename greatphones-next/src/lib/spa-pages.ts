@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from 'fs'
+import { readFileSync, existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 
 const shellPath = join(process.cwd(), 'public', 'index.html')
@@ -20,15 +20,18 @@ function loadPage(pageId: string): string {
   return readFileSync(path, 'utf-8')
 }
 
+let _allPages = ''
+
 function loadAllPages(): string {
+  if (_allPages) return _allPages
   if (!existsSync(pagesDir)) return ''
   let html = _homePage || ''
-  const { readdirSync } = require('fs')
   const files = readdirSync(pagesDir).filter((f: string) => f.endsWith('.html') && f !== 'home.html')
   for (const f of files) {
     html += readFileSync(join(pagesDir, f), 'utf-8')
   }
-  return html
+  _allPages = html
+  return _allPages
 }
 
 const adminScripts = ['/lib/admin.js', '/lib/admin-ui.js', '/lib/instore.js', '/lib/preventa.js', 'chart.js']
@@ -44,10 +47,6 @@ function removeAdminStuff(html: string): string {
   return result
 }
 
-function hideNonActivePages(html: string): string {
-  return html
-}
-
 function wrapMain(html: string): string {
   return html.replace('<body>', '<body><main id="main-content">').replace('</body>', '</main></body>')
 }
@@ -59,7 +58,6 @@ export function serveSpa(targetPage?: string): string {
   if (!targetPage || targetPage === 'home') {
     const allPages = loadAllPages()
     let fullSpa = _shell.replace('</body>', allPages + '</body>')
-    fullSpa = hideNonActivePages(fullSpa)
     fullSpa = wrapMain(fullSpa)
     return removeAdminStuff(fullSpa)
   }
@@ -73,7 +71,7 @@ export function serveSpa(targetPage?: string): string {
   )
 
   let html = _shell.replace('</body>', pageContentAct + '</body>')
-  html = hideNonActivePages(html)
+  html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
   html = wrapMain(html)
   return removeAdminStuff(html)
 }
@@ -83,28 +81,9 @@ export function serveAdminSpa(activeTab?: string): string {
   if (!_shell) return '<h1>Loading...</h1>'
   let allPages = loadAllPages()
   let html = _shell.replace('</body>', allPages + '</body>')
+  html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
   html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
   html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
-  html = hideNonActivePages(html)
   html = wrapMain(html)
-  if (activeTab && activeTab !== 'dashboard') {
-    const tabFnMap: Record<string, string> = {
-      prods: 'renderAdminContent("prods")',
-      acc: 'renderAdminContent("acc")',
-      stock: 'renderAdminContent("stock")',
-      promos: 'renderAdminContent("promos")',
-      orders: 'renderAdminContent("orders")',
-      arrep: 'renderAdminContent("arrep")',
-      chat: 'renderAdminContent("chat")',
-      quotes: 'renderAdminContent("quotes")',
-      instore: 'renderAdminContent("instore")',
-      preventa: 'renderAdminContent("preventa")',
-      users: 'renderAdminContent("users")',
-    }
-    const fn = tabFnMap[activeTab]
-    if (fn) {
-      html = html.replace('</body>', `<script>setTimeout(function(){if(typeof ${fn.split('("')[0]}==="function")${fn}},200)</script></body>`)
-    }
-  }
   return html
 }

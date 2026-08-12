@@ -472,22 +472,6 @@
 </div>
 
 <!-- ===== CART OVERLAY ===== -->
-<div id="cartOverlay" data-testid="cart-overlay" role="dialog" aria-label="Carrito de compras" style="position:fixed;inset:0;z-index:800;pointer-events:none">
-  <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);opacity:0;transition:opacity .3s" onclick="closeCart()"></div>
-  <div style="position:absolute;right:0;top:0;bottom:0;width:min(440px,100vw);background:#fff;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);box-shadow:-12px 0 48px rgba(0,0,0,.18)">
-    <div class="cart-hdr" style="padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,var(--orange),#FF8F5E)">
-      <div style="display:flex;align-items:center;gap:10px">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-        <div class="cart-title" style="font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;color:#fff">Tu carrito</div>
-      </div>
-      <button class="cart-close" onclick="closeCart()" aria-label="Cerrar carrito" style="width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s" onmouseover="this.style.background='rgba(255,255,255,.35)'" onmouseout="this.style.background='rgba(255,255,255,.2)'">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="cart-body" id="cartBody" style="flex:1;overflow-y:auto"></div>
-  </div>
-</div>
-
 <!-- ===== ARREPENTIMIENTO MODAL (Resolución 424/2020) ===== -->
 <div id="arrepentimientoModal" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeArrepentimiento()"></div>

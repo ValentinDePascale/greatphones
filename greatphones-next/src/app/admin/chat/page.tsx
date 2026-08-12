@@ -1,3 +1,7 @@
 import { serveAdminSpa } from '@/lib/spa-pages'
+import AdminPageClient from '../AdminPageClient'
 export const dynamic = 'force-dynamic'
-export default function Page() { return <div dangerouslySetInnerHTML={{ __html: serveAdminSpa('chat') }} suppressHydrationWarning /> }
+export default function Page() {
+  const html = serveAdminSpa('chat')
+  return <AdminPageClient html={html} tab="chat" />
+}

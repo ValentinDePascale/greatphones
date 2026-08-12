@@ -10,6 +10,7 @@ const tabs = [
   { href: '/admin/stock', label: 'Stock', icon: '📋' },
   { href: '/admin/promos', label: 'Promociones', icon: '🏷️' },
   { href: '/admin/pedidos', label: 'Pedidos', icon: '📑' },
+  { href: '/admin/ventas', label: 'Ventas', icon: '📈' },
   { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: '↩️' },
   { href: '/admin/chat', label: 'Chat', icon: '💬' },
   { href: '/admin/cotizaciones', label: 'Cotizaciones', icon: '💵' },
