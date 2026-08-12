@@ -168,6 +168,10 @@ function nav(id){
   var urlMap={home:'',shop:'productos',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
   var titles={home:'Great Phones',shop:'Productos — Great Phones',sell:'Vender — Great Phones',detail:'Producto — Great Phones',favoritos:'Favoritos — Great Phones',accesorios:'Accesorios — Great Phones',garantias:'Garantías — Great Phones',ofertas:'Ofertas — Great Phones',preventas:'Preventas — Great Phones',chats:'Chats — Great Phones',admin:'Admin — Great Phones',cuenta:'Mi Cuenta — Great Phones',checkout:'Checkout — Great Phones',terminos:'Términos — Great Phones',privacidad:'Privacidad — Great Phones',login:'Iniciar Sesión — Great Phones',register:'Registro — Great Phones','track-order':'Seguimiento — Great Phones'};
   if(titles[id])document.title=titles[id];
+  if(id==='detail'){
+    if(window.currentProd)document.title=window.currentProd.name+' — Great Phones';
+    else if(window.currentAcc)document.title=window.currentAcc.name+' — Great Phones';
+  }
   if(urlMap[id]!==undefined){
     var path=urlMap[id];
     if(id==='detail'){
@@ -1219,3 +1223,29 @@ function doSecurityChangePassword(){
     document.getElementById('securityPanel').remove();
   }).catch(function(){if(err){err.textContent='Error de conexión';err.style.display='block';}});
 }
+
+// =========== SPA DETAIL NAVIGATION ===========
+// Intercepts <a href="/detail/{id}"> clicks to do SPA navigation
+// instead of full page reloads. Falls back to native if data not loaded.
+document.addEventListener('click',function(e){
+  if(e.defaultPrevented)return;
+  if(e.button!==0)return;
+  if(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+  var a=e.target&&e.target.closest?e.target.closest('a[href^="/detail/"]'):null;
+  if(!a)return;
+  var href=a.getAttribute('href')||'';
+  var id=href.replace(/^\/detail\//,'').split(/[/?#]/)[0];
+  if(!id)return;
+  // Lookup id in loaded data
+  var found=false;
+  if(typeof PRODUCTS!=='undefined'&&PRODUCTS&&typeof getById==='function'){
+    if(getById(PRODUCTS,id)){openDetail(id);found=true;}
+  }
+  if(!found&&typeof PREORDER_PRODUCTS!=='undefined'&&PREORDER_PRODUCTS&&typeof getById==='function'){
+    if(getById(PREORDER_PRODUCTS,id)){openDetail(id);found=true;}
+  }
+  if(!found&&window.ACCS&&typeof getById==='function'){
+    if(getById(window.ACCS,id)){openAccDetail(id);found=true;}
+  }
+  if(found)e.preventDefault();
+},false);
