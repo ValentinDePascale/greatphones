@@ -76,7 +76,12 @@ function loadTrackingScripts() {
   if (!consent) return;
 
   if (consent.analytics) {
-    loadScript('https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX', 'https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX');
+    const GA_ID = 'G-DXBP3J79WS';
+    loadScript('https://www.googletagmanager.com/gtag/js?id=' + GA_ID, 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID);
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', GA_ID);
   }
 
   if (consent.marketing) {
