@@ -24,6 +24,7 @@ vi.mock('@/lib/rate-limit', () => ({
       resetAt: new Date(Date.now() + 60000),
     })
   }),
+  safeKeyPart: (v: string) => v,
 }))
 
 vi.mock('bcryptjs', () => ({

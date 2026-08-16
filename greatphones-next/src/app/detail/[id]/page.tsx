@@ -7,6 +7,9 @@ export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
+  if (!/^[a-z0-9]{20,30}$/i.test(id)) {
+    return { title: 'Producto no encontrado — Great Phones' }
+  }
   try {
     const product = await prisma.product.findUnique({ where: { id } })
     if (product) {
@@ -27,6 +30,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  // Validar formato del id (Prisma CUID: empieza con 'c', 25 chars alfanuméricos)
+  // Evita inyecciones en el <script> posterior
+  if (!/^[a-z0-9]{20,30}$/i.test(id)) {
+    return notFound()
+  }
   let html = serveSpa('detail')
 
   try {
@@ -61,7 +69,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         }))
       })
       html = html.replace('</body>',
-        '<script>window.__INITIAL_DETAIL_ID__="' + id + '";window.__INITIAL_DETAIL__=' + detailData + ';setTimeout(function(){if(typeof openDetail==="function")openDetail("' + id + '");},200)</script></body>')
+        '<script>window.__INITIAL_DETAIL_ID__=' + JSON.stringify(id) + ';window.__INITIAL_DETAIL__=' + detailData + '</script></body>')
       return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
     }
 
@@ -82,7 +90,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         }
       })
       html = html.replace('</body>',
-        '<script>window.__INITIAL_ACCS_DETAIL_ID__="' + id + '";window.__INITIAL_ACCS_DETAIL__=' + detailData + ';setTimeout(function(){if(typeof openAccDetail==="function")openAccDetail("' + id + '");},200)</script></body>')
+        '<script>window.__INITIAL_ACCS_DETAIL_ID__=' + JSON.stringify(id) + ';window.__INITIAL_ACCS_DETAIL__=' + detailData + '</script></body>')
       return <div dangerouslySetInnerHTML={{ __html: html }} suppressHydrationWarning />
     }
   } catch {

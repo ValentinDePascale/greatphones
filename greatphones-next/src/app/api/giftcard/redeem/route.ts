@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth-guard'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, clientIpKey } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
@@ -18,10 +18,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Formato de código inválido (GP-XXXX-XXXX)' }, { status: 400 })
     }
 
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
-    const rl = await rateLimit(`redeem:${ip}`, 5, 60000)
-    if (!rl.allowed) {
+    const ip = clientIpKey(request)
+    // Rate-limit por usuario + IP (un usuario no evade rotando IPs; una IP no evade con varios usuarios)
+    const [rlUser, rlIp] = await Promise.all([
+      rateLimit(`redeem:user:${user.id}`, 5, 60000),
+      rateLimit(`redeem:ip:${ip}`, 10, 60000),
+    ])
+    if (!rlUser.allowed || !rlIp.allowed) {
       return NextResponse.json({ error: 'Demasiados intentos. Esperá un minuto.' }, { status: 429 })
+    }
+
+    // Lockout por código: rate-limit secundario usando el código como parte de la key.
+    // Esto mitiga fuerza bruta sobre un código específico desde múltiples IPs.
+    const codeLimit = await rateLimit(`redeem:code:${normalizedCode}`, 3, 60 * 60 * 1000)
+    if (!codeLimit.allowed) {
+      return NextResponse.json({ error: 'Demasiados intentos sobre este código. Probá más tarde.' }, { status: 429 })
     }
 
     const result = await prisma.$transaction(async (tx) => {

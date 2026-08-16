@@ -2,17 +2,29 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 
+const DEFAULT_LIMIT = 50
+const MAX_LIMIT = 100
+
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true, name: true, email: true, role: true,
-        createdAt: true, phone: true, direccion: true,
-      },
-    })
-    return NextResponse.json(users)
+    const { searchParams } = new URL(request.url)
+    const page = Math.max(1, Number(searchParams.get('page') ?? 1))
+    const limit = Math.min(MAX_LIMIT, Math.max(1, Number(searchParams.get('limit') ?? DEFAULT_LIMIT)))
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * limit,
+        take: limit,
+        select: {
+          id: true, name: true, email: true, role: true,
+          createdAt: true, phone: true, direccion: true,
+        },
+      }),
+      prisma.user.count(),
+    ])
+    return NextResponse.json({ users, total, page, limit })
   } catch (error) {
     console.error('Error fetching users:', error)
     return NextResponse.json({ error: 'Error al obtener usuarios' }, { status: 500 })

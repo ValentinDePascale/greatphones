@@ -6,13 +6,13 @@
       <input class="admin-inp" type="text" id="adUser" placeholder="Usuario" autocomplete="off">
       <input class="admin-inp" type="password" id="adPass" placeholder="Contrasena" onkeydown="if(event.key==='Enter')adminLogin()">
       <button class="btn-fo" style="margin-top:4px" onclick="adminLogin()">Entrar</button>
-      <button class="btn-fout" style="margin-top:6px;border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.45)" onclick="nav('home')">Volver a la tienda</button>
+      <button class="btn-fout" style="margin-top:6px;border-color:rgba(255,255,255,.12);color:rgba(255,255,255,.45)" onclick="goToHome()">Volver a la tienda</button>
     </div>
   <div id="adminPanel" class="admin-panel hidden">
     <div class="admin-nav">
       <div class="admin-nav-t" style="font-family:'Playfair Display',Georgia,serif">Admin — Great Phones</div>
       <div style="display:flex;gap:6px">
-        <button class="admin-exit" onclick="nav('home')">Ver tienda</button>
+        <button class="admin-exit" onclick="goToHome()">Ver tienda</button>
         <button class="admin-exit" onclick="adminLogout()">Salir</button>
       </div>
     </div>

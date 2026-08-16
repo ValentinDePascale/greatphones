@@ -3,16 +3,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { SignupSchema, formatZodError } from '@/lib/validations'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart } from '@/lib/rate-limit'
 import { createSessionCookie } from '@/lib/session'
-import { ALLOWED_ORIGINS } from '@/config'
-
-export async function GET() {
-  return NextResponse.json({ 
-    message: 'Signup API working',
-    prismaConnected: !!prisma 
-  })
-}
 
 
 
@@ -27,7 +19,7 @@ export async function POST(request: Request) {
     
     const { email, name, phone, dni, provincia, ciudad, password } = body
 
-    const limit = await rateLimit(`signup:${email}`, 3, 60 * 60 * 1000)
+    const limit = await rateLimit(`signup:${safeKeyPart(email)}`, 3, 60 * 60 * 1000)
     if (!limit.allowed) {
       const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
       return NextResponse.json({ error: `Demasiados registros. Espera ${mins} minutos` }, { status: 429 })
@@ -67,11 +59,11 @@ export async function POST(request: Request) {
         provincia: user.provincia,
         ciudad: user.ciudad,
         role: user.role,
+        hasPassword: true,
       }
     }, { 
       status: 201,
       headers: {
-        'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0],
         'Set-Cookie': cookie,
       }
     })

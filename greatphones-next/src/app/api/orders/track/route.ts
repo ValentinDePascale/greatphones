@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart, clientIpKey } from '@/lib/rate-limit'
 
 
 
 export async function GET(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = clientIpKey(request)
     const limit = await rateLimit(`order-track:${ip}`, 15, 60000)
     if (!limit.allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })
@@ -18,6 +18,12 @@ export async function GET(request: Request) {
 
     if (!code || !email) {
       return NextResponse.json({ error: 'Codigo de orden y email requeridos' }, { status: 400 })
+    }
+
+    // Rate-limit por par (código + email) para mitigar enumeración de órdenes
+    const pairLimit = await rateLimit(`order-track-pair:${safeKeyPart(code)}:${safeKeyPart(email)}`, 5, 60000)
+    if (!pairLimit.allowed) {
+      return NextResponse.json({ error: 'Demasiados intentos para esta orden. Esperá un minuto.' }, { status: 429 })
     }
 
     const order = await prisma.order.findFirst({

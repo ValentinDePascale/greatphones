@@ -111,6 +111,10 @@
                 </select>
               </div>
             </div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;background:var(--cream);border-radius:12px;border:1px solid rgba(0,0,0,.04)">
+              <input type="checkbox" id="checkoutSaveData" checked style="width:18px;height:18px;accent-color:var(--orange);cursor:pointer;flex-shrink:0">
+              <label for="checkoutSaveData" style="font-size:12px;color:var(--dk);cursor:pointer">Guardá mis datos de contacto y envío para futuras compras</label>
+            </div>
           </section>
           <div style="display:flex;justify-content:flex-end;margin-top:16px">
             <button onclick="checkoutNextStep(2)" id="btn-step1-next" style="padding:14px 32px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">

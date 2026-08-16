@@ -4,11 +4,12 @@ import { MercadoPagoConfig, Preference } from 'mercadopago';
 import { CheckoutSchema, formatZodError } from '@/lib/validations';
 import { sendOrderConfirmationEmail, sendNewOrderAdminNotification } from '@/lib/email';
 import { productCache } from '@/lib/cache';
-import { rateLimit } from '@/lib/rate-limit';
+import { rateLimit, clientIpKey } from '@/lib/rate-limit';
 import { reserveStock } from '@/lib/stock';
 import { getEffectivePrice, generateOrderCode, WARRANTY_COST_MAP } from '@/lib/pricing';
 import { RESERVATION_TTL_MINUTES } from '@/config';
 import { AuthError } from '@/lib/auth-guard';
+import { logger } from '@/lib/logger';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -17,12 +18,16 @@ const client = new MercadoPagoConfig({
 async function findOrCreateUser(email: string, phone?: string, document?: string) {
   let user = await prisma.user.findFirst({ where: { email } });
   if (!user) {
+    // Crea el user sin password y verified=false para evitar account squatting:
+    // - No puede hacer login (signin chequea user.verified)
+    // - Después de pago confirmado vía webhook, se le envía magic link para setear password
     user = await prisma.user.create({
       data: {
         email,
         name: email.split('@')[0],
         phone: phone || null,
         dni: document || null,
+        verified: false,
       }
     });
   }
@@ -85,7 +90,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(formatZodError(validation.error), { status: 400 });
     }
 
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = clientIpKey(request)
     const checkoutLimit = await rateLimit(`checkout:${ip}`, 10, 300000)
     if (!checkoutLimit.allowed) {
       return NextResponse.json({ error: 'Demasiados intentos. Espera 5 minutos.' }, { status: 429 })
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
       items, email, phone, street, number, floor, zip, city, province, document,
       warranty, delivery, cuotas, carrier, carrierService, paymentMethod,
       coupons: couponIds, agreedToTerms,
-    } = body;
+    } = validation.data as any;
 
     const hasPreorderItems = items.some((item: any) => item.isPreorder);
     if (hasPreorderItems && !agreedToTerms) {
@@ -176,11 +181,12 @@ export async function POST(request: NextRequest) {
     // Recalculate totals server-side — never trust frontend amounts
     const calculatedSubtotal = enrichedItems.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0);
     const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0;
-    const safeDeliveryCost = Math.max(0, body.deliveryCost || 0);
+    // Usar validation.data (sanitizado por Zod) — NUNCA body crudo
+    const safeDeliveryCost = Math.max(0, (validation.data as any).deliveryCost || 0);
     const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + safeDeliveryCost;
 
     // Cross-check: reject if frontend total doesn't match
-    if (body.total !== calculatedTotal) {
+    if ((validation.data as any).total !== calculatedTotal) {
       return NextResponse.json({ error: 'Error de validación: el total no coincide. Reintente.' }, { status: 400 });
     }
 
@@ -255,7 +261,7 @@ export async function POST(request: NextRequest) {
     let initPoint: string | null = null;
 
     if (!isFullyPaidByCoupons) {
-      const cleanDoc = document.replace(/[^0-9]/g, '');
+      const cleanDoc = (document || '').replace(/[^0-9]/g, '');
       const idType = cleanDoc.length > 8 ? 'CUIT' : 'DNI';
 
       const excludedTypes: Record<string, string[]> = {
@@ -486,7 +492,7 @@ export async function POST(request: NextRequest) {
     productCache.clear();
 
     if (isFullyPaidByCoupons) {
-      console.log('[Checkout] Sending coupon confirmation email to:', email);
+      logger.info({ orderCode: order.code }, 'Sending coupon confirmation email');
       sendOrderConfirmationEmail({
         orderCode: order.code,
         email,

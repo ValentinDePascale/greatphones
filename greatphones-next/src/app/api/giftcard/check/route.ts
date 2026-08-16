@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, clientIpKey } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = clientIpKey(request)
     const limit = await rateLimit(`giftcard-check:${ip}`, 20, 60000)
     if (!limit.allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })

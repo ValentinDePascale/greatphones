@@ -34,39 +34,11 @@ const nextConfig: NextConfig = {
         headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
       {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
-          },
-        ],
+        source: '/(account|orders|wallet|admin|api/auth|api/instore|api/warranty)/:path*',
+        headers: [{ key: 'Cache-Control', value: 'private, no-store' }],
       },
-      {
-        source: '/icons/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-      },
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net https://cdn.socket.io https://www.googletagmanager.com https://connect.facebook.net",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://http2.mlstatic.com",
-              "connect-src 'self' https://api.mercadopago.com https://greatphones.onrender.com https://*.neon.tech https://connect.facebook.net https://www.facebook.com",
-              "frame-src https://www.mercadopago.com",
-              "base-uri 'self'",
-              "form-action 'self'",
-              "upgrade-insecure-requests",
-              "report-uri /api/csp-report",
-            ].join('; '),
-          },
-        ],
-      },
+      // CSP se aplica en middleware.ts (permite nonces por-request).
+      // No duplicar acá para evitar reglas contradictorias.
     ];
   },
 };

@@ -7,9 +7,22 @@ function nav(id){
   var _hidden=['servicio','notebooks','mayorista'];
   if(_hidden.indexOf(id)!==-1){nav('home');return;}
   if(id==='cuenta'&&!currentUser){openLogin();return;}
-  if(id==='checkout'&&!currentUser){nav('login');return;}
+  if(id==='checkout'&&!currentUser){openLogin();return;}
   if(id==='admin'&&(!currentUser||currentUser.role!=='ADMIN')){nav('home');return;}
   if(id==='chats'&&currentUser&&currentUser.role==='ADMIN'){nav('admin');return;}
+  // Fallback: if the target page is not in the current DOM (e.g. old SSR served
+  // without the full page bundle), force a full reload to the canonical URL.
+  // Otherwise the SPA stays on the previous page with no visible content.
+  var _targetPageEl=document.getElementById('p-'+id);
+  var _pageUrlMap={home:'/',shop:'productos',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin/productos','admin-acc':'admin/accesorios',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
+  if(!_targetPageEl&&_pageUrlMap[id]){
+    var _fullUrl='/'+_pageUrlMap[id];
+    if(id==='detail'&&window.currentProd)_fullUrl='/detail/'+window.currentProd.id;
+    else if(id==='detail'&&window.currentAcc)_fullUrl='/detail/'+window.currentAcc.id;
+    else if(id==='admin-product'&&window._currentEditProductId)_fullUrl='/admin/productos/'+window._currentEditProductId;
+    window.location.href=_fullUrl;
+    return;
+  }
   var chatBtn=document.getElementById('chatWidgetBtn');
   if(chatBtn)chatBtn.style.display=(id==='admin')?'none':'';
   if(id==='sell'){
@@ -30,7 +43,7 @@ function nav(id){
   if(id==='terminos'||id==='privacidad'){
     window.scrollTo({top:0,behavior:'smooth'});
   }
-  if(id==='home'){renderHomeRail();renderOfferStrip();setCN('home');var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
+  if(id==='home'){renderHomeRail();renderOfferStrip();if(typeof renderFeaturedGrid==='function')renderFeaturedGrid();setCN('home');var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
   if(id==='register'){
     document.querySelectorAll('.page').forEach(function(p){p.classList.remove('act');p.style.removeProperty('display');});
     document.getElementById('p-register').classList.add('act');
@@ -96,17 +109,25 @@ function nav(id){
     if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
   }
   if(id==='admin'){
+    // Prefer the tab the user was already viewing (preserved across SPA navs),
+    // fall back to URL hash, then to 'dashboard'.
+    var validTabs=['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','sales','users'];
     var hashTab=location.hash.replace('#','');
-    if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','sales'].indexOf(hashTab)!==-1){
-      window.currentAdminTab=hashTab;
-      var btn=document.getElementById('adm-'+hashTab);
-      if(btn&&typeof adminTab==='function'){adminTab(hashTab,btn);}else{renderAdminContent(hashTab);}
-    }else{
-      window.currentAdminTab='dashboard';
-      renderAdminContent('dashboard');
+    var tabToShow='dashboard';
+    if(window.currentAdminTab&&validTabs.indexOf(window.currentAdminTab)!==-1){
+      tabToShow=window.currentAdminTab;
+    }else if(hashTab&&validTabs.indexOf(hashTab)!==-1){
+      tabToShow=hashTab;
     }
+    window.currentAdminTab=tabToShow;
+    var btn=document.getElementById('adm-'+tabToShow);
+    if(btn&&typeof adminTab==='function'){adminTab(tabToShow,btn);}else if(typeof renderAdminContent==='function'){renderAdminContent(tabToShow);}
   }
-  if(id==='home'){renderHomeRail();renderOfferStrip();var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
+  if(id==='home'){renderHomeRail();renderOfferStrip();if(typeof renderFeaturedGrid==='function')renderFeaturedGrid();var cf=document.querySelector('.cat-flex');if(cf){cf.classList.remove('cat-reveal');void cf.offsetWidth;cf.classList.add('cat-reveal');}}
+  // Si aún no cargamos productos (p.ej. llegamos a home por back antes de
+  // que termine el fetch), forzamos la carga para que los grids no queden vacíos.
+  if(id==='home'&&typeof loadProducts==='function'&&(!window._productsLoaded))loadProducts();
+  if(id==='home'&&typeof loadAccessories==='function'&&(!window._accLoaded))loadAccessories();
   if(id==='admin-product'){
     if(!window.isEditingProduct){
       document.getElementById('prodId').value='';
@@ -165,7 +186,7 @@ function nav(id){
     var verModal=document.getElementById('verificationModal');
     if(verModal&&verModal.style.display==='flex')closeVerification();
   }
-  var urlMap={home:'',shop:'productos',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin-product',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
+  var urlMap={home:'',shop:'productos',sell:'sell',detail:'detail',favoritos:'favoritos',accesorios:'accesorios',garantias:'garantias',ofertas:'ofertas',preventas:'preventas',chats:'chats',admin:'admin',cuenta:'cuenta',checkout:'checkout',terminos:'terminos',privacidad:'privacidad','edit-profile':'edit-profile','admin-product':'admin/productos','admin-acc':'admin/accesorios',login:'login',register:'register','forgot-password':'forgot-password','reset-password':'reset-password','track-order':'track-order',compare:'compare'};
   var titles={home:'Great Phones',shop:'Productos — Great Phones',sell:'Vender — Great Phones',detail:'Producto — Great Phones',favoritos:'Favoritos — Great Phones',accesorios:'Accesorios — Great Phones',garantias:'Garantías — Great Phones',ofertas:'Ofertas — Great Phones',preventas:'Preventas — Great Phones',chats:'Chats — Great Phones',admin:'Admin — Great Phones',cuenta:'Mi Cuenta — Great Phones',checkout:'Checkout — Great Phones',terminos:'Términos — Great Phones',privacidad:'Privacidad — Great Phones',login:'Iniciar Sesión — Great Phones',register:'Registro — Great Phones','track-order':'Seguimiento — Great Phones'};
   if(titles[id])document.title=titles[id];
   if(id==='detail'){
@@ -260,12 +281,10 @@ async function doLogin(){
   if(!email||!password){showLoginError('Ingresa email y contraseña');return;}
   showLoginError('');
   try{
-    var res=await fetch(API_URL+'/api/auth/signin',{
+    var data=await window.gpFetch('/api/auth/signin',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email,password:password})
+      body:{email:email,password:password}
     });
-    var data=await res.json();
     if(data.error){
       if(data.needsVerification){
         registerTempData={email:email,password:password};
@@ -324,12 +343,10 @@ async function sendForgotCode(){
   errEl.style.display='none';sucEl.style.display='none';
   if(!email){errEl.textContent='Ingresa tu email';errEl.style.display='block';return;}
   try{
-    var res=await fetch(API_URL+'/api/auth/forgot-password',{
+    var data=await window.gpFetch('/api/auth/forgot-password',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email})
+      body:{email:email}
     });
-    var data=await res.json();
     if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
     sucEl.textContent='Codigo enviado. Revisa tu email.';sucEl.style.display='block';
     document.getElementById('resetEmail').value=email;
@@ -344,25 +361,39 @@ async function doResetPassword(){
   var sucEl=document.getElementById('resetSuccess');
   errEl.style.display='none';sucEl.style.display='none';
   if(!code||!newPassword){errEl.textContent='Completa todos los campos';errEl.style.display='block';return;}
-  if(newPassword.length<6){errEl.textContent='La contraseña debe tener al menos 6 caracteres';errEl.style.display='block';return;}
+  if(!isPasswordStrong(newPassword)){errEl.textContent=passwordPolicyMsg();errEl.style.display='block';return;}
   try{
-    var res=await fetch(API_URL+'/api/auth/reset-password',{
+    var data=await window.gpFetch('/api/auth/reset-password',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({email:email,code:code,newPassword:newPassword})
+      body:{email:email,code:code,newPassword:newPassword}
     });
-    var data=await res.json();
     if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
     sucEl.textContent='Contraseña actualizada! Redirigiendo...';sucEl.style.display='block';
     setTimeout(function(){window.location.href='/login';},2000);
   }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }
-function doLogout(){
+function clearAuthCookies(){
+  // Mejor-esfuerzo del lado cliente. Las cookies Secure/HttpOnly se limpian
+  // de verdad con los Set-Cookie del POST /api/auth/logout (que ya se esperó).
+  ['gp-session','next-auth.session-token','__Secure-next-auth.session-token','next-auth.csrf-token','__Host-next-auth.csrf-token'].forEach(function(name){
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + window.location.hostname;
+    document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.' + window.location.hostname;
+  });
+}
+async function doLogout(){
   currentUser=null;
-  Storage.remove('user');
-  Storage.remove('remember');
-  fetch(API_URL+'/api/auth/logout',{method:'POST'}).catch(function(){});
-  fetch('/api/auth/signout',{method:'GET'}).catch(function(){});
+
+  // 1) Avisar al server y ESPERAR la respuesta: sus Set-Cookie son los únicos
+  //    que pueden borrar las cookies Secure/HttpOnly (gp-session).
+  try{await window.gpFetch('/api/auth/logout',{method:'POST'});}catch(e){}
+  try{await fetch('/api/auth/signout',{method:'GET'});}catch(e){}
+
+  // 2) Limpieza cliente-server / storage.
+  try{Storage.remove('user');}catch(e){}
+  try{Storage.remove('remember');}catch(e){}
+  clearAuthCookies();
+
   var cuentaLink=document.querySelector('a[href="/cuenta"]');
   if(cuentaLink)cuentaLink.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Cuenta</span>';
   var adminLink=document.getElementById('adminLink');
@@ -373,6 +404,7 @@ function doLogout(){
   Cart=[];
   saveCart();
   initCart();
+  updateUserUI();
   window.location.href='/';
 }
 function updateUserUI(){
@@ -435,6 +467,12 @@ function updateUserUI(){
       if(li)li.style.display='none';
     }
   }
+  // Cuentas vinculadas a Google (sin password local): ocultar cambio de contraseña.
+  var pwSensitiveEls=document.querySelectorAll('[onclick="openSecurityPanel()"],[onclick="openChangePassword()"]');
+  var gotPw=!(currentUser&&currentUser.hasPassword===false);
+  pwSensitiveEls.forEach(function(el){
+    el.style.display=gotPw?'':'none';
+  });
   if(currentUser){
     if(typeof updateNotifBadge==='function')updateNotifBadge();
     if(typeof startNotifPolling==='function')startNotifPolling();
@@ -460,7 +498,12 @@ document.addEventListener('click',function(e){
 (function(){
   var saved=Storage.get('user');
   if(saved){
-    try{currentUser=saved;updateUserUI();loadUserFavorites();}catch(e){}
+    try{currentUser=saved;updateUserUI();loadUserFavorites();
+      if(document.getElementById('p-cuenta')&&document.getElementById('p-cuenta').classList.contains('act')){
+        if(typeof renderOrderHistory==='function')renderOrderHistory();
+        if(typeof loadClientQuotes==='function')loadClientQuotes();
+      }
+    }catch(e){}
   }
   checkGoogleSession();
 })();
@@ -503,7 +546,7 @@ async function initiateSignup(){
   var confirmPassword=document.getElementById('signupConfirmPassword').value;
   var fullName=name+' '+lastname;
   if(!email){showLoginError('Ingresa tu email');return;}
-  if(!password||password.length<6){showLoginError('Password debe tener al menos 6 caracteres');return;}
+  if(!password||!isPasswordStrong(password)){showLoginError(passwordPolicyMsg());return;}
   if(password!==confirmPassword){showLoginError('Las passwords no coinciden');return;}
   showLoginError('');
   try{
@@ -519,7 +562,7 @@ async function initiateSignup(){
     document.getElementById('signupStep2').style.display='block';
     var emailDisplay=document.getElementById('verifyEmailDisplay');
     if(emailDisplay)emailDisplay.textContent=email;
-    startSignupTimer(300);
+    startSignupTimer(600);
   }catch(e){showLoginError('Error de conexion');}
 }
 function showSignupStep1(){
@@ -528,24 +571,23 @@ function showSignupStep1(){
   if(signupCodeTimer)clearInterval(signupCodeTimer);
 }
 function startSignupTimer(seconds){
+  // Expiración del código: 10 minutos. Cooldown de reenvío: 60s.
   if(signupCodeTimer)clearInterval(signupCodeTimer);
-  var remaining=seconds;
+  var remaining=seconds||600;
   var timerEl=document.getElementById('codeTimer');
-  var resendBtn=document.querySelector('#signupStep2 button[onclick="resendSignupCode()"]');
-  if(resendBtn){resendBtn.style.opacity='.4';resendBtn.style.pointerEvents='none';resendBtn.textContent='Reenviar en 05:00';}
+  var fmtT=function(){var m=Math.floor(remaining/60);var s=remaining%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;};
+  if(timerEl)timerEl.textContent=fmtT();
   signupCodeTimer=setInterval(function(){
     remaining--;
-    var m=Math.floor(remaining/60);
-    var s=remaining%60;
-    var timeStr=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-    if(timerEl)timerEl.textContent=timeStr;
-    if(resendBtn)resendBtn.textContent='Reenviar en '+timeStr;
+    if(timerEl)timerEl.textContent=fmtT();
     if(remaining<=0){
       clearInterval(signupCodeTimer);
+      signupCodeTimer=null;
       if(timerEl)timerEl.textContent='00:00';
-      if(resendBtn){resendBtn.style.opacity='1';resendBtn.style.pointerEvents='auto';resendBtn.textContent='Reenviar codigo';}
     }
   },1000);
+  var resendBtn=document.querySelector('#signupStep2 button[onclick="resendSignupCode()"]');
+  startOtpResendCooldown(resendBtn,60);
 }
 async function verifyAndCompleteSignup(){
   var code='';
@@ -559,11 +601,10 @@ async function verifyAndCompleteSignup(){
     });
     var verifyData=await verifyRes.json();
     if(verifyData.error){showLoginError(verifyData.error);return;}
-    var signupRes=await fetch(API_URL+'/api/auth/signup',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({...signupTempData,verified:true})
+    var signupData=await window.gpFetch('/api/auth/signup',{
+      method:'POST',
+      body:{...signupTempData,verified:true}
     });
-    var signupData=await signupRes.json();
     if(signupData.error){showLoginError(signupData.error);return;}
     currentUser=signupData.user;
     closeLogin();updateUserUI();
@@ -576,7 +617,7 @@ async function verifyAndCompleteSignup(){
 }
 async function resendSignupCode(){
   if(!signupTempData||!signupTempData.email){showLoginError('Error: email no encontrado');return;}
-  if(signupCodeTimer){showLoginError('Espera a que termine el contador');return;}
+  if(_codeResendLocked){showLoginError('Espera antes de reenviar');return;}
   try{
     var res=await fetch(API_URL+'/api/auth/verify-email',{
       method:'POST',
@@ -587,7 +628,7 @@ async function resendSignupCode(){
     if(data.error){showLoginError(data.error);return;}
     showLoginError('');
     showToast('Codigo reenviado correctamente');
-    startSignupTimer(300);
+    startSignupTimer(600);
     for(var i=1;i<=6;i++){var el=document.getElementById('v'+i);if(el)el.value='';}
     document.getElementById('v1').focus();
   }catch(e){showLoginError('Error de conexion');}
@@ -603,7 +644,7 @@ async function doRegister(){
   var tyC=document.getElementById('regTyC');
   var fullName=name+' '+lastname;
   if(!name||!lastname||!email||!password){showToast('Completa los campos obligatorios');return;}
-  if(password.length<6){showToast('La contraseña debe tener al menos 6 caracteres');return;}
+  if(!isPasswordStrong(password)){showToast(passwordPolicyMsg());return;}
   if(password!==confirmPassword){showToast('Las contraseñas no coinciden');return;}
   if(tyC&&!tyC.checked){showToast('Debes aceptar los Terminos y Condiciones');return;}
   try{
@@ -623,32 +664,32 @@ function showPageRegisterStep2(email){
   document.getElementById('pageVerifyStep').style.display='block';
   var emailSpan=document.getElementById('pageVerifyEmail');
   if(emailSpan)emailSpan.textContent=email;
-  startCodeTimer(300);
+  startCodeTimer();
 }
 function showPageRegisterStep(){
   document.getElementById('registerFormStep1').style.display='block';
   document.getElementById('pageVerifyStep').style.display='none';
   if(registerCodeTimer)clearInterval(registerCodeTimer);
 }
-function startCodeTimer(seconds){
+function startCodeTimer(){
+  // Expiración del código: 10 minutos (coincide con backend/mail).
   if(registerCodeTimer)clearInterval(registerCodeTimer);
-  var remaining=seconds;
+  var remaining=600;
   var timerEl=document.getElementById('pageCodeTimer');
-  var resendBtn=document.querySelector('#pageVerifyStep button[onclick="resendVerificationCode()"]');
-  if(resendBtn){resendBtn.style.opacity='.4';resendBtn.style.pointerEvents='none';resendBtn.textContent='Reenviar en 05:00';}
+  var fmtT=function(){var m=Math.floor(remaining/60);var s=remaining%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;};
+  if(timerEl)timerEl.textContent=fmtT();
   registerCodeTimer=setInterval(function(){
     remaining--;
-    var m=Math.floor(remaining/60);
-    var s=remaining%60;
-    var timeStr=(m<10?'0':'')+m+':'+(s<10?'0':'')+s;
-    if(timerEl)timerEl.textContent=timeStr;
-    if(resendBtn)resendBtn.textContent='Reenviar en '+timeStr;
+    if(timerEl)timerEl.textContent=fmtT();
     if(remaining<=0){
       clearInterval(registerCodeTimer);
+      registerCodeTimer=null;
       if(timerEl)timerEl.textContent='00:00';
-      if(resendBtn){resendBtn.style.opacity='1';resendBtn.style.pointerEvents='auto';resendBtn.textContent='Reenviar codigo';}
     }
   },1000);
+  // Cooldown para reenviar: 60 segundos (independiente de la expiración).
+  var resendBtn=document.querySelector('#pageVerifyStep button[onclick="resendVerificationCode()"]');
+  startOtpResendCooldown(resendBtn,60);
 }
 function moveToNext(current,nextId){
   if(current.value.length===1){
@@ -664,7 +705,7 @@ function moveBack(e,currentId){
 }
 async function resendVerificationCode(){
   if(!registerTempData||!registerTempData.email){showToast('Error: email no encontrado');return;}
-  if(registerCodeTimer){showToast('Espera a que termine el contador');return;}
+  if(_codeResendLocked){showToast('Espera antes de reenviar');return;}
   try{
     var res=await fetch(API_URL+'/api/auth/verify-email',{
       method:'POST',
@@ -674,7 +715,7 @@ async function resendVerificationCode(){
     var data=await res.json();
     if(data.error){showToast(data.error);return;}
     showToast('Codigo reenviado correctamente');
-    startCodeTimer(300);
+    startCodeTimer();
     for(var i=1;i<=6;i++){var el=document.getElementById('pv'+i);if(el)el.value='';}
     document.getElementById('pv1').focus();
   }catch(e){showToast('Error de conexion');}
@@ -696,21 +737,17 @@ async function verifyAndCompleteRegister(){
     var verifyData=await verifyRes.json();
     if(verifyData.error){showToast(verifyData.error);return;}
     if(registerTempData.name){
-      var signupRes=await fetch(API_URL+'/api/auth/signup',{
+      var signupData=await window.gpFetch('/api/auth/signup',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({...registerTempData,verified:true})
+        body:{...registerTempData,verified:true}
       });
-      var signupData=await signupRes.json();
       if(signupData.error){showToast(signupData.error);return;}
       currentUser=signupData.user;
     }else{
-      var signinRes=await fetch(API_URL+'/api/auth/signin',{
+      var signinData=await window.gpFetch('/api/auth/signin',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({email:registerTempData.email,password:registerTempData.password})
+        body:{email:registerTempData.email,password:registerTempData.password}
       });
-      var signinData=await signinRes.json();
       if(signinData.error){showToast(signinData.error);return;}
       currentUser=signinData.user;
     }
@@ -938,6 +975,51 @@ function togglePassword(inputId,btn){
     if(btn)btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 }
+// Política de contraseña (debe coincidir con PasswordSchema del backend):
+// mínimo 8 caracteres, una mayúscula, una minúscula y un número.
+function isPasswordStrong(pw){
+  return typeof pw==='string'&&pw.length>=8&&/[A-Z]/.test(pw)&&/[a-z]/.test(pw)&&/[0-9]/.test(pw);
+}
+function passwordPolicyMsg(){
+  return 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número';
+}
+function handleOtpPaste(e){
+  var wrap=e.target&&e.target.parentElement;
+  var boxes=wrap?Array.prototype.slice.call(wrap.querySelectorAll('input[maxlength="1"]')):[];
+  var startIdx=boxes.indexOf(e.target);
+  if(startIdx<0)startIdx=0;
+  var txt=(e.clipboardData||window.clipboardData).getData('text')||'';
+  var digits=txt.replace(/[^\d]/g,'').split('');
+  if(!digits.length)return;
+  e.preventDefault();
+  for(var i=0;i<boxes.length;i++){
+    var idx=i-startIdx;
+    var d=idx>=0&&idx<digits.length?digits[idx]:'';
+    if(idx>=0)boxes[i].value=d;
+  }
+  var next=startIdx+digits.length;
+  if(next<boxes.length)boxes[next].focus();
+  else if(boxes.length)boxes[boxes.length-1].focus();
+}
+// Cooldown para reenviar códigos por mail.
+var _codeResendLocked=false;
+function startOtpResendCooldown(btn,seconds){
+  var orig='Reenviar codigo';
+  if(btn){btn.style.opacity='.4';btn.style.pointerEvents='none';btn.textContent='Reenviar en '+('00'+seconds).slice(-2)+'s';}
+  _codeResendLocked=true;
+  var remaining=seconds;
+  var iv=setInterval(function(){
+    remaining--;
+    if(remaining<=0){
+      clearInterval(iv);
+      _codeResendLocked=false;
+      if(btn){btn.style.opacity='1';btn.style.pointerEvents='auto';btn.textContent=orig;}
+    }else{
+      if(btn)btn.textContent='Reenviar en '+('00'+remaining).slice(-2)+'s';
+    }
+  },1000);
+  return iv;
+}
 function checkPasswordStrength(){
   var pw=document.getElementById('regPassword');
   var el=document.getElementById('passwordStrength');
@@ -946,9 +1028,9 @@ function checkPasswordStrength(){
   var val=pw.value;
   if(!val.length){if(el)el.textContent='';if(missing)missing.textContent='';return;}
   var strength=0;
-  if(val.length>=6)strength++;
+  if(val.length>=8)strength++;
   if(val.length>=10)strength++;
-  if(/[A-Z]/.test(val))strength++;
+  if(/[A-Z]/.test(val)&&/[a-z]/.test(val))strength++;
   if(/[0-9]/.test(val))strength++;
   if(/[^A-Za-z0-9]/.test(val))strength++;
   var levels=[
@@ -962,8 +1044,9 @@ function checkPasswordStrength(){
   if(el){el.textContent=lvl.label;el.style.color=lvl.color;}
   if(missing){
     var missingText=[];
-    if(val.length<6)missingText.push('minimo 6 caracteres');
+    if(val.length<8)missingText.push('minimo 8 caracteres');
     if(!/[A-Z]/.test(val))missingText.push('una mayuscula');
+    if(!/[a-z]/.test(val))missingText.push('una minuscula');
     if(!/[0-9]/.test(val))missingText.push('un numero');
     missing.textContent=missingText.length?'Falta: '+missingText.join(', '):'';
   }
@@ -976,9 +1059,9 @@ function checkPasswordStrength2(){
   var val=pw.value;
   if(!val.length){if(el)el.textContent='';if(missing)missing.textContent='';return;}
   var strength=0;
-  if(val.length>=6)strength++;
+  if(val.length>=8)strength++;
   if(val.length>=10)strength++;
-  if(/[A-Z]/.test(val))strength++;
+  if(/[A-Z]/.test(val)&&/[a-z]/.test(val))strength++;
   if(/[0-9]/.test(val))strength++;
   if(/[^A-Za-z0-9]/.test(val))strength++;
   var levels=[
@@ -992,8 +1075,9 @@ function checkPasswordStrength2(){
   if(el){el.textContent=lvl.label;el.style.color=lvl.color;}
   if(missing){
     var missingText=[];
-    if(val.length<6)missingText.push('minimo 6 caracteres');
+    if(val.length<8)missingText.push('minimo 8 caracteres');
     if(!/[A-Z]/.test(val))missingText.push('una mayuscula');
+    if(!/[a-z]/.test(val))missingText.push('una minuscula');
     if(!/[0-9]/.test(val))missingText.push('un numero');
     missing.textContent=missingText.length?'Falta: '+missingText.join(', '):'';
   }
@@ -1059,21 +1143,52 @@ async function loadOrderTracking(){
   }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
 }
 window.addEventListener('popstate',function(e){
+  // Si la URL actual NO es una ruta admin, no forzar activación del admin.
+  // Esto evita que al hacer back desde un form admin (/admin/productos)
+  // hacia una URL pública (ej. /home), se renderice el contenido admin
+  // sin su layout.
+  var isAdminRoute=/^\/admin(\/|$)/.test(window.location.pathname);
   if(e.state&&e.state.page){
-    if(e.state.page==='edit-profile'){nav('edit-profile');loadEditProfile();}
+    if(e.state.page==='edit-profile'){if(isAdminRoute||e.state.page==='edit-profile'){nav('edit-profile');loadEditProfile();}}
     else if(e.state.page==='detail'&&e.state.productId){openDetail(e.state.productId);}
     else if(e.state.page==='admin'&&e.state.tab){
+      if(!isAdminRoute)return;
       var btn=document.getElementById('adm-'+e.state.tab);
       if(btn&&typeof adminTab==='function'){adminTab(e.state.tab,btn);}else{nav('admin');}
     }
+    else if(e.state.page==='admin-product'||e.state.page==='admin-acc'){
+      // Stay on the form (do not navigate to a public route just because
+      // browser fired popstate with this state).
+      if(!isAdminRoute)return;
+      nav(e.state.page);
+    }
     else{nav(e.state.page);}
   }else{
-    var hashTab=location.hash.replace('#','');
-    if(hashTab&&typeof adminTab==='function'&&document.getElementById('adm-'+hashTab)){
-      nav('admin');
-    }else{
-      nav('home');
+    if(isAdminRoute){
+      var hashTab=location.hash.replace('#','');
+      if(hashTab&&typeof adminTab==='function'&&document.getElementById('adm-'+hashTab)){
+        nav('admin');
+      }else{
+        nav('home');
+      }
+      return;
     }
+    // Entrada de historial sin estado (p.ej. la página inicial cargada en
+    // full-page). Inferimos el destino desde la URL para que "volver atrás"
+    // (p. ej. a /home) muestre la página correcta en vez de quedarse quieto.
+    var pn=window.location.pathname.replace(/^\//,'').replace(/\/$/,'');
+    var pSeg=pn.split('/')[0];
+    var routeMap={'':'home','home':'home','productos':'shop','shop':'shop','sell':'sell','favoritos':'favoritos','accesorios':'accesorios','garantias':'garantias','ofertas':'ofertas','preventas':'preventas','cuenta':'cuenta','checkout':'checkout','terminos':'terminos','privacidad':'privacidad','compare':'compare','login':'login','register':'register','track-order':'track-order'};
+    var target=routeMap[pSeg]||'home';
+    if(target==='home'&&pn.indexOf('detail/')===0){
+      var did=pn.split('/')[1];
+      var pEl=getById(PRODUCTS,did);
+      var aEl=window.ACCS?getById(window.ACCS,did):null;
+      if(pEl){openDetail(did);return;}
+      if(aEl){openAccDetail(did);return;}
+    }
+    if(target&&document.getElementById('p-'+target))nav(target);
+    else nav('home');
   }
 });
 var pendingDetailId=null;
@@ -1120,107 +1235,96 @@ document.addEventListener('keydown',function(e){
   }
 });
 
-// ===== CHANGE PASSWORD =====
-function openChangePassword(){
+// ===== CHANGE PASSWORD (vía código por email) =====
+function openPasswordChangeModal(title){
   var existing=document.getElementById('changePwModal');
   if(existing)existing.remove();
   var overlay=document.createElement('div');
   overlay.id='changePwModal';
   overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center';
+  var noPassword=currentUser&&currentUser.hasPassword===false;
+  var body=noPassword
+    ? '<div style="background:var(--cream);border-radius:12px;padding:1rem;text-align:center">'+
+        '<p style="font-size:13px;color:var(--gray);line-height:1.6;margin:0">Tu cuenta está vinculada a <strong>Google</strong> e inicia sesión con esa identidad. No hay contraseña que cambiar.</p>'+
+      '</div>'
+    : '<div style="background:var(--cream);border-radius:12px;padding:12px;font-size:12px;color:var(--gray);margin-bottom:12px">'+
+        'Vamos a enviarte un código a <strong id="cpEmailLbl" style="color:var(--dk)">'+(currentUser&&currentUser.email?currentUser.email:'tu email')+'</strong>. Ingresalo junto con tu nueva contraseña.'+
+      '</div>'+
+      '<div style="display:grid;gap:10px">'+
+        '<div style="position:relative"><input type="text" id="cpCode" inputmode="numeric" maxlength="6" placeholder="Código de verificación" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;letter-spacing:6px;font-weight:700" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'"></div>'+
+        '<div style="position:relative"><input type="password" id="cpNew" placeholder="Nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'"><button type="button" onclick="togglePw(\'cpNew\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+        '<div style="position:relative"><input type="password" id="cpConfirm" placeholder="Confirmar nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'"><button type="button" onclick="togglePw(\'cpConfirm\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
+      '</div>'+
+      '<div id="cpError" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px">'+
+        '<button id="cpSendBtn" onclick="sendChangePasswordCode(\'cpSendBtn\')" style="padding:13px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:12px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Enviar código</button>'+
+        '<button id="cpSubmitBtn" onclick="doChangePassword()" style="padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Cambiar contraseña</button>'+
+      '</div>';
   overlay.innerHTML=
     '<div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="document.getElementById(\'changePwModal\').remove()"></div>'+
     '<div style="position:relative;background:#fff;border-radius:20px;width:min(440px,92vw);padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:1">'+
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">'+
-        '<div style="font-size:18px;font-weight:700;color:var(--dk)">Cambiar contraseña</div>'+
+        '<div style="font-size:18px;font-weight:700;color:var(--dk)">'+(title||'Cambiar contraseña')+'</div>'+
         '<button onclick="document.getElementById(\'changePwModal\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>'+
       '</div>'+
-      '<div style="display:grid;gap:12px">'+
-        '<div style="position:relative"><input type="password" id="cpCurrent" placeholder="Contraseña actual" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpCurrent\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-        '<div style="position:relative"><input type="password" id="cpNew" placeholder="Nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpNew\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-        '<div style="position:relative"><input type="password" id="cpConfirm" placeholder="Confirmar nueva contraseña" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'cpConfirm\')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-      '</div>'+
-      '<div id="cpError" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>'+
-      '<button onclick="doChangePassword()" style="width:100%;padding:14px;margin-top:16px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:transform .15s" onmouseover="this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.transform=\'translateY(0)\'">Cambiar contraseña</button>'+
+      body+
     '</div>';
   document.body.appendChild(overlay);
-
-  var first=document.getElementById('cpCurrent');
+  var first=noPassword?null:document.getElementById('cpSendBtn');
   if(first)setTimeout(function(){first.focus();},100);
+}
+function openChangePassword(){
+  openPasswordChangeModal('Cambiar contraseña');
+}
+function openSecurityPanel(){
+  openPasswordChangeModal('Seguridad de la Cuenta');
 }
 
 function togglePw(id){var el=document.getElementById(id);if(el)el.type=el.type==='password'?'text':'password';}
+async function sendChangePasswordCode(btnId){
+  if(!currentUser){showToast('Iniciá sesión para continuar');return;}
+  var err=document.getElementById('cpError');
+  if(err)err.style.display='none';
+  var btn=document.getElementById(btnId);
+  try{
+    var data=await window.gpFetch('/api/auth/forgot-password',{
+      method:'POST',
+      body:{email:currentUser.email}
+    });
+    if(data.error){
+      if(data.error.toLowerCase().indexOf('demasiados')!==-1){
+        if(err){err.textContent=data.error;err.style.display='block';}
+        return;
+      }
+      if(err){err.textContent=data.error;err.style.display='block';}
+      return;
+    }
+    showToast('Código enviado a tu email');
+    startOtpResendCooldown(btn,60);
+    var codeInput=document.getElementById('cpCode');
+    if(codeInput)setTimeout(function(){codeInput.focus();},50);
+  }catch(e){
+    if(err){err.textContent='Error de conexión';err.style.display='block';}
+  }
+}
 function doChangePassword(){
-  var curr=document.getElementById('cpCurrent')?.value||'';
+  var code=document.getElementById('cpCode')?.value||'';
   var newPw=document.getElementById('cpNew')?.value||'';
   var conf=document.getElementById('cpConfirm')?.value||'';
   var err=document.getElementById('cpError');
   if(err)err.style.display='none';
-  if(!curr||!newPw||!conf){if(err){err.textContent='Todos los campos son requeridos';err.style.display='block';};return;}
-  if(newPw.length<6){if(err){err.textContent='La contraseña debe tener al menos 6 caracteres';err.style.display='block';};return;}
+  if(!code||!newPw||!conf){if(err){err.textContent='Completá el código, la nueva contraseña y su confirmación';err.style.display='block';};return;}
+  if(code.length<6){if(err){err.textContent='Ingresá el código completo recibido por mail';err.style.display='block';};return;}
+  if(!isPasswordStrong(newPw)){if(err){err.textContent=passwordPolicyMsg();err.style.display='block';};return;}
   if(newPw!==conf){if(err){err.textContent='Las contraseñas no coinciden';err.style.display='block';};return;}
 
-  fetch(API_URL+'/api/auth/change-password',{
+  window.gpFetch('/api/auth/change-password',{
     method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({currentPassword:curr,newPassword:newPw})
-  }).then(function(r){return r.json();}).then(function(res){
+    body:{email:currentUser?currentUser.email:undefined,code:code,newPassword:newPw}
+  }).then(function(res){
     if(res.error){if(err){err.textContent=res.error;err.style.display='block';};return;}
     showToast({title:'Exito',message:'Contraseña actualizada',type:'success'});
     var modal=document.getElementById('changePwModal');if(modal)modal.remove();
-  }).catch(function(){if(err){err.textContent='Error de conexión';err.style.display='block';}});
-}
-
-function openSecurityPanel(){
-  var existing=document.getElementById('securityPanel');
-  if(existing)existing.remove();
-  var overlay=document.createElement('div');
-  overlay.id='securityPanel';
-  overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center';
-  overlay.innerHTML=
-    '<div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="document.getElementById(\'securityPanel\').remove()"></div>'+
-    '<div style="position:relative;background:#fff;border-radius:20px;width:min(480px,92vw);padding:1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);z-index:1;max-height:90vh;overflow-y:auto">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">'+
-        '<div style="font-size:18px;font-weight:700;color:var(--dk)">Seguridad de la Cuenta</div>'+
-        '<button onclick="document.getElementById(\'securityPanel\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray);line-height:1">&times;</button>'+
-      '</div>'+
-      '<div style="background:var(--cream);border-radius:14px;padding:1rem;margin-bottom:1rem">'+
-        '<div style="font-weight:600;color:var(--dk);margin-bottom:8px">Cambiar contraseña</div>'+
-        '<p style="font-size:12px;color:var(--gray);margin-bottom:12px">Elegí una contraseña segura que no uses en otros sitios.</p>'+
-        '<div style="display:grid;gap:8px">'+
-          '<div style="position:relative"><input type="password" id="spCurrent" placeholder="Contraseña actual" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spCurrent\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-          '<div style="position:relative"><input type="password" id="spNew" placeholder="Nueva contraseña" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spNew\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-          '<div style="position:relative"><input type="password" id="spConfirm" placeholder="Confirmar nueva contraseña" style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;box-sizing:border-box;font-family:inherit;outline:none"><button type="button" onclick="togglePw(\'spConfirm\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div>'+
-        '</div>'+
-        '<div id="spError" style="font-size:11px;color:var(--red);margin-top:8px;display:none"></div>'+
-        '<button onclick="doSecurityChangePassword()" style="width:100%;padding:12px;margin-top:12px;border:none;border-radius:10px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Actualizar contraseña</button>'+
-      '</div>'+
-      '<div style="background:var(--cream);border-radius:14px;padding:1rem">'+
-        '<div style="font-weight:600;color:var(--dk);margin-bottom:4px">Sesiones activas</div>'+
-        '<p style="font-size:12px;color:var(--gray);margin-bottom:8px">Si ves actividad sospechosa, cerrá sesión en todos los dispositivos.</p>'+
-        '<button onclick="doLogout();document.getElementById(\'securityPanel\').remove();window.location.href=\'/login\'" style="padding:10px 20px;background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cerrar sesión en todos lados</button>'+
-      '</div>'+
-    '</div>';
-  document.body.appendChild(overlay);
-}
-
-function doSecurityChangePassword(){
-  var curr=document.getElementById('spCurrent')?.value||'';
-  var newPw=document.getElementById('spNew')?.value||'';
-  var conf=document.getElementById('spConfirm')?.value||'';
-  var err=document.getElementById('spError');
-  if(err)err.style.display='none';
-  if(!curr||!newPw||!conf){if(err){err.textContent='Todos los campos son requeridos';err.style.display='block';};return;}
-  if(newPw.length<6){if(err){err.textContent='Al menos 6 caracteres';err.style.display='block';};return;}
-  if(newPw!==conf){if(err){err.textContent='No coinciden';err.style.display='block';};return;}
-
-  fetch(API_URL+'/api/auth/change-password',{
-    method:'PUT',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({currentPassword:curr,newPassword:newPw})
-  }).then(function(r){return r.json();}).then(function(res){
-    if(res.error){if(err){err.textContent=res.error;err.style.display='block';};return;}
-    showToast({title:'Exito',message:'Contraseña actualizada',type:'success'});
-    document.getElementById('securityPanel').remove();
   }).catch(function(){if(err){err.textContent='Error de conexión';err.style.display='block';}});
 }
 

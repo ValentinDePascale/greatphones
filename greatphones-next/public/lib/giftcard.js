@@ -14,7 +14,7 @@ function renderGiftModal(presetAmount) {
 
   var modal = document.createElement('div')
   modal.id = 'gcModal'
-  modal.className = 'modal-overlay'
+  modal.className = 'modal-overlay show'
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s ease'
 
   var isCustom = presetAmount === 0

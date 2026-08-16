@@ -164,6 +164,7 @@ function loadProducts(){
     renderFeaturedGrid();
     if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
+    if(window.currentAdminTab==='prods'&&typeof renderAdminProductsFiltered==='function')renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
   }).catch(function(e){hideLoadingBar();console.error('Error loading products:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los productos');});
 }
 
@@ -191,6 +192,7 @@ function loadAccessories(){
     if(currentAcc&&typeof renderAccVariants==='function')renderAccVariants();
     if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
+    if(window.currentAdminTab==='acc'&&typeof renderAdminAccFiltered==='function')renderAdminAccFiltered(document.getElementById('adminAccSearch')?document.getElementById('adminAccSearch').value:'');
   }).catch(function(e){console.error('Error loading accessories:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los accesorios');});
 }
 
@@ -202,19 +204,46 @@ function refreshAdmin(){
     invalidateCache('/api/accessories');
     invalidateCache('/api/inventory');
   }
-  loadProducts();
-  loadAccessories();
+  // Esperar a que carguen los datos nuevos antes de re-renderizar el tab.
+  // Antes se llamaba loadProducts() y loadAccessories() sin esperar, pero son
+  // async; el render del tab se ejecutaba con datos viejos.
+  var tab=window.currentAdminTab;
+  Promise.all([
+    Promise.resolve(loadProducts()),
+    Promise.resolve(loadAccessories())
+  ]).then(function(){
+    // Re-renderizar el tab activo con los datos frescos.
+    if(tab==='prods'&&typeof loadAdminProducts==='function')loadAdminProducts();
+    if(tab==='acc'&&typeof renderAccGrid==='function')renderAccGrid();
+    if(tab==='stock'&&typeof renderStockList==='function')renderStockList();
+    if(tab==='promos'){
+      if(typeof renderPromoProducts==='function')renderPromoProducts();
+      if(typeof renderActivePromos==='function')renderActivePromos();
+    }
+    if(tab==='dashboard'&&typeof loadDashboard==='function')loadDashboard();
+  });
 }
 
 function loadDashboard(){
   if(!currentUser||currentUser.role!=='ADMIN')return;
   if(window._dashRefreshInterval)clearInterval(window._dashRefreshInterval);
+  if(window._dashDataChangedHandler){window.removeEventListener('admin:data-changed',window._dashDataChangedHandler);}
+  if(window._dashVisibilityHandler){document.removeEventListener('visibilitychange',window._dashVisibilityHandler);}
+  window._dashDataChangedHandler=function(){if(typeof loadDashboard==='function')loadDashboard();};
+  window._dashVisibilityHandler=function(){if(!document.hidden&&typeof loadDashboard==='function')loadDashboard();};
+  window.addEventListener('admin:data-changed',window._dashDataChangedHandler);
+  document.addEventListener('visibilitychange',window._dashVisibilityHandler);
   fetch(API_URL+'/api/admin/dashboard',{
-    headers:{'X-User-Id':currentUser.id}
+    headers:{}
   }).then(function(r){
     if(!r.ok)throw new Error('Error '+r.status);
     return r.json();
   }).then(function(d){
+    // El usuario pudo haber navegado a otro tab mientras el fetch estaba
+    // en vuelo. No pintar si ya no estamos en el dashboard.
+    if(window.currentAdminTab!=='dashboard')return;
+    var dashView=document.getElementById('dashboard-view');
+    if(!dashView)return;
     window._dashData=d;
     renderDashStats();
     renderDashRecentOrders(d);
@@ -225,19 +254,6 @@ function loadDashboard(){
   }).catch(function(e){
     console.error('Dashboard error:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudo cargar el dashboard');
   });
-  window._dashRefreshInterval=setInterval(function(){
-    fetch(API_URL+'/api/admin/dashboard',{
-      headers:{'X-User-Id':currentUser.id}
-    }).then(function(r){return r.json();}).then(function(d){
-      window._dashData=d;
-      renderDashStats();
-      renderDashRecentOrders(d);
-      renderDashTopProducts(d);
-      renderDashStockAlerts(d);
-      renderDashPaymentBreakdown(d);
-      renderDashCharts();
-    }).catch(function(e){console.error('Dashboard refresh error:',e);});
-  },300000);
 }
 
 function setDashView(view){
@@ -266,6 +282,7 @@ function updateDashMonth(month){
 
 function renderDashStats(){
   if(!window._dashData)return;
+  if(!document.getElementById('kpi-revenue'))return;
   var d=window._dashData;
   var stats;
   var isMensual=window.dashView==='mensual';
@@ -707,13 +724,26 @@ return isOfferValid(p);
   }else if(tb)tb.style.display='none';
   renderGrid('offerStrip',offers);
 }
+function shopFilterMatches(p,f){
+  if(!p)return false;
+  var fLower=(f||'').toLowerCase();
+  if(fLower==='iphone'){
+    var brand=(p.brand||'').toLowerCase();
+    var type=(p.type||'').toLowerCase();
+    if((brand==='apple'||brand==='iphone')&&(type==='celular'||type==='tablet'))return true;
+    return (((p.name||'')+' '+(p.modelGroup||'')).toLowerCase().indexOf('iphone')>=0);
+  }
+  return !!(p.brand&&p.brand.toLowerCase()===fLower);
+}
 function renderShopGrid(){
   var grid=document.getElementById('shopGrid');
   var count=document.getElementById('shopCount');
   if(!grid)return;
   var prods=PRODUCTS.slice();
   if(!window.shopFilter)window.shopFilter='todos';
-  if(window.shopFilter!=='todos')prods=prods.filter(function(p){return p.brand&&p.brand.toLowerCase()===window.shopFilter.toLowerCase();});
+  if(window.shopFilter!=='todos'&&window.shopFilter!=='fav'){
+    prods=prods.filter(function(p){return shopFilterMatches(p,window.shopFilter);});
+  }
   if(window.shopFilter==='fav'){
     prods=prods.filter(function(p){return favorites.indexOf(p.id)!==-1;});
   }
@@ -906,6 +936,7 @@ function renderAccGrid(){
           (category?'<div class="pcard-subtitle">'+category+'</div>':'')+
           '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(accData.price)+'</span><span class="pcard-discount-badge">-'+accData.discount+'%</span>':'')+'</div>'+
           '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+          '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round(finalPrice/12))+' sin interes</span>'+
           (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();openAccDetail(\''+g.id+'\')">Ver variantes</button>')+
           stockLine+
         '</div>'+
@@ -925,6 +956,7 @@ function renderAccGrid(){
         (category?'<div class="pcard-subtitle">'+category+'</div>':'')+
         '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(accData.price)+'</span><span class="pcard-discount-badge">-'+accData.discount+'%</span>':'')+'</div>'+
         '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+        '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round(finalPrice/12))+' sin interes</span>'+
         (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+accData.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
         stockLine+
       '</div>'+
@@ -937,13 +969,27 @@ function openAccDetail(id){
     var detailData=window.__INITIAL_ACCS_DETAIL__;
     if(detailData.accessory){
       var cached=getById(window.ACCS,id);
-      if(!cached)window.ACCS.push(detailData.accessory);
+      if(!cached&&window.ACCS)window.ACCS.push(detailData.accessory);
     }
     delete window.__INITIAL_ACCS_DETAIL__;
   }
   detailBackTarget='accesorios';
   currentProd=null;
-  currentAcc=getById(window.ACCS,id);if(!currentAcc)return;
+  currentAcc=window.ACCS?getById(window.ACCS,id):null;if(!currentAcc){
+    if(!window._accLoaded){
+      showLoadingBar();
+      var retryInterval=setInterval(function(){
+        currentAcc=window.ACCS?getById(window.ACCS,id):null;
+        if(currentAcc){
+          clearInterval(retryInterval);
+          hideLoadingBar();
+          openAccDetail(id);
+        }
+      },100);
+      setTimeout(function(){clearInterval(retryInterval);hideLoadingBar();if(typeof showErrorToast==='function')showErrorToast('No encontrado','No se pudo cargar el accesorio');},8000);
+    }
+    return;
+  }
   var now=new Date();
   var isPromoActive=isOfferValid(currentAcc);
   var finalPrice=isPromoActive?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
@@ -1102,7 +1148,7 @@ function openDetail(id, variantId){
     if(detailData.product){
       // Merge product into cache so subsequent lookups work
       var cached=getById(PRODUCTS,id);
-      if(!cached)PRODUCTS.push(detailData.product);
+      if(!cached&&typeof PRODUCTS!=='undefined')PRODUCTS.push(detailData.product);
     }
     if(detailData.variants&&detailData.variants.length>0){
       window._detailVariants=detailData.variants;
@@ -1112,9 +1158,25 @@ function openDetail(id, variantId){
   }
   var activePage=document.querySelector('.page.act');
   if(activePage){var pid=activePage.id.replace('p-','');if(pid&&pid!=='detail')detailBackTarget=pid;}
-  currentProd=getById(PRODUCTS,id);
-  if(!currentProd)currentProd=getById(PREORDER_PRODUCTS,id);
-  if(!currentProd)return;
+  currentProd=typeof PRODUCTS!=='undefined'?getById(PRODUCTS,id):null;
+  if(!currentProd&&typeof PREORDER_PRODUCTS!=='undefined')currentProd=getById(PREORDER_PRODUCTS,id);
+  if(!currentProd){
+    // Product not in cache yet: wait for loadProducts to finish, then retry
+    if(typeof PRODUCTS==='undefined'||!window._productsLoaded){
+      showLoadingBar();
+      var retryInterval=setInterval(function(){
+        currentProd=typeof PRODUCTS!=='undefined'?getById(PRODUCTS,id):null;
+        if(!currentProd&&typeof PREORDER_PRODUCTS!=='undefined')currentProd=getById(PREORDER_PRODUCTS,id);
+        if(currentProd){
+          clearInterval(retryInterval);
+          hideLoadingBar();
+          openDetail(id, variantId);
+        }
+      },100);
+      setTimeout(function(){clearInterval(retryInterval);hideLoadingBar();if(typeof showErrorToast==='function')showErrorToast('No encontrado','No se pudo cargar el producto');},8000);
+    }
+    return;
+  }
   currentAcc=null;
   // Collect all product IDs sharing the same modelGroup
   var variantProdIds=[id];
@@ -1178,7 +1240,7 @@ function openDetail(id, variantId){
   // Show loading skeleton immediately
   renderDetailVariants();
   var fetchUrls=variantProdIds.map(function(pid){
-    return API_URL+'/api/inventory?productId='+pid+'&limit=50';
+    return API_URL+'/api/inventory/public?productId='+pid+'&limit=50';
   });
   Promise.all(fetchUrls.map(function(url){return fetch(url).then(function(r){return r.json();});})).then(function(results){
     if(currentProd.id!==id)return;
@@ -1886,7 +1948,7 @@ function renderOrderHistory(){
   var list=document.getElementById('orderHistory');
   if(!list)return;
   if(!currentUser){list.innerHTML='<div class="cu-empty"><p>Iniciá sesión para ver tu historial</p></div>';return;}
-  fetch(API_URL+'/api/orders?userId='+currentUser.id).then(function(r){return r.json();}).then(function(res){
+  window.gpFetch('/api/orders?userId='+currentUser.id).then(function(res){
     var ords=res.data||res;
     var countEl=document.getElementById('orderCount');
     if(!ords||ords.length===0){
@@ -1898,7 +1960,7 @@ function renderOrderHistory(){
         var status=o.status||'PENDING';
         var badgeClass=statusBadges[status]||'cu-item-badge--neutral';
         var label=statusLabels[status]||status;
-        return'<div class="cu-item"><div class="cu-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="cu-item-body"><div class="cu-item-title">'+(o.items[0]?.product?.name||'Producto')+'</div><div class="cu-item-sub">'+o.code+' · '+new Date(o.createdAt).toLocaleDateString('es-AR')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-weight:700;font-size:13px;color:var(--orange)">$'+o.total.toLocaleString('es-AR')+'</div><span class="cu-item-badge '+badgeClass+'">'+label+'</span></div></div>';
+        return'<div class="cu-item"><div class="cu-item-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><div class="cu-item-body"><div class="cu-item-title">'+esc(o.items[0]?.product?.name||'Producto')+'</div><div class="cu-item-sub">'+esc(o.code)+' · '+new Date(o.createdAt).toLocaleDateString('es-AR')+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-weight:700;font-size:13px;color:var(--orange)">$'+o.total.toLocaleString('es-AR')+'</div><span class="cu-item-badge '+badgeClass+'">'+label+'</span></div></div>';
       }).join('');
     }
   }).catch(function(){
@@ -1994,7 +2056,7 @@ function openClientQuoteDetail(id){
     var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
     
     var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Batería 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
-    var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--cream3);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:12px;color:var(--gray)">Ninguno</span>';
+    var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--cream3);padding:4px 8px;border-radius:6px">'+esc(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:12px;color:var(--gray)">Ninguno</span>';
     
     var conditionLabels={excellent:'Excelente',good:'Bueno',fair:'Regular',poor:'Defectuoso'};
     
@@ -2005,7 +2067,7 @@ function openClientQuoteDetail(id){
     
     var content='<div style="background:var(--cream2);border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'+
       '<div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--cream2);z-index:1;border-radius:16px 16px 0 0">'+
-        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Cotización '+q.code+'</h3>'+
+        '<h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">Cotización '+esc(q.code)+'</h3>'+
         '<button onclick="document.getElementById(\'clientQuoteDetailModal\').remove()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray);padding:4px 8px;border-radius:6px" onmouseover="this.style.background=\'var(--cream3)\'" onmouseout="this.style.background=\'none\'">&times;</button>'+
       '</div>'+
       '<div style="padding:1.5rem">'+
@@ -2016,9 +2078,9 @@ function openClientQuoteDetail(id){
           '<div><div style="font-weight:700;font-size:14px;color:'+sc+'">'+sl+'</div><div style="font-size:11px;color:var(--gray)">'+date+'</div></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.25rem">'+
-          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Dispositivo</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+q.device+'</div></div>'+
-          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Almacenamiento</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+q.storage+'</div></div>'+
-          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Condición</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+(conditionLabels[q.condition]||q.condition)+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Dispositivo</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+esc(q.device)+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Almacenamiento</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+esc(q.storage)+'</div></div>'+
+          '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Condición</div><div style="font-weight:600;font-size:13px;color:var(--dk)">'+esc(conditionLabels[q.condition]||q.condition)+'</div></div>'+
           '<div><div style="font-size:11px;color:var(--gray);margin-bottom:4px">Precio estimado</div><div style="font-weight:700;font-size:16px;color:var(--orange)">$'+q.finalPrice.toLocaleString('es-AR')+'</div></div>'+
         '</div>'+
         '<div style="margin-bottom:1.25rem"><div style="font-size:11px;color:var(--gray);margin-bottom:6px">Extras seleccionados</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+extrasHtml+'</div></div>'+
@@ -2029,15 +2091,15 @@ function openClientQuoteDetail(id){
         '<div style="padding-top:1rem;border-top:1px solid var(--border)">'+
           '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">Datos del cliente</div>'+
           '<div style="font-size:13px;color:var(--dk);line-height:1.8">'+
-            '<div><strong>Nombre:</strong> '+(q.clientName||'No especificado')+'</div>'+
-            '<div><strong>DNI:</strong> '+(q.clientDni||'No especificado')+'</div>'+
-            '<div><strong>Teléfono:</strong> '+(q.clientPhone||'No especificado')+'</div>'+
-            (q.clientProvince?'<div><strong>Provincia:</strong> '+q.clientProvince+(q.clientCp?' (CP: '+q.clientCp+')':'')+'</div>':'')+
+            '<div><strong>Nombre:</strong> '+esc(q.clientName||'No especificado')+'</div>'+
+            '<div><strong>DNI:</strong> '+esc(q.clientDni||'No especificado')+'</div>'+
+            '<div><strong>Teléfono:</strong> '+esc(q.clientPhone||'No especificado')+'</div>'+
+            (q.clientProvince?'<div><strong>Provincia:</strong> '+esc(q.clientProvince)+(q.clientCp?' (CP: '+esc(q.clientCp)+')':'')+'</div>':'')+
           '</div>'+
         '</div>'+
         (q.rejectReason?'<div style="margin-top:1.25rem;padding:12px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:10px">'+
           '<div style="font-size:11px;color:var(--red);font-weight:600;margin-bottom:4px">Motivo de rechazo</div>'+
-          '<div style="font-size:13px;color:var(--dk)">'+q.rejectReason+'</div>'+
+          '<div style="font-size:13px;color:var(--dk)">'+esc(q.rejectReason)+'</div>'+
         '</div>':'')+
       '</div>'+
     '</div>';
@@ -2057,7 +2119,42 @@ document.addEventListener('DOMContentLoaded',function(){
   initSlider();
   startTimer();
   renderNotebookConfig();
+  restoreSession();
 });
+
+// Restaurar la sesion del usuario al cargar la pagina. Si gp-session es valida,
+// hacemos /api/auth/me para obtener el perfil y guardarlo en localStorage.
+// Asi currentUser queda seteado incluso despues de un reload.
+function restoreSession(){
+  var stored=null;
+  try{stored=Storage.get('user');}catch(e){}
+  if(stored&&stored.id){
+    currentUser=stored;
+    updateUserUI();
+    if(typeof updateCartBadge==='function')updateCartBadge();
+    if(typeof updateChatWidget==='function')updateChatWidget();
+  }
+  if(typeof window.gpFetch!=='function')return;
+  window.gpFetch('/api/auth/me').then(function(data){
+    if(data&&data.user){
+      currentUser=data.user;
+      try{Storage.set('user',currentUser);}catch(e){}
+      updateUserUI();
+      if(typeof updateCartBadge==='function')updateCartBadge();
+      if(typeof updateChatWidget==='function')updateChatWidget();
+      // Si estamos en /cuenta, refrescar las secciones ahora que hay sesion
+      if(typeof renderOrderHistory==='function')renderOrderHistory();
+      if(typeof loadClientQuotes==='function')loadClientQuotes();
+      if(typeof cpnRenderCuentaSection==='function')cpnRenderCuentaSection('ACTIVE');
+      var amt=document.getElementById('cuBalanceAmount');
+      if(amt&&typeof getWallet==='function'){
+        getWallet().then(function(w){
+          amt.innerHTML='$<span id="cuentaSaldo" style="font-family:\'Playfair Display\',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px">'+(w.balance||0).toLocaleString('es-AR')+'</span>';
+        }).catch(function(){});
+      }
+    }
+  }).catch(function(){});
+}
 
 // =========== SLIDER ===========
 var sliderIdx=0,sliderTimer=null;
@@ -2207,24 +2304,8 @@ function adminTab(tab,btn){
   if(btn)btn.classList.add('act');
   
   // Update topbar title
-  var titles={
-    dashboard:'Dashboard',
-    prods:'Productos',
-    inventory:'Inventario',
-    acc:'Accesorios',
-    stock:'Stock',
-    promos:'Promociones',
-    orders:'Pedidos',
-    arrep:'Arrepentimientos',
-    chat:'Chat',
-    quotes:'Cotizaciones',
-    instore:'Venta en Tienda',
-    preventa:'Preventas',
-    sales:'Historial de Ventas',
-    users:'Usuarios'
-  };
   var titleEl=document.getElementById('adminPageTitle');
-  if(titleEl&&titles[tab])titleEl.textContent=titles[tab];
+  if(titleEl&&ADMIN_TITLES[tab])titleEl.textContent=ADMIN_TITLES[tab];
   
   // Activate section (for old admin panel)
   var sec=document.getElementById('as-'+tab);
@@ -2948,355 +3029,6 @@ function showImeiProductModal(existingProductId){
     });
   };
 
-  window.abrirScannerQR=function(opts){
-    opts=opts||{};
-    var onDetected=opts.onDetected||function(){};
-    var mode=opts.mode||'qr';
-    var isBarcode=mode==='barcode';
-    var frameW=isBarcode?360:260;
-    var frameH=isBarcode?200:260;
-    var texto=isBarcode?'Apuntá al código de barras del dispositivo':'Apuntá al código QR del dispositivo';
-    var overlay=document.createElement('div');
-    overlay.style.cssText='position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;';
-    overlay.innerHTML=
-      '<video id="qrScannerVideo" playsinline muted style="position:absolute;width:100%;height:100%;object-fit:cover"></video>'+
-      '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">'+
-        '<div style="position:relative;width:'+frameW+'px;height:'+frameH+'px">'+
-          '<div style="position:absolute;inset:0;border-radius:'+(isBarcode?12:20)+'px;border:2px solid rgba(255,107,44,.7);box-shadow:0 0 0 9999px rgba(0,0,0,.55)"></div>'+
-          '<div class="qrscan-line" style="position:absolute;left:16px;right:16px;height:2px;background:#FF6B2C;box-shadow:0 0 16px #FF6B2C;border-radius:2px;animation:qrscanMove 2s ease-in-out infinite"></div>'+
-        '</div>'+
-        '<div style="color:#fff;font-size:14px;margin-top:28px;text-align:center;opacity:.85">'+texto+'</div>'+
-        '<div id="qrStatusText" style="color:rgba(255,255,255,.5);font-size:12px;margin-top:8px"></div>'+
-      '</div>'+
-      '<button id="qrScannerCancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;pointer-events:auto;backdrop-filter:blur(8px);z-index:10">Cancelar</button>'+
-      '<button id="qrScannerBack" style="position:absolute;top:16px;left:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:20px;cursor:pointer;pointer-events:auto;z-index:10;display:flex;align-items:center;justify-content:center">←</button>'+
-      '<canvas id="qrScannerCanvas" style="display:none"></canvas>'+
-      '<style>@keyframes qrscanMove{0%{top:24px}50%{top:calc(100% - 24px)}100%{top:24px}}</style>';
-    document.body.appendChild(overlay);
-
-    var video=document.getElementById('qrScannerVideo');
-    var canvas=document.getElementById('qrScannerCanvas');
-    var statusEl=document.getElementById('qrStatusText');
-    var detenido=false;
-
-    function limpiar(){
-      if(detenido)return;
-      detenido=true;
-      if(zxingReader){zxingReader=null;}
-      if(window.Quagga){try{Quagga.stop();}catch(e){}}
-      if(html5QrCode){try{html5QrCode.stop().catch(function(){/* cleanup, ignore errors */});}catch(e){}}
-      if(video.srcObject){video.srcObject.getTracks().forEach(function(t){t.stop();});}
-      overlay.remove();
-    }
-
-    document.getElementById('qrScannerCancel').onclick=limpiar;
-    document.getElementById('qrScannerBack').onclick=limpiar;
-
-    // ---- Barcode detection setup ----
-    var barcodeDetector=null;
-    var usandoQuagga=false;
-    var detectando=false;
-    var ultimaDetect=0;
-    var zxingReader=null;
-    var zxingListo=false;
-
-    function initBarcodeDetector(){
-      if(!window.BarcodeDetector)return false;
-      try{
-        barcodeDetector=new BarcodeDetector({formats:['code_128','code_39','ean_13','ean_8','upc_a']});
-        return true;
-      }catch(e){
-        var list=['code_128','ean_13','code_39','ean_8','upc_a'];
-        for(var i=0;i<list.length;i++){
-          try{barcodeDetector=new BarcodeDetector({formats:[list[i]]});return true;}catch(e2){}
-        }
-        return false;
-      }
-    }
-
-    // ---- Luhn validation para IMEI ----
-    function luhnValido(n){
-      var s=0,a=false;
-      for(var i=n.length-1;i>=0;i--){
-        var v=parseInt(n[i],10);
-        if(a){v*=2;if(v>9)v-=9;}
-        s+=v;a=!a;
-      }
-      return s%10===0;
-    }
-
-    function procesarDigitos(raw){
-      var d=raw.replace(/[^0-9]/g,'');
-      var len=d.length;
-      if(len>=14&&len<=16){
-        var imei=d.substring(0,15);
-        if(luhnValido(imei)){
-          limpiar();onDetected({type:'imei',imei:imei,raw:raw});return true;
-        }
-        if(len===14){
-          for(var cd=0;cd<=9;cd++){
-            var test=d+cd;
-            if(luhnValido(test)){limpiar();onDetected({type:'imei',imei:test,raw:raw});return true;}
-          }
-        }
-        if(statusEl)statusEl.textContent='Leyendo... '+d;
-      }
-      return false;
-    }
-
-    // ---- Quagga/Quagga2 (fallback 1D barcode) ----
-    function escanearQuagga(){
-      if(detenido||!window.Quagga)return;
-      if(statusEl)statusEl.textContent='Alineá el código de barras';
-      usandoQuagga=true;
-      video.style.display='none';
-      Quagga.init({
-        inputStream:{name:"Live",type:"LiveStream",target:overlay,
-          constraints:{width:{min:640,ideal:1280},height:{min:480,ideal:720},facingMode:"environment"}
-        },
-        decoder:{readers:["code_128_reader","code_39_reader","ean_reader"]},
-        locator:{patchSize:"medium"},
-        frequency:5,
-        debug:false
-      },function(err){
-        if(detenido)return;
-        if(err){
-          if(statusEl)statusEl.textContent='Error al iniciar escáner';
-          return;
-        }
-        Quagga.start();
-      });
-      Quagga.onDetected(function(result){
-        if(detenido)return;
-        procesarDigitos(result.codeResult.code);
-      });
-    }
-
-    // ---- Html5Qrcode (fallback principal para iOS/Safari) ----
-    var html5QrCode=null;
-    function escanearHtml5Qrcode(){
-      if(detenido)return;
-      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
-      if(window.Html5Qrcode){
-        iniciarHtml5Qrcode();
-        return;
-      }
-      var sc=document.createElement('script');
-      sc.src='https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js';
-      sc.onload=function(){
-        if(detenido)return;
-        iniciarHtml5Qrcode();
-      };
-      sc.onerror=function(){
-        showErrorToast('Error','No se pudo cargar el escáner');
-        limpiar();
-      };
-      document.head.appendChild(sc);
-    }
-    function iniciarHtml5Qrcode(){
-      if(detenido)return;
-      video.style.display='none';
-      var frame=overlay.querySelector('div[style*="pointer-events:none"]');
-      if(frame)frame.style.display='none';
-      var readerDiv=document.getElementById('html5qr-reader');
-      if(!readerDiv){
-        readerDiv=document.createElement('div');
-        readerDiv.id='html5qr-reader';
-        readerDiv.style.cssText='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;';
-        overlay.insertBefore(readerDiv,overlay.firstChild);
-      }
-      html5QrCode=new Html5Qrcode('html5qr-reader');
-      var config={
-        fps:20,
-        qrbox:{width:320,height:180},
-        aspectRatio:1.777,
-      };
-      html5QrCode.start(
-        {facingMode:'environment'},
-        config,
-        function(decodedText){
-          if(detenido)return;
-          procesarDigitos(decodedText);
-        },
-        function(errorMessage){}
-      ).catch(function(err){
-        if(statusEl)statusEl.textContent='Error: '+err;
-        // fallback: intentar sin qrbox
-        html5QrCode.start({facingMode:'environment'},{fps:20},function(t){procesarDigitos(t);},function(){}).catch(function(e2){
-          if(statusEl)statusEl.textContent='Error: '+e2;
-        });
-      });
-    }
-
-    // ---- ZXing library scanner (canvas frames, todos los browsers) ----
-    function cargarZxingLib(callback){
-      if(zxingListo&&window.ZXing&&window.ZXing.MultiFormatReader){
-        if(!zxingReader)iniciarZxingCanvas();
-        callback();return;
-      }
-      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
-      var sc=document.createElement('script');
-      sc.src='https://cdn.jsdelivr.net/npm/@zxing/library@latest/umd/index.min.js';
-      sc.onload=function(){
-        if(detenido)return;
-        zxingListo=true;
-        iniciarZxingCanvas();
-        callback();
-      };
-      sc.onerror=function(){
-        cargarQuagga2(callback);
-      };
-      document.head.appendChild(sc);
-    }
-
-    function iniciarZxingCanvas(){
-      if(!window.ZXing)return;
-      var ZX=window.ZXing;
-      try{
-        var hints=new Map();
-        hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS,[
-          ZX.BarcodeFormat.CODE_128,
-          ZX.BarcodeFormat.CODE_39,
-          ZX.BarcodeFormat.EAN_13,
-          ZX.BarcodeFormat.EAN_8,
-          ZX.BarcodeFormat.UPC_A
-        ]);
-        zxingReader=new ZX.MultiFormatReader();
-        zxingReader.setHints(hints);
-      }catch(e){
-        zxingReader=new ZX.MultiFormatReader();
-      }
-    }
-
-    // ---- Quagga2 (fallback si ZXing no carga) ----
-    function cargarQuagga2(callback){
-      if(window.Quagga){escanearQuagga();return;}
-      if(statusEl)statusEl.innerHTML='<span class="loader-spinner" style="padding:0;display:inline-flex;gap:6px"><span style="font-size:13px">Cargando escáner...</span></span>';
-      var sc=document.createElement('script');
-      sc.src='https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.12.1/dist/quagga.min.js';
-      sc.onload=function(){
-        if(detenido)return;
-        escanearQuagga();
-      };
-      sc.onerror=function(){
-        escanearHtml5Qrcode();
-      };
-      document.head.appendChild(sc);
-    }
-
-    // ---- Main scan loop ----
-    function escanear(){
-      if(detenido)return;
-      if(video.readyState<2){requestAnimationFrame(escanear);return;}
-
-      if(barcodeDetector){
-        var ahora=Date.now();
-        if(!detectando&&ahora-ultimaDetect>100){
-          ultimaDetect=ahora;
-          detectando=true;
-          barcodeDetector.detect(video).then(function(barcodes){
-            detectando=false;
-            if(detenido)return;
-            for(var i=0;i<barcodes.length;i++){
-              if(procesarDigitos(barcodes[i].rawValue))return;
-            }
-            if(statusEl&&barcodes.length===0)statusEl.textContent='Buscando código de barras...';
-          }).catch(function(){detectando=false;});
-        }
-        requestAnimationFrame(escanear);
-        return;
-      }
-
-      if(zxingReader&&!usandoQuagga){
-        var zxctx=canvas.getContext('2d');
-        if(!zxctx){requestAnimationFrame(escanear);return;}
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        zxctx.drawImage(video,0,0,canvas.width,canvas.height);
-        var zxImgData=zxctx.getImageData(0,0,canvas.width,canvas.height);
-        try{
-          var zxLum=new window.ZXing.RGBLuminanceSource(canvas.width,canvas.height,new Uint8ClampedArray(zxImgData.data));
-          var zxBmp=new window.ZXing.BinaryBitmap(new window.ZXing.HybridBinarizer(zxLum));
-          var zxRes=zxingReader.decode(zxBmp);
-          if(zxRes&&zxRes.getText()){
-            if(procesarDigitos(zxRes.getText()))return;
-          }
-          if(statusEl)statusEl.textContent='Buscando código de barras...';
-        }catch(e){}
-        requestAnimationFrame(escanear);
-        return;
-      }
-
-      if(!usandoQuagga){
-        var ctx=canvas.getContext('2d');
-        if(!ctx){requestAnimationFrame(escanear);return;}
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        var imageData=ctx.getImageData(0,0,canvas.width,canvas.height);
-        try{
-          var code=jsQR(imageData.data,imageData.width,imageData.height,{inversionAttempts:'dontInvert'});
-          if(code&&code.data){
-            var data=code.data.trim();
-            var match=data.match(/\/inv\/([A-Za-z0-9-]+)/);
-            if(match){limpiar();onDetected({type:'code',code:match[1],raw:data});return;}
-            var d=data.replace(/[^0-9]/g,'');
-            if(d.length>=14&&d.length<=16&&procesarDigitos(data))return;
-          }
-        }catch(e){}
-      }
-      requestAnimationFrame(escanear);
-    }
-
-    function iniciarCamara(){
-      var constraints=isBarcode
-        ? {video:{width:{min:1280,ideal:1920,max:2560},height:{min:720,ideal:1080,max:1440},facingMode:{exact:'environment'},focusMode:'continuous'}}
-        : {video:{facingMode:{ideal:'environment'}}};
-      navigator.mediaDevices.getUserMedia(constraints).then(function(s){
-        video.srcObject=s;video.play();escanear();
-      }).catch(function(){
-        var fallback=isBarcode
-          ? {video:{width:{ideal:1280},height:{ideal:720},facingMode:'environment'}}
-          : {video:{facingMode:'environment'}};
-        return navigator.mediaDevices.getUserMedia(fallback).then(function(s){
-          video.srcObject=s;video.play();escanear();
-        });
-      }).catch(function(){
-        var fallback2=isBarcode
-          ? {video:{facingMode:'environment'}}
-          : {video:{facingMode:'environment'}};
-        return navigator.mediaDevices.getUserMedia(fallback2).then(function(s){
-          video.srcObject=s;video.play();escanear();
-        });
-      }).catch(function(err){
-        showErrorToast('Error','No se pudo acceder a la cámara: '+(err.message||''));
-        limpiar();
-      });
-    }
-
-    // ---- Script loading and start ----
-    if(isBarcode){
-      var tieneNativo=initBarcodeDetector();
-      if(tieneNativo){
-        if(statusEl)statusEl.textContent='Escáner listo';
-        iniciarCamara();
-      }else{
-        cargarZxingLib(function(){
-          iniciarCamara();
-        });
-      }
-    }else{
-      if(typeof jsQR==='undefined'){
-        var sc=document.createElement('script');
-        sc.src='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js';
-        sc.onload=iniciarCamara;
-        document.head.appendChild(sc);
-      }else{
-        iniciarCamara();
-      }
-    }
-  };
-
   window.startImeiScanner=function(){
     // Remove any lingering confirmation overlay before opening scanner
     var prev=document.getElementById('imeiConfirmOverlay');
@@ -3306,7 +3038,7 @@ function showImeiProductModal(existingProductId){
       mode:'barcode',
       onDetected:function(res){
         if(res.type==='imei'){
-          var imei=res.imei;
+          var imei=res.value;
           var confirmDiv=document.createElement('div');
           confirmDiv.id='imeiConfirmOverlay';
           confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
@@ -3314,7 +3046,7 @@ function showImeiProductModal(existingProductId){
             '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
             '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
             '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">El código escaneado es:</p>'+
-            '<div id="imeiConfirmNumber" style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+imei+'</div>'+
+            '<div id="imeiConfirmNumber" style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+esc(imei)+'</div>'+
             '<div style="display:flex;gap:8px">'+
               '<button id="imeiRetryBtn" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
               '<button id="imeiConfirmBtn" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
@@ -3471,395 +3203,183 @@ function showImeiProductModal(existingProductId){
   };
 }
 
+// Titulos legibles para el topbar del admin. Usado por adminTab y renderAdminContent
+// para que el header se actualice al cambiar de tab (incluso cuando se navega
+// directamente a /admin/<tab> y no se pasa por adminTab).
+var ADMIN_TITLES={
+  dashboard:'Dashboard',
+  prods:'Productos',
+  inventory:'Inventario',
+  acc:'Accesorios',
+  stock:'Stock',
+  promos:'Promociones',
+  orders:'Pedidos',
+  arrep:'Arrepentimientos',
+  chat:'Chat',
+  quotes:'Cotizaciones',
+  instore:'Venta en Tienda',
+  preventa:'Preventas',
+  sales:'Historial de Ventas',
+  users:'Usuarios'
+};
+
+// Wrapper unificado que delega al renderAdminContent de admin.js (que maneja
+// prods/acc/orders/chat/etc.) o al renderDashboardContent propio (dashboard).
+// Se llama desde AdminPageClient (React) al cargar /admin/<tab>.
 function renderAdminContent(tab){
   window.currentAdminTab=tab;
   var el=document.getElementById('adminContent');
   if(!el)return;
-  window.currentAdminTab=tab;
   if(tab!=='chats'){window.adminActiveConvId=null;}
   if(tab!=='dashboard'&&window._dashRefreshInterval){
     clearInterval(window._dashRefreshInterval);
     window._dashRefreshInterval=null;
   }
-  
-  if(tab==='acc'&&(!window.ACCS||window.ACCS.length===0)){
-    loadAccessories();
-  }
-  
-  // Reset tab buttons
+
+  // Actualizar titulo del topbar para reflejar el tab activo.
+  var titleEl=document.getElementById('adminPageTitle');
+  if(titleEl&&ADMIN_TITLES[tab])titleEl.textContent=ADMIN_TITLES[tab];
+
+  // Reset tab buttons y activar el actual
   document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa,#adm-sales,#adm-users').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
+
   if(tab==='dashboard'){
-    var months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    var monthOptions=months.map(function(m,i){return'<option value="'+i+'"'+(i===new Date().getMonth()?' selected':'')+'>'+m+'</option>';}).join('');
-    
-    el.innerHTML='<div id="dashboard-view">'+
-      '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px" class="dash-header">'+
-        '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard</h1>'+
-        '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px" class="dash-header-actions">'+
-          '<button id="dashTabMensual" onclick="setDashView(\'mensual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--orange);color:#fff">Mensual</button>'+
-          '<button id="dashTabAnual" onclick="setDashView(\'anual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--gray)">Anual</button>'+
-          '<select id="dashMonthSelect" onchange="updateDashMonth(this.value)" style="padding:8px 12px;border:none;border-left:1px solid var(--border);border-radius:0 8px 8px 0;font-size:13px;font-weight:600;color:var(--dk);background:transparent;outline:none;cursor:pointer">'+monthOptions+'</select>'+
-        '</div>'+
-      '</header>'+
-      
-      '<!-- KPI Cards -->'+
-      '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem" class="dash-kpis">'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-revenue-label">Ingresos</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCB5</div>'+
-          '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-revenue-change-container"><span id="kpi-revenue-change">--</span></div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-orders-label">Pedidos</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDED2</div>'+
-          '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-orders-change-container"><span id="kpi-orders-change">--</span></div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-ticket-label">Ticket Promedio</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCCB</div>'+
-          '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-ticket-change-container"><span id="kpi-ticket-change">--</span></div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-users-label">Nuevos Usuarios</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDC64</div>'+
-          '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-users-change-container"><span id="kpi-users-change">--</span></div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
-          '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
-            '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-profit-label">Ganancia</h3>'+
-            '<div style="width:36px;height:36px;border-radius:8px;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;font-size:18px">\uD83D\uDCC8</div>'+
-          '</div>'+
-          '<div style="font-size:28px;font-weight:800;color:var(--green);margin-bottom:6px" id="kpi-profit">$0</div>'+
-          '<div style="font-size:12px;font-weight:600;color:var(--gray);display:inline-flex;align-items:center;gap:4px" id="kpi-profit-usd">US$ 0</div>'+
-        '</div>'+
-      '</section>'+
-      
-      '<!-- Recent Orders & Top Products -->'+
-      '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem" class="dash-row">'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
-          '<div style="padding:16px;border-bottom:1px solid var(--border);background:var(--cream2);display:flex;justify-content:space-between;align-items:center">'+
-            '<h2 style="font-size:16px;font-weight:700">Ultimos Pedidos</h2>'+
-          '</div>'+
-          '<table style="width:100%;border-collapse:collapse">'+
-            '<thead><tr style="border-bottom:1px solid var(--border)">'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">ID</th>'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Cliente</th>'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Monto</th>'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Ganancia</th>'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Método</th>'+
-              '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Estado</th>'+
-            '</tr></thead>'+
-            '<tbody id="dashboard-recent-orders"></tbody>'+
-          '</table>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
-          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ingresos Mensuales</h2>'+
-          '<div style="position:relative;height:280px"><canvas id="revenueChart"></canvas></div>'+
-        '</div>'+
-      '</section>'+
-      
-      '<!-- Payment breakdown -->'+
-      '<section style="margin-bottom:2rem">'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
-          '<h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Ventas por Método de Pago</h2>'+
-          '<div id="dashboard-payment-breakdown" style="display:flex;flex-direction:column;gap:12px"></div>'+
-        '</div>'+
-      '</section>'+
-      
-      '<!-- Charts Row -->'+
-      '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px" class="dash-charts-row">'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
-          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Pedidos por Estado</h2>'+
-          '<div style="position:relative;height:260px"><canvas id="statusChart"></canvas></div>'+
-        '</div>'+
-        '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
-          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ventas por Marca</h2>'+
-          '<div style="position:relative;height:260px"><canvas id="brandChart"></canvas></div>'+
-        '</div>'+
-        '<div style="display:flex;flex-direction:column;gap:16px">'+
-          '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border)">'+
-            '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)">Productos mas vendidos</h2>'+
-            '<ul id="dashboard-top-products" style="list-style:none;padding:0;margin:0"></ul>'+
-          '</div>'+
-          '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.03)">'+
-            '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(239,68,68,.2);display:flex;align-items:center;gap:8px">\u26A0\uFE0F Alertas de Stock</h2>'+
-            '<ul id="dashboard-stock-alerts" style="list-style:none;padding:0;margin:0"></ul>'+
-          '</div>'+
-          '</div>'+
-        '</div>'+
-      '</section>'+
-    '</div>';
-    
-    // Init state
-    window.dashView='mensual';
-    window.dashMonth=new Date().getMonth();
-    loadDashboard();
+    renderDashboardContent();
+    if(typeof loadDashboard==='function')loadDashboard();
     return;
   }
-  if(tab==='prods'){
-    var dolarVal=window.dolarRate||'';
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
-        '<h3 style="font-size:16px" id="adm-prods-title">Productos ('+PRODUCTS.length+')</h3>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-          '<input type="text" id="adminProdSearch" placeholder="🔍 Buscar por nombre..." oninput="renderAdminProductsFiltered(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:200px">'+
-          '<button class="btn btn-g btn-sm" onclick="exportProductLog()">📥 Exportar Excel</button>'+
-          '<button class="btn btn-o btn-sm" onclick="showAddProductByImeiModal()">+ Agregar producto</button>'+
-        '</div>'+
-      '</div>'+
-      '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-prods-quickfilters">'+
-          '<button class="ord-btn ord-btn-act" onclick="setAdmProdFilter(\'all\',this)">Todos</button>'+
-          '<button class="ord-btn" onclick="setAdmProdFilter(\'offer\',this)">Ofertas</button>'+
-          '<button class="ord-btn" onclick="setAdmProdFilter(\'nostock\',this)">Sin stock</button>'+
-          '<button class="ord-btn" onclick="setAdmProdFilter(\'low\',this)">Stock bajo</button>'+
-        '</div>'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Ordenar por</label>'+
-          '<select id="admProdsSort" onchange="renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff">'+
-            '<option value="name">Nombre</option>'+
-            '<option value="price">Precio venta</option>'+
-            '<option value="cost">Costo</option>'+
-            '<option value="profit">Ganancia</option>'+
-            '<option value="stock">Stock</option>'+
-          '</select></div>'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Cotización USD</label>'+
-          '<input type="number" id="adminDolarRate" value="'+dolarVal+'" placeholder="Ej: 1200" oninput="window.dolarRate=parseFloat(this.value)||0;localStorage.setItem(\'dolarRate\',this.value);renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:120px;outline:none"></div>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px" class="admin-prods-grid" id="admin-prods-grid"></div>';
-    renderAdminProductsFiltered("");
-  }else if(tab==='stock'){
-    var allBrands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
-    var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
-    var allBrandsSet=new Set(allBrands.concat(accBrands));
-    var brandsHtml=Array.from(allBrandsSet).map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
-    el.innerHTML='<div style="margin-bottom:1.5rem">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:4px">'+
-        '<h3 style="font-size:20px;font-weight:700;font-family:\'Playfair Display\',Georgia,serif;margin:0">Gestión de Stock</h3>'+
-        '<span class="loader-spinner" style="padding:0;display:inline-flex" id="stockTotalLabel"><span style="font-size:12px">Cargando...</span></span>'+
-      '</div>'+
-      '<div id="stockStatsRow" style="display:flex;gap:10px;margin-bottom:1.25rem;flex-wrap:wrap"></div>'+
-    '</div>'+
-    '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:1rem;margin-bottom:1.25rem">'+
-      '<div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">'+
-        '<div style="flex:1;min-width:140px">'+
-          '<label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Tipo</label>'+
-          '<div style="display:flex;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden">'+
-            '<button class="stock-type-btn" data-type="todos" onclick="window._stockPage=1;window._stockType=\'todos\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:var(--orange);color:#fff;cursor:pointer;transition:all .15s">Todos</button>'+
-            '<button class="stock-type-btn" data-type="productos" onclick="window._stockPage=1;window._stockType=\'productos\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--dk);cursor:pointer;transition:all .15s">Productos</button>'+
-            '<button class="stock-type-btn" data-type="accesorios" onclick="window._stockPage=1;window._stockType=\'accesorios\';document.querySelectorAll(\'.stock-type-btn\').forEach(function(b){b.style.background=b===this?\'var(--orange)\':\'transparent\';b.style.color=b===this?\'#fff\':\'var(--dk)\';}.bind(this));renderStockList()" style="flex:1;padding:8px 12px;font-size:12px;font-weight:600;border:none;background:transparent;color:var(--dk);cursor:pointer;transition:all .15s">Accesorios</button>'+
-          '</div>'+
-        '</div>'+
-        '<div style="min-width:140px">'+
-          '<label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">Marca</label>'+
-          '<select id="stockFilterBrand" onchange="window._stockPage=1;renderStockList()" style="width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff;outline:none"><option value="">Todas</option>'+brandsHtml+'</select>'+
-        '</div>'+
-        '<div style="display:flex;gap:8px;align-items:flex-end;margin-left:auto">'+
-          '<button onclick="undoAllStock()" style="padding:8px 16px;border:1.5px solid var(--border);border-radius:8px;background:#fff;color:var(--dk);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.borderColor=\'var(--gray)\'" onmouseout="this.style.borderColor=\'var(--border)\'">↩ Deshacer</button>'+
-          '<button onclick="saveAllStock()" style="padding:8px 16px;border:none;border-radius:8px;background:var(--orange);color:#fff;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap" onmouseover="this.style.opacity=\'.9\'" onmouseout="this.style.opacity=\'1\'">✔ Guardar</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>'+
-    '<div style="display:grid;gap:10px" id="stockList"></div>'+
-    '<div id="stockPagination"></div>';
-    window._stockPage=1;
-    window._stockLimit=20;
-    window._stockType='todos';
-    renderStockList();
-  }else if(tab==='promos'){
-    var brands=[...new Set(PRODUCTS.map(function(p){return p.brand;}).filter(function(b){return b;}))];
-    var accBrands=[...new Set((window.ACCS||[]).map(function(a){return a.brand;}).filter(function(b){return b;}))];
-    var allBrandsSet=new Set(brands.concat(accBrands));
-    var allBrands=Array.from(allBrandsSet);
-    var brandsHtml=allBrands.map(function(b){return'<option value="'+b+'">'+b+'</option>';}).join('');
-    el.innerHTML='<div style="margin-bottom:2rem">'+
-      '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Crear Promoción</h3>'+
-      '<p style="font-size:13px;color:var(--gray);margin-bottom:1.5rem">Diseña ofertas exclusivas para tu colección.</p>'+
-      
-      '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)" class="promo-filters">'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Tipo</label><select class="sel-f" id="promoItemType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="todos">Todos</option><option value="productos">Productos</option><option value="accesorios">Accesorios</option></select></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Marca</label><select class="sel-f" id="promoBrand" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas las Marcas</option>'+brandsHtml+'</select></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Categoría</label><select class="sel-f" id="promoType" onchange="renderPromoProducts()" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><option value="">Todas</option></select></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">% Descuento</label><div style="position:relative"><input class="inp-f" id="promoDiscount" type="number" placeholder="0" min="0" max="100" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"><span style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--orange)">%</span></div></div>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1rem;background:#fff;padding:20px;border-radius:12px;border:1px solid var(--border)">'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Inicio oferta (opcional)</label><input class="inp-f" id="promoOfferStartDate" type="date" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:4px"><input class="inp-f" id="promoOfferStartTime" type="time" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Fin oferta</label><input class="inp-f" id="promoOfferEndDate" type="date" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:4px"><input class="inp-f" id="promoOfferEndTime" type="time" style="width:100%;padding:12px;border:1.5px solid var(--border);border-radius:8px;font-size:14px"></div>'+
-      '</div>'+
-      '<div style="margin-bottom:1rem">'+
-        '<input type="text" id="promoSearch" placeholder="🔍 Buscar por nombre..." oninput="renderPromoProducts()" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor=\'var(--orange)\'" onblur="this.style.borderColor=\'var(--border)\'">'+
-      '</div>'+
-      
-      '<div style="margin-bottom:1rem">'+
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem" class="promo-select-actions">'+
-          '<h4 style="font-size:18px;font-weight:600">Seleccionar Productos</h4>'+
-          '<div style="display:flex;gap:8px">'+
-            '<button onclick="selectAllPromo(true)" style="background:var(--green);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:none;cursor:pointer">Seleccionar todos</button>'+
-            '<button onclick="selectAllPromo(false)" style="background:var(--cream2);color:var(--dk);padding:8px 16px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);cursor:pointer">Deseleccionar todos</button>'+
-          '</div>'+
-        '</div>'+
-        '<div id="promoProductList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px" class="promo-prods-grid"></div>'+
-      '</div>'+
-      
-      '<button onclick="applyPromo()" style="width:100%;background:var(--orange);color:#fff;padding:16px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;margin-top:1rem">Publicar Promoción</button>'+
-      
-      '<div style="margin-top:3rem;border-top:1px solid var(--border);padding-top:2rem">'+
-        '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.5rem">Administrar Promociones Activas</h3>'+
-        '<div style="height:4px;width:80px;background:var(--orange);border-radius:2px;margin-bottom:1.5rem"></div>'+
-        '<div style="background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border)">'+
-          '<table style="width:100%;text-align:left;border-collapse:collapse">'+
-            '<tbody id="activePromosTable">'+
-            '</tbody>'+
-          '</table>'+
-        '</div>'+
-        '<button onclick="deleteSelectedPromos()" style="width:100%;margin-top:12px;padding:14px;background:var(--red);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer">Eliminar promoción</button>'+
-      '</div>'+
-    '</div>';
-    renderPromoProducts();
-    renderActivePromos();
-  }else if(tab==='orders'){
-    var content=document.getElementById('adminContent');
-    if(content){
-      content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center" class="ord-tabs">'+
-        '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="waitForAdmin.call(this,\'loadPendingOrders\')">Pedidos en Espera</button>'+
-        '<button class="ord-btn" id="btnAcceptedOrders" onclick="waitForAdmin.call(this,\'loadAcceptedOrders\')">Pedidos Aceptados</button>'+
-        '<button class="ord-btn" id="btnHistoryOrders" onclick="waitForAdmin.call(this,\'loadOrderHistory\')">Historial</button>'+
-      '</div>'+
-      '<div style="margin-bottom:1rem;display:flex;gap:8px;align-items:center">'+
-        '<input type="text" id="orderSearchInput" placeholder="Buscar por DNI, email, nombre o código de orden..." oninput="window.__adminLoaded&&typeof searchOrders===\'function\'?searchOrders(this.value):null" style="flex:1;max-width:500px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
-      '</div>'+
-      '<div class="adm-list" id="orderList"></div><div id="orderPagination"></div>';
-      if(typeof loadPendingOrders==='function'){
-        loadPendingOrders();
-      }else{
-        document.getElementById('orderList').innerHTML='<div class="loader-spinner"><span>Cargando pedidos...</span></div>';
-      }
-    }
-  }else if(tab==='acc'){
-    var accs=window.ACCS||[];
-    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
-        '<h3 style="font-size:16px" id="adm-acc-title">Accesorios ('+accs.length+')</h3>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
-          '<input type="text" id="adminAccSearch" placeholder="🔍 Buscar accesorio..." oninput="renderAdminAccFiltered(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;min-width:200px">'+
-          '<button class="btn btn-o btn-sm" onclick="window.isEditingAcc=false;if(typeof resetAccessoryForm===\'function\')resetAccessoryForm();nav(\'admin-acc\')">+ Agregar accesorio</button>'+
-        '</div>'+
-      '</div>'+
-      '<div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:1rem;flex-wrap:wrap">'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap" id="adm-acc-quickfilters">'+
-          '<button class="ord-btn ord-btn-act" onclick="setAdmAccFilter(\'all\',this)">Todos</button>'+
-          '<button class="ord-btn" onclick="setAdmAccFilter(\'offer\',this)">Ofertas</button>'+
-          '<button class="ord-btn" onclick="setAdmAccFilter(\'nostock\',this)">Sin stock</button>'+
-          '<button class="ord-btn" onclick="setAdmAccFilter(\'low\',this)">Stock bajo</button>'+
-        '</div>'+
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Ordenar por</label>'+
-          '<select id="admAccSort" onchange="renderAdminAccFiltered(document.getElementById(\'adminAccSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:#fff">'+
-            '<option value="name">Nombre</option>'+
-            '<option value="price">Precio venta</option>'+
-            '<option value="stock">Stock</option>'+
-          '</select></div>'+
-      '</div>'+
-      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:18px" class="admin-prods-grid" id="admin-acc-grid"></div>';
-    renderAdminAccFiltered("");
-  }else if(tab==='arrep'){
-    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="ord-tabs">'+
-      '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="waitForAdmin.call(this,\'loadArrepPendientes\')">Pendientes</button>'+
-      '<button class="ord-btn" id="arrepBtnAceptados" onclick="waitForAdmin.call(this,\'loadArrepAceptados\')">Aceptados</button>'+
-      '<button class="ord-btn" id="arrepBtnRechazados" onclick="waitForAdmin.call(this,\'loadArrepRechazados\')">Rechazados</button>'+
-    '</div>'+
-    '<div class="loader-spinner"><span>Cargando...</span></div>'+
-    '<div id="arrepList"></div>';
-    if(typeof loadArrepPendientes==='function'){loadArrepPendientes();}else{el.innerHTML='<div style="padding:2rem;color:var(--gray);text-align:center">Arrepentimientos no disponible</div>';}
-  }else if(tab==='users'){
-    el.innerHTML='<div class="loader-spinner"><span>Cargando...</span></div><div id="adminUsersList"></div>';
-    loadAdminUsers();
-  }else if(tab==='chat'){
-    el.innerHTML='<div style="display:flex;gap:0;height:calc(100vh - 140px);background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden" class="admin-chat-wrap">'+
-      '<div style="width:280px;border-right:1px solid var(--border);overflow-y:auto" class="chat-conv-side">'+
-        '<div style="padding:14px;border-bottom:1px solid var(--border)"><h3 style="font-size:15px;font-weight:700">Conversaciones</h3></div>'+
-        '<div id="adminConvList"></div>'+
-      '</div>'+
-      '<div style="flex:1;display:flex;flex-direction:column;background:var(--cream)" class="chat-msg-area">'+
-        '<div id="adminChatHeader" style="padding:14px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">'+
-          '<div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">'+
-            '<button class="chat-back-btn" onclick="closeMobileChat()" style="display:none;padding:4px;background:transparent;border:none;cursor:pointer;font-size:20px;color:var(--gray);margin-right:4px;line-height:1">←</button>'+
-            '<span id="adminChatName" style="font-size:13px;font-weight:600;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Seleccioná una conversación</span>'+
-            '<span id="adminOnlineDot" style="width:6px;height:6px;border-radius:50%;background:var(--green);display:none;flex-shrink:0" title="En línea"></span>'+
-          '</div>'+
-          '<div style="display:flex;gap:4px;flex-shrink:0">'+
-            '<button onclick="openMsgSearch()" id="adminMsgSearchBtn" title="Buscar en mensajes (Ctrl+F)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">🔍</button>'+
-            '<button onclick="openManageReplies()" id="adminManageRepliesBtn" title="Gestionar respuestas rápidas (Ctrl+Shift+R)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">⚡</button>'+
-            '<button onclick="openCreateQuoteFromChat()" id="adminQuoteBtn" title="Crear cotización desde el chat" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">💲</button>'+
-            '<button onclick="exportConversation()" id="adminExportBtn" title="Exportar conversación (Ctrl+Shift+E)" style="display:none;padding:5px 8px;font-size:11px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor=\'var(--orange)\';this.style.color=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\';this.style.color=\'var(--gray)\'">📥</button>'+
-            '<button id="adminAssignConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--green);color:#fff;border:none;border-radius:6px;cursor:pointer">Asignar</button>'+
-            '<button id="adminCloseConvBtn" style="display:none;padding:5px 10px;font-size:10px;background:var(--red);color:#fff;border:none;border-radius:6px;cursor:pointer">Cerrar</button>'+
-          '</div>'+
-        '</div>'+
-        '<div id="msgSearchBar" style="display:none;padding:8px 14px;background:var(--cream2);border-bottom:1px solid var(--border)">'+
-          '<div style="display:flex;gap:6px;align-items:center">'+
-            '<input id="msgSearchInput" type="text" placeholder="Buscar en mensajes..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;outline:none;background:#fff" onkeydown="if(event.key===\'Enter\')searchInMessages(this.value)" oninput="if(!this.value)searchInMessages(\'\')">'+
-            '<button onclick="searchInMessages(document.getElementById(\'msgSearchInput\').value)" style="padding:6px 10px;background:var(--orange);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600">Buscar</button>'+
-            '<button onclick="closeMsgSearch()" style="padding:6px 8px;background:transparent;color:var(--gray);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:11px">✕</button>'+
-          '</div>'+
-        '</div>'+
-        '<div class="msg-list" id="chatMsgList" style="flex:1;overflow-y:auto;padding:14px"></div>'+
-        '<div id="typingIndicator" style="padding:4px 14px;font-size:11px;color:var(--gray);display:none"></div>'+
-        '<div id="quickReplies" style="padding:6px 14px;background:#fff;display:none;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border)"></div>'+
-        '<div class="wa-chat-input-bar">'+
-          '<button class="wa-attach-btn" onclick="openProductSearch()" id="adminProductBtn" title="Compartir producto">'+
-            '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>'+
-          '</button>'+
-          '<div class="wa-input-wrap">'+
-            '<textarea id="adminChatInput" rows="1" placeholder="Escribí un mensaje..." onkeydown="adminChatKeydown(event)" oninput="autoResizeChatInput(this);handleAdminTyping();toggleSendBtn()"></textarea>'+
-          '</div>'+
-          '<button class="wa-send-btn" id="adminSendBtn" onclick="sendAdminMessage()" title="Enviar">'+
-            '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>'+
-          '</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-    if(typeof loadAdminConversations==='function'){loadAdminConversations();}else{el.innerHTML='<div style="padding:2rem;color:var(--gray);text-align:center">Chat no disponible</div>';}
-    if(typeof initChatSocket==='function')initChatSocket();
-  }else if(tab==='quotes'){
-    el.innerHTML=
-    '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
-      '<button class="ord-btn ord-btn-act" id="quoteBtnAll" onclick="loadQuotes(\'all\')">Todas</button>'+
-      '<button class="ord-btn" id="quoteBtnPending" onclick="loadQuotes(\'PENDING\')">Pendientes</button>'+
-      '<button class="ord-btn" id="quoteBtnApproved" onclick="loadQuotes(\'APPROVED\')">Aceptadas</button>'+
-      '<button class="ord-btn" id="quoteBtnRejected" onclick="loadQuotes(\'REJECTED\')">Rechazadas</button>'+
-      '<input type="text" id="quoteSearchInput" placeholder="Buscar por nombre, telefono o codigo..." oninput="searchQuotes(this.value)" style="flex:1;max-width:400px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
-    '</div>'+
-    '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
-    loadQuotes('all');
-  }else if(tab==='inventory'){
-    el.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)"><p style="font-size:48px;margin-bottom:1rem">📋</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">El inventario ahora se gestiona desde Productos</p><p style="font-size:13px;margin-bottom:1.5rem">Agregá y administrá los IMEIs desde la sección de productos</p><button class="btn btn-o" onclick="adminTab(\'prods\',document.getElementById(\'adm-prods\'))">Ir a Productos</button></div>';
-  }else if(tab==='instore'){
-    el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="instore-tabs">'+
-      '<button class="ord-btn" id="instoreTabVenta" onclick="renderInStoreSale()">Nueva Venta</button>'+
-      '<button class="ord-btn" id="instoreTabHist" onclick="loadInStoreHistory()">Historial</button>'+
-    '</div>'+
-    '<div id="instore-subview"></div>';
-    if(typeof renderInStoreSale==='function'){renderInStoreSale();}else{el.innerHTML+='<div style="padding:2rem;color:var(--gray);text-align:center">Venta en Tienda — esperando carga de scripts...</div>';}
-  }else if(tab==='preventa'){
-    el.innerHTML='<div id="preventa-view"></div>';
-    if(typeof renderPreventaTab==='function'){renderPreventaTab('local');}else{el.innerHTML+='<div style="padding:2rem;color:var(--gray);text-align:center">Preventa — esperando carga de scripts...</div>';}
-  }else if(tab==='sales'){
-    var el2=document.getElementById('adminContent');
-    if(el2&&typeof loadSalesHistory==='function'){loadSalesHistory(1,{});}
-    else if(el2){el2.innerHTML='<div style="text-align:center;padding:3rem;color:var(--gray)">Cargando historial de ventas...</div>';}
+
+  // Para los demas tabs, delegamos al renderAdminContent legacy de admin.js
+  // que sabe dibujar cada vista con su lista/paginacion. La funcion vive en
+  // admin.js y se llama _renderAdminLegacy para evitar colision de nombres.
+  if(typeof window._renderAdminLegacy==='function'){
+    window._renderAdminLegacy(tab);
+  }else{
+    // Fallback: si admin.js no esta cargado (no deberia pasar en admin),
+    // mostramos un mensaje para no dejar el panel en blanco.
+    el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--gray)">Cargando panel...</div>';
   }
 }
+
+
+function renderDashboardContent(){
+  var el=document.getElementById('adminContent');
+  if(!el)return;
+  var months=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  var monthOptions=months.map(function(m,i){return'<option value="'+i+'"'+(i===new Date().getMonth()?' selected':'')+'>'+m+'</option>';}).join('');
+
+  el.innerHTML='<div id="dashboard-view">'+
+    '<header style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px" class="dash-header">'+
+      '<h1 style="font-size:24px;font-weight:700;color:var(--dk)">Dashboard</h1>'+
+      '<div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:4px" class="dash-header-actions">'+
+        '<button id="dashTabMensual" onclick="setDashView(\'mensual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:var(--orange);color:#fff">Mensual</button>'+
+        '<button id="dashTabAnual" onclick="setDashView(\'anual\')" style="padding:8px 16px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:var(--gray)">Anual</button>'+
+        '<select id="dashMonthSelect" onchange="updateDashMonth(this.value)" style="padding:8px 12px;border:none;border-left:1px solid var(--border);border-radius:0 8px 8px 0;font-size:13px;font-weight:600;color:var(--dk);background:transparent;outline:none;cursor:pointer">'+monthOptions+'</select>'+
+      '</div>'+
+    '</header>'+
+    '<!-- KPI Cards -->'+
+    '<section style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:2rem" class="dash-kpis">'+
+      '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+          '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-revenue-label">Ingresos</h3>'+
+          '<div style="width:36px;height:36px;border-radius:8px;background:rgba(34,197,94,.1);display:flex;align-items:center;justify-content:center;font-size:18px">💵</div>'+
+        '</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-revenue">$0</div>'+
+        '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-revenue-change-container"><span id="kpi-revenue-change">--</span></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+          '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-orders-label">Pedidos</h3>'+
+          '<div style="width:36px;height:36px;border-radius:8px;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>'+
+        '</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-orders">0</div>'+
+        '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-orders-change-container"><span id="kpi-orders-change">--</span></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+          '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-ticket-label">Ticket Promedio</h3>'+
+          '<div style="width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,.1);display:flex;align-items:center;justify-content:center;font-size:18px">📋</div>'+
+        '</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-ticket">$0</div>'+
+        '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-ticket-change-container"><span id="kpi-ticket-change">--</span></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+          '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-users-label">Nuevos Usuarios</h3>'+
+          '<div style="width:36px;height:36px;border-radius:8px;background:rgba(168,85,247,.1);display:flex;align-items:center;justify-content:center;font-size:18px">👤</div>'+
+        '</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--dk);margin-bottom:6px" id="kpi-users">0</div>'+
+        '<div style="font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,.1);padding:4px 8px;border-radius:6px" id="kpi-users-change-container"><span id="kpi-users-change">--</span></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;padding:20px;border:1px solid var(--border)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">'+
+          '<h3 style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px" id="kpi-profit-label">Ganancia</h3>'+
+          '<div style="width:36px;height:36px;border-radius:8px;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;font-size:18px">📈</div>'+
+        '</div>'+
+        '<div style="font-size:28px;font-weight:800;color:var(--green);margin-bottom:6px" id="kpi-profit">$0</div>'+
+        '<div style="font-size:12px;font-weight:600;color:var(--gray);display:inline-flex;align-items:center;gap:4px" id="kpi-profit-usd">US$ 0</div>'+
+      '</div>'+
+    '</section>'+
+    '<!-- Recent Orders & Top Products -->'+
+    '<section style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:2rem" class="dash-row">'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);overflow:hidden">'+
+        '<div style="padding:16px;border-bottom:1px solid var(--border);background:var(--cream2);display:flex;justify-content:space-between;align-items:center">'+
+          '<h2 style="font-size:16px;font-weight:700">Últimos Pedidos</h2>'+
+        '</div>'+
+        '<table style="width:100%;border-collapse:collapse">'+
+          '<thead><tr style="border-bottom:1px solid var(--border)">'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">ID</th>'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Cliente</th>'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Monto</th>'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Ganancia</th>'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Método</th>'+
+            '<th style="padding:10px 14px;text-align:left;font-size:10px;font-weight:600;color:var(--gray);text-transform:uppercase">Estado</th>'+
+          '</tr></thead>'+
+          '<tbody id="dashboard-recent-orders"></tbody>'+
+        '</table>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ingresos Mensuales</h2>'+
+        '<div style="position:relative;height:280px"><canvas id="revenueChart"></canvas></div>'+
+      '</div>'+
+    '</section>'+
+    '<!-- Payment breakdown -->'+
+    '<section style="margin-bottom:2rem">'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Ventas por Método de Pago</h2>'+
+        '<div id="dashboard-payment-breakdown" style="display:flex;flex-direction:column;gap:12px"></div>'+
+      '</div>'+
+    '</section>'+
+    '<!-- Charts Row -->'+
+    '<section style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px" class="dash-charts-row">'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Pedidos por Estado</h2>'+
+        '<div style="position:relative;height:260px"><canvas id="statusChart"></canvas></div>'+
+      '</div>'+
+      '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:16px">'+
+        '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px">Ventas por Marca</h2>'+
+        '<div style="position:relative;height:260px"><canvas id="brandChart"></canvas></div>'+
+      '</div>'+
+      '<div style="display:flex;flex-direction:column;gap:16px">'+
+        '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid var(--border)">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border)">Productos más vendidos</h2>'+
+          '<ul id="dashboard-top-products" style="list-style:none;padding:0;margin:0"></ul>'+
+        '</div>'+
+        '<div style="background:#fff;border-radius:12px;padding:16px;border:1px solid rgba(239,68,68,.3);background:rgba(239,68,68,.03)">'+
+          '<h2 style="font-size:16px;font-weight:700;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(239,68,68,.2);display:flex;align-items:center;gap:8px">⚠️ Alertas de Stock</h2>'+
+          '<ul id="dashboard-stock-alerts" style="list-style:none;padding:0;margin:0"></ul>'+
+        '</div>'+
+      '</div>'+
+    '</section>'+
+  '</div>';
+
+  window.dashView='mensual';
+  window.dashMonth=new Date().getMonth();
+  loadDashboard();
+}
+
 
 // Polling helper: waits for admin.js to load before calling function
 function waitForAdmin(fnName){
@@ -4291,17 +3811,22 @@ function applyPromo(){
     if(offerEnd)body.offerEnd=offerEnd;
     promises.push(fetch(API_URL+endpoint,{
       method:'PUT',
-      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)
     }));
   });
   Promise.all(promises).then(function(){
-    refreshAdmin();
-    var msg='Promo aplicada';
-    if(prodCount>0&&accCount>0)msg+=' a '+prodCount+' producto(s) y '+accCount+' accesorio(s)';
-    else if(prodCount>0)msg+=' a '+prodCount+' producto(s)';
-    else if(accCount>0)msg+=' a '+accCount+' accesorio(s)';
-    showSuccessToast('Promoción aplicada', msg);
+    // Devolver la promesa de refreshAdmin para esperar a que se actualicen los datos
+    // antes de mostrar el toast, asi el usuario ve los cambios inmediatamente.
+    var p=refreshAdmin();
+    var done=function(){
+      var msg='Promo aplicada';
+      if(prodCount>0&&accCount>0)msg+=' a '+prodCount+' producto(s) y '+accCount+' accesorio(s)';
+      else if(prodCount>0)msg+=' a '+prodCount+' producto(s)';
+      else if(accCount>0)msg+=' a '+accCount+' accesorio(s)';
+      showSuccessToast('Promoción aplicada', msg);
+    };
+    if(p&&typeof p.then==='function')p.then(done);else done();
   }).catch(function(){showErrorToast('Error', 'No se pudo aplicar la promoción');});
 }
 function renderActivePromos(){
@@ -4398,7 +3923,7 @@ function removePromo(id){
   var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
   fetch(API_URL+endpoint,{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({discount:0,isOffer:false})
   }).then(function(){
     refreshAdmin();
@@ -4423,7 +3948,7 @@ function deleteSelectedPromos(){
       var endpoint=isAcc?'/api/accessories?id='+realId:'/api/products/'+realId;
       promises.push(fetch(API_URL+endpoint,{
         method:'PUT',
-        headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({discount:0,isOffer:false})
       }));
     });
@@ -4531,17 +4056,17 @@ function renderQuotesList(res){
     return '<div class="gp-card" style="--gp-accent:'+sc+'">'+
       '<div class="gp-card-head">'+
         '<div style="min-width:0">'+
-          '<div class="gp-card-title" style="font-family:inherit;font-size:15px">'+q.device+'</div>'+
-          '<div class="gp-card-sub">'+(q.clientName||'Sin nombre')+' · '+date+'</div>'+
+          '<div class="gp-card-title" style="font-family:inherit;font-size:15px">'+esc(q.device)+'</div>'+
+          '<div class="gp-card-sub">'+esc(q.clientName||'Sin nombre')+' · '+date+'</div>'+
         '</div>'+
         '<span class="gp-pill" style="--gp-pill-bg:'+sc+';--gp-pill-fg:#fff"><span class="gp-dot"></span>'+sl+'</span>'+
       '</div>'+
       '<div class="gp-fields">'+
-        (q.clientDni?'<div class="gp-field"><div class="gp-field-label">DNI</div><div class="gp-field-value">'+q.clientDni+'</div></div>':'')+
-        (phone?'<div class="gp-field"><div class="gp-field-label">Teléfono</div><div class="gp-field-value">'+phone+'</div></div>':'')+
-        (q.clientCity?'<div class="gp-field"><div class="gp-field-label">Ciudad</div><div class="gp-field-value">'+q.clientCity+'</div></div>':'')+
-        (q.storage?'<div class="gp-field"><div class="gp-field-label">Almacenamiento</div><div class="gp-field-value">'+q.storage+'</div></div>':'')+
-        (q.condition?'<div class="gp-field"><div class="gp-field-label">Estado</div><div class="gp-field-value">'+q.condition+'</div></div>':'')+
+        (q.clientDni?'<div class="gp-field"><div class="gp-field-label">DNI</div><div class="gp-field-value">'+esc(q.clientDni)+'</div></div>':'')+
+        (phone?'<div class="gp-field"><div class="gp-field-label">Teléfono</div><div class="gp-field-value">'+esc(phone)+'</div></div>':'')+
+        (q.clientCity?'<div class="gp-field"><div class="gp-field-label">Ciudad</div><div class="gp-field-value">'+esc(q.clientCity)+'</div></div>':'')+
+        (q.storage?'<div class="gp-field"><div class="gp-field-label">Almacenamiento</div><div class="gp-field-value">'+esc(q.storage)+'</div></div>':'')+
+        (q.condition?'<div class="gp-field"><div class="gp-field-label">Estado</div><div class="gp-field-value">'+esc(q.condition)+'</div></div>':'')+
       '</div>'+
       '<div class="gp-card-foot">'+
         '<div><span class="gp-total-label">Precio cotizado</span><span class="gp-total-value">$'+(q.finalPrice||0).toLocaleString('es-AR')+'</span></div>'+
@@ -4583,11 +4108,11 @@ function openQuoteDetail(id){
   var date=new Date(q.createdAt).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
   
   var extrasLabels={pant:'Pantalla perfecta (+6%)',bat:'Bateria 80%+ (+5%)',icloud:'Cuenta libre (+8%)',caja:'Caja original (+3%)',acc:'Accesorios originales (+3%)'};
-  var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
+  var extrasHtml=(q.extras||[]).length>0?(q.extras||[]).map(function(e){return'<span style="font-size:11px;background:var(--admin-surface-hover);padding:4px 8px;border-radius:6px">'+esc(extrasLabels[e]||e)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--admin-text-muted)">Ninguno</span>';
   
-  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+p+'" onclick="openLightbox(\''+p+'\')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
+  var photosHtml=(q.photos||[]).length>0?q.photos.map(function(p){return'<img loading="lazy" src="'+esc(p)+'" onclick="openLightbox(\''+jsStr(p)+'\')" style="width:100px;height:100px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer">';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos</span>';
 
-  var dniPhotosHtml=(q.dniPhotos||[]).length>0?q.dniPhotos.map(function(p,i){var label=i===0?'Frente':'Dorso';return'<div><div style="font-size:10px;color:var(--admin-text-muted);margin-bottom:4px">'+label+'</div><img loading="lazy" src="'+p+'" onclick="openLightbox(\''+p+'\')" style="width:100px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer"></div>';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos del DNI</span>';
+  var dniPhotosHtml=(q.dniPhotos||[]).length>0?q.dniPhotos.map(function(p,i){var label=i===0?'Frente':'Dorso';return'<div><div style="font-size:10px;color:var(--admin-text-muted);margin-bottom:4px">'+label+'</div><img loading="lazy" src="'+esc(p)+'" onclick="openLightbox(\''+jsStr(p)+'\')" style="width:100px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--admin-border);cursor:pointer"></div>';}).join(''):'<span style="font-size:12px;color:var(--admin-text-muted)">No se adjuntaron fotos del DNI</span>';
   
   var modal=document.createElement('div');
   modal.id='quoteDetailModal';
@@ -4595,15 +4120,15 @@ function openQuoteDetail(id){
   modal.innerHTML='<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)" onclick="closeQuoteDetail()"></div>'+
     '<div style="position:relative;background:var(--admin-surface);border:1px solid var(--admin-border);border-radius:16px;width:min(600px,95%);max-height:90vh;overflow-y:auto;box-shadow:0 25px 80px rgba(0,0,0,.35);transform:scale(.9);transition:transform .3s">'+
       '<div style="padding:20px 24px;border-bottom:1px solid var(--admin-border);display:flex;align-items:center;justify-content:space-between">'+
-        '<div><h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--admin-text)">Cotizacion '+q.code+'</h3><p style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+date+'</p></div>'+
+        '<div><h3 style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--admin-text)">Cotizacion '+esc(q.code)+'</h3><p style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+date+'</p></div>'+
         '<button onclick="closeQuoteDetail()" style="background:none;border:none;color:var(--admin-text-muted);cursor:pointer;font-size:24px;padding:4px">&times;</button>'+
       '</div>'+
       '<div style="padding:24px">'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">'+
           '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px">'+
             '<div style="font-size:10px;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Dispositivo</div>'+
-            '<div style="font-size:14px;font-weight:600;color:var(--admin-text)">'+q.device+'</div>'+
-            '<div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+q.storage+' &middot; '+q.condition+'</div>'+
+            '<div style="font-size:14px;font-weight:600;color:var(--admin-text)">'+esc(q.device)+'</div>'+
+            '<div style="font-size:12px;color:var(--admin-text-muted);margin-top:4px">'+esc(q.storage)+' &middot; '+esc(q.condition)+'</div>'+
           '</div>'+
           '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px">'+
             '<div style="font-size:10px;color:var(--admin-text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Precio estimado</div>'+
@@ -4620,10 +4145,10 @@ function openQuoteDetail(id){
         '<div style="margin-bottom:20px">'+
           '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Datos del cliente</div>'+
           '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Nombre</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientName||'-')+'</div></div>'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">DNI</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientDni||'-')+'</div></div>'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Telefono</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientPhone||'-')+'</div></div>'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Ciudad</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.clientCity||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Nombre</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.clientName||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">DNI</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.clientDni||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Telefono</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.clientPhone||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Ciudad</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.clientCity||'-')+'</div></div>'+
           '</div>'+
         '</div>'+
         
@@ -4640,8 +4165,8 @@ function openQuoteDetail(id){
         '<div style="margin-bottom:20px">'+
           '<div style="font-size:12px;font-weight:600;color:var(--admin-text);margin-bottom:8px">Envio y cobro</div>'+
           '<div style="background:var(--admin-surface-hover);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px">'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Envio</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.envio||'-')+'</div></div>'+
-            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Cobro</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+(q.payment||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Envio</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.envio||'-')+'</div></div>'+
+            '<div><span style="font-size:10px;color:var(--admin-text-muted)">Cobro</span><div style="font-size:13px;font-weight:500;color:var(--admin-text)">'+esc(q.payment||'-')+'</div></div>'+
           '</div>'+
         '</div>'+
         
@@ -4665,13 +4190,20 @@ function closeQuoteDetail(){
 }
 
 function approveQuote(id){
-  showConfirm('Aceptar cotizacion','¿Confirmas que aceptas esta cotizacion? Se notificara al cliente.',{confirmText:'Aceptar',confirmClass:'primary'}).then(function(confirmed){
+  showConfirm('Aceptar cotizacion','¿Confirmas que aceptas esta cotizacion? Se emitira una factura ARCA automaticamente y se notificara al cliente.',{confirmText:'Aceptar y facturar',confirmClass:'primary'}).then(function(confirmed){
     if(!confirmed)return;
-    fetch(API_URL+'/api/quotes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:'APPROVED'})}).then(function(r){return r.json();}).then(function(){
-      showSuccessToast('Cotizacion aceptada','El cliente sera notificado');
+    fetch(API_URL+'/api/quotes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:id,status:'APPROVED'})}).then(function(r){return r.json();}).then(function(res){
+      var invoice=res.invoice;
+      var msg=invoice
+        ? 'Factura '+invoice.type+' N° '+invoice.pos.toString().padStart(4,'0')+'-'+invoice.number.toString().padStart(8,'0')
+        : 'Aceptada (sin factura)';
+      var sub=res.warning||'El cliente sera notificado';
+      showSuccessToast('Cotizacion aceptada',msg+(res.warning?' · '+sub:''));
       closeQuoteDetail();
       loadQuotes(_quoteStatus);
-    }).catch(function(){showErrorToast('Error','No se pudo aceptar la cotizacion');});
+    }).catch(function(err){
+      showErrorToast('Error',err&&err.message?err.message:'No se pudo aceptar la cotizacion');
+    });
   });
 }
 
@@ -4754,12 +4286,24 @@ function deleteQuote(id){
 
 // SSR support: auto-open detail when pre-fetched data is available
 (function initSSRDetail(){
+  // Accessory detail
+  if(window.__INITIAL_ACCS_DETAIL_ID__&&window.__INITIAL_ACCS_DETAIL__){
+    var accId=window.__INITIAL_ACCS_DETAIL_ID__;
+    var accInterval=setInterval(function(){
+      if(window._accLoaded||(window.__INITIAL_ACCESSORIES__&&window.__INITIAL_ACCESSORIES__.length>0)||(window.ACCS&&window.ACCS.length>0)){
+        clearInterval(accInterval);
+        if(typeof openAccDetail==='function')openAccDetail(accId);
+      }
+    },50);
+    setTimeout(function(){clearInterval(accInterval);},5000);
+  }
+  // Product detail
   if(window.__INITIAL_DETAIL_ID__&&window.__INITIAL_DETAIL__){
     var id=window.__INITIAL_DETAIL_ID__;
     var checkInterval=setInterval(function(){
-      if(window._productsLoaded||(window.__INITIAL_PRODUCTS__&&window.__INITIAL_PRODUCTS__.length>0)){
+      if(window._productsLoaded||(window.__INITIAL_PRODUCTS__&&window.__INITIAL_PRODUCTS__.length>0)||(typeof PRODUCTS!=='undefined'&&PRODUCTS&&PRODUCTS.length>0)){
         clearInterval(checkInterval);
-        openDetail(id);
+        if(typeof openDetail==='function')openDetail(id);
       }
     },50);
     setTimeout(function(){clearInterval(checkInterval);},5000);
@@ -4837,18 +4381,22 @@ function deleteQuote(id){
 })();
 
 // ===== ADMIN USERS =====
+var _adminUsersPage = 1;
+var _adminUsersLimit = 50;
+
 function loadAdminUsers(){
-  fetch(API_URL+'/api/admin/users',{headers:{'X-User-Id':currentUser?.id||''}})
+  var url=API_URL+'/api/admin/users?page='+_adminUsersPage+'&limit='+_adminUsersLimit;
+  fetch(url,{headers:{}})
     .then(function(r){return r.json();})
-    .then(function(users){
-      renderAdminUsers(users);
+    .then(function(res){
+      renderAdminUsers(res.users || [], res.total || 0, res.page || 1, res.limit || _adminUsersLimit);
     }).catch(function(){
       var el=document.getElementById('adminUsersList');
       if(el)el.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)">Error cargando usuarios</div>';
     });
 }
 
-function renderAdminUsers(users){
+function renderAdminUsers(users,total,page,limit){
   var el=document.getElementById('adminUsersList');
   if(!el)return;
   var loader=document.querySelector('#adminContent .loader-spinner');
@@ -4859,7 +4407,12 @@ function renderAdminUsers(users){
     return;
   }
 
-  var html='<table style="width:100%;border-collapse:collapse;font-size:13px">'+
+  var totalPages=Math.max(1,Math.ceil(total/limit));
+  var html='<div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;font-size:12px;color:var(--gray)">'+
+    '<span>'+total+' usuario'+(total===1?'':'s')+'</span>'+
+    '<span>Página '+page+' de '+totalPages+'</span>'+
+  '</div>'+
+  '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
     '<thead><tr style="border-bottom:2px solid var(--border)">'+
       '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Usuario</th>'+
       '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Email</th>'+
@@ -4890,15 +4443,30 @@ function renderAdminUsers(users){
     '</tr>';
   });
 
-  html+='</tbody></table>';
+  html+='</tbody></table>'+
+    '<div style="display:flex;justify-content:center;gap:8px;padding:16px">'+
+      '<button onclick="adminUsersPrevPage()" '+(page<=1?'disabled':'')+' style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:'+(page<=1?'var(--cream)':'white')+';cursor:'+(page<=1?'default':'pointer')+';font-size:12px;font-family:inherit;font-weight:600;color:'+(page<=1?'var(--gray)':'var(--orange)')+'">← Anterior</button>'+
+      '<button onclick="adminUsersNextPage()" '+(page>=totalPages?'disabled':'')+' style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:'+(page>=totalPages?'var(--cream)':'white')+';cursor:'+(page>=totalPages?'default':'pointer')+';font-size:12px;font-family:inherit;font-weight:600;color:'+(page>=totalPages?'var(--gray)':'var(--orange)')+'">Siguiente →</button>'+
+    '</div>';
   el.innerHTML=html;
+}
+
+function adminUsersPrevPage(){
+  if(_adminUsersPage<=1)return;
+  _adminUsersPage--;
+  loadAdminUsers();
+}
+
+function adminUsersNextPage(){
+  _adminUsersPage++;
+  loadAdminUsers();
 }
 
 function changeUserRole(userId,newRole){
   if(!currentUser||!currentUser.id)return showToast({title:'Error',message:'No autorizado',type:'error'});
   fetch(API_URL+'/api/admin/users',{
     method:'PUT',
-    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({id:userId,role:newRole})
   }).then(function(r){return r.json();}).then(function(res){
     if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
@@ -4913,7 +4481,7 @@ function deleteAdminUser(userId,userName){
 
   fetch(API_URL+'/api/admin/users?id='+userId,{
     method:'DELETE',
-    headers:{'X-User-Id':currentUser.id}
+    headers:{}
   }).then(function(r){return r.json();}).then(function(res){
     if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
     showToast({title:'Exito',message:'Usuario eliminado',type:'success'});

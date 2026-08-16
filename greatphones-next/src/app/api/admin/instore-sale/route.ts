@@ -6,7 +6,7 @@ import { requireAdmin } from '@/lib/auth-guard'
 import { reserveStock, releaseStock } from '@/lib/stock'
 
 const client = new MercadoPagoConfig({
-  accessToken: process.env.MP_ACCESS_TOKEN!
+  accessToken: process.env.MP_ACCESS_TOKEN!,
 })
 
 function generateOrderCode() {
@@ -20,12 +20,57 @@ export async function POST(request: Request) {
   try {
     await requireAdmin(request)
     const body = await request.json()
-    const { clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail, items, paymentMethod, cashReceived, adminId, currency, installments, usdRate } = body
+    const {
+      clientName,
+      clientDni,
+      clientCuil,
+      clientPhone,
+      clientAddress,
+      clientEmail,
+      items,
+      paymentMethod,
+      cashReceived,
+      adminId,
+      currency,
+      installments,
+      usdRate,
+    } = body
 
-    console.log('[instore-sale] Body:', JSON.stringify({ clientName, clientDni, paymentMethod, itemCount: items?.length, adminId, currency, installments }))
+    console.log(
+      '[instore-sale] Body:',
+      JSON.stringify({
+        clientName,
+        clientDni,
+        paymentMethod,
+        itemCount: items?.length,
+        adminId,
+        currency,
+        installments,
+      }),
+    )
 
     if (!clientName || !clientDni || !items || items.length === 0) {
       return NextResponse.json({ error: 'Datos incompletos' }, { status: 400 })
+    }
+
+    const unsafeText = [clientName, clientDni, clientCuil, clientPhone, clientAddress, clientEmail].find(
+      (value) => typeof value === 'string' && /[<>]/.test(value),
+    )
+    if (unsafeText !== undefined) {
+      return NextResponse.json({ error: 'Campos inválidos: no puede contener < o >' }, { status: 400 })
+    }
+
+    for (const item of items) {
+      if (!['catalog', 'custom', 'inventory'].includes(item?.type)) {
+        return NextResponse.json({ error: 'Tipo de ítem inválido' }, { status: 400 })
+      }
+      const qty = item.quantity
+      if (
+        qty !== undefined &&
+        (typeof qty !== 'number' || !Number.isInteger(qty) || qty < 1 || qty > 99)
+      ) {
+        return NextResponse.json({ error: 'Cantidad de ítem inválida' }, { status: 400 })
+      }
     }
 
     if (!paymentMethod || !['cash', 'transfer'].includes(paymentMethod)) {
@@ -48,7 +93,7 @@ export async function POST(request: Request) {
     // Validate admin
     const admin = await prisma.user.findUnique({
       where: { id: adminId },
-      select: { role: true }
+      select: { role: true },
     })
 
     if (!admin || admin.role !== 'ADMIN') {
@@ -67,7 +112,7 @@ export async function POST(request: Request) {
     if (catalogItems.length > 0) {
       const productIds = catalogItems.map((i: any) => i.productId)
       const products = await prisma.product.findMany({
-        where: { id: { in: productIds } }
+        where: { id: { in: productIds } },
       })
 
       const productMap = new Map(products.map(p => [p.id, p] as [string, typeof p]))
@@ -75,12 +120,18 @@ export async function POST(request: Request) {
       for (const item of catalogItems) {
         const product = productMap.get(item.productId)
         if (!product) {
-          return NextResponse.json({ error: `Producto no encontrado: ${item.productId}` }, { status: 400 })
+          return NextResponse.json(
+            { error: `Producto no encontrado: ${item.productId}` },
+            { status: 400 },
+          )
         }
         if (product.stock < item.quantity) {
-          return NextResponse.json({
-            error: `Stock insuficiente para ${product.name}. Disponible: ${product.stock}`
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: `Stock insuficiente para ${product.name}. Disponible: ${product.stock}`,
+            },
+            { status: 400 },
+          )
         }
         subtotal += product.price * item.quantity
       }
@@ -92,7 +143,7 @@ export async function POST(request: Request) {
       const invIds = inventoryItems.map((i: any) => i.inventoryItemId)
       const invItems = await prisma.inventoryItem.findMany({
         where: { id: { in: invIds } },
-        include: { product: true }
+        include: { product: true },
       })
 
       const invMap = new Map(invItems.map(i => [i.id, i]))
@@ -100,12 +151,18 @@ export async function POST(request: Request) {
       for (const item of inventoryItems) {
         const invItem = invMap.get(item.inventoryItemId)
         if (!invItem) {
-          return NextResponse.json({ error: `Dispositivo de inventario no encontrado` }, { status: 400 })
+          return NextResponse.json(
+            { error: `Dispositivo de inventario no encontrado` },
+            { status: 400 },
+          )
         }
         if (invItem.status !== 'IN_STOCK') {
-          return NextResponse.json({
-            error: `El dispositivo ${invItem.code} no está disponible (estado: ${invItem.status})`
-          }, { status: 400 })
+          return NextResponse.json(
+            {
+              error: `El dispositivo ${invItem.code} no está disponible (estado: ${invItem.status})`,
+            },
+            { status: 400 },
+          )
         }
         subtotal += item.price || invItem.targetPrice || invItem.purchasePrice
         inventoryItemRecords.push(invItem)
@@ -124,9 +181,12 @@ export async function POST(request: Request) {
     let change = 0
     if (paymentMethod === 'cash') {
       if (cashReceived < expectedAmount) {
-        return NextResponse.json({
-          error: 'Monto recibido insuficiente'
-        }, { status: 400 })
+        return NextResponse.json(
+          {
+            error: 'Monto recibido insuficiente',
+          },
+          { status: 400 },
+        )
       }
       change = cashReceived - expectedAmount
     }
@@ -136,7 +196,7 @@ export async function POST(request: Request) {
 
     // Create or find user for the client
     let user = await prisma.user.findFirst({
-      where: { dni: clientDni }
+      where: { dni: clientDni },
     })
 
     if (!user) {
@@ -145,13 +205,13 @@ export async function POST(request: Request) {
           email: `${clientDni}@instore.greatphones.com`,
           name: clientName,
           dni: clientDni,
-          role: 'CLIENT'
-        }
+          role: 'CLIENT',
+        },
       })
     }
 
     // Create order and update stock in transaction
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async tx => {
       // Create order
       const newOrder = await tx.order.create({
         data: {
@@ -179,7 +239,7 @@ export async function POST(request: Request) {
                 return {
                   productId: item.productId,
                   quantity: item.quantity,
-                  price: item.price
+                  price: item.price,
                 }
               } else if (item.type === 'inventory') {
                 // Find the inventory item record to check for linked product
@@ -188,45 +248,58 @@ export async function POST(request: Request) {
                   return {
                     productId: invRecord.productId,
                     quantity: 1,
-                    price: item.price || invRecord.targetPrice || invRecord.purchasePrice
+                    price: item.price || invRecord.targetPrice || invRecord.purchasePrice,
                   }
                 }
                 return {
-                  customName: invRecord ? `${invRecord.brand} ${invRecord.modelName}` : 'Dispositivo inventario',
-                  customPrice: item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0,
+                  customName: invRecord
+                    ? `${invRecord.brand} ${invRecord.modelName}`
+                    : 'Dispositivo inventario',
+                  customPrice:
+                    item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0,
                   quantity: 1,
-                  price: item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0
+                  price: item.price || invRecord?.targetPrice || invRecord?.purchasePrice || 0,
                 }
               } else {
                 return {
                   customName: item.name,
                   customPrice: item.price,
                   quantity: item.quantity,
-                  price: item.price
+                  price: item.price,
                 }
               }
-            })
-          }
+            }),
+          },
         },
         include: {
-          items: true
-        }
+          items: true,
+        },
       })
 
       if (paymentMethod === 'cash') {
-        await reserveStock(tx, catalogItems.map((item: any) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })))
-        await releaseStock(tx, catalogItems.map((item: any) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })), orderCode)
+        await reserveStock(
+          tx,
+          catalogItems.map((item: any) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        )
+        await releaseStock(
+          tx,
+          catalogItems.map((item: any) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+          orderCode,
+        )
       } else {
-        await reserveStock(tx, catalogItems.map((item: any) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-        })))
+        await reserveStock(
+          tx,
+          catalogItems.map((item: any) => ({
+            productId: item.productId,
+            quantity: item.quantity,
+          })),
+        )
       }
 
       // Handle inventory items: mark as SOLD, update linked product stock, create history
@@ -243,7 +316,7 @@ export async function POST(request: Request) {
               salePrice,
               soldAt: new Date(),
               soldById: adminId,
-            }
+            },
           })
 
           // Decrement product stock if linked
@@ -253,16 +326,16 @@ export async function POST(request: Request) {
                 where: { id: invItem.productId },
                 data: {
                   stock: { decrement: 1 },
-                  sold: { increment: 1 }
-                }
+                  sold: { increment: 1 },
+                },
               })
             } else {
               await tx.product.update({
                 where: { id: invItem.productId },
                 data: {
                   stock: { decrement: 1 },
-                  reserved: { increment: 1 }
-                }
+                  reserved: { increment: 1 },
+                },
               })
             }
           }
@@ -276,7 +349,7 @@ export async function POST(request: Request) {
               newValue: 'SOLD',
               description: `Vendido en tienda — ${clientName} (${clientDni})${paymentMethod === 'cash' ? ' — Efectivo' : ' — Transferencia'}`,
               userId: adminId,
-            }
+            },
           })
         }
       }
@@ -288,7 +361,7 @@ export async function POST(request: Request) {
           method: paymentMethod === 'transfer' ? 'transfer' : 'cash',
           status: paymentMethod === 'transfer' ? 'pending' : 'approved',
           installments: installmentsCount || 1,
-        }
+        },
       })
 
       return newOrder
@@ -306,13 +379,13 @@ export async function POST(request: Request) {
         description: `Venta en tienda - ${orderCode}`,
         payment_method_id: 'mp_qr',
         payer: {
-          email: 'instore@greatphones.com'
+          email: 'instore@greatphones.com',
         },
         point_of_interaction: {
-          type: 'OPENPLATFORM'
+          type: 'OPENPLATFORM',
         },
         external_reference: orderCode,
-        notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`
+        notification_url: `${process.env.NEXTAUTH_URL}/api/webhooks/mercadopago`,
       }
 
       const mpResponse = await payment.create({ body: paymentData })
@@ -322,8 +395,8 @@ export async function POST(request: Request) {
         where: { id: order.id },
         data: {
           mpPaymentId: mpResponse.id?.toString(),
-          mpStatus: 'pending'
-        }
+          mpStatus: 'pending',
+        },
       })
 
       return NextResponse.json({
@@ -335,7 +408,7 @@ export async function POST(request: Request) {
         amount: total,
         currency: currency || 'ARS',
         installments: installmentsCount,
-        mpPaymentId: mpResponse.id?.toString()
+        mpPaymentId: mpResponse.id?.toString(),
       })
     }
 
@@ -343,9 +416,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       order,
-      change
+      change,
     })
-
   } catch (error) {
     console.error('Error creating in-store sale:', error)
     return NextResponse.json({ error: 'Error al crear la venta' }, { status: 500 })
@@ -364,7 +436,7 @@ export async function GET(request: Request) {
     const paymentMethod = searchParams.get('paymentMethod')
 
     const where: any = {
-      saleChannel: 'in-store'
+      saleChannel: 'in-store',
     }
 
     if (startDate || endDate) {
@@ -384,12 +456,12 @@ export async function GET(request: Request) {
       include: {
         items: true,
         admin: {
-          select: { name: true, email: true }
-        }
+          select: { name: true, email: true },
+        },
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * limit,
-      take: limit
+      take: limit,
     })
 
     return NextResponse.json({
@@ -397,9 +469,8 @@ export async function GET(request: Request) {
       page,
       limit,
       total,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
     })
-
   } catch (error) {
     console.error('Error fetching in-store sales:', error)
     return NextResponse.json({ error: 'Error al obtener el historial' }, { status: 500 })

@@ -40,6 +40,7 @@ model User {
   orders                Order[]
   preOrders             PreOrder[]
   quotes                Quote[]
+  purchasedDevices      PurchasedDevice[]
   repairs               Repair[]
   sales                 Sale[]
   sessions              Session[]
@@ -289,33 +290,63 @@ model PreOrder {
 }
 
 model Quote {
-  id             String      @id @default(cuid())
-  code           String      @unique
-  userId         String
-  device         String
-  storage        String
-  condition      String
-  basePrice      Int
-  finalPrice     Int
-  bonus          Int?
-  status         QuoteStatus @default(PENDING)
-  envio          String?
-  payment        String?
-  clientName     String?
-  clientDni      String?
-  clientPhone    String?
-  clientCity     String?
-  signature      String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  extras         String[]
-  photos         String[]
-  rejectReason   String?
-  clientCp       String?
-  clientProvince String?
-  dniPhotos      String[]
-  batteryHealth  Int?
-  user           User        @relation(fields: [userId], references: [id])
+  id              String          @id @default(cuid())
+  code            String          @unique
+  userId          String
+  device          String
+  storage         String
+  condition       String
+  basePrice       Int
+  finalPrice      Int
+  bonus           Int?
+  status          QuoteStatus     @default(PENDING)
+  envio           String?
+  payment         String?
+  clientName      String?
+  clientDni       String?
+  clientPhone     String?
+  clientCity      String?
+  signature       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  extras          String[]
+  photos          String[]
+  rejectReason    String?
+  clientCp        String?
+  clientProvince  String?
+  dniPhotos       String[]
+  batteryHealth   Int?
+  invoice         Invoice?
+  purchasedDevice PurchasedDevice?
+  user            User            @relation(fields: [userId], references: [id])
+}
+
+model PurchasedDevice {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  quoteId         String   @unique
+  brand           String
+  device          String
+  storage         String
+  condition       String
+  color           String?
+  batteryHealth   Int?
+  imei            String?
+  serialNumber    String?
+  clientName      String
+  clientDni       String?
+  clientPhone     String?
+  clientCity      String?
+  clientProvince  String?
+  purchasePrice   Int
+  invoiceId       String   @unique
+  receivedAt      DateTime @default(now())
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  quote           Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy       User     @relation(fields: [createdById], references: [id])
 }
 
 model Sale {
@@ -685,21 +716,24 @@ model PaymentTransaction {
 }
 
 model Invoice {
-  id        String    @id @default(cuid())
-  orderId   String    @unique
-  type      String    @default("C")
-  pos       Int       @default(1)
-  number    Int
-  cae       String?
-  caeExpiry DateTime?
-  total     Int
-  netAmount Int
-  ivaAmount Int
-  status    String    @default("PENDING")
-  pdfUrl    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id              String           @id @default(cuid())
+  orderId         String?          @unique
+  quoteId         String?          @unique
+  type            String           @default("C")
+  pos             Int              @default(1)
+  number          Int
+  cae             String?
+  caeExpiry       DateTime?
+  total           Int
+  netAmount       Int
+  ivaAmount       Int
+  status          String           @default("PENDING")
+  pdfUrl          String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  order           Order?           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  quote           Quote?           @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  purchasedDevice PurchasedDevice?
 }
 
 model Cart {

@@ -3,16 +3,33 @@ import { prisma } from '@/lib/prisma'
 import { requireSession, handleRouteError } from '@/lib/auth-guard'
 import { reserveStock } from '@/lib/stock'
 import { getEffectivePrice, generateOrderCode, WARRANTY_COST_MAP } from '@/lib/pricing'
+import { WalletPaySchema, formatZodError } from '@/lib/validations'
 
 export async function POST(request: NextRequest) {
   try {
     const user = await requireSession(request)
 
     const body = await request.json()
+    const validation = WalletPaySchema.safeParse(body)
+    if (!validation.success) {
+      return NextResponse.json(formatZodError(validation.error), { status: 400 })
+    }
     const {
-      items, email, phone, street, number, floor, zip, city, province, document,
-      warranty, cuotas,
-    } = body
+      items,
+      email,
+      phone,
+      street,
+      number,
+      floor,
+      zip,
+      city,
+      province,
+      document,
+      warranty,
+      cuotas,
+      deliveryCost,
+      total,
+    } = validation.data
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: 'Carrito vacío' }, { status: 400 })
@@ -24,26 +41,32 @@ export async function POST(request: NextRequest) {
     const productMap = new Map(products.map((p: any) => [p.id, p]))
 
     // Validate IMEI items
-    const imeiMap = new Map<string, any>();
-    const imeiItems = items.filter((item: any) => item.imei);
+    const imeiMap = new Map<string, any>()
+    const imeiItems = items.filter((item: any) => item.imei)
     if (imeiItems.length > 0) {
-      const imeis = imeiItems.map((item: any) => item.imei);
+      const imeis = imeiItems.map((item: any) => item.imei)
       const inventoryUnits = await prisma.inventoryItem.findMany({
         where: { imei: { in: imeis } },
         select: { id: true, imei: true, productId: true, status: true },
-      });
-      for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit);
+      })
+      for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit)
 
       for (const item of imeiItems) {
-        const unit = imeiMap.get(item.imei);
+        const unit = item.imei ? imeiMap.get(item.imei) : undefined
         if (!unit) {
-          throw { status: 400, message: `IMEI no encontrado: ${item.imei}` };
+          throw { status: 400, message: `IMEI no encontrado: ${item.imei}` }
         }
         if (unit.productId !== item.id) {
-          throw { status: 400, message: `El IMEI ${item.imei} no pertenece al producto ${item.name}` };
+          throw {
+            status: 400,
+            message: `El IMEI ${item.imei} no pertenece al producto ${item.name}`,
+          }
         }
         if (unit.status !== 'IN_STOCK') {
-          throw { status: 400, message: `El equipo ${item.imei} no está disponible (${unit.status})` };
+          throw {
+            status: 400,
+            message: `El equipo ${item.imei} no está disponible (${unit.status})`,
+          }
         }
       }
     }
@@ -60,27 +83,33 @@ export async function POST(request: NextRequest) {
     })
 
     // Recalculate totals server-side
-    const calculatedSubtotal = enrichedItems.reduce((sum: number, item: any) => sum + item.unitPrice * item.quantity, 0)
-    const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty] ?? 0
-    const safeDeliveryCost = Math.max(0, body.deliveryCost || 0)
+    const calculatedSubtotal = enrichedItems.reduce(
+      (sum: number, item: any) => sum + item.unitPrice * item.quantity,
+      0,
+    )
+    const calculatedWarrantyCost = WARRANTY_COST_MAP[warranty ?? ''] ?? 0
+    const safeDeliveryCost = Math.max(0, deliveryCost || 0)
     const calculatedTotal = calculatedSubtotal + calculatedWarrantyCost + safeDeliveryCost
 
     // Cross-check: reject if frontend total doesn't match
-    if (body.total !== calculatedTotal) {
-      return NextResponse.json({ error: 'Error de validación: el total no coincide.' }, { status: 400 })
+    if (total !== calculatedTotal) {
+      return NextResponse.json(
+        { error: 'Error de validación: el total no coincide.' },
+        { status: 400 },
+      )
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async tx => {
       // Lock wallet row
       const walletRows = await tx.$queryRawUnsafe<Array<{ id: string }>>(
         'SELECT id FROM "Wallet" WHERE "userId" = $1 FOR UPDATE',
-        user.id
+        user.id,
       )
 
       let wallet: any
       if (!walletRows || walletRows.length === 0) {
         wallet = await tx.wallet.create({
-          data: { userId: user.id }
+          data: { userId: user.id },
         })
       } else {
         wallet = await tx.wallet.findUnique({ where: { id: walletRows[0].id } })
@@ -90,10 +119,13 @@ export async function POST(request: NextRequest) {
         throw { status: 400, message: 'Saldo insuficiente' }
       }
 
-      await reserveStock(tx, enrichedItems.map((item: any) => ({
-        productId: item.product.id,
-        quantity: item.quantity,
-      })))
+      await reserveStock(
+        tx,
+        enrichedItems.map((item: any) => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+        })),
+      )
 
       // Deduct from wallet
       const balanceBefore = wallet.balance
@@ -102,22 +134,22 @@ export async function POST(request: NextRequest) {
         data: {
           balance: { decrement: calculatedTotal },
           totalSpent: { increment: calculatedTotal },
-        }
+        },
       })
 
       // Reserve IMEI units
-      const itemInventoryMap = new Map<string, string>();
+      const itemInventoryMap = new Map<string, string>()
       for (const item of enrichedItems) {
         if (item.imei && imeiMap.has(item.imei)) {
-          const unit = imeiMap.get(item.imei);
+          const unit = imeiMap.get(item.imei)
           await tx.inventoryItem.update({
             where: { id: unit.id },
             data: {
               status: 'RESERVED',
               salePrice: item.unitPrice,
             },
-          });
-          itemInventoryMap.set(item.imei, unit.id);
+          })
+          itemInventoryMap.set(item.imei, unit.id)
         }
       }
 
@@ -146,12 +178,12 @@ export async function POST(request: NextRequest) {
           items: {
             create: enrichedItems.map((item: any) => ({
               productId: item.product.id,
-              inventoryItemId: item.imei ? (itemInventoryMap.get(item.imei) || null) : null,
+              inventoryItemId: item.imei ? itemInventoryMap.get(item.imei) || null : null,
               quantity: item.quantity,
-              price: item.unitPrice
-            }))
-          }
-        }
+              price: item.unitPrice,
+            })),
+          },
+        },
       })
 
       await tx.walletTransaction.create({
@@ -163,7 +195,7 @@ export async function POST(request: NextRequest) {
           balanceAfter: balanceBefore - calculatedTotal,
           referenceId: order.id,
           description: `Pago de orden ${orderCode}`,
-        }
+        },
       })
 
       // Payment ledger
@@ -174,7 +206,7 @@ export async function POST(request: NextRequest) {
           method: 'wallet',
           status: 'approved',
           installments: 1,
-        }
+        },
       })
 
       return { orderId: order.id, orderCode }
@@ -184,9 +216,8 @@ export async function POST(request: NextRequest) {
       success: true,
       orderId: result.orderId,
       orderCode: result.orderCode,
-      redirectUrl: `/success?wext=${result.orderCode}`
+      redirectUrl: `/success?wext=${result.orderCode}`,
     })
-
   } catch (error) {
     return handleRouteError(error)
   }

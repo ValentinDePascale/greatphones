@@ -20,10 +20,20 @@ vi.mock('@/lib/cache', () => ({
 
 vi.mock('@/lib/auth-guard', () => ({
   requireAdmin: vi.fn(),
+  handleRouteError: vi.fn((e) => {
+    const status = e?.status || 500
+    return new Response(JSON.stringify({ error: e?.message || 'Error interno' }), { status, headers: { 'Content-Type': 'application/json' } })
+  }),
 }))
 
 vi.mock('@/lib/rate-limit', () => ({
   rateLimit: vi.fn().mockResolvedValue({ allowed: true, remaining: 30, resetAt: Date.now() + 60000 }),
+  safeKeyPart: (v: string) => v,
+  clientIpKey: (req: Request) => req.headers.get('x-forwarded-for') || 'unknown',
+}))
+
+vi.mock('@/lib/expire-offers', () => ({
+  expireOffers: vi.fn().mockResolvedValue({ products: 0, accessories: 0 }),
 }))
 
 vi.mock('@/lib/validations', async () => {

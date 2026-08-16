@@ -7,12 +7,35 @@
 export const APP_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 
 // ---- Allowed Origins (single source of truth) ----
+// En desarrollo (sin NODE_ENV=production) aceptamos orígenes de túneles
+// efímeros (trycloudflare.com, localtunnel, ngrok, serveo) y LAN para
+// poder probar la app desde el celular. En producción, la lista es estricta.
 export const ALLOWED_ORIGINS = [
   APP_URL,
   'https://greatphones.com.ar',
   'https://www.greatphones.com.ar',
-  'https://greatphones.onrender.com',
 ]
+
+// Patrones regex adicionales para dev (túneles HTTPS efímeros + LAN).
+const DEV_TUNNEL_PATTERNS = process.env.NODE_ENV === 'production'
+  ? []
+  : [
+      /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/,
+      /^https:\/\/[a-z0-9-]+\.loca\.lt$/,
+      /^https:\/\/[a-z0-9-]+\.ngrok(-free)?\.app$/,
+      /^https:\/\/[a-z0-9-]+\.serveo\.net$/,
+      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+      /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+    ]
+
+export function isOriginAllowed(origin: string | null | undefined): boolean {
+  if (!origin) return false
+  if (ALLOWED_ORIGINS.includes(origin)) return true
+  for (const re of DEV_TUNNEL_PATTERNS) {
+    if (re.test(origin)) return true
+  }
+  return false
+}
 
 // ---- Session ----
 export const SESSION_COOKIE_NAME = 'gp-session'

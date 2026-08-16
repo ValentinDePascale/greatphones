@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart } from '@/lib/rate-limit'
 import { createSessionCookie, clearSessionCookie } from '@/lib/session'
-import { ALLOWED_ORIGINS } from '@/config'
 
 
 
@@ -16,7 +15,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email y password requeridos' }, { status: 400 })
     }
 
-    const limit = await rateLimit(`signin:${email}`, 5, 15 * 60 * 1000)
+    const limit = await rateLimit(`signin:${safeKeyPart(email)}`, 5, 15 * 60 * 1000)
     if (!limit.allowed) {
       const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
       return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
@@ -46,18 +45,11 @@ export async function POST(request: Request) {
         id: user.id,
         email: user.email,
         name: user.name,
-        phone: user.phone,
-        dni: user.dni,
-        direccion: user.direccion,
-        piso: user.piso,
-        cp: user.cp,
-        provincia: user.provincia,
-        ciudad: user.ciudad,
         role: user.role,
+        hasPassword: true,
       }
     }, {
       headers: {
-        'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0],
         'Set-Cookie': cookie,
       }
     })

@@ -6,6 +6,9 @@ export default defineConfig({
     environment: 'node',
     include: ['src/**/*.test.ts'],
     globals: true,
+    env: {
+      BYPASS_CSRF: 'true', // Permite tests de endpoints sin Origin/Referer
+    },
   },
   resolve: {
     alias: {

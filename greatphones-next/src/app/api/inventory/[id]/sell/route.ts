@@ -41,6 +41,15 @@ export async function POST(
       return NextResponse.json({ error: 'Este dispositivo ya fue vendido' }, { status: 409, headers: corsHeaders })
     }
 
+    // Lock pesimista: SELECT FOR UPDATE para prevenir venta concurrente del mismo item
+    const lockResult = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM "InventoryItem" WHERE id = ${id} AND status != 'SOLD' FOR UPDATE
+    `.catch(() => [])
+
+    if (!lockResult || lockResult.length === 0) {
+      return NextResponse.json({ error: 'Este dispositivo ya fue vendido' }, { status: 409, headers: corsHeaders })
+    }
+
     // Perform sale in transaction
     const result = await prisma.$transaction(async (tx) => {
       const now = new Date()

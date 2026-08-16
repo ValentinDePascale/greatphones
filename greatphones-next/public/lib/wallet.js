@@ -3,10 +3,9 @@
 var WALLET_CACHE = null
 
 function getWallet() {
-  return fetch('/api/wallet')
-    .then(function(r) { return r.json() })
+  return window.gpFetch('/api/wallet')
     .then(function(data) {
-      if (data.error) throw new Error(data.error)
+      if (data && data.error) throw new Error(data.error)
       WALLET_CACHE = data
       return data
     })
@@ -27,8 +26,7 @@ function updateWalletUI() {
 function getWalletTransactions(page, limit) {
   page = page || 1
   limit = limit || 20
-  return fetch('/api/wallet/transactions?page=' + page + '&limit=' + limit)
-    .then(function(r) { return r.json() })
+  return window.gpFetch('/api/wallet/transactions?page=' + page + '&limit=' + limit)
 }
 
 function renderWalletTransactions(page) {

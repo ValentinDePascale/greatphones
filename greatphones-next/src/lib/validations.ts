@@ -11,10 +11,12 @@ export function formatZodError(error: z.ZodError) {
 
   return {
     success: false,
-    error: 'Error de validación: ' + issues.map((e: any) => e.path.join('.') + ': ' + e.message).join(', '),
+    error:
+      'Error de validación: ' +
+      issues.map((e: any) => e.path.join('.') + ': ' + e.message).join(', '),
     message: 'Error de validación',
     errors: formattedErrors,
-    rawIssues: issues.map((e: any) => ({ path: e.path, message: e.message, code: e.code }))
+    rawIssues: issues.map((e: any) => ({ path: e.path, message: e.message, code: e.code })),
   }
 }
 
@@ -26,7 +28,10 @@ export const ProductCreateSchema = z.object({
   description: z.string().optional(),
   price: z.number().int().positive('Precio debe ser positivo'),
   stock: z.number().int().min(0).default(0),
-  condition: z.enum(['Nuevo', 'Impecable', 'Muy bueno', 'Bueno', 'Usado']).optional().or(z.literal('')),
+  condition: z
+    .enum(['Nuevo', 'Impecable', 'Muy bueno', 'Bueno', 'Usado'])
+    .optional()
+    .or(z.literal('')),
   type: z.enum(['celular', 'laptop', 'tablet', 'desktop']).optional().or(z.literal('')),
   color: z.string().optional(),
   screen: z.number().optional(),
@@ -121,33 +126,77 @@ export const UserUpdateSchema = z.object({
   avatar: z.string().url().optional().or(z.literal('')),
 })
 
+export const plainText = (min = 0, msg?: string) =>
+  z
+    .string()
+    .min(min, msg || 'No puede estar vacío')
+    .refine(v => !/[<>]/.test(v), 'No puede contener < o >')
+
 // === CHECKOUT ===
 export const CheckoutSchema = z.object({
   items: z.array(OrderItemSchema).min(1, 'Carrito vacío'),
   email: z.string().email('Email inválido'),
-  phone: z.string().optional(),
-  document: z.string().min(7, 'DNI/CUIT requerido'),
-  street: z.string().min(1, 'Dirección requerida'),
-  number: z.string().min(1, 'Número requerido'),
-  floor: z.string().optional(),
-  zip: z.string().min(4, 'Código postal requerido'),
-  city: z.string().min(1, 'Ciudad requerida'),
-  province: z.string().min(1, 'Provincia requerida'),
-  warranty: z.string().optional().default('12 meses'),
-  delivery: z.string().optional().default('Retiro en tienda'),
+  phone: plainText().optional(),
+  document: plainText(7, 'DNI/CUIT requerido'),
+  street: plainText(1, 'Dirección requerida'),
+  number: plainText(1, 'Número requerido'),
+  floor: plainText().optional(),
+  zip: plainText(4, 'Código postal requerido'),
+  city: plainText(1, 'Ciudad requerida'),
+  province: plainText(1, 'Provincia requerida'),
+  warranty: plainText().optional().default('12 meses'),
+  delivery: plainText().optional().default('Retiro en tienda'),
   cuotas: z.number().int().min(1).max(24).optional().default(1),
   subtotal: z.number().int().positive(),
   warrantyCost: z.number().int().min(0).optional().default(0),
   deliveryCost: z.number().int().min(0).optional().default(0),
   total: z.number().int().positive(),
-  paymentMethod: z.string().optional().default('mercadopago'),
+  paymentMethod: plainText().optional().default('mercadopago'),
   coupons: z.array(z.string()).optional(),
 })
 
+// === WALLET PAY ===
+export const WalletPayItemSchema = z.object({
+  id: z.string().min(1, 'Producto requerido'),
+  name: z.string().optional(),
+  quantity: z
+    .number()
+    .int('Cantidad inválida')
+    .min(1, 'Cantidad debe ser al menos 1')
+    .max(99, 'Cantidad demasiado alta'),
+  imei: z.string().optional(),
+})
+
+export const WalletPaySchema = z.object({
+  items: z.array(WalletPayItemSchema).min(1, 'Carrito vacío'),
+  email: z.string().optional(),
+  phone: plainText().optional(),
+  document: plainText().optional(),
+  street: plainText().optional(),
+  number: plainText().optional(),
+  floor: plainText().optional(),
+  zip: plainText().optional(),
+  city: plainText().optional(),
+  province: plainText().optional(),
+  warranty: plainText().optional(),
+  cuotas: z.number().int().min(1).max(24).optional(),
+  deliveryCost: z.number().min(0).optional().default(0),
+  total: z.number().optional(),
+})
+
 // === AUTH ===
+// Política de contraseña fuerte: mínimo 8 caracteres, una mayúscula,
+// una minúscula y un número.
+export const PasswordSchema = z
+  .string()
+  .min(8, 'La contraseña debe tener al menos 8 caracteres')
+  .regex(/[A-Z]/, 'La contraseña debe incluir al menos una mayúscula')
+  .regex(/[a-z]/, 'La contraseña debe incluir al menos una minúscula')
+  .regex(/[0-9]/, 'La contraseña debe incluir al menos un número')
+
 export const SignupSchema = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'Password debe tener al menos 6 caracteres'),
+  password: PasswordSchema,
   name: z.string().min(1, 'Nombre requerido').optional(),
   phone: z.string().optional(),
   dni: z.string().optional(),
@@ -163,24 +212,24 @@ export const SigninSchema = z.object({
 
 // === QUOTES ===
 export const QuoteCreateSchema = z.object({
-  device: z.string().min(1, 'Dispositivo requerido'),
-  brand: z.string().optional(),
-  model: z.string().optional(),
+  device: plainText(1, 'Dispositivo requerido'),
+  brand: plainText().optional(),
+  model: plainText().optional(),
   condition: z.enum(['Nuevo', 'Perfecto', 'Bueno', 'Regular', 'Malo']).optional(),
-  storage: z.string().optional(),
-  battery: z.string().optional(),
+  storage: plainText().optional(),
+  battery: plainText().optional(),
   hasCharger: z.boolean().optional(),
   hasBox: z.boolean().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
-  phone: z.string().optional(),
-  name: z.string().optional(),
+  phone: plainText().optional(),
+  name: plainText().optional(),
 })
 
 // === ARREPENTIMIENTO ===
 export const ArrepentimientoSchema = z.object({
   orderId: z.string().min(1, 'Order ID requerido'),
   email: z.string().email('Email inválido'),
-  motivo: z.string().min(10, 'Motivo requerido (mínimo 10 caracteres)'),
+  motivo: plainText(10, 'Motivo requerido (mínimo 10 caracteres)'),
 })
 
 // === EXPORTACIÓN DE TIPOS ===
@@ -199,6 +248,7 @@ export type OrderQueryPayload = z.infer<typeof OrderQuerySchema>
 export type UserUpdatePayload = z.infer<typeof UserUpdateSchema>
 
 export type CheckoutPayload = z.infer<typeof CheckoutSchema>
+export type WalletPayPayload = z.infer<typeof WalletPaySchema>
 
 export type SignupPayload = z.infer<typeof SignupSchema>
 export type SigninPayload = z.infer<typeof SigninSchema>
@@ -211,24 +261,26 @@ export type ArrepentimientoPayload = z.infer<typeof ArrepentimientoSchema>
 export const CreateConversationSchema = z.object({
   type: z.enum(['COMPRA', 'COTIZACION', 'SERVICIO', 'REPARACION', 'GENERIC']),
   subject: z.string().min(1, 'Asunto requerido').max(200),
-  firstMessage: z.string().max(2000).optional()
+  firstMessage: z.string().max(2000).optional(),
 })
 
-export const SendMessageSchema = z.object({
-  text: z.string().min(1, 'Mensaje requerido').max(2000).optional(),
-  imageUrl: z.string().url().optional(),
-  imageCaption: z.string().max(500).optional()
-}).refine(data => data.text || data.imageUrl, {
-  message: 'Se requiere texto o imagen'
-})
+export const SendMessageSchema = z
+  .object({
+    text: z.string().min(1, 'Mensaje requerido').max(2000).optional(),
+    imageUrl: z.string().url().optional(),
+    imageCaption: z.string().max(500).optional(),
+  })
+  .refine(data => data.text || data.imageUrl, {
+    message: 'Se requiere texto o imagen',
+  })
 
 export const MarkReadSchema = z.object({
-  conversationId: z.string()
+  conversationId: z.string(),
 })
 
 export const AssignConversationSchema = z.object({
   conversationId: z.string(),
-  adminId: z.string()
+  adminId: z.string(),
 })
 
 export type CreateConversationPayload = z.infer<typeof CreateConversationSchema>

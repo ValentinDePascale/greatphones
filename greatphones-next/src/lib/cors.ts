@@ -1,12 +1,10 @@
-import { ALLOWED_ORIGINS } from '@/config'
+import { isOriginAllowed } from '@/config'
 
 export function getCorsHeaders(origin?: string | null) {
-  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin)
-    ? origin
-    : ALLOWED_ORIGINS[0]
+  const allowedOrigin = origin && isOriginAllowed(origin) ? origin : null
 
   return {
-    'Access-Control-Allow-Origin': allowedOrigin,
+    ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   }

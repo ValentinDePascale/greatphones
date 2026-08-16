@@ -175,7 +175,7 @@ function crearPreventa() {
 
   fetch(API_URL + '/api/admin/preorders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify(body)
   }).then(function(r) { return r.json() }).then(function(res) {
     if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
@@ -209,7 +209,7 @@ function loadPreventaRecent() {
   var list = document.getElementById('prev-recentList')
   if (!list) return
   fetch(API_URL + '/api/admin/preorders?status=PENDING', {
-    headers: { 'X-User-Id': currentUser && currentUser.id }
+    headers: {}
   }).then(function(r) { return r.json() }).then(function(data) {
     if (!Array.isArray(data) || !data.length) {
       list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)"><div style="font-size:32px;margin-bottom:.5rem">📝</div><p>No hay preventas pendientes</p></div>'
@@ -272,7 +272,7 @@ function loadPreventaList(status, search) {
   if (search) params.push('search=' + encodeURIComponent(search))
   var url = API_URL + '/api/admin/preorders' + (params.length ? '?' + params.join('&') : '')
   list.innerHTML = '<div class="loader-spinner"><span>Cargando...</span></div>'
-  fetch(url, { headers: { 'X-User-Id': currentUser && currentUser.id } })
+  fetch(url, { headers: {} })
     .then(function(r) { return r.json() })
     .then(function(data) {
       if (!Array.isArray(data) || !data.length) {
@@ -323,7 +323,7 @@ function renderPreventaCard(o) {
 
 function renderPreventaDetail(id) {
   fetch(API_URL + '/api/admin/preorders/' + id, {
-    headers: { 'X-User-Id': currentUser && currentUser.id }
+    headers: {}
   }).then(function(r) { return r.json() }).then(function(o) {
     if (o.error) { showToast({ title: 'Error', message: o.error, type: 'error' }); return }
     showPreventaDetailModal(o)
@@ -409,7 +409,7 @@ function confirmPreventaAction(id, action) {
 function executePreventaAction(id, status) {
   fetch(API_URL + '/api/admin/preorders/' + id, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser && currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({ status: status })
   }).then(function(r) { return r.json() }).then(function(res) {
     if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
@@ -451,7 +451,7 @@ function loadPreventaProducts() {
   grid.innerHTML = ''
   if (loading) loading.style.display = 'block'
 
-  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id; hdrs['X-Admin-Request'] = '1'; }
+  var hdrs = {};
   fetch(API_URL + '/api/products?preorder=true&limit=50', { headers: hdrs })
     .then(function(r) { return r.json(); })
     .then(function(res) {
@@ -597,7 +597,7 @@ function savePreventaProduct(id) {
   if (isEdit) { url += '?id=' + id; method = 'PUT' }
 
   var hdrs = { 'Content-Type': 'application/json' }
-  if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+  
 
   fetch(url, { method: method, headers: hdrs, body: JSON.stringify(data) })
     .then(function(r) { return r.json(); })
@@ -610,7 +610,7 @@ function savePreventaProduct(id) {
 }
 
 function editPreventaProduct(id) {
-  var hdrs = {}; if (currentUser && currentUser.id) { hdrs['X-User-Id'] = currentUser.id }
+  var hdrs = {};
   fetch(API_URL + '/api/products/' + id, { headers: hdrs })
     .then(function(r) { return r.json(); })
     .then(function(p) {
@@ -622,7 +622,7 @@ function editPreventaProduct(id) {
 
 function deletePreventaProduct(id) {
   if (!confirm('Eliminar este producto de preventa?')) return
-  var hdrs = {}; if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+  var hdrs = {}; 
   fetch(API_URL + '/api/products?id=' + id, { method: 'DELETE', headers: hdrs })
     .then(function(r) { return r.json(); })
     .then(function(res) {
@@ -666,7 +666,7 @@ function loadOnlinePreventas() {
   list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--gray)">Cargando...</div>'
   var url = API_URL + '/api/admin/preorders?source=online&limit=50'
   if (_onlinePreventaStatusFilter) url += '&status=' + _onlinePreventaStatusFilter
-  var hdrs = {}; if (currentUser && currentUser.id) hdrs['X-User-Id'] = currentUser.id
+  var hdrs = {}; 
 
   fetch(url, { headers: hdrs })
     .then(function(r) { return r.json(); })
@@ -690,18 +690,18 @@ function loadOnlinePreventas() {
 
         return '<div class="acard" style="padding:1rem">' +
           '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
-            '<div style="font-size:12px;font-weight:700;color:var(--orange)">' + po.code + '</div>' +
+            '<div style="font-size:12px;font-weight:700;color:var(--orange)">' + esc(po.code) + '</div>' +
             '<span style="font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;background:' + sc + ';color:#fff">' + po.status + '</span>' +
           '</div>' +
           '<div style="display:flex;gap:12px">' +
             '<div style="flex:1;min-width:0">' +
-              '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + productName + '</div>' +
-              '<div style="font-size:11px;color:var(--gray);margin-bottom:4px">' + (po.productStorage || '') + ' · ' + (po.productColor || '') + '</div>' +
+              '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + esc(productName) + '</div>' +
+              '<div style="font-size:11px;color:var(--gray);margin-bottom:4px">' + esc(po.productStorage || '') + ' · ' + esc(po.productColor || '') + '</div>' +
               '<div style="font-size:11px;margin-bottom:4px">' +
-                '<span style="color:var(--gray)">Cliente:</span> ' + po.clientName + ' · ' + (po.clientEmail || '') + ' · ' + (po.clientPhone || '') +
+                '<span style="color:var(--gray)">Cliente:</span> ' + esc(po.clientName) + ' · ' + esc(po.clientEmail || '') + ' · ' + esc(po.clientPhone || '') +
               '</div>' +
               (availableFrom ? '<div style="font-size:10px;color:#8B7355;margin-bottom:4px">&#x1F4C5; Disp: ' + availableFrom + '</div>' : '') +
-              '<div style="font-size:16px;font-weight:700;margin-top:4px">' + fmt(po.price) + (po.installments > 1 ? ' · ' + po.installments + ' cuotas' : '') + ' · ' + (po.paymentMethod || '') + '</div>' +
+              '<div style="font-size:16px;font-weight:700;margin-top:4px">' + fmt(po.price) + (po.installments > 1 ? ' · ' + po.installments + ' cuotas' : '') + ' · ' + esc(po.paymentMethod || '') + '</div>' +
             '</div>' +
           '</div>' +
           (actionsHtml ? '<div style="display:flex;gap:6px;margin-top:10px">' + actionsHtml + '</div>' : '') +
@@ -716,7 +716,7 @@ function updateOnlinePreventa(id, newStatus) {
   if (!confirm(msg)) return
   fetch(API_URL + '/api/admin/preorders/' + id, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser && currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({ status: newStatus })
   }).then(function(r) { return r.json(); }).then(function(res) {
     if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }

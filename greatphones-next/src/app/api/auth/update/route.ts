@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSelfOrAdmin, handleRouteError } from '@/lib/auth-guard'
-import { ALLOWED_ORIGINS } from '@/config'
 
 
 
@@ -34,10 +33,9 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ 
       message: 'Usuario actualizado',
-      user: { id: user.id, email: user.email, name: user.name, phone: user.phone, dni: user.dni, direccion: user.direccion, piso: user.piso, cp: user.cp, provincia: user.provincia, ciudad: user.ciudad, avatar: user.avatar }
+      user: { id: user.id, email: user.email, name: user.name, phone: user.phone, dni: user.dni, direccion: user.direccion, piso: user.piso, cp: user.cp, provincia: user.provincia, ciudad: user.ciudad, avatar: user.avatar, hasPassword: !!user.password }
     }, { 
-      status: 200,
-      headers: { 'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0] }
+      status: 200
     })
   } catch (error) {
     return handleRouteError(error)

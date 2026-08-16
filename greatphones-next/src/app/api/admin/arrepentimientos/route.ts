@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(arrepentimientos, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) {
     console.error('[ADMIN ARREPENTIMIENTOS] Error:', error)
@@ -54,7 +54,7 @@ export async function PATCH(request: Request) {
     const validStates = ['PENDIENTE', 'APROBADO', 'RECHAZADO', 'COMPLETADO']
     if (!validStates.includes(estado)) {
       return NextResponse.json(
-        { error: 'Estado inválido' },
+        { error: 'Estado invÃ¡lido' },
         { status: 400 }
       )
     }
@@ -69,7 +69,7 @@ export async function PATCH(request: Request) {
       message: 'Estado actualizado',
       data: updated
     }, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) {
     console.error('[ADMIN ARREPENTIMIENTOS] PATCH Error:', error)

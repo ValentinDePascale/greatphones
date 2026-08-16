@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getSessionFromCookies, type SessionPayload } from '@/lib/session'
+import { getSessionFromCookies } from '@/lib/session'
 
 export class AuthError extends Error {
   status: number
@@ -18,7 +18,7 @@ async function getAuthenticatedUser(request?: Request) {
   if (session?.user?.email) {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, email: true, role: true }
+      select: { id: true, email: true, role: true },
     })
     if (user) return user
   }
@@ -29,17 +29,19 @@ async function getAuthenticatedUser(request?: Request) {
     if (sessionPayload) {
       const user = await prisma.user.findUnique({
         where: { id: sessionPayload.id },
-        select: { id: true, email: true, name: true, phone: true, dni: true, direccion: true, piso: true, cp: true, provincia: true, ciudad: true, role: true }
-      })
-      if (user) return user
-    }
-
-    // Fallback: X-User-Id header
-    const userId = request.headers.get('X-User-Id')
-    if (userId) {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { id: true, email: true, name: true, phone: true, dni: true, direccion: true, piso: true, cp: true, provincia: true, ciudad: true, role: true }
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          phone: true,
+          dni: true,
+          direccion: true,
+          piso: true,
+          cp: true,
+          provincia: true,
+          ciudad: true,
+          role: true,
+        },
       })
       if (user) return user
     }

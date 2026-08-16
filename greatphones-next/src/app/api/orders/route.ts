@@ -107,6 +107,17 @@ export async function GET(request: Request) {
                 }
               }
             }
+          },
+          invoice: {
+            select: {
+              id: true,
+              type: true,
+              pos: true,
+              number: true,
+              cae: true,
+              caeExpiry: true,
+              status: true,
+            }
           }
         },
         orderBy: { createdAt: 'desc' },

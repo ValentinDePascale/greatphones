@@ -1,11 +1,12 @@
 import 'dotenv/config'
+import { randomBytes } from 'crypto'
 import { prisma } from '../lib/prisma'
 import bcrypt from 'bcryptjs'
 
 async function main() {
-  const password = 'admin123'
+  const password = randomBytes(16).toString('base64url')
   const hashedPassword = await bcrypt.hash(password, 10)
-  
+
   const admin = await prisma.user.upsert({
     where: { email: 'greatphones.contacto@gmail.com' },
     update: {
@@ -26,12 +27,15 @@ async function main() {
       verified: true
     },
   })
-  
+
   console.log('Admin actualizado:', admin.email)
-  console.log('Password:', password)
-  console.log('Verificado:', admin.verified)
   console.log('Role:', admin.role)
+  console.log('Verificado:', admin.verified)
   await prisma.$disconnect()
+
+  console.error('\n=== ADMIN PASSWORD (guardar en gestor seguro, NO en el repo) ===')
+  console.error(password)
+  console.error('====================================================================\n')
 }
 
 main().catch(console.error)

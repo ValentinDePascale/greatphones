@@ -18,6 +18,15 @@ function initChatSocket(){
     console.log('[Chat] Socket client not available');
     return;
   }
+  // Si ya hay un socket conectado o en proceso de conexión, reusarlo para
+  // evitar conexiones duplicadas que el servidor rechaza.
+  if(chatSocket&&(chatSocket.connected||chatSocket.connecting)){
+    return;
+  }
+  if(chatSocket&&chatSocket.disconnected){
+    try{chatSocket.disconnect();}catch(e){}
+    chatSocket=null;
+  }
   try{
     var socketUrl=window.location.origin;
     chatSocket=window.io(socketUrl,{
@@ -293,7 +302,7 @@ function createDefaultConversation(){
 
 function loadMessages(convId,scrollBottom,scrollToMsgId){
   var headers={};
-  if(currentUser)headers['X-User-Id']=currentUser.id;
+  
   fetch(API_URL+'/api/conversations/'+convId+'/messages?limit='+PAGE_SIZE,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');
@@ -384,7 +393,7 @@ function loadOlderMessages(){
   var btn=document.querySelector('#olderMsgsBtn');
   if(btn)btn.innerHTML='<span style="font-size:12px;color:var(--gray)">Cargando...</span>';
   var headers={};
-  if(currentUser)headers['X-User-Id']=currentUser.id;
+  
   fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit='+PAGE_SIZE+'&cursor='+_msgCursor,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');
@@ -972,7 +981,7 @@ function consultarProducto(){
     userConvId=convId;
     fetch(API_URL+'/api/conversations/'+convId+'/messages',{
       method:'POST',
-      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({userId:currentUser.id,text:encodedText})
     })
     .then(function(r){return r.json();})
@@ -1308,7 +1317,7 @@ function loadAdminConversations(){
   }
   list.innerHTML='<div class="loader-spinner"><span>Cargando conversaciones...</span></div>';
   fetch(API_URL+'/api/admin/conversations',{
-    headers:{'X-User-Id':currentUser.id}
+    headers:{}
   })
     .then(function(r){
       if(!r.ok)throw new Error('HTTP '+r.status);
@@ -1395,15 +1404,15 @@ function renderAdminConvList(convs){
       '<div style="width:40px;height:40px;min-width:40px;border-radius:50%;background:'+grad+';display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.1)">'+initials+'</div>'+
       '<div style="flex:1;min-width:0">'+
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">'+
-          '<span style="font-size:13px;font-weight:600;color:var(--dk)">'+userName+'</span>'+
+          '<span style="font-size:13px;font-weight:600;color:var(--dk)">'+esc(userName)+'</span>'+
           '<div style="display:flex;align-items:center;gap:6px">'+
             (time?'<span style="font-size:10px;color:var(--gray)">'+time+'</span>':'')+
             (unreadCount>0?'<span style="background:var(--orange);color:#fff;font-size:9px;font-weight:700;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;border-radius:9px;padding:0 5px;box-sizing:border-box">'+(unreadCount>99?'99+':unreadCount)+'</span>':'')+
           '</div>'+
         '</div>'+
-        (userEmail?'<div style="font-size:10px;color:var(--gray);margin-bottom:4px">'+userEmail+'</div>':'')+
+        (userEmail?'<div style="font-size:10px;color:var(--gray);margin-bottom:4px">'+esc(userEmail)+'</div>':'')+
         '<div style="display:flex;align-items:center;gap:6px">'+
-          '<span class="conv-last-msg" style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+(lastMsg||'Sin mensajes')+'</span>'+
+          '<span class="conv-last-msg" style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px">'+esc(lastMsg||'Sin mensajes')+'</span>'+
           '<span style="width:5px;height:5px;border-radius:50%;background:'+statusColor+';flex-shrink:0"></span>'+
           '<span style="font-size:9px;color:'+statusColor+';font-weight:500;text-transform:uppercase;letter-spacing:.3px">'+statusLabel+'</span>'+
         '</div>'+
@@ -1494,7 +1503,7 @@ function renderQuickReplies(){
   if(!replies||replies.length===0){container.style.display='none';return;}
   container.style.display='flex';
   container.innerHTML=replies.map(function(r,i){
-    return '<button onclick="useQuickReply('+i+')" title="'+r.text+'">⚡ '+r.label+'</button>';
+    return '<button onclick="useQuickReply('+i+')" title="'+esc(r.text)+'">⚡ '+esc(r.label)+'</button>';
   }).join('');
 }
 
@@ -1521,7 +1530,7 @@ function deleteAdminConv(id){
     if(!confirmed) return;
     fetch(API_URL+'/api/admin/conversations',{
       method:'POST',
-      headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({conversationId:id,action:'delete'})
     })
     .then(function(r){return r.json();})
@@ -1564,7 +1573,7 @@ function closeAdminConv(id){
   if(!id)return;
   fetch(API_URL+'/api/admin/conversations',{
     method:'POST',
-    headers:{'Content-Type':'application/json','X-User-Id':currentUser.id},
+    headers:{'Content-Type':'application/json'},
     body:JSON.stringify({conversationId:id,action:'close'})
   })
   .then(function(r){return r.json();})
@@ -1693,8 +1702,8 @@ function appendPanelMessage(msg){
   if(productData){
     content=renderProductCard(productData);
   }else if(msg.imageUrl){
-    content='<img src="'+msg.imageUrl+'" class="msg-img" onclick="openLightbox(\''+msg.imageUrl+'\')">';
-    if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+msg.imageCaption+'</p>';
+    content='<img src="'+escapeHtml(msg.imageUrl)+'" class="msg-img" onclick="openLightbox(\''+escapeHtml(msg.imageUrl)+'\')">';
+    if(msg.imageCaption)content+='<p style="margin-top:6px;font-size:13px">'+escapeHtml(msg.imageCaption)+'</p>';
   }else{
     content='<p style="margin:0">'+escapeHtml(msg.text||'')+'</p>';
   }
@@ -1737,7 +1746,7 @@ function handlePanelTyping(){
 
 function loadPanelMessages(convId,scrollBottom){
   var headers={};
-  if(currentUser)headers['X-User-Id']=currentUser.id;
+  
   fetch(API_URL+'/api/conversations/'+convId+'/messages?limit='+PAGE_SIZE,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');
@@ -1812,7 +1821,7 @@ function loadOlderPanelMessages(){
   var btn=document.querySelector('#panelOlderBtn');
   if(btn)btn.innerHTML='<span style="font-size:12px;color:var(--gray)">Cargando...</span>';
   var headers={};
-  if(currentUser)headers['X-User-Id']=currentUser.id;
+  
   fetch(API_URL+'/api/conversations/'+userConvId+'/messages?limit='+PAGE_SIZE+'&cursor='+_panelCursor,{headers:headers})
     .then(function(r){
       if(!r.ok)throw new Error('Error al cargar mensajes');

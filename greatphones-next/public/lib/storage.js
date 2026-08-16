@@ -156,8 +156,11 @@ var FetchCache = {
       }
     }
 
-    // Create new request
-    var promise = fetch(url, options)
+    // Create new request. Siempre enviamos cookies (credentials: 'include') para
+    // que la cookie de sesion gp-session llegue al backend, incluso cuando la app
+    // se sirve desde un origen distinto al del backend (ej. tunel HTTPS).
+    var fetchOptions = Object.assign({}, options || {}, { credentials: 'include' });
+    var promise = fetch(url, fetchOptions)
       .then(function(response) {
         if (!response.ok) {
           throw new Error('HTTP ' + response.status);

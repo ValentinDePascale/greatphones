@@ -142,10 +142,35 @@ function showConfirm(title, message, options) {
  * @param {number} options.duration - Duration in ms (default: 4000)
  * @param {boolean} options.showProgress - Show progress bar (default: true)
  */
+// Helper para salir del panel admin y volver a la tienda pública. A diferencia
+// de nav('home') (que solo cambia visibilidad SPA, manteniendo el shell admin
+// en memoria), goToHome() hace una navegación completa a /home, lo que:
+//   1. Cambia la URL a la home pública.
+//   2. Descarta el shell admin y el layout React del admin.
+//   3. Re-hidrata la home pública desde cero.
+function goToHome(){
+  try{window.stop();}catch(e){}
+  window.location.href = '/home';
+}
+window.goToHome = goToHome;
+
+/**
+ * Show a toast notification
+ * @param {Object} options - Toast options
+ * @param {string} options.title - Toast title
+ * @param {string} options.message - Toast message
+ * @param {string} options.type - Toast type: 'info', 'success', 'warning', 'error'
+ * @param {number} options.duration - Duration in ms (default: 4000)
+ * @param {boolean} options.showProgress - Show progress bar (default: true)
+ */
 function showToast(options) {
   var container = document.getElementById('adminToastContainer');
   if (!container) return;
-  
+
+  if (options.type === 'success') {
+    window.dispatchEvent(new CustomEvent('admin:data-changed'));
+  }
+
   var type = options.type || 'info';
   var duration = options.duration || 4000;
   var showProgress = options.showProgress !== false;

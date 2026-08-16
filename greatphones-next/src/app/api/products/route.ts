@@ -8,12 +8,13 @@ import {
 import { productCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin, handleRouteError, AuthError } from '@/lib/auth-guard'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, clientIpKey } from '@/lib/rate-limit'
+import { expireOffers } from '@/lib/expire-offers'
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin') || '*'
   const corsHeaders = getCorsHeaders(origin)
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const ip = clientIpKey(request)
   const rl = await rateLimit(`products:${ip}`, 30, 60000)
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Demasiadas solicitudes. Reintenta en ' + Math.ceil((rl.resetAt - Date.now()) / 1000) + 's' }, { status: 429 })
@@ -35,6 +36,7 @@ export async function GET(request: NextRequest) {
   }
 
    try {
+    await expireOffers()
     const where: any = {}
 
     if (brand) {

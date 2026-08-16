@@ -56,3 +56,6 @@ button,input,select,textarea{font-family:inherit}
 .fav-btn:hover{transform:scale(1.1)}
 *:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:4px}
 a:focus-visible,button:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+
+/* ===== ADMIN: hide legacy HTML sidebar (React sidebar is the source of truth) ===== */
+#p-admin .admin-sidebar,#p-admin .admin-sidebar-backdrop{display:none!important}

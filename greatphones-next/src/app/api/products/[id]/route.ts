@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
@@ -14,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
     return NextResponse.json(product, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) { return handleRouteError(error) }
 }
@@ -61,7 +61,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     })
     console.log('Updated product:', updated)
     return NextResponse.json(updated, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) { return handleRouteError(error) }
 }
@@ -79,7 +79,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       where: { id }
     })
     return NextResponse.json({ message: 'Product deleted' }, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) { return handleRouteError(error) }
 }

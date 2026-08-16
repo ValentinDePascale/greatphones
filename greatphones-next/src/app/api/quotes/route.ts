@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendNewQuoteEmail } from '@/lib/email'
 import { requireSession, requireAdmin } from '@/lib/auth-guard'
+import {
+  arcaIsConfigured,
+  arcaPtoVta,
+  getArcaClient,
+  buildFacturarOptsFromQuote,
+  caeExpiryToDate,
+} from '@/lib/arca'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: Request) {
   try {
@@ -150,6 +158,128 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
     }
 
+    // Flujo especial: aprobación emite factura ARCA automáticamente
+    if (status === 'APPROVED') {
+      const adminUser = await requireAdmin(request)
+      const quote = await prisma.quote.findUnique({ where: { id } })
+      if (!quote) {
+        return NextResponse.json({ error: 'Cotización no encontrada' }, { status: 404 })
+      }
+
+      // Verificar si ya tiene factura
+      const existingInvoice = await prisma.invoice.findUnique({ where: { quoteId: id } })
+      if (existingInvoice) {
+        return NextResponse.json(
+          {
+            error: `La cotización ya tiene factura ${existingInvoice.type} N° ${existingInvoice.number}`,
+          },
+          { status: 409 }
+        )
+      }
+
+      let invoice = null
+      let arcaError: string | null = null
+
+      if (arcaIsConfigured()) {
+        try {
+          const built = buildFacturarOptsFromQuote({
+            device: quote.device,
+            storage: quote.storage,
+            finalPrice: quote.finalPrice,
+            clientDni: quote.clientDni,
+            clientName: quote.clientName,
+          })
+          const arca = getArcaClient()
+          const result = await arca.facturar(built.opts)
+
+          if (!result.aprobada) {
+            arcaError = 'ARCA rechazó el comprobante'
+            const details = result.observaciones.map(o => ({ code: o.code, msg: o.msg }))
+            logger.error({ quoteId: id, observaciones: details }, 'ARCA rejected invoice')
+            return NextResponse.json(
+              {
+                error: arcaError,
+                observaciones: details,
+              },
+              { status: 400 }
+            )
+          }
+
+          invoice = await prisma.invoice.create({
+            data: {
+              quoteId: id,
+              type: 'C',
+              pos: result.ptoVta || arcaPtoVta(),
+              number: result.cbteNro,
+              cae: result.cae,
+              caeExpiry: result.caeVencimiento ? caeExpiryToDate(result.caeVencimiento) : null,
+              total: Math.round(built.total),
+              netAmount: Math.round(built.neto),
+              ivaAmount: Math.round(built.iva),
+              status: 'APPROVED',
+            },
+          })
+
+          logger.info(
+            { quoteId: id, invoiceId: invoice.id, cae: invoice.cae, total: invoice.total },
+            'Invoice created from approved quote'
+          )
+
+          // Crear registro en historial de comprados
+          await prisma.purchasedDevice.create({
+            data: {
+              code: `PUR-${Date.now()}`,
+              quoteId: id,
+              brand: quote.device.split(' ')[0] || 'Genérico',
+              device: quote.device,
+              storage: quote.storage,
+              condition: quote.condition,
+              batteryHealth: quote.batteryHealth,
+              clientName: quote.clientName || 'Sin nombre',
+              clientDni: quote.clientDni,
+              clientPhone: quote.clientPhone,
+              clientCity: quote.clientCity,
+              clientProvince: quote.clientProvince,
+              purchasePrice: quote.finalPrice,
+              invoiceId: invoice.id,
+              createdById: adminUser.id,
+            },
+          })
+          logger.info({ quoteId: id }, 'PurchasedDevice registered')
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Error desconocido de ARCA'
+          logger.error({ err, quoteId: id }, 'ARCA error while creating invoice')
+          return NextResponse.json(
+            { error: `Error al facturar con ARCA: ${message}` },
+            { status: 502 }
+          )
+        }
+      } else {
+        arcaError = 'ARCA no está configurado. Aceptada sin factura.'
+        logger.warn({ quoteId: id }, 'ARCA not configured, approving quote without invoice')
+      }
+
+      // Actualizar estado de la cotización (siempre, haya factura o no)
+      const updated = await prisma.quote.update({
+        where: { id },
+        data: {
+          status: 'APPROVED',
+        },
+        include: {
+          invoice: true,
+          user: { select: { id: true, name: true, email: true } },
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        quote: updated,
+        invoice,
+        warning: arcaError,
+      })
+    }
+
+    // Otros status (REJECTED, REVIEWING, COMPLETED): update simple
     const quote = await prisma.quote.update({
       where: { id },
       data: {
@@ -157,10 +287,9 @@ export async function PATCH(request: Request) {
         ...(rejectReason ? { rejectReason } : {}),
       },
       include: {
-        user: {
-          select: { id: true, name: true, email: true }
-        }
-      }
+        user: { select: { id: true, name: true, email: true } },
+        invoice: true,
+      },
     })
 
     return NextResponse.json({ success: true, quote })

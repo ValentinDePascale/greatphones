@@ -62,6 +62,99 @@ test.describe('Native Pages E2E', () => {
     await expect(page.locator('.dt-pr')).toBeVisible()
   })
 
+  test('Product detail loads when navigating from /productos (regression: race condition openDetail)', async ({ page }) => {
+    // Regression test: previously clicking a card from /productos navigated to /detail/[id]
+    // but the page rendered blank because openDetail was called before PRODUCTS was loaded.
+    // The fix: openDetail now polls for PRODUCTS before silently failing, and page.tsx no
+    // longer uses a fragile inline setTimeout.
+    await page.goto('/productos')
+    await page.waitForLoadState('networkidle')
+
+    const firstCard = page.locator('.pc').first()
+    await expect(firstCard).toBeVisible({ timeout: 10000 })
+
+    // Capture the product id from the href so we can compare
+    const href = await firstCard.getAttribute('href')
+    expect(href).toBeTruthy()
+
+    await firstCard.click()
+
+    // Should navigate to either /detail/[id] (SPA) or /productos/[id] (full reload fallback)
+    await page.waitForURL(/\/(detail|productos)\/[a-z0-9]{20,30}/i, { timeout: 10000 })
+    await page.waitForLoadState('networkidle')
+
+    // Detail page MUST render the product (not be blank)
+    // The fix ensures openDetail waits for PRODUCTS to load instead of failing silently
+    const detailName = page.locator('#detName, .dt-name')
+    await expect(detailName).toBeVisible({ timeout: 8000 })
+    const nameText = await detailName.textContent()
+    expect(nameText).toBeTruthy()
+    expect(nameText!.trim().length).toBeGreaterThan(0)
+  })
+
+  test('Accessory detail loads when navigating from /accesorios', async ({ page }) => {
+    await page.goto('/accesorios')
+    await page.waitForLoadState('networkidle')
+
+    // Wait for accessory cards to load
+    await page.waitForTimeout(500)
+    const firstAccCard = page.locator('a[href^="/detail/"]').first()
+    const count = await page.locator('a[href^="/detail/"]').count()
+
+    if (count === 0) {
+      test.skip(true, 'No accessory cards found in /accesorios — skipping')
+      return
+    }
+
+    await expect(firstAccCard).toBeVisible({ timeout: 10000 })
+    await firstAccCard.click()
+
+    await page.waitForURL(/\/detail\/[a-z0-9]{20,30}/i, { timeout: 10000 })
+    await page.waitForLoadState('networkidle')
+
+    // Detail MUST render even if ACCS was not pre-loaded
+    const detailName = page.locator('#detName, .dt-name')
+    await expect(detailName).toBeVisible({ timeout: 8000 })
+    const nameText = await detailName.textContent()
+    expect(nameText).toBeTruthy()
+    expect(nameText!.trim().length).toBeGreaterThan(0)
+  })
+
+  test('Preorder detail loads when navigating from /preventas', async ({ page }) => {
+    await page.goto('/preventas')
+    await page.waitForLoadState('networkidle')
+
+    await page.waitForTimeout(500)
+    const preorderCards = page.locator('.preorder-card, a[href^="/detail/"]')
+    const count = await preorderCards.count()
+
+    if (count === 0) {
+      test.skip(true, 'No preorder cards found in /preventas — skipping')
+      return
+    }
+
+    const firstPreorder = preorderCards.first()
+    const closestAnchor = await firstPreorder.evaluate(el => {
+      const a = el.closest('a[href^="/detail/"]')
+      return a ? a.getAttribute('href') : null
+    })
+
+    if (!closestAnchor) {
+      test.skip(true, 'No /detail/ anchor found near preorder cards — skipping')
+      return
+    }
+
+    await page.goto(closestAnchor)
+    await page.waitForLoadState('networkidle')
+
+    // Detail MUST render even if PREORDER_PRODUCTS was not pre-loaded
+    const detailName = page.locator('#detName, .dt-name')
+    await expect(detailName).toBeVisible({ timeout: 8000 })
+    const nameText = await detailName.textContent()
+    expect(nameText).toBeTruthy()
+    expect(nameText!.trim().length).toBeGreaterThan(0)
+  })
+
   test('Detail page has back button to catalog', async ({ page }) => {
     await page.goto('/productos')
     await page.waitForLoadState('networkidle')

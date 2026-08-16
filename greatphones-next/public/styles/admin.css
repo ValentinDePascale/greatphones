@@ -1192,3 +1192,131 @@ body:has(#p-admin.act) .adm-item-price,
 .admin-layout .adm-item-price{
   font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif!important
 }
+
+/* Chat admin shell — chat.js no define estilos para #adminConvList, así que
+   las conversaciones no serían visibles. Layout flex para los 3 paneles
+   (lista de conversaciones / header del chat / mensajes / input). */
+#adminConvList{display:flex;flex-direction:column;gap:2px;padding:6px}
+#adminConvList .adm-conv{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;
+  cursor:pointer;transition:background .12s
+}
+#adminConvList .adm-conv:hover{background:var(--admin-bg)}
+#adminConvList .adm-conv.act{background:rgba(255,107,44,.08)}
+#adminConvList .adm-conv-avatar{
+  width:36px;height:36px;border-radius:50%;background:var(--admin-border);
+  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--dk);
+  flex-shrink:0;overflow:hidden
+}
+#adminConvList .adm-conv-avatar img{width:100%;height:100%;object-fit:cover}
+#adminConvList .adm-conv-info{flex:1;min-width:0}
+#adminConvList .adm-conv-name{font-size:13px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#adminConvList .adm-conv-last{font-size:11px;color:var(--admin-text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+#adminConvList .adm-conv-badge{
+  min-width:18px;height:18px;padding:0 6px;border-radius:9px;background:var(--orange);
+  color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.chat-msg{display:flex;margin-bottom:6px}
+.chat-msg-bubble{
+  max-width:70%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;
+  word-wrap:break-word
+}
+.chat-msg.out{justify-content:flex-end}
+.chat-msg.out .chat-msg-bubble{background:var(--orange);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.in .chat-msg-bubble{background:#fff;color:var(--dk);border:1px solid var(--border);border-bottom-left-radius:4px}
+.chat-msg-time{font-size:10px;color:var(--admin-text-muted);margin-top:2px;text-align:center}
+.chat-msg.out .chat-msg-time{color:rgba(255,255,255,.7);text-align:right}
+#adminMsgList{padding:14px;overflow-y:auto}
+.admin-chat-input-bar{
+  display:flex;gap:8px;align-items:flex-end;padding:10px 14px;background:#fff;
+  border-top:1px solid var(--border)
+}
+.admin-chat-input-bar textarea{
+  flex:1;border:1px solid var(--border);border-radius:18px;padding:8px 14px;
+  font-size:13px;font-family:inherit;resize:none;max-height:120px;outline:none
+}
+.admin-chat-input-bar textarea:focus{border-color:var(--orange)}
+.admin-chat-input-bar button{
+  border:none;border-radius:50%;width:36px;height:36px;background:var(--orange);
+  color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0
+}
+.admin-chat-input-bar button:disabled{background:var(--admin-border);cursor:default}
+
+/* Hide public-site chrome when admin is active (the legacy shell renders
+   topbar/mainnav/catnav outside any .page wrapper, so .page display:none
+   doesn't affect them). */
+body:has(#p-admin.act) .topbar,
+body:has(#p-admin.act) .mainnav,
+body:has(#p-admin.act) .catnav,
+body:has(#p-admin.act) #chatPanel,
+body:has(#p-admin.act) #chatWidgetWrap,
+body:has(#p-admin.act) #backToTop,
+body:has(#p-admin.act) #scrollProgress,
+body:has(#p-admin.act) #cookieBanner,
+body:has(#p-admin.act) #cookieModal,
+body:has(#p-admin.act) #cartOverlay,
+body:has(#p-admin.act) #compatModal,
+body:has(#p-admin.act) #colorPickerModal,
+body:has(#p-admin.act) #productSearchOverlay,
+body:has(#p-admin.act) #manageRepliesOverlay,
+body:has(#p-admin.act) #createQuoteOverlay,
+body:has(#p-admin.act) #mobileMenu,
+body:has(#p-admin.act) #mobileOverlay,
+body:has(#p-admin.act) #lightbox,
+body:has(#p-admin.act) #splash{display:none!important}
+
+/* Cuando se navega a admin-product o admin-acc (forms legacy), sigue siendo
+   contexto admin. Mantenemos el sidebar visible y ocultamos el hero/sh-hdr
+   propio de esas páginas (que se diseñó para el sitio público). */
+body:has(#p-admin-product.act) .topbar,
+body:has(#p-admin-product.act) .mainnav,
+body:has(#p-admin-product.act) .catnav,
+body:has(#p-admin-product.act) #chatPanel,
+body:has(#p-admin-product.act) #chatWidgetWrap,
+body:has(#p-admin-product.act) #backToTop,
+body:has(#p-admin-product.act) #scrollProgress,
+body:has(#p-admin-product.act) #cookieBanner,
+body:has(#p-admin-product.act) #cookieModal,
+body:has(#p-admin-product.act) #cartOverlay,
+body:has(#p-admin-product.act) #compatModal,
+body:has(#p-admin-product.act) #colorPickerModal,
+body:has(#p-admin-product.act) #productSearchOverlay,
+body:has(#p-admin-product.act) #manageRepliesOverlay,
+body:has(#p-admin-product.act) #createQuoteOverlay,
+body:has(#p-admin-product.act) #mobileMenu,
+body:has(#p-admin-product.act) #mobileOverlay,
+body:has(#p-admin-product.act) #lightbox,
+body:has(#p-admin-product.act) #splash,
+body:has(#p-admin-product.act) #p-admin-product .sh-hdr,
+body:has(#p-admin-product.act) #cartFab{display:none!important}
+
+/* El form necesita su propio padding-top porque admin.css añade un padding
+   al body cuando hay chrome público que ya no está. */
+body:has(#p-admin-product.act) #p-admin-product,
+body:has(#p-admin-acc.act) #p-admin-acc{
+  padding-top:24px;
+  background:var(--cream);
+  min-height:calc(100vh - 0px);
+}
+
+body:has(#p-admin-acc.act) .topbar,
+body:has(#p-admin-acc.act) .mainnav,
+body:has(#p-admin-acc.act) .catnav,
+body:has(#p-admin-acc.act) #chatPanel,
+body:has(#p-admin-acc.act) #chatWidgetWrap,
+body:has(#p-admin-acc.act) #backToTop,
+body:has(#p-admin-acc.act) #scrollProgress,
+body:has(#p-admin-acc.act) #cookieBanner,
+body:has(#p-admin-acc.act) #cookieModal,
+body:has(#p-admin-acc.act) #cartOverlay,
+body:has(#p-admin-acc.act) #compatModal,
+body:has(#p-admin-acc.act) #colorPickerModal,
+body:has(#p-admin-acc.act) #productSearchOverlay,
+body:has(#p-admin-acc.act) #manageRepliesOverlay,
+body:has(#p-admin-acc.act) #createQuoteOverlay,
+body:has(#p-admin-acc.act) #mobileMenu,
+body:has(#p-admin-acc.act) #mobileOverlay,
+body:has(#p-admin-acc.act) #lightbox,
+body:has(#p-admin-acc.act) #splash,
+body:has(#p-admin-acc.act) #p-admin-acc .sh-hdr,
+body:has(#p-admin-acc.act) #cartFab{display:none!important}

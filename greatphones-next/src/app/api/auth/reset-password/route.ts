@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart } from '@/lib/rate-limit'
+import { timingSafeEqualString } from '@/lib/crypto'
+import { PasswordSchema } from '@/lib/validations'
 
 
 
@@ -14,11 +16,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email, codigo y nueva contraseña requeridos' }, { status: 400 })
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json({ error: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 })
+    const pwCheck = PasswordSchema.safeParse(newPassword)
+    if (!pwCheck.success) {
+      return NextResponse.json({ error: pwCheck.error.issues[0]?.message || 'Contraseña inválida' }, { status: 400 })
     }
 
-    const limit = await rateLimit(`reset-pass:${email}`, 5, 60 * 60 * 1000)
+    const limit = await rateLimit(`reset-pass:${safeKeyPart(email)}`, 5, 60 * 60 * 1000)
     if (!limit.allowed) {
       const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
       return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
@@ -43,7 +46,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Codigo expirado' }, { status: 400 })
     }
 
-    if (record.code !== code) {
+    if (!timingSafeEqualString(record.code, code)) {
       return NextResponse.json({ error: 'Codigo incorrecto' }, { status: 400 })
     }
 

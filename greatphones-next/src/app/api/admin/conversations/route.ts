@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(conversations, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) {
     console.error('Error fetching admin conversations:', error)
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true })
     }
 
-    return NextResponse.json({ error: 'Acción no válida' }, { status: 400 })
+    return NextResponse.json({ error: 'AcciÃ³n no vÃ¡lida' }, { status: 400 })
   } catch (error) {
     console.error('Error updating conversation:', error)
     return NextResponse.json({ error: 'Failed to update conversation' }, { status: 500 })

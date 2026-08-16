@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart, clientIpKey } from '@/lib/rate-limit'
 
 export async function GET(request: Request) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = clientIpKey(request)
     const limit = await rateLimit(`warranty-check:${ip}`, 30, 60000)
     if (!limit.allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })
@@ -23,6 +23,12 @@ export async function GET(request: Request) {
     }
 
     const imeiVal = imei.trim()
+
+    // Rate-limit por par (código + IMEI) para mitigar enumeración
+    const pairLimit = await rateLimit(`warranty-check-pair:${safeKeyPart(code)}:${safeKeyPart(imeiVal)}`, 5, 60000)
+    if (!pairLimit.allowed) {
+      return NextResponse.json({ error: 'Demasiados intentos para esta orden/IMEI. Esperá un minuto.' }, { status: 429 })
+    }
 
     const order = await prisma.order.findFirst({
       where: {

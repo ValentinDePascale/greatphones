@@ -21,7 +21,6 @@ app.prepare().then(() => {
         'http://localhost:3000',
         appUrl,
         'https://greatphones.com.ar',
-        'https://greatphones.onrender.com',
       ],
       methods: ['GET', 'POST'],
       credentials: true,
@@ -34,9 +33,13 @@ app.prepare().then(() => {
   setupSocketHandlers(io);
 
   const PORT = process.env.PORT || 3000;
-  server.listen(PORT, (err) => {
+  const HOST = process.env.HOST || '0.0.0.0';
+  server.listen(PORT, HOST, (err) => {
     if (err) throw err;
-    console.log(`> Ready on http://localhost:${PORT} (${dev ? 'development' : 'production'})`);
+    console.log(`> Ready on http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT} (${dev ? 'development' : 'production'})`);
+    if (HOST === '0.0.0.0') {
+      console.log(`> LAN access: configure NEXTAUTH_URL=http://<your-ip>:${PORT} to test from other devices`);
+    }
   });
 
   function shutdown() {

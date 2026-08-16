@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SendMessageSchema, formatZodError } from '@/lib/validations'
 import { sendNewMessageToAdminEmail, sendAdminReplyEmail } from '@/lib/email'
@@ -19,7 +19,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       select: { userId: true }
     })
     if (!conversation) {
-      return NextResponse.json({ error: 'Conversación no encontrada' }, { status: 404 })
+      return NextResponse.json({ error: 'ConversaciÃ³n no encontrada' }, { status: 404 })
     }
     if (user.id !== conversation.userId && user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
@@ -58,7 +58,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const messages = await prisma.message.findMany(query)
 
     return NextResponse.json(messages.reverse(), {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) { return handleRouteError(error) }
 }
@@ -96,7 +96,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const isUserSender = conversation.userId === userId;
 
     if (!isAdminSender && !isUserSender) {
-      return NextResponse.json({ error: 'No autorizado — no sos parte de esta conversación' }, { status: 403 })
+      return NextResponse.json({ error: 'No autorizado â€” no sos parte de esta conversaciÃ³n' }, { status: 403 })
     }
 
     const message = await prisma.message.create({

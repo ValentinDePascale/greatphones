@@ -368,6 +368,34 @@ function prefillCheckoutFields(){
   }
 }
 
+function saveCheckoutPersonalData(){
+  if(!currentUser)return;
+  var cb=document.getElementById('checkoutSaveData');
+  if(cb&&!cb.checked)return;
+  var street=document.getElementById('checkout-street')?.value||'';
+  var number=document.getElementById('checkout-number')?.value||'';
+  var payload={
+    userId:currentUser.id,
+    phone:document.getElementById('checkout-phone')?.value||currentUser.phone,
+    dni:document.getElementById('checkout-document')?.value||currentUser.dni,
+    direccion:(street+' '+number).trim()||undefined,
+    piso:document.getElementById('checkout-floor')?.value||'',
+    cp:document.getElementById('checkout-zip')?.value||'',
+    ciudad:document.getElementById('checkout-city')?.value||'',
+    provincia:document.getElementById('checkout-province')?.value||''
+  };
+  fetch(API_URL+'/api/auth/update',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  }).then(function(r){return r.json();}).then(function(data){
+    if(data.error||!data.user)return;
+    currentUser=data.user;
+    try{Storage.set('user',currentUser);}catch(e){}
+    if(typeof updateUserUI==='function')updateUserUI();
+  }).catch(function(e){console.error('Error guardando datos del checkout:',e);});
+}
+
 function openCheckout(){
   if(Cart.length===0){
     showToast('El carrito está vacío');
@@ -478,6 +506,7 @@ function checkoutNextStep(targetStep){
       showToast('Completá: '+errors.join(', '));
       return;
     }
+    if(typeof saveCheckoutPersonalData==='function')saveCheckoutPersonalData();
     showCheckoutStep(2);
   }else if(targetStep===3){
     showCheckoutStep(3);
@@ -628,6 +657,7 @@ function renderCheckoutSummaryStep(){
   if(!container)return;
   if(Cart.length===0){
     container.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:36px;margin-bottom:.5rem">🛒</p><p style="font-size:14px">No hay productos en el carrito</p></div>';
+    updateCheckoutSummaryPrices();
     return;
   }
   container.innerHTML=Cart.map(function(item, idx){
@@ -645,10 +675,82 @@ function renderCheckoutSummaryStep(){
         '</div>'+
         '<div style="font-size:13px;font-weight:700;white-space:nowrap">'+fmt(price*item.qty)+'</div>'+
       '</div>';
-    }else{
-      sumCouponLine.style.display='none';
     }
+    var a=getById(window.ACCS,lookupId);
+    if(a){
+      var isPromoA=isOfferValid(a);
+      var priceA=isPromoA?Math.round(a.price-a.price*a.discount/100):a.price;
+      var imgA=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📦</span>';
+      return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
+        '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+imgA+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+a.name+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">x'+item.qty+' · '+fmt(priceA)+'</div>'+
+        '</div>'+
+        '<div style="font-size:13px;font-weight:700;white-space:nowrap">'+fmt(priceA*item.qty)+'</div>'+
+      '</div>';
+    }
+    if(item.snapshot){
+      var snap=item.snapshot;
+      var imgS=snap.imageUrl?'<img src="'+snap.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">'+(snap.ico||'📦')+'</span>';
+      return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
+        '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+imgS+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+(snap.name||'Artículo')+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">x'+item.qty+' · '+fmt(snap.finalPrice||0)+'</div>'+
+        '</div>'+
+        '<div style="font-size:13px;font-weight:700;white-space:nowrap">'+fmt((snap.finalPrice||0)*item.qty)+'</div>'+
+      '</div>';
+    }
+    return '';
   }).join('');
+  updateCheckoutSummaryPrices();
+}
+
+function updateCheckoutSummaryPrices(){
+  var subtotal=cartTotal();
+  var warranty=checkoutState.warranty||0;
+  var delivery=typeof checkoutState.delivery==='number'?(checkoutState.delivery||0):0;
+  var total=subtotal+warranty+delivery;
+  var couponTotal=(typeof CPN!=='undefined'&&CPN.applied)?CPN.applied.reduce(function(s,c){return s+(c.amount||0);},0):0;
+  var displayTotal=total-couponTotal;
+
+  var subEl=document.getElementById('sum-subtotal');
+  if(subEl)subEl.textContent=fmt(subtotal);
+  var totalEl=document.getElementById('sum-total');
+  if(totalEl)totalEl.textContent=fmt(displayTotal);
+
+  var wLabel=document.getElementById('sum-warranty');
+  if(wLabel)wLabel.textContent=warranty>0?(warranty===85000?'+12 meses cobertura completa':'+24 meses'):'12 meses';
+  var dLabel=document.getElementById('sum-delivery');
+  if(dLabel){
+    if(checkoutState.delivery==='enviopack')dLabel.textContent='Envío a todo el país';
+    else if(checkoutState.selectedCarrier)dLabel.textContent=checkoutState.selectedCarrier;
+    else dLabel.textContent=delivery>0?'Express':'Retiro en tienda';
+  }
+
+  var wLine=document.getElementById('sum-warranty-line');
+  var wCost=document.getElementById('sum-warranty-cost');
+  if(wLine&&wCost){
+    wLine.style.display=warranty>0?'flex':'none';
+    wCost.textContent='+$'+warranty.toLocaleString('es-AR');
+  }
+  var dLine=document.getElementById('sum-delivery-line');
+  var dCost=document.getElementById('sum-delivery-cost');
+  if(dLine&&dCost){
+    dLine.style.display=delivery>0?'flex':'none';
+    dCost.textContent='+$'+delivery.toLocaleString('es-AR');
+  }
+  var cLine=document.getElementById('sum-coupon-line');
+  var cCost=document.getElementById('sum-coupon-cost');
+  if(cLine&&cCost){
+    if(couponTotal>0){
+      cLine.style.display='flex';
+      cCost.textContent='-$'+couponTotal.toLocaleString('es-AR');
+    }else{
+      cLine.style.display='none';
+    }
+  }
 }
 
 function closeCheckout(){

@@ -26,11 +26,10 @@ function cpnFmt(amount) {
 
 function cpnFetchCoupons(statusFilter) {
   var q = statusFilter ? '?status=' + statusFilter : ''
-  return fetch('/api/coupons' + q)
-    .then(function(r) { return r.json() })
+  return window.gpFetch('/api/coupons' + q)
     .then(function(data) {
-      if (data.error) throw new Error(data.error)
-      CPN.coupons = data.coupons || data || []
+      if (data && data.error) throw new Error(data.error)
+      CPN.coupons = (data && (data.coupons || data)) || []
       return CPN.coupons
     })
     .catch(function(e) {

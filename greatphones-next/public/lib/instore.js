@@ -459,20 +459,23 @@ function addInvDeviceToSale() {
   showToast(`${device.brand} ${device.modelName} agregado`, 'success')
 }
 
-// =========== QR CAMERA SCANNER ===========
+// =========== QR + BARCODE CAMERA SCANNER ===========
 function openCameraScanner() {
   if (typeof window.abrirScannerQR !== 'function') {
-    // Fallback if render.js hasn't loaded yet
     showToast('Cargando escáner...', 'info')
+    setTimeout(openCameraScanner, 400)
     return
   }
   window.abrirScannerQR({
+    mode: 'both',
     onDetected: function(res) {
       if (res.type === 'code') {
-        lookupInvByCode(res.code)
+        lookupInvByCode(res.value)
       } else if (res.type === 'imei') {
-        document.getElementById('instore-invImei').value = res.imei
+        document.getElementById('instore-invImei').value = res.value
         lookupInventoryDevice()
+      } else {
+        showToast('Código no reconocido: ' + res.raw, 'error')
       }
     }
   })
@@ -870,7 +873,7 @@ function generateTransferQr() {
   var total = instoreState.items.reduce(function(s, i) { return s + (i.price * (i.quantity || 1)) }, 0)
   fetch(API_URL + '/api/admin/instore-sale/generate-qr', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({
       amount: total,
       currency: instoreState.currency,
@@ -1089,7 +1092,7 @@ function confirmInStoreSale() {
 
   fetch(API_URL + '/api/admin/instore-sale', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify(payload)
   })
   .then(r => r.json())
@@ -1601,7 +1604,7 @@ function enviarReciboPorEmail(){
     var orderCode=lastInstoreSaleData?lastInstoreSaleData.order.code:'';
     fetch(API_URL+'/api/admin/instore-sale/send-receipt',{
       method:'POST',
-      headers:{'Content-Type':'application/json','X-User-Id': currentUser.id},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({email:email,pdfBase64:pdfBase64,orderCode:orderCode})
     })
     .then(function(r){return r.json()})
@@ -1712,7 +1715,7 @@ function startPaymentPolling(orderId, mpPaymentId) {
   paymentPollingInterval = setInterval(() => {
     fetch(API_URL + '/api/admin/instore-sale/verify-payment', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+      headers: { 'Content-Type': 'application/json'},
       body: JSON.stringify({ orderId, mpPaymentId })
     })
     .then(r => r.json())
@@ -1874,7 +1877,7 @@ function loadInStoreHistory(page, filters) {
     </div>
   `
 
-  fetch(url, { headers: { 'X-User-Id': currentUser.id } })
+  fetch(url, { headers: {} })
     .then(r => r.json())
     .then(res => {
       instoreHistoryOrders = res.data
@@ -1902,12 +1905,12 @@ function renderInStoreHistoryList(orders) {
       onmouseout="this.style.boxShadow='none'">
       <div style="flex:1;min-width:200px">
         <div style="font-weight:700;font-size:14px;margin-bottom:4px">${order.code}</div>
-        <div style="font-size:12px;color:var(--gray);margin-bottom:2px">${order.clientName} · DNI: ${order.clientDni}</div>
+        <div style="font-size:12px;color:var(--gray);margin-bottom:2px">${esc(order.clientName)} · DNI: ${esc(order.clientDni)}</div>
         <div style="font-size:11px;color:var(--gray)">${new Date(order.createdAt).toLocaleString('es-AR')}</div>
       </div>
       <div style="text-align:right;margin-right:1.5rem">
         <div style="font-size:18px;font-weight:800;color:var(--orange)">$${order.total.toLocaleString('es-AR')}</div>
-        <div style="font-size:11px;color:var(--gray);margin-top:2px">${order.payment}</div>
+        <div style="font-size:11px;color:var(--gray);margin-top:2px">${esc(order.payment)}</div>
       </div>
       <div style="min-width:100px;text-align:right">
         ${order.status === 'DELIVERED' 
@@ -1950,7 +1953,7 @@ function showInStoreSaleDetail(orderId) {
   var itemsHtml = (order.items||[]).map(function(item){
     var name = item.customName || 'Producto #'+(item.productId||'')
     return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px">'+
-      '<span>'+name+' <span style="color:var(--gray)">x'+item.quantity+'</span></span>'+
+      '<span>'+esc(name)+' <span style="color:var(--gray)">x'+item.quantity+'</span></span>'+
       '<span style="font-weight:600">$'+(item.price*item.quantity).toLocaleString('es-AR')+'</span>'+
     '</div>'
   }).join('')
@@ -1983,16 +1986,16 @@ function showInStoreSaleDetail(orderId) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;background:white;padding:1rem;border-radius:10px;border:1px solid var(--border)">
         <div>
           <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.5rem">Datos del Comprador</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>Nombre:</strong> ${order.clientName||'—'}</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>DNI:</strong> ${order.clientDni||'—'}</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>CUIL:</strong> ${order.clientCuil||'—'}</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>Tel:</strong> ${order.clientPhone||'—'}</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>Domicilio:</strong> ${order.clientAddress||'—'}</div>
-          <div style="font-size:13px"><strong>Email:</strong> ${order.clientEmail||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Nombre:</strong> ${esc(order.clientName||'—')}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>DNI:</strong> ${esc(order.clientDni||'—')}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>CUIL:</strong> ${esc(order.clientCuil||'—')}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Tel:</strong> ${esc(order.clientPhone||'—')}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Domicilio:</strong> ${esc(order.clientAddress||'—')}</div>
+          <div style="font-size:13px"><strong>Email:</strong> ${esc(order.clientEmail||'—')}</div>
         </div>
         <div>
           <div style="font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:0.5rem">Pago</div>
-          <div style="font-size:13px;margin-bottom:2px"><strong>Método:</strong> ${order.payment||'—'}</div>
+          <div style="font-size:13px;margin-bottom:2px"><strong>Método:</strong> ${esc(order.payment||'—')}</div>
           ${order.payment==='Efectivo' ? '<div style="font-size:13px;margin-bottom:2px"><strong>Recibido:</strong> $'+(order.cashReceived||0).toLocaleString('es-AR')+'</div>' : ''}
           ${order.cashReceived ? '<div style="font-size:13px;margin-bottom:2px"><strong>Vuelto:</strong> $'+(order.change||0).toLocaleString('es-AR')+'</div>' : ''}
           <div style="font-size:13px;margin-top:4px"><strong>Estado:</strong> ${order.status==='DELIVERED'?'✅ Entregado':order.status==='PENDING'?'⏳ Pendiente':'❌ Cancelado'}</div>
@@ -2015,14 +2018,20 @@ function showInStoreSaleDetail(orderId) {
 }
 
 function closeModal(btn) {
-  var el = btn.closest('div[style*="fixed"]')
-  if (el) el.remove()
+  if (btn && typeof btn.closest === 'function') {
+    var el = btn.closest('div[style*="fixed"]')
+    if (el) { el.remove(); return }
+  }
+  // Fallback: si nos llaman sin arg (overlay.onclick), remover el último
+  // modal overlay visible.
+  var overlays = document.querySelectorAll('div[style*="position:fixed"][style*="z-index:9999"], div#imeiModalOverlay, div#imeiConfirmOverlay')
+  if (overlays.length) overlays[overlays.length - 1].remove()
 }
 
 function confirmApproveSale(orderId) {
   if (!confirm('¿Aprobar esta venta? Se marcará como entregada.')) return
   document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
-  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/approve',{method:'POST',headers:{'X-User-Id':currentUser.id}})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/approve',{method:'POST',headers:{}})
   .then(function(r){return r.json()})
   .then(function(data){
     if(data.success){
@@ -2039,7 +2048,7 @@ function confirmApproveSale(orderId) {
 function confirmCancelSale(orderId) {
   if (!confirm('¿Cancelar esta venta? Se devolverán los productos al stock.')) return
   document.querySelectorAll('div[style*="fixed"]').forEach(function(m){m.remove()})
-  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/cancel',{method:'POST',headers:{'X-User-Id':currentUser.id}})
+  fetch(API_URL+'/api/admin/instore-sale/'+orderId+'/cancel',{method:'POST',headers:{}})
   .then(function(r){return r.json()})
   .then(function(data){
     if(data.success){
@@ -2121,8 +2130,8 @@ function preProductSearch(q) {
   if (!matches.length) { box.style.display='none'; box.innerHTML=''; return }
   box.style.display='block'
   box.innerHTML = matches.map(function(p){
-    return '<div onclick="selectPreProduct(\''+p.id+'\',\''+(p.name||'').replace(/'/g,"\\'")+'\')" style="padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;cursor:pointer;font-size:12px" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
-      '<span style="font-weight:600">'+(p.name||'')+'</span> <span style="color:var(--gray)">'+fmt(p.price)+'</span></div>'
+    return '<div onclick="selectPreProduct(\''+p.id+'\',\''+jsStr(p.name||'')+'\')" style="padding:8px 10px;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;cursor:pointer;font-size:12px" onmouseover="this.style.borderColor=\'var(--orange)\'" onmouseout="this.style.borderColor=\'var(--border)\'">'+
+      '<span style="font-weight:600">'+esc(p.name||'')+'</span> <span style="color:var(--gray)">'+fmt(p.price)+'</span></div>'
   }).join('')
 }
 
@@ -2153,7 +2162,7 @@ function createPreOrder() {
   var body = { clientName: name, clientDni: dni, clientPhone: phone, clientEmail: email, productId: productId, customName: customName, customPrice: customPrice?parseInt(customPrice):null, notes: notes }
   fetch(API_URL+'/api/admin/preorders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify(body)
   }).then(function(r){ return r.json(); }).then(function(res){
     if (res.error) { showToast(res.error, 'error'); return }
@@ -2181,14 +2190,14 @@ function loadPreOrders() {
   var f = window._preOrderFilter || 'PENDING'
   var url = API_URL + '/api/admin/preorders' + (f!=='all' ? '?status='+f : '')
   list.innerHTML = '<div class="loader-spinner"><span>Cargando...</span></div>'
-  fetch(url, { headers: { 'X-User-Id': currentUser.id } }).then(function(r){ return r.json(); }).then(function(data){
+  fetch(url, { headers: {} }).then(function(r){ return r.json(); }).then(function(data){
     if (!Array.isArray(data) || !data.length) {
       list.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:44px;margin-bottom:.5rem">📝</div><p>No hay preeventas'+(f!=='all'?' en este estado':'')+'</p></div>'
       return
     }
     list.innerHTML = data.map(function(o){
       var prodName = o.product ? o.product.name : (o.customName||'Producto custom')
-      var prodImg = o.product && o.product.imageUrl ? '<img src="'+o.product.imageUrl+'" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:26px">'+(o.product&&o.product.ico||'📦')+'</span>'
+      var prodImg = o.product && o.product.imageUrl ? '<img src="'+esc(o.product.imageUrl)+'" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:26px">'+(o.product&&o.product.ico||'📦')+'</span>'
       var price = o.customPrice || (o.product ? o.product.price : 0)
       var statusColor = o.status==='PENDING'?'var(--orange)':o.status==='CONFIRMED'?'var(--green)':o.status==='SOLD'?'#009ee3':'var(--red)'
       var statusLabel = { PENDING:'Pendiente', CONFIRMED:'Confirmada', SOLD:'Vendida', CANCELLED:'Cancelada' }[o.status]||o.status
@@ -2197,7 +2206,7 @@ function loadPreOrders() {
         '<div style="flex:1;min-width:200px">'+
           '<div style="font-weight:700;font-size:14px">'+escapeHtml(prodName)+'</div>'+
           '<div style="font-size:12px;color:var(--gray)">'+escapeHtml(o.clientName||'')+(o.clientDni?' · DNI: '+escapeHtml(o.clientDni):'')+'</div>'+
-          '<div style="font-size:11px;color:var(--gray)">'+o.code+' · '+(o.clientPhone||o.clientEmail||'')+'</div>'+
+          '<div style="font-size:11px;color:var(--gray)">'+o.code+' · '+esc(o.clientPhone||o.clientEmail||'')+'</div>'+
         '</div>'+
         '<div style="text-align:right;margin-right:1rem">'+
           '<div style="font-size:16px;font-weight:800;color:var(--orange)">'+(price>0?fmt(price):'—')+'</div>'+
@@ -2219,7 +2228,7 @@ function loadPreOrders() {
 function updatePreOrderStatus(id, status) {
   fetch(API_URL+'/api/admin/preorders/'+id, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({ status: status })
   }).then(function(r){ return r.json(); }).then(function(res){
     if (res.error) { showToast(res.error, 'error'); return }
@@ -2234,7 +2243,7 @@ function updatePreOrderStatus(id, status) {
 function convertPreOrderToSale(id) {
   fetch(API_URL+'/api/admin/preorders/'+id, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', 'X-User-Id': currentUser.id },
+    headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({ status: 'SOLD' })
   }).then(function(r){ return r.json(); }).then(function(res){
     if (res.error) { showToast(res.error, 'error'); return }

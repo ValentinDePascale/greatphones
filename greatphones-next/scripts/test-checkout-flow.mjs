@@ -129,7 +129,7 @@ async function run() {
 
   // ======== 6. VERIFY CHECKOUT COUPON API ========
   console.log('\n=== 6. Testing checkout API with coupon ===');
-  // Use the browser's fetch context (which has X-User-Id)
+  // Use the browser's fetch context (session cookie)
   const apiResult = await page.evaluate(async function(base, couponId) {
     try {
       // First login via API to ensure session

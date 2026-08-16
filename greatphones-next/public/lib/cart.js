@@ -119,6 +119,23 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
         name:cleanName
       };
     }
+    var snapSrc=p||a;
+    if(snapSrc){
+      var snapBasePrice=snapSrc.price||0;
+      var snapIsOffer=!!(snapSrc.isOffer&&snapSrc.discount>0);
+      var snapFinalPrice=snapIsOffer?Math.round(snapBasePrice-snapBasePrice*snapSrc.discount/100):snapBasePrice;
+      entry.snapshot={
+        name:snapSrc.name||'',
+        price:snapBasePrice,
+        finalPrice:snapFinalPrice,
+        imageUrl:snapSrc.imageUrl||'',
+        sub:snapSrc.sub||snapSrc.category||'',
+        brand:snapSrc.brand||'',
+        isOffer:snapIsOffer,
+        discount:snapSrc.discount||0,
+        ico:snapSrc.ico||(a?'📦':'📱')
+      };
+    }
     Cart.push(entry);
   }
   saveCart();
@@ -126,6 +143,16 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
   if(triggerEl&&typeof svBtnSuccess==='function')svBtnSuccess(triggerEl);
   openCart();
   showToast('Agregado al carrito');
+  if(a){
+    var warns=cartCompatWarnings().filter(function(w){return w.accId===itemId;});
+    if(warns.length){
+      setTimeout(function(){
+        var names=[];var seenNames={};
+        warns.forEach(function(w){if(!seenNames[w.productName]){seenNames[w.productName]=1;names.push(w.productName);}});
+        showToast('Este accesorio no es compatible con: '+names.join(', '));
+      },50);
+    }
+  }
 }
 function addProdCart(id, variant){
   addToCart(id, null, variant);
@@ -242,6 +269,13 @@ function cartTotal(){
       var price=isPromo?Math.round(a.price-a.price*a.discount/100):a.price;
       return sum+(price*item.qty);
     }
+    var pre=getById(PREORDER_PRODUCTS,pid);
+    if(pre){
+      return sum+(pre.price*item.qty);
+    }
+    if(item.snapshot&&item.snapshot.finalPrice>0){
+      return sum+(item.snapshot.finalPrice*item.qty);
+    }
     return sum;
   },0);
 }
@@ -253,6 +287,37 @@ function updCartBadge(){
   var b=document.getElementById('cartBadge');
   if(b){b.textContent=n;if(n>0)b.classList.remove('hidden');else b.classList.add('hidden');}
 }
+function accessoryCompatWith(acc,prod){
+  if(!acc||!acc.compatibleModels)return true;
+  var models=acc.compatibleModels.split(',').map(function(s){return s.trim().toLowerCase();}).filter(Boolean);
+  if(!models.length)return true;
+  var prodGroup=((prod&&prod.modelGroup)||'').toLowerCase();
+  var prodName=((prod&&prod.name)||'').toLowerCase();
+  var prodNameNoBrand=prodName.replace(/^apple\s+/,'').replace(/^iphone\s*/,'').trim();
+  return models.some(function(m){
+    if(prodGroup&&prodGroup.indexOf(m)>=0)return true;
+    if(prodName&&prodName.indexOf(m)>=0)return true;
+    if(m.indexOf('iphone '+prodNameNoBrand)>=0)return true;
+    return false;
+  });
+}
+function cartCompatWarnings(){
+  var warns=[];
+  Cart.forEach(function(item){
+    var pid=item.productId||item.id;
+    var acc=getById(window.ACCS,pid);
+    if(!acc)return;
+    Cart.forEach(function(other){
+      var opid=other.productId||other.id;
+      var prod=getById(PRODUCTS,opid)||getById(PREORDER_PRODUCTS,opid);
+      if(!prod||opid===pid)return;
+      if(!accessoryCompatWith(acc,prod)){
+        warns.push({accId:item.id,productName:prod.name,productId:prod.id});
+      }
+    });
+  });
+  return warns;
+}
 function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
   var qtyId=(aid||item.id).replace(/::/g,'_');
   var priceHtml=isPromo?
@@ -262,6 +327,15 @@ function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
     '<div style="font-size:14px;font-weight:700;color:var(--dk)">'+fmt(finalPrice*item.qty)+'</div>';
   var maxReached=(p||a)&&!item.isPreorder&&(p||a).stock>0&&item.qty>=(p||a).stock;
   var stockWarning=(p||a)&&!item.isPreorder&&(p||a).stock<=5&&(p||a).stock>0?'<div style="font-size:10px;color:var(--red);margin-top:4px">Solo '+(p||a).stock+' disp.</div>':'';
+  var compatWarn='';
+  if(a&&!p){
+    var warns=cartCompatWarnings().filter(function(w){return w.accId===aid;});
+    if(warns.length){
+      var seen={};var names=[];
+      warns.forEach(function(w){if(!seen[w.productName]){seen[w.productName]=1;names.push(w.productName);}});
+      compatWarn='<div style="font-size:10px;color:var(--red);font-weight:600;margin-top:6px;line-height:1.4">⚠️ No compatible con: '+names.join(', ')+'</div>';
+    }
+  }
   var preorderBadge=item.isPreorder?'<div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;background:rgba(255,107,44,.1);color:var(--orange);margin-top:4px;display:inline-block">🏷️ Preventa</div>':'';
   var preorderDate=item.availableFrom?'<div style="font-size:10px;color:#8B7355;margin-top:2px">📅 Disp. '+new Date(item.availableFrom).toLocaleDateString('es-AR',{month:'short',year:'numeric'})+'</div>':'';
   return '<div data-cart-id="'+aid+'" class="cart-item">'+
@@ -275,7 +349,7 @@ function ciHtml(item, aid, p, a, img, sub, displayName, finalPrice, isPromo){
         '<span class="cart-qty-'+qtyId+'" style="font-size:13px;font-weight:600;min-width:24px;text-align:center">'+item.qty+'</span>'+
         '<button onclick="updateCartQty(\''+aid+'\',1)" class="cart-qty-btn'+(maxReached?' maxed':'')+'">+</button>'+
       '</div>'+
-      stockWarning+
+      stockWarning+compatWarn+
     '</div>'+
     '<div style="text-align:right">'+
       priceHtml+
@@ -321,11 +395,23 @@ function renderCartBody(){
       return ciHtml(item, item.id, p, null, img, sub, displayName, finalPrice, isPromo);
     }
     var a=getById(window.ACCS,item.productId||item.id);
-    if(!a)return '';
-    var isPromo2=a.isOffer&&a.discount>0;
-    var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
-    var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
-    return ciHtml(item, a.id, null, a, img2, (a.brand||'')+' '+(a.color||''), a.name, finalPrice2, isPromo2);
+    if(a){
+      var isPromo2=a.isOffer&&a.discount>0;
+      var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
+      var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
+      return ciHtml(item, a.id, null, a, img2, (a.brand||'')+' '+(a.color||''), a.name, finalPrice2, isPromo2);
+    }
+    var pre=getById(PREORDER_PRODUCTS,pid);
+    if(pre){
+      var preImg=pre.imageUrl?'<img src="'+pre.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>';
+      return ciHtml(item, item.id, null, {name:pre.name,price:pre.price,ico:pre.ico}, preImg, pre.sub||'', pre.name, pre.price, false);
+    }
+    if(item.snapshot){
+      var snap=item.snapshot;
+      var snapImg=snap.imageUrl?'<img src="'+snap.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(snap.ico||'📦')+'</span>';
+      return ciHtml(item, item.id, null, {name:snap.name,price:snap.price}, snapImg, snap.sub||'', snap.name, snap.finalPrice, snap.isOffer);
+    }
+    return '';
   }).join('')+
   '<div style="padding:16px;border-top:1px solid var(--border);background:var(--cream2)">'+
     '<div style="display:flex;justify-content:space-between;margin-bottom:12px">'+

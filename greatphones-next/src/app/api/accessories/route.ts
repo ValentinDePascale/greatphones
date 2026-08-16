@@ -8,14 +8,15 @@ import {
 import { accessoryCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, clientIpKey } from '@/lib/rate-limit'
+import { expireOffers } from '@/lib/expire-offers'
 
 
 
 export async function GET(request: Request) {
   const origin = request.headers.get('origin')
   const corsHeaders = getCorsHeaders(origin)
-  const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+  const ip = clientIpKey(request)
   const rl = await rateLimit(`accessories:${ip}`, 30, 60000)
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Demasiadas solicitudes' }, { status: 429 })
@@ -48,6 +49,8 @@ export async function GET(request: Request) {
     if (cached) {
       return NextResponse.json(cached, { headers: corsHeaders })
     }
+
+    await expireOffers()
 
     const where: any = { isActive: true }
 

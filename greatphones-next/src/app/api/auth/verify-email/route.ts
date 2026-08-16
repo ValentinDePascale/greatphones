@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, safeKeyPart } from '@/lib/rate-limit'
+import { timingSafeEqualString } from '@/lib/crypto'
 
 function generateCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
       }
 
-      const limit = await rateLimit(`verify:${email}`, 5, 60 * 60 * 1000)
+      const limit = await rateLimit(`verify:${safeKeyPart(email)}`, 5, 60 * 60 * 1000)
       if (!limit.allowed) {
         const mins = Math.ceil((limit.resetAt - Date.now()) / 60000)
         return NextResponse.json({ error: `Demasiados codigos. Espera ${mins} minutos` }, { status: 429 })
@@ -69,7 +70,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Email y código requeridos' }, { status: 400 })
       }
 
-      const vfLimit = await rateLimit(`verify-code:${email}`, 10, 15 * 60 * 1000)
+      const vfLimit = await rateLimit(`verify-code:${safeKeyPart(email)}`, 10, 15 * 60 * 1000)
       if (!vfLimit.allowed) {
         const mins = Math.ceil((vfLimit.resetAt - Date.now()) / 60000)
         return NextResponse.json({ error: `Demasiados intentos. Espera ${mins} minutos` }, { status: 429 })
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Código expirado' }, { status: 400 })
       }
 
-      if (record.code !== code) {
+      if (!timingSafeEqualString(record.code, code)) {
         return NextResponse.json({ error: 'Código incorrecto' }, { status: 400 })
       }
 

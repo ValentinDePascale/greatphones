@@ -10,6 +10,10 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/lib/auth-guard', () => ({
   requireAdmin: vi.fn(),
+  handleRouteError: vi.fn((e) => {
+    const status = e?.status || 500
+    return new Response(JSON.stringify({ error: e?.message || 'Error interno' }), { status, headers: { 'Content-Type': 'application/json' } })
+  }),
 }))
 
 describe('GET /api/products/[id]', () => {

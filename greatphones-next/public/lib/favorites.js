@@ -88,14 +88,19 @@ function toggleFavFromCard(id){
   if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act'))renderFavGrid();
 }
 
+function favHeartSvg(isFav){
+  return '<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+}
 function updateFavHearts(id,isNowFav){
   var btns=document.querySelectorAll('.pcard-fav');
   for(var i=0;i<btns.length;i++){
     var btn=btns[i];
     var onclickAttr=btn.getAttribute('onclick');
     if(onclickAttr&&onclickAttr.indexOf("'"+id+"'")!==-1){
-      if(isNowFav){btn.classList.add('on');btn.innerHTML='\u2665';btn.style.animation='none';btn.offsetHeight;btn.style.animation='favPop 0.3s ease';}
-      else{btn.classList.remove('on');btn.innerHTML='\u2661';}
+      btn.classList.toggle('on',isNowFav);
+      btn.innerHTML=favHeartSvg(isNowFav);
+      if(isNowFav){btn.style.animation='none';btn.offsetHeight;btn.style.animation='favPop 0.3s ease';}
+      else{btn.style.animation='';}
     }
   }
 }
@@ -135,7 +140,7 @@ function renderFavGrid(){
         var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
         var isFav=isFavorite(item.id);
-        var heartSvgA='<svg width="14" height="14" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        var heartSvgA='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         return '<article class="pcard" onclick="openAccDetail(\''+item.id+'\')">'+
           '<div class="pcard-img">'+imgHtml+
           (isPromo?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+
@@ -159,7 +164,7 @@ function renderFavGrid(){
         var isOutOfStock=item.stock===0;
         var outClass=isOutOfStock?' pcard-out-of-stock':'';
         var clickH=isOutOfStock?'':'openDetail(\''+item.id+'\')';
-        var heartSvgP='<svg width="14" height="14" viewBox="0 0 24 24" fill="'+(isFav2?'var(--red)':'none')+'" stroke="'+(isFav2?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+        var heartSvgP='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav2?'var(--red)':'none')+'" stroke="'+(isFav2?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
         return '<article class="pcard'+outClass+'" onclick="'+clickH+'">'+
           '<div class="pcard-img">'+imgHtml2+
           (isPromo2?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+

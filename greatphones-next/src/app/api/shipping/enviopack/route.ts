@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { rateLimit } from '@/lib/rate-limit'
+import { rateLimit, clientIpKey } from '@/lib/rate-limit'
 
 const ENVIOPACK_API_URL = 'https://api.enviopack.com'
 const ENVIOPACK_API_KEY = process.env.ENVIOPACK_API_KEY || ''
@@ -60,7 +60,7 @@ function buildFallbackOptions(destZip: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const ip = request.headers.get('x-forwarded-for') || 'unknown'
+    const ip = clientIpKey(request)
     const limit = await rateLimit(`enviopack:${ip}`, 10, 60000)
     if (!limit.allowed) {
       return NextResponse.json({ error: 'Demasiadas solicitudes. Espera 1 minuto.' }, { status: 429 })

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { CreateConversationSchema, formatZodError } from '@/lib/validations'
 import { requireSession, handleRouteError } from '@/lib/auth-guard'
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     })
 
     return NextResponse.json(conversations, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
   } catch (error) { return handleRouteError(error) }
 }

@@ -4,9 +4,17 @@ import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+const CACHE_TTL_MS = 60_000
+let _cache: { data: unknown; ts: number } | null = null
+
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
+
+    if (_cache && Date.now() - _cache.ts < CACHE_TTL_MS) {
+      return NextResponse.json(_cache.data)
+    }
+
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentMonth = new Date(currentYear, now.getMonth(), 1)
@@ -242,7 +250,7 @@ export async function GET(request: Request) {
     const ticketChange = lastAvgTicket > 0 ? Math.round(((avgTicket - lastAvgTicket) / lastAvgTicket) * 100) : 0
     const usersChange = lastNewUsers > 0 ? Math.round(((newUsers - lastNewUsers) / lastNewUsers) * 100) : 0
 
-    return NextResponse.json({
+    const payload = {
       revenue: currentRevenue,
       revenueChange,
       orders: currentOrderCount,
@@ -310,6 +318,9 @@ export async function GET(request: Request) {
         .slice(0, 5),
       orderStatuses: orderStatuses.filter(s => s.count > 0),
       brandSales,
-    })
+    }
+
+    _cache = { data: payload, ts: Date.now() }
+    return NextResponse.json(payload)
   } catch (error) { return handleRouteError(error) }
 }

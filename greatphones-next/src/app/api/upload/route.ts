@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+﻿import { NextResponse } from 'next/server'
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary'
 import { requireSession } from '@/lib/auth-guard'
 
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       url: uploadResult.secure_url,
       publicId: uploadResult.public_id,
     }, {
-      headers: { 'Access-Control-Allow-Origin': 'https://greatphones.onrender.com' }
+      headers: {  }
     })
 
   } catch (error) {

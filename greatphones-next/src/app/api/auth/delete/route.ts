@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSelfOrAdmin, handleRouteError } from '@/lib/auth-guard'
-import { ALLOWED_ORIGINS } from '@/config'
 
 
 
@@ -21,8 +20,7 @@ export async function DELETE(request: Request) {
     console.log('[DELETE API] User deleted successfully')
 
     return NextResponse.json({ message: 'Cuenta eliminada' }, { 
-      status: 200,
-      headers: { 'Access-Control-Allow-Origin': request.headers.get('origin') || ALLOWED_ORIGINS[0] }
+      status: 200
     })
   } catch (error) {
     return handleRouteError(error)

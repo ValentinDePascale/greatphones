@@ -2,8 +2,19 @@ import nodemailer from 'nodemailer';
 
 function escapeHtml(text: unknown): string {
   const s = String(text ?? '')
-  const map: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }
+  const map: Record<string, string> = { '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#039;' }
   return s.replace(/[&<>"']/g, c => map[c])
+}
+
+/**
+ * Sanitiza headers SMTP contra CR/LF injection (header smuggling).
+ * nodemailer valida algunos chars pero defendemos en profundidad.
+ */
+function sanitizeHeader(value: string, maxLen = 254): string {
+  if (typeof value !== 'string') return ''
+  // Eliminar CR/LF/Tab y otros chars de control
+  // Limitar longitud (RFC 5321: max 254 para email addresses, 998 para otras líneas)
+  return value.replace(/[\r\n\t\u0000-\u001F\u007F]/g, '').slice(0, maxLen)
 }
 
 const transporter = process.env.EMAIL_USER && process.env.EMAIL_PASS
@@ -32,8 +43,8 @@ export async function sendEmail({
   try {
     await transporter.sendMail({
       from: `"Great Phones" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
+      to: sanitizeHeader(to, 254),
+      subject: sanitizeHeader(subject, 998),
       html
     });
     return { success: true };

@@ -82,23 +82,9 @@ function setupSocketHandlers(io) {
         }
       }
 
-      const userId = socket.handshake.auth.userId;
-      if (userId) {
-        console.warn(`[Socket] Legacy auth for userId=${userId} — upgrade client to use session token`);
-        socket.userId = userId;
-        socket._authMethod = 'legacy';
-        return next();
-      }
-
       next(new Error('Authentication required'));
     } catch (err) {
       console.error('[Socket] Auth error:', err.message);
-      const userId = socket.handshake.auth.userId;
-      if (userId) {
-        socket.userId = userId;
-        socket._authMethod = 'legacy';
-        return next();
-      }
       next(new Error('Authentication required'));
     }
   });
