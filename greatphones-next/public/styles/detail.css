@@ -1,0 +1,111 @@
+/* ============================================================
+   DETAIL.CSS — Rediseño del detalle de producto / accesorio / preventa
+   Aditivo: mantiene ids/clases funcionales, agrega estilos con clases.
+   ============================================================ */
+
+/* ---- Layout ---- */
+.det-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.det-gallery{display:flex;flex-direction:column;gap:12px;position:sticky;top:120px}
+
+/* ---- Breadcrumb ---- */
+.det-breadcrumb{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);margin-bottom:16px;flex-wrap:wrap}
+.det-breadcrumb svg{width:12px;height:12px}
+.det-crumb{color:var(--green);font-weight:600}
+.det-crumb-current{color:var(--dk);font-weight:600}
+
+/* ---- Nombre ---- */
+.det-name{font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:16px;letter-spacing:-.3px}
+
+/* ---- Precio ---- */
+.det-price-wrap{margin-bottom:6px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.det-price{font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--orange);letter-spacing:-1px}
+.det-old{font-size:16px;color:var(--gray);text-decoration:line-through}
+.det-cuota{font-size:14px;color:var(--green);font-weight:600;margin-bottom:20px;padding:10px 14px;background:rgba(45,90,39,.06);border-radius:10px;display:inline-block}
+
+/* ---- Descripción ---- */
+.det-desc{font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+
+/* ---- Galería ---- */
+.det-main-img{background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.det-img-counter{position:absolute;bottom:12px;left:12px;z-index:11;background:rgba(26,18,8,.6);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:100px;letter-spacing:.3px;pointer-events:none}
+.det-img-zoom{position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.det-thumbnails{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.det-thumb{aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff;transition:border-color .15s,transform .15s,box-shadow .15s}
+.det-thumb:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.08)}
+.det-thumb.act{border-color:var(--orange)}
+.det-thumb img{width:100%;height:100%;object-fit:contain}
+
+/* ---- Specs ---- */
+.det-specs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sp-card{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px}
+.sp-ico{width:40px;height:40px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--orange)}
+.sp-ico svg{width:20px;height:20px}
+.sp-label{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.sp-val{font-size:15px;font-weight:700;color:var(--dk)}
+
+/* ---- Badges ---- */
+.det-badges{display:flex;flex-wrap:wrap;gap:8px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.det-pill{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600}
+.det-pill svg{width:13px;height:13px;flex-shrink:0}
+
+/* ---- Variantes ---- */
+.det-variants-hd{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px}
+.variant-chip{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;border:2px solid var(--border);background:#fff;color:var(--dk);font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.variant-chip:hover{border-color:var(--orange);color:var(--orange)}
+.variant-chip.act{border-color:var(--orange);background:var(--orange);color:#fff;box-shadow:0 2px 8px rgba(255,107,44,.3)}
+.variant-chip.disabled{opacity:.5;cursor:not-allowed;border-style:dashed;background:var(--cream2)}
+.variant-chip .vc-old{text-decoration:line-through;opacity:.6}
+.variant-chip .vc-price{font-weight:700}
+
+/* ---- Acciones ---- */
+.det-actions{padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px}
+.det-total-row{display:flex;justify-content:space-between;align-items:center}
+.det-total-label{font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+.det-total{font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700}
+.det-ctas{display:flex;gap:10px}
+.det-consult{width:100%;padding:10px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s}
+.det-consult:hover{border-color:var(--orange);color:var(--orange);background:rgba(255,107,44,.04)}
+
+/* ---- Trust strip ---- */
+.det-trust{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0}
+.det-trust-item{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px;background:#fff;border:1px solid var(--border);border-radius:12px;font-size:10px;color:var(--gray);text-align:center}
+.det-trust-item svg{width:20px;height:20px;color:var(--green)}
+
+/* ---- Preventa ---- */
+.det-preorder{background:rgba(255,107,44,.07);border:1px solid rgba(255,107,44,.18);border-radius:12px;padding:14px;margin-bottom:20px;animation:scaleIn .25s ease}
+.det-preorder-title{font-size:12px;font-weight:700;color:var(--orange);display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.det-preorder-title svg{width:15px;height:15px}
+.det-preorder p{font-size:11.5px;color:var(--gray);line-height:1.6;margin:0}
+
+/* ---- Related ---- */
+.det-related-section{margin-top:40px}
+.det-related-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:var(--dk);margin-bottom:16px}
+.det-related-scroll{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.det-related-card{display:block;background:#fff;border:1.5px solid var(--border);border-radius:14px;overflow:hidden;transition:all .2s}
+.det-related-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(0,0,0,.08);border-color:rgba(255,107,44,.3)}
+.det-related-img{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:var(--cream2);overflow:hidden}
+.det-related-img img{width:100%;height:100%;object-fit:contain}
+.det-related-img svg{width:34px;height:34px;color:var(--gray2)}
+.det-related-body{padding:12px}
+.det-related-name{font-size:12px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
+.det-related-price{font-size:14px;font-weight:700;color:var(--orange)}
+
+/* ---- Barra sticky (móvil) ---- */
+.det-sticky{display:none}
+
+/* ---- Responsive ---- */
+@media(max-width:767px){
+  .det-grid{grid-template-columns:1fr;gap:24px}
+  .det-gallery{position:static}
+  .det-specs{grid-template-columns:1fr}
+  .det-related-scroll{grid-template-columns:repeat(2,1fr)}
+  .det-trust{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .det-sticky{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:700;background:#fff;border-top:1px solid var(--border);box-shadow:0 -6px 24px rgba(0,0,0,.08);padding:12px 16px;gap:12px;align-items:center}
+  .det-sticky-price{display:flex;flex-direction:column;flex-shrink:0}
+  .det-sticky-label{font-size:9px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px}
+  .det-sticky-val{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;color:var(--dk);line-height:1.1}
+  .det-sticky .det-btn{flex:1;margin:0}
+  #p-detail > div:last-child{padding-bottom:96px!important}
+}

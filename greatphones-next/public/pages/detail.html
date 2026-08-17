@@ -1,71 +1,94 @@
 <div class="page" id="p-detail">
-  <div class="det-back-wrap" style="background:var(--cream);padding:.65rem var(--pad);max-width:var(--W);margin:0 auto"><button class="det-back" onclick="goBackFromDetail()">← Volver</button></div>
+  <div class="det-back-wrap"><button class="det-back" onclick="goBackFromDetail()">← Volver</button></div>
   <div style="background:var(--cream);padding:1.5rem var(--pad) 3rem;min-height:100vh;position:relative;z-index:1">
-    <div style="max-width:1200px;margin:0 auto">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start">
-        <!-- Column 1: Image Gallery -->
-        <div style="display:flex;flex-direction:column;gap:12px;position:sticky;top:120px">
-          <div class="det-main-img" id="detImgMain" style="height:720px;background:#fff;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-            <button id="detFavBtn" onclick="toggleDetFav()" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray);transition:all .2s">♡</button>
-            <button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>
-            <button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>
-            <span id="detIco" style="font-size:80px">📱</span>
+    <div class="det-page-wrap" style="max-width:1200px;margin:0 auto">
+      <div class="det-grid">
+        <!-- Columna 1: Galería -->
+        <div class="det-gallery">
+          <div class="det-main-img" id="detImgMain" style="height:720px;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+            <span class="det-img-counter" id="detImgCounter" style="display:none"></span>
+            <button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">♡</button>
+            <button id="detImgPrev" onclick="prevDetailImage()" aria-label="Imagen anterior" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">←</button>
+            <button id="detImgNext" onclick="nextDetailImage()" aria-label="Imagen siguiente" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">→</button>
+            <span id="detIco" style="font-size:80px"></span>
           </div>
-          <div class="det-thumbnails" id="detThumbnails" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px"></div>
+          <div class="det-thumbnails" id="detThumbnails"></div>
         </div>
-        <!-- Column 2: Product Info -->
-        <div style="display:flex;flex-direction:column;gap:0">
-          <!-- Breadcrumb -->
-          <nav style="display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--gray);margin-bottom:16px">
-            <span id="detBrand" style="color:var(--green);font-weight:600">Apple</span><span style="color:var(--gray2)">›</span>
-            <span id="detType">iPhone</span><span style="color:var(--gray2)">›</span>
-            <span style="color:var(--dk);font-weight:600" id="detName2">iPhone 16 Pro</span>
+        <!-- Columna 2: Info -->
+        <div class="det-info">
+          <nav class="det-breadcrumb" aria-label="Migajas de pan">
+            <span class="det-crumb" id="detBrand">Apple</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            <span id="detType">iPhone</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+            <span class="det-crumb-current" id="detName2">iPhone 16 Pro</span>
           </nav>
-          <!-- Name -->
-          <h1 style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;line-height:1.15;margin-bottom:16px" id="detName">iPhone 16 Pro</h1>
-          <!-- Price Block -->
-          <div id="detPriceWrap" style="margin-bottom:4px">
-            <span style="font-family:'Playfair Display',Georgia,serif;font-size:clamp(28px,4vw,40px);font-weight:700;color:var(--orange)" id="detPrice">$1.200.000</span>
-            <span style="font-size:16px;color:var(--gray);text-decoration:line-through;margin-left:10px;display:none" id="detOld"></span>
+          <h1 class="det-name" id="detName">iPhone 16 Pro</h1>
+          <!-- Precio -->
+          <div class="det-price-wrap" id="detPriceWrap">
+            <span class="det-price" id="detPrice">$1.200.000</span>
+            <span class="det-old" id="detOld" style="display:none"></span>
           </div>
           <div id="detOfferTimer" style="display:none;margin-bottom:10px"><span class="offer-countdown" id="detTimerText"></span></div>
-          <!-- Installment Price -->
-          <div id="detCuotaInfo" style="font-size:14px;color:var(--green);font-weight:600;margin-bottom:20px;padding:10px 14px;background:rgba(45,90,39,.06);border-radius:10px;display:inline-block">
-            <span id="detCuotaText">12x $100.000 sin interes</span>
-          </div>
-          <!-- Description -->
-          <div id="detDesc" style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--border);display:none"></div>
-          <!-- Specs Section -->
+          <span class="det-cuota" id="detCuotaInfo" style="display:inline-block"><span id="detCuotaText">12x $100.000 sin interés</span></span>
+          <!-- Descripción -->
+          <div class="det-desc" id="detDesc" style="display:none"></div>
+          <!-- Características -->
           <div style="margin-bottom:24px">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Caracteristicas</div>
-            <div id="detSpecs" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+            <div class="det-variants-hd">Características</div>
+            <div class="det-specs" id="detSpecs"></div>
           </div>
-          <!-- Trust Badges -->
-          <div id="detBadges" style="display:flex;flex-wrap:wrap;gap:8px;padding-bottom:20px;margin-bottom:20px;border-bottom:1px solid var(--border)"></div>
-          <!-- Variant Selector -->
-          <div id="detVariants" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dk);margin-bottom:12px">Variantes disponibles</div>
+          <!-- Badges de confianza -->
+          <div class="det-badges" id="detBadges"></div>
+          <!-- Preventa info -->
+          <div class="det-preorder" id="detPreorderInfo" style="display:none"></div>
+          <!-- Selector de variantes -->
+          <div class="det-variants" id="detVariants" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+            <div class="det-variants-hd">Variantes disponibles</div>
             <div id="detVariantsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
           </div>
-          <!-- Total & Buttons -->
-          <div style="padding-top:20px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px">Total Final</div><div style="font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700" id="detTotal">$1.200.000</div></div>
+          <!-- Total y botones -->
+          <div class="det-actions">
+            <div class="det-total-row">
+              <div><div class="det-total-label">Total Final</div><div class="det-total" id="detTotal">$1.200.000</div></div>
             </div>
-            <div style="display:flex;gap:10px">
+            <div class="det-ctas">
               <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Agregar al carrito</button>
               <button class="det-btn det-btn-buy" id="detBuyNow" onclick="buyNow()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Comprar ahora</button>
             </div>
-            <button onclick="consultarProducto()" id="detConsultBtn" style="width:100%;padding:10px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.borderColor='var(--orange)';this.style.color='var(--orange)';this.style.background='rgba(255,107,44,.04)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)';this.style.background='transparent'">
+            <button onclick="consultarProducto()" id="detConsultBtn" class="det-consult">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Consultar por chat
             </button>
           </div>
+          <!-- Trust strip -->
+          <div class="det-trust">
+            <div class="det-trust-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+              12 meses garantía
+            </div>
+            <div class="det-trust-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              Envío a todo el país
+            </div>
+            <div class="det-trust-item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+              Devolución 7 días
+            </div>
+          </div>
         </div>
       </div>
-      <!-- Related accessories -->
-      <div id="detRelated" style="display:none"></div>
+      <!-- Accesorios relacionados -->
+      <div id="detRelated"></div>
     </div>
+  </div>
+  <!-- Barra sticky (móvil) -->
+  <div class="det-sticky" aria-hidden="true">
+    <div class="det-sticky-price">
+      <span class="det-sticky-label">Total</span>
+      <span class="det-sticky-val" id="detStickyVal">$0</span>
+    </div>
+    <button class="det-btn det-btn-cart" id="detStickyAdd">Agregar al carrito</button>
   </div>
 </div>
 

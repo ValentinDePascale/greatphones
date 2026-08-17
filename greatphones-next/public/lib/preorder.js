@@ -38,7 +38,7 @@ function loadPreorderProducts() {
     })
     .catch(function() {
       if (loading) loading.style.display = 'none';
-      if (empty) { empty.style.display = 'block'; empty.innerHTML = '<div style="font-size:60px;margin-bottom:1rem">&#x26A0;</div><p style="font-family:\'Playfair Display\',serif;font-size:22px;color:var(--dk);margin-bottom:.5rem">Error cargando productos</p><p style="font-size:13px;margin-bottom:1.5rem">No pudimos cargar los productos. Intenta nuevamente.</p><button class="btn btn-o" onclick="loadPreorderProducts()">Reintentar</button>'; }
+      if (empty) { empty.style.display = 'block'; empty.innerHTML = '<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".5" style="margin-bottom:1rem" aria-hidden="true"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><p style="font-family:\'Playfair Display\',serif;font-size:22px;color:var(--dk);margin-bottom:.5rem">Error cargando productos</p><p style="font-size:13px;margin-bottom:1.5rem">No pudimos cargar los productos. Intenta nuevamente.</p><button class="btn btn-o" onclick="loadPreorderProducts()">Reintentar</button>'; }
     });
 }
 
@@ -57,6 +57,8 @@ function renderPreorderGrid() {
   grid.innerHTML = sorted.map(function(p) {
     return buildPreorderCard(p);
   }).join('');
+
+  if (window.GPAnim && window.GPAnim.revealAll) window.GPAnim.revealAll('.preorder-card');
 }
 
 function buildPreorderCard(p) {

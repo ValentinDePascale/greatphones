@@ -17,31 +17,74 @@ function goBackFromDetail(){
   window.location.href=backMap[detailBackTarget]||'/productos';
 }
 
+function detIco(key){
+  var P={
+    check:'<path d="M20 6L9 17l-5-5"/>',
+    battery:'<rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="10" x2="23" y2="14"/>',
+    color:'<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 011.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>',
+    ram:'<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>',
+    storage:'<line x1="22" y1="12" x2="2" y2="12"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/><line x1="6" y1="16" x2="6.01" y2="16"/><line x1="10" y1="16" x2="10.01" y2="16"/>',
+    cpu:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>',
+    screen:'<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    date:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+    stock:'<path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>',
+    status:'<path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/>',
+    phone:'<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
+    shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+    star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    percent:'<line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+    dev:'<path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'
+  };
+  var body=P[key]||P.stock;
+  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+body+'</svg>';
+}
+
+function detFavBtnHtml(isFav){
+  return '<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFav?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">'+(isFav?'\u2665':'\u2661')+'</button>';
+}
+
+function detMainImgHTML(imgUrl, isFav, total, currentIdx, accMode){
+  var idx=currentIdx||0;
+  total=total||1;
+  var show=total>1?'flex':'none';
+  var prevIdx=(idx-1+total)%total, nextIdx=(idx+1)%total;
+  var prevOn=accMode?'switchAccMainImg('+prevIdx+')':'prevDetailImage()';
+  var nextOn=accMode?'switchAccMainImg('+nextIdx+')':'nextDetailImage()';
+  var counter=total>1?'<span class="det-img-counter" id="detImgCounter">'+(idx+1)+' / '+total+'</span>':'';
+  var prev='<button id="detImgPrev" onclick="'+prevOn+'" aria-label="Imagen anterior" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+show+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">\u2190</button>';
+  var next='<button id="detImgNext" onclick="'+nextOn+'" aria-label="Imagen siguiente" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+show+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">\u2192</button>';
+  return detFavBtnHtml(isFav)+prev+next+counter+
+    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
+      '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
+      '<div class="det-img-zoom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg></div>'+
+    '</div>';
+}
+
 function buildSpecsForProduct(p){
   var specs=[];
   var type=(p.type||'').toLowerCase();
   var cond=p.condition||'';
   if(type==='celular'||type==='tablet'){
-    if(cond==='Nuevo'){specs.push({ico:'\u2728',label:'Estado',val:'Nuevo',color:'var(--green)'});}
-    else if(cond){specs.push({ico:'\u{1F4CB}',label:'Estado',val:cond,color:'var(--orange)'});}
-    if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({ico:'\u{1F50B}',label:'Bateria',val:batPct+'%',color:batColor});}
-    if(p.color)specs.push({ico:'\u{1F3A8}',label:'Color',val:p.color});
-    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
-    if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
+    if(cond==='Nuevo'){specs.push({key:'check',label:'Estado',val:'Nuevo',color:'var(--green)'});}
+    else if(cond){specs.push({key:'status',label:'Estado',val:cond,color:'var(--orange)'});}
+    if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({key:'battery',label:'Bateria',val:batPct+'%',color:batColor});}
+    if(p.color)specs.push({key:'color',label:'Color',val:p.color});
+    if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
+    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   }else if(type==='laptop'||type==='desktop'){
-    if(p.processor)specs.push({ico:'\u{1F527}',label:'Procesador',val:p.processor});
-    else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({ico:'\u{1F527}',label:'Procesador',val:cpuMatch[0]});}
-    if(p.storage)specs.push({ico:'\u{1F4BE}',label:'Almacenamiento',val:p.storage});
-    if(p.ram)specs.push({ico:'\u26A1',label:'RAM',val:p.ram});
-    if(p.screen)specs.push({ico:'\u{1F5A5}',label:'Pantalla',val:p.screen+'"'});
+    if(p.processor)specs.push({key:'cpu',label:'Procesador',val:p.processor});
+    else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({key:'cpu',label:'Procesador',val:cpuMatch[0]});}
+    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
+    if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
+    if(p.screen)specs.push({key:'screen',label:'Pantalla',val:p.screen+'"'});
   }
   if(p.stock!==undefined){
     if(p.isPreorder){
       var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
-      specs.push({ico:'📅',label:'Disponibilidad',val:dateStr,color:'var(--orange)'});
+      specs.push({key:'date',label:'Disponibilidad',val:dateStr,color:'var(--orange)'});
     }else{
       var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
-      specs.push({ico:'📦',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
+      specs.push({key:'stock',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
     }
   }
   return specs;
@@ -52,10 +95,10 @@ function renderSpecsGrid(specs){
   if(!specs.length){el.style.display='none';return;}
   el.style.display='grid';
   el.innerHTML=specs.map(function(s){
-    return '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px">'+
-      '<div style="width:40px;height:40px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.ico+'</div>'+
-      '<div><div style="font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">'+s.label+'</div>'+
-      '<div style="font-size:15px;font-weight:700;color:var(--dk)'+(s.color?';color:'+s.color:'')+'">'+s.val+'</div></div></div>';
+    return '<div class="sp-card">'+
+      '<div class="sp-ico">'+detIco(s.key||'stock')+'</div>'+
+      '<div><div class="sp-label">'+s.label+'</div>'+
+      '<div class="sp-val"'+(s.color?';color:'+s.color:'')+'>'+s.val+'</div></div></div>';
   }).join('');
 }
 
@@ -63,24 +106,23 @@ function renderDetBadges(p,extraCond){
   var el=document.getElementById('detBadges');if(!el)return;
   var type=(p.type||'').toLowerCase();
   var badges=[];
-  // Discount badge
   var isPromo=isOfferValid(p);
   if(isPromo){
-    badges.push({ico:'\uD83C\uDFF7',text:p.discount+'% OFF',color:'var(--red)',bg:'rgba(192,57,43,.1)'});
+    badges.push({ico:'percent',text:p.discount+'% OFF',color:'var(--red)',bg:'rgba(192,57,43,.1)'});
   }
-  badges.push({ico:'\u2713',text:'12 Meses Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  badges.push({ico:'\u2713',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  badges.push({ico:'\u2713',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  if(type==='celular')badges.splice(2,0,{ico:'\u2713',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'check',text:'12 Meses Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'check',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'dev',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(type==='celular')badges.splice(2,0,{ico:'phone',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   if(p.isPreorder){
     var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
-    badges.unshift({ico:'\u2B50',text:'Preventa — Disponible '+dateStr,color:'var(--orange)',bg:'rgba(255,107,44,.12)'});
+    badges.unshift({ico:'star',text:'Preventa — Disponible '+dateStr,color:'var(--orange)',bg:'rgba(255,107,44,.12)'});
   }
-  if(extraCond)badges.unshift({ico:'\uD83D\uDCF1',text:extraCond,color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(extraCond)badges.unshift({ico:'phone',text:extraCond,color:'var(--green)',bg:'rgba(45,90,39,.1)'});
   el.innerHTML=badges.map(function(b){
     var c=b.color||'var(--green)';
     var bg=b.bg||'rgba(45,90,39,.1)';
-    return '<div style="display:flex;align-items:center;gap:6px;background:'+bg+';padding:8px 12px;border-radius:8px;font-size:11px;font-weight:600;color:'+c+'">'+b.ico+' '+b.text+'</div>';
+    return '<div class="det-pill" style="background:'+bg+';color:'+c+'">'+detIco(b.ico||'check')+' '+b.text+'</div>';
   }).join('');
 }
 
@@ -1013,9 +1055,9 @@ function openAccDetail(id){
   if(descEl){var descParts=[];if(currentAcc.brand)descParts.push(currentAcc.brand);if(currentAcc.description)descParts.push(currentAcc.description);if(descParts.length){descEl.textContent=descParts.join(' \u2014 ');descEl.style.display='block';}else{descEl.style.display='none';}}
 
   var accSpecs=[];
-  if(currentAcc.compatibleModels)accSpecs.push({ico:'\u{1F4F1}',label:'Compatible con',val:currentAcc.compatibleModels});
+  if(currentAcc.compatibleModels)accSpecs.push({key:'phone',label:'Compatible con',val:currentAcc.compatibleModels});
   var sc=currentAcc.stock>5?'var(--green)':currentAcc.stock>0?'var(--orange)':'var(--red)';
-  accSpecs.push({ico:'\u{1F4E6}',label:'Stock',val:currentAcc.stock>0?currentAcc.stock+' disponibles':'Agotado',color:sc});
+  accSpecs.push({key:'stock',label:'Stock',val:currentAcc.stock>0?currentAcc.stock+' disponibles':'Agotado',color:sc});
   renderSpecsGrid(accSpecs);
 
   renderAccVariants();
@@ -1025,26 +1067,21 @@ function openAccDetail(id){
   var addCartBtn=document.getElementById('detAddCart');var buyNowBtn=document.getElementById('detBuyNow');
   if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartAcc(currentAcc.id,addCartBtn);};}
   if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.onclick=function(){if(typeof svBtnSuccess==='function')svBtnSuccess(buyNowBtn);addToCartAcc(currentAcc.id);setTimeout(function(){nav('checkout');},400);};}
+  syncDetSticky(addCartBtn);
 
   _accImages=[];
   if(currentAcc.imageUrl)_accImages.push(currentAcc.imageUrl);
   if(currentAcc.images&&currentAcc.images.length)_accImages=_accImages.concat(currentAcc.images);
 
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
-  if(mainImg){var ico=currentAcc.ico||'\u{1F4E6}';
+  if(mainImg){
     if(_accImages.length){
-      var accImgUrl=_accImages[0];
-      mainImg.innerHTML='<div style="position:relative;width:100%;height:100%;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-        '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
-        '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
-        '</div>'+
-      '</div>';
+      mainImg.innerHTML=detMainImgHTML(_accImages[0],isFavorite(currentAcc.id),_accImages.length,0,true);
     }
-    else{mainImg.innerHTML='<span style="font-size:80px">'+ico+'</span>';}
+    else{mainImg.innerHTML=detFavBtnHtml(isFavorite(currentAcc.id))+'<span style="font-size:80px">'+detIco('stock')+'</span>';}
   }
   if(thumbsContainer){
-    if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div onclick="switchAccMainImg('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img loading="lazy" src="'+src+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    if(_accImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=_accImages.map(function(src,i){return '<div class="det-thumb'+(i===0?' act':'')+'" onclick="switchAccMainImg('+i+')"><img loading="lazy" src="'+src+'" alt=""></div>';}).join('');}
     else{thumbsContainer.style.display='none';}
   }
   detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
@@ -1055,15 +1092,8 @@ function openAccDetail(id){
 function switchAccMainImg(idx){
   if(!_accImages||!_accImages[idx])return;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
-  var accImgUrl=_accImages[idx];
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentAcc.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentAcc.id)?'\u2665':'\u2661')+'</button>'+
-    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
-      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
-      '</div>'+
-    '</div>';
-  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===idx?'var(--orange)':'var(--border)';}}
+  if(mainImg)mainImg.innerHTML=detMainImgHTML(_accImages[idx],isFavorite(currentAcc&&currentAcc.id),_accImages.length,idx,true);
+  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('act',i===idx);}}
 }
 
 function selectAccVariant(id){
@@ -1079,9 +1109,9 @@ function selectAccVariant(id){
   else{if(oldEl)oldEl.style.display='none';}
   // Update specs (stock is per-variant now)
   var accSpecs=[];
-  if(currentAcc.compatibleModels)accSpecs.push({ico:'\u{1F4F1}',label:'Compatible con',val:currentAcc.compatibleModels});
+  if(currentAcc.compatibleModels)accSpecs.push({key:'phone',label:'Compatible con',val:currentAcc.compatibleModels});
   var sc=currentAcc.stock>5?'var(--green)':currentAcc.stock>0?'var(--orange)':'var(--red)';
-  accSpecs.push({ico:'\u{1F4E6}',label:'Stock',val:currentAcc.stock>0?currentAcc.stock+' disponibles':'Agotado',color:sc});
+  accSpecs.push({key:'stock',label:'Stock',val:currentAcc.stock>0?currentAcc.stock+' disponibles':'Agotado',color:sc});
   renderSpecsGrid(accSpecs);
   // Update variant chips
   document.querySelectorAll('.acc-color-chip').forEach(function(c){c.classList.remove('act');});
@@ -1093,17 +1123,12 @@ function selectAccVariant(id){
   if(currentAcc.images&&currentAcc.images.length)_accImages=_accImages.concat(currentAcc.images);
   var mainImg=document.getElementById('detImgMain');
   if(mainImg&&_accImages.length){
-    var accImgUrl=_accImages[0];
-    mainImg.innerHTML='<div style="position:relative;width:100%;height:100%;cursor:zoom-in" onclick="openLightbox(\''+accImgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img loading="lazy" src="'+accImgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
-      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
-      '</div>'+
-    '</div>';
+    mainImg.innerHTML=detMainImgHTML(_accImages[0],isFavorite(currentAcc.id),_accImages.length,0,true);
   }
   // Update cart button
   var addCartBtn=document.getElementById('detAddCart');
   if(addCartBtn){addCartBtn.style.display='';addCartBtn.onclick=function(){addToCartAcc(currentAcc.id,addCartBtn);};}
+  syncDetSticky(addCartBtn);
   updDetTotal();
   var fb=document.getElementById('detFavBtn');
   if(fb){if(isFavorite(currentAcc.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
@@ -1331,6 +1356,13 @@ function openDetail(id, variantId){
     }
     if(addCartBtn){addCartBtn.style.display='';addCartBtn.textContent='Reservar';addCartBtn.onclick=function(){addToCart(currentProd.id,addCartBtn,null,true,currentProd.availableFrom);};}
     if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.textContent='Reservar Ahora';buyNowBtn.onclick=function(){addToCart(currentProd.id,null,null,true,currentProd.availableFrom);setTimeout(function(){nav('checkout');},400);};}
+    syncDetSticky(addCartBtn);
+    var preEl=document.getElementById('detPreorderInfo');
+    if(preEl){
+      preEl.innerHTML='<div class="det-preorder-title">'+detIco('date')+' Preventa</div>'+
+        '<p><strong>Disponible '+availStr+'</strong>. Al reservar no necesitás IMEI: se te asigna uno cuando el equipo ingrese. Te avisamos por email cuando esté por llegar.</p>';
+      preEl.style.display='block';
+    }
     var variantsEl=document.getElementById('detVariants');
     if(variantsEl)variantsEl.style.display='none';
     var imeiSection=document.querySelector('.det-imei-section');
@@ -1338,6 +1370,7 @@ function openDetail(id, variantId){
   }else{
     if(addCartBtn){addCartBtn.style.display='';addCartBtn.textContent='Agregar al carrito';addCartBtn.onclick=function(){addToCartFromDetail();};}
     if(buyNowBtn){buyNowBtn.style.display='';buyNowBtn.textContent='Comprar ahora';buyNowBtn.onclick=function(){buyNow();};}
+    syncDetSticky(addCartBtn);
   }
   var consultBtn=document.getElementById('detConsultBtn');
   if(consultBtn)consultBtn.style.display='flex';
@@ -1369,25 +1402,12 @@ function renderDetailImages(){
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
   if(!mainImg)return;
   var isFav=isFavorite(currentProd.id);
-  var favBtn='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFav?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFav?'\u2665':'\u2661')+'</button>';
-  var prevBtn='<button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button>';
-  var nextBtn='<button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>';
-  if(allImages.length===0){mainImg.innerHTML=favBtn+prevBtn+nextBtn+'<span style="font-size:80px">\u{1F4F1}</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
-  var imgUrl=allImages[0];
-  mainImg.innerHTML=favBtn+prevBtn+nextBtn+
-    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
-      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
-      '</div>'+
-    '</div>';
+  var total=allImages.length;
+  if(total===0){mainImg.innerHTML=detFavBtnHtml(isFav)+'<span style="font-size:80px">'+detIco('phone')+'</span>';if(thumbsContainer)thumbsContainer.style.display='none';return;}
   detailCurrentImageIndex=0;
-  var showArrows=allImages.length>1;
-  var prevEl=document.getElementById('detImgPrev');var nextEl=document.getElementById('detImgNext');
-  if(prevEl)prevEl.style.display=showArrows?'flex':'none';
-  if(nextEl)nextEl.style.display=showArrows?'flex':'none';
+  mainImg.innerHTML=detMainImgHTML(allImages[0],isFav,total,0,false);
   if(thumbsContainer){
-    if(allImages.length>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div onclick="setDetailImage('+i+')" style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;border:2px solid '+(i===0?'var(--orange)':'var(--border)')+';cursor:pointer;display:flex;align-items:center;justify-content:center;background:#fff"><img loading="lazy" src="'+url+'" style="width:100%;height:100%;object-fit:contain"></div>';}).join('');}
+    if(total>1){thumbsContainer.style.display='grid';thumbsContainer.innerHTML=allImages.map(function(url,i){return '<div class="det-thumb'+(i===0?' act':'')+'" onclick="setDetailImage('+i+')"><img loading="lazy" src="'+url+'" alt=""></div>';}).join('');}
     else{thumbsContainer.style.display='none';}
   }
 }
@@ -1397,16 +1417,9 @@ function setDetailImage(index){
   if(currentProd&&currentProd.images)allImages=allImages.concat(currentProd.images);
   detailCurrentImageIndex=index;
   var mainImg=document.getElementById('detImgMain');var thumbsContainer=document.getElementById('detThumbnails');
-  var isFav=isFavorite(currentProd.id);
   var imgUrl=allImages[index];
-  if(mainImg)mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFav?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFav?'\u2665':'\u2661')+'</button><button id="detImgPrev" onclick="prevDetailImage()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8592;</button><button id="detImgNext" onclick="nextDetailImage()" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:'+(allImages.length>1?'flex':'none')+';align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.1)">&#8594;</button>'+
-    '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+imgUrl+'\')" onmousemove="handleImageZoom(event,this)" onmouseleave="resetImageZoom(this)">'+
-      '<img loading="lazy" src="'+imgUrl+'" style="width:100%;height:100%;object-fit:contain;transition:transform .2s ease;pointer-events:none" id="detZoomImg">'+
-      '<div style="position:absolute;bottom:12px;right:12px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.85);display:flex;align-items:center;justify-content:center;pointer-events:none;box-shadow:0 2px 8px rgba(0,0,0,.1)">'+
-        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--dk)" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>'+
-      '</div>'+
-    '</div>';
-  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].style.borderColor=i===index?'var(--orange)':'var(--border)';}}
+  if(mainImg)mainImg.innerHTML=detMainImgHTML(imgUrl,isFavorite(currentProd.id),allImages.length,index,false);
+  if(thumbsContainer){var thumbs=thumbsContainer.children;for(var i=0;i<thumbs.length;i++){thumbs[i].classList.toggle('act',i===index);}}
 }
 function prevDetailImage(){
   var allImages=[];
@@ -1462,6 +1475,8 @@ function selectDetailVariant(idx){
   if(priceEl)priceEl.textContent=fmt(finalPrice);
   var totalEl=document.getElementById('detTotal');
   if(totalEl)totalEl.textContent=fmt(finalPrice);
+  var sbv=document.getElementById('detStickyVal');
+  if(sbv)sbv.textContent=fmt(finalPrice);
   var oldEl=document.getElementById('detOld');
   if(isPromo&&oldEl){oldEl.textContent=fmt(basePrice);oldEl.style.display='inline';}
   else if(oldEl)oldEl.style.display='none';
@@ -1510,10 +1525,7 @@ function selectDetailVariant(idx){
   if(v.imageUrl){
     var mainImg=document.getElementById('detImgMain');
     if(mainImg){
-      mainImg.innerHTML='<button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn'+(isFavorite(currentProd.id)?' saved':'')+'" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10">'+(isFavorite(currentProd.id)?'\u2665':'\u2661')+'</button>'+
-        '<div style="position:relative;width:100%;height:100%;overflow:hidden;cursor:zoom-in" onclick="openLightbox(\''+v.imageUrl+'\')">'+
-          '<img loading="lazy" src="'+v.imageUrl+'" style="width:100%;height:100%;object-fit:contain">'+
-        '</div>';
+      mainImg.innerHTML=detMainImgHTML(v.imageUrl,isFavorite(currentProd.id),1,0,false);
     }
   }
 
@@ -1636,11 +1648,13 @@ function renderDetailVariants(){
   // Fallback: original text pills for non-iPhone products
   list.innerHTML=variants.map(function(v,i){
     var isActive=i===window._selectedVariantIdx;
+    var isOos=v.status==='SOLD';
     var parts=[];
     if(v.color)parts.push(v.color);
     if(v.storage)parts.push(v.storage);
     if(v.cosmeticCondition&&!v.color&&!v.storage)parts.push(v.cosmeticCondition);
     var label=parts.join(' \u00B7 ')||'Variante '+(i+1);
+    var priceHtml='';
     if(v.targetPrice){
       var variantProd=null;
       if(v.productId){
@@ -1650,19 +1664,11 @@ function renderDetailVariants(){
       }
       var isPromo=isOfferValid(variantProd);
       var pillPrice=isPromo?Math.round(v.targetPrice*(1-variantProd.discount/100)):v.targetPrice;
-      if(isPromo)label+=' — <span style="text-decoration:line-through;opacity:.5">'+fmt(v.targetPrice)+'</span> <strong>'+fmt(pillPrice)+'</strong>';
-      else label+=' — '+fmt(v.targetPrice);
+      if(isPromo)priceHtml=' <span class="vc-old">'+fmt(v.targetPrice)+'</span> <span class="vc-price">'+fmt(pillPrice)+'</span>';
+      else priceHtml=' <span class="vc-price">'+fmt(v.targetPrice)+'</span>';
     }
-    var clickAttr=variants.length>1?'onclick="selectDetailVariant('+i+')"':'';
-    var cursor=variants.length>1?'pointer':'default';
-    return '<button '+clickAttr+' style="'+
-      'padding:8px 16px;border-radius:10px;border:2px solid '+(isActive?'var(--orange)':'var(--border)')+';'+
-      'background:'+(isActive?'var(--orange)':'#fff')+';'+
-      'color:'+(isActive?'#fff':'var(--dk)')+';'+
-      'font-size:13px;font-weight:'+(isActive?'700':'500')+';'+
-      'cursor:'+cursor+';'+
-      'transition:all .15s;box-shadow:'+(isActive?'0 2px 8px rgba(255,107,44,.3)':'none')+
-      '">'+label+'</button>';
+    var clickAttr=variants.length>1&&!isOos?'onclick="selectDetailVariant('+i+')"':'';
+    return '<button '+clickAttr+' class="variant-chip'+(isActive?' act':'')+(isOos?' disabled':'')+'"'+(isOos?' disabled':'')+'>'+label+priceHtml+'</button>';
   }).join('');
 }
 
@@ -1708,20 +1714,29 @@ function selOpt(el,type,val){
   }
   updDetTotal();
 }
+function syncDetSticky(addBtn){
+  var sb=document.getElementById('detStickyAdd');
+  if(!sb)return;
+  sb.textContent=(addBtn&&addBtn.textContent)||'Agregar al carrito';
+  sb.onclick=addBtn?addBtn.onclick:null;
+}
 function updDetTotal(){
   var total=0;
   if(currentProd){
-    var now=new Date();
+    var base=(window._selectedVariant&&window._selectedVariant.targetPrice)
+      ? window._selectedVariant.targetPrice
+      : ((typeof displayBasePrice==='function')?displayBasePrice(currentProd):currentProd.price);
     var isPromo=isOfferValid(currentProd);
-    var base=isPromo?Math.round(currentProd.price*(1-currentProd.discount/100)):currentProd.price;
-    total=base+detWMult+detDExtra;
+    total=isPromo?Math.round(base*(1-currentProd.discount/100)):base;
   }else if(currentAcc){
-    var now2=new Date();
     var isPromo2=isOfferValid(currentAcc);
     total=isPromo2?Math.round(currentAcc.price*(1-currentAcc.discount/100)):currentAcc.price;
   }
+  total+=detWMult+detDExtra;
   var totalEl=document.getElementById('detTotal');
   if(totalEl)totalEl.textContent=fmt(total);
+  var sbv=document.getElementById('detStickyVal');
+  if(sbv)sbv.textContent=fmt(total);
 }
 function filterShop(f,btn){
   window.shopFilter=f;
@@ -1886,6 +1901,8 @@ function renderRelatedAccs(){
   var title='';
   var clickFn='';
 
+  window.GPAnim&&window.GPAnim.revealAll&&window.GPAnim.revealAll('.det-gallery,.det-info');
+
   if(currentProd){
     // Product detail → show compatible accessories
     var modelName=currentProd.name.replace(/iPhone\s*/,'').trim();
@@ -1919,8 +1936,9 @@ function renderRelatedAccs(){
       '<div class="det-related-scroll">'+
         related.map(function(item){
           var isPromo=isOfferValid(item);
-          var fp=isPromo?Math.round(item.price*(1-item.discount/100)):item.price;
-          var img=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:contain">':'<span>'+(item.ico||'\u{1F4E6}')+'</span>';
+          var base=typeof displayBasePrice==='function'?displayBasePrice(item):item.price;
+          var fp=isPromo?Math.round(base*(1-item.discount/100)):base;
+          var img=item.imageUrl?'<img src="'+item.imageUrl+'" alt="'+(item.name||'')+'">':detIco('stock');
           var hrefPrefix='/detail/';
           return '<a href="'+hrefPrefix+item.id+'" style="text-decoration:none;color:inherit"><div class="det-related-card">'+
             '<div class="det-related-img">'+img+'</div>'+
@@ -1932,6 +1950,7 @@ function renderRelatedAccs(){
         }).join('')+
       '</div>'+
     '</div>';
+  if(window.GPAnim&&window.GPAnim.revealAll)window.GPAnim.revealAll('.det-related-card');
 }
 
 function clearAdvF(){
