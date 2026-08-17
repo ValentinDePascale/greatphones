@@ -97,7 +97,7 @@ function renderSpecsGrid(specs){
   el.innerHTML=specs.map(function(s){
     return '<div class="sp-card">'+
       '<div class="sp-ico">'+detIco(s.key||'stock')+'</div>'+
-      '<div><div class="sp-label">'+s.label+'</div>'+
+      '<div class="sp-text"><div class="sp-label">'+s.label+'</div>'+
       '<div class="sp-val"'+(s.color?';color:'+s.color:'')+'>'+s.val+'</div></div></div>';
   }).join('');
 }
