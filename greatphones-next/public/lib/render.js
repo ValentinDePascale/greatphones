@@ -36,7 +36,7 @@ function detIco(key){
     dev:'<path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/>'
   };
   var body=P[key]||P.stock;
-  return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+body+'</svg>';
+  return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+body+'</svg>';
 }
 
 function detFavBtnHtml(isFav){
@@ -108,21 +108,19 @@ function renderDetBadges(p,extraCond){
   var badges=[];
   var isPromo=isOfferValid(p);
   if(isPromo){
-    badges.push({ico:'percent',text:p.discount+'% OFF',color:'var(--red)',bg:'rgba(192,57,43,.1)'});
+    badges.push({ico:'percent',text:p.discount+'% OFF',c:'red'});
   }
-  badges.push({ico:'check',text:'12 Meses Garantia',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  badges.push({ico:'check',text:'Cable + funda gratis',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  badges.push({ico:'dev',text:'Dev. 7 dias',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
-  if(type==='celular')badges.splice(2,0,{ico:'phone',text:'IMEI Verificado',color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  badges.push({ico:'check',text:'12 Meses Garantia',c:'green'});
+  badges.push({ico:'check',text:'Cable + funda gratis',c:'green'});
+  badges.push({ico:'dev',text:'Dev. 7 dias',c:'green'});
+  if(type==='celular')badges.splice(2,0,{ico:'phone',text:'IMEI Verificado',c:'green'});
   if(p.isPreorder){
     var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
-    badges.unshift({ico:'star',text:'Preventa — Disponible '+dateStr,color:'var(--orange)',bg:'rgba(255,107,44,.12)'});
+    badges.unshift({ico:'star',text:'Preventa — Disponible '+dateStr,c:'orange'});
   }
-  if(extraCond)badges.unshift({ico:'phone',text:extraCond,color:'var(--green)',bg:'rgba(45,90,39,.1)'});
+  if(extraCond)badges.unshift({ico:'phone',text:extraCond,c:'green'});
   el.innerHTML=badges.map(function(b){
-    var c=b.color||'var(--green)';
-    var bg=b.bg||'rgba(45,90,39,.1)';
-    return '<div class="det-pill" style="background:'+bg+';color:'+c+'">'+detIco(b.ico||'check')+' '+b.text+'</div>';
+    return '<div class="det-pill" data-c="'+b.c+'">'+detIco(b.ico||'check')+' '+b.text+'</div>';
   }).join('');
 }
 
@@ -1594,9 +1592,9 @@ function renderDetailVariants(){
       var isSelected=c===state.selectedColor;
       if(available&&!state.selectedColor)state.selectedColor=c;
       if(!available) {
-        return '<div style="width:36px;height:36px;border-radius:50%;background:#ddd;cursor:not-allowed;border:2px solid #ccc;flex-shrink:0;position:relative;opacity:.45" title="'+c+' (no disponible)">'+
+        return '<div style="width:36px;height:36px;border-radius:50%;background:#e0ddd8;cursor:not-allowed;border:2px dashed var(--border);flex-shrink:0;position:relative;opacity:.45" title="'+c+' (no disponible)">'+
           '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'+
-          '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><line x1="4" y1="4" x2="20" y2="20"/><line x1="20" y1="4" x2="4" y2="20"/></svg></div></div>';
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray2)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg></div></div>';
       }
       return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
     }).join('');
@@ -1619,9 +1617,9 @@ function renderDetailVariants(){
           var isAvailable=validStorages.indexOf(s)>=0;
           var isSelected=s===state.selectedStorage;
           if(isAvailable){
-            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" style="padding:6px 14px;border-radius:8px;border:2px solid '+(isSelected?'var(--orange)':'var(--border)')+';background:'+(isSelected?'var(--orange)':'#fff')+';color:'+(isSelected?'#fff':'var(--dk)')+';font-size:12px;font-weight:'+(isSelected?'700':'500')+';cursor:pointer;transition:all .15s">'+s+'</div>';
+            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
           }
-          return '<div style="padding:6px 14px;border-radius:8px;border:2px dashed #ddd;background:#f5f5f5;color:#bbb;font-size:12px;cursor:not-allowed" title="No disponible para '+state.selectedColor+'">'+s+'</div>';
+          return '<div class="variant-chip disabled">'+s+'</div>';
         }).join('')+'</div></div>';
     }else if(state.selectedColor&&!storagesForColor){
       storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
