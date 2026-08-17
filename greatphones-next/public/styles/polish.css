@@ -1,0 +1,51 @@
+/* ============================================================
+   POLISH.CSS — Mejoras estéticas y de accesibilidad (aditivo)
+   Solo agrega estilos; no toca ids/clases usados por scripts.
+   ============================================================ */
+
+/* ---- Contraste: textos secundarios sobre fondo cream ---- */
+:root{ --gray2:#A69C92 }
+.nav-sub,.nsi::placeholder,.faq-arr-new{color:var(--gray)}
+
+/* ---- Feedback táctil: press ---- */
+.btn:active,.btn-o:active,.nbtn:active,.fchip:active,.cat-card:active,
+.cu-btn:active,.sec-more:active,.cart-qty-btn:active,.cart-remove-btn:active,
+.pcard-add:active{transform:scale(.97)}
+
+/* ---- Elevación en hover ---- */
+.cat-card{transition:transform .22s cubic-bezier(.22,.68,.36,1),box-shadow .22s ease,background .18s ease}
+.cat-card:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(26,18,8,.10)}
+.cat-card:hover .cat-ico-wrap{transform:scale(1.07)}
+.srv-card{transition:transform .25s cubic-bezier(.22,.68,.36,1),box-shadow .25s ease}
+.srv-card:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.16)}
+
+/* ---- Topbar sticky: sombra al scrollear ---- */
+.mainnav{transition:box-shadow .3s ease}
+.mainnav.nav-scrolled{box-shadow:0 4px 20px rgba(26,18,8,.07)}
+
+/* ---- Acento decorativo en títulos de sección ---- */
+.sec-title{position:relative}
+.sec-title::after{content:'';position:absolute;left:0;bottom:-6px;height:3px;width:34px;border-radius:2px;background:linear-gradient(90deg,var(--orange),var(--orange2));opacity:.85}
+
+/* ---- Área táctil expandida (sin mover layout) ---- */
+.nbtn::after{content:'';position:absolute;inset:-6px;border-radius:12px}
+.nbtn-cart::after{inset:-8px -10px}
+
+/* ---- Focus unificado y consistente ---- */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:none;box-shadow:0 0 0 3px rgba(255,107,44,.35);border-radius:6px}
+
+/* ---- Extras premium ---- */
+::selection{background:rgba(255,107,44,.25)}
+*{scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.16) transparent}
+*::-webkit-scrollbar{width:8px;height:8px}
+*::-webkit-scrollbar-thumb{background:rgba(0,0,0,.14);border-radius:8px}
+*::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.26)}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* ---- Respetar usuarios con movimiento reducido ---- */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important;scroll-behavior:auto!important}
+  .page{animation:none!important}
+  .cat-flex,.pgrid,.pgrid-static{animation:none!important}
+}

@@ -3447,7 +3447,7 @@ function renderAdminProductsFiltered(q){
   var title=document.getElementById('adm-prods-title');
   if(title)title.textContent='Productos ('+list.length+(q?' / '+PRODUCTS.length:'')+')';
   if(!list.length){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:40px;margin-bottom:.5rem">🔍</div><p>No se encontraron productos</p></div>';
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5" style="display:block;margin:0 auto .5rem" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No se encontraron productos</p></div>';
     return;
   }
   grid.innerHTML=list.map(function(p){return renderAdminProductCard(p);}).join('');
@@ -3531,7 +3531,7 @@ function renderAdminAccFiltered(q){
   var title=document.getElementById('adm-acc-title');
   if(title)title.textContent='Accesorios ('+list.length+(q?' / '+(window.ACCS||[]).length:'')+')';
   if(!list.length){
-    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><div style="font-size:40px;margin-bottom:.5rem">🔍</div><p>No se encontraron accesorios</p></div>';
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--gray)"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5" style="display:block;margin:0 auto .5rem" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><p>No se encontraron accesorios</p></div>';
     return;
   }
   grid.innerHTML=list.map(function(a){return renderAdminAccCard(a);}).join('');

@@ -1,0 +1,112 @@
+/* ============================================================
+   COMPARE.CSS — Rediseño de /compare (aditivo, sin tocar funcionalidad)
+   ============================================================ */
+#p-compare{background:var(--cream)}
+
+/* ---- Encabezado ---- */
+.compare-ctr{padding:40px var(--pad) 64px}
+.compare-hdr{margin-bottom:28px}
+.compare-eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--orange);background:rgba(255,107,44,.08);padding:5px 12px;border-radius:100px;margin-bottom:12px}
+.compare-hdr h1{font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,3.5vw,38px);font-weight:700;color:var(--dk);margin-bottom:8px;line-height:1.1}
+.compare-hdr p{font-size:14px;color:var(--gray);line-height:1.6;max-width:520px}
+
+/* ---- Selectores (grid de 2 slots + swap) ---- */
+.cmp-pick{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:start;margin-bottom:40px}
+.cmp-slot{position:relative;background:#fff;border:1.5px solid var(--border);border-radius:18px;padding:22px;min-height:220px;box-shadow:var(--sh);transition:box-shadow .25s ease,border-color .25s ease}
+.cmp-slot:has(.cmp-selected:not(:empty)){border-color:rgba(255,107,44,.35);box-shadow:0 10px 30px rgba(255,107,44,.10)}
+.cmp-slot-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.cmp-slot-num{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;box-shadow:0 3px 10px rgba(255,107,44,.3)}
+.cmp-slot-head h3{font-size:16px;font-weight:600;color:var(--dk);flex:1}
+.cmp-slot-state{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gray2)}
+
+/* ---- Búsqueda ---- */
+.cmp-search{position:relative;margin-bottom:10px}
+.cmp-search-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray);pointer-events:none}
+.cmp-search-input{width:100%;padding:12px 14px 12px 40px;border:1.5px solid var(--border);border-radius:12px;background:var(--cream);color:var(--dk);font-size:13px;outline:none;transition:border-color .2s,background .2s,box-shadow .2s}
+.cmp-search-input:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 4px rgba(255,107,44,.08)}
+.cmp-search-input::placeholder{color:var(--gray2)}
+
+/* ---- Resultados ---- */
+.cmp-results{max-height:230px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(26,18,8,.10);margin-bottom:8px;z-index:20}
+.cmp-res-item{display:flex;align-items:center;gap:12px;padding:10px 12px;cursor:pointer;transition:background .15s}
+.cmp-res-item:hover{background:var(--cream)}
+.cmp-res-item img,.cmp-res-thumb{width:46px;height:46px;border-radius:8px;flex-shrink:0;object-fit:cover;background:var(--cream2)}
+.cmp-res-thumb{display:flex;align-items:center;justify-content:center;font-size:22px}
+.cmp-res-info{flex:1;min-width:0}
+.cmp-res-name{font-weight:600;font-size:13px;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp-res-sub{font-size:11px;color:var(--gray)}
+.cmp-res-price{font-weight:700;color:var(--orange);font-size:14px;white-space:nowrap}
+.cmp-res-empty{padding:14px;color:var(--gray);font-size:13px;text-align:center}
+
+/* ---- Seleccionado ---- */
+.cmp-selected{min-height:120px;border:1.5px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;text-align:center}
+.cmp-selected:empty::before{content:'Elegí un dispositivo';font-size:13px;color:var(--gray2);font-weight:500}
+.cmp-selected:has(> div){border-style:solid;border-color:rgba(255,107,44,.25)}
+.cmp-selected-card{width:100%;display:flex;align-items:center;gap:14px;padding:12px;animation:scaleIn .25s ease}
+.cmp-selected-card img,.cmp-selected-thumb{width:64px;height:64px;border-radius:12px;flex-shrink:0;object-fit:cover;background:var(--cream2)}
+.cmp-selected-thumb{display:flex;align-items:center;justify-content:center;font-size:28px}
+.cmp-selected-info{flex:1;min-width:0}
+.cmp-selected-name{font-weight:700;font-size:14px;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp-selected-sub{font-size:12px;color:var(--gray);margin-top:2px}
+.cmp-selected-price{font-weight:700;color:var(--orange);font-size:17px;margin-top:4px}
+.cmp-selected-remove{width:30px;height:30px;border-radius:50%;border:none;background:rgba(239,68,68,.1);color:var(--red);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.cmp-selected-remove:hover{background:var(--red);color:#fff}
+
+/* ---- Botón intercambiar ---- */
+.cmp-swap{display:flex;align-items:center;justify-content:center;padding-top:88px}
+.cmp-swap-btn{width:52px;height:52px;border-radius:50%;background:#fff;border:1.5px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--dk);transition:all .2s;box-shadow:var(--sh)}
+.cmp-swap-btn:hover{border-color:var(--orange);color:var(--orange);transform:scale(1.1) rotate(180deg)}
+
+/* ---- Tabla comparativa ---- */
+#compare-table-container{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:16px}
+.cmp-table{min-width:640px;background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--sh)}
+.cmp-t{display:grid;grid-template-columns:1.1fr 1fr 1fr}
+.cmp-t-head{position:sticky;top:60px;background:var(--dk);color:#fff;z-index:5}
+.cmp-t-head .cmp-t-label{color:rgba(255,255,255,.65)}
+.cmp-t-label{padding:16px 20px;font-size:12.5px;font-weight:600;color:var(--dk);display:flex;align-items:center;border-left:1px solid var(--border)}
+.cmp-t-head .cmp-t-label,.cmp-t-head .cmp-t-val{border-left-color:rgba(255,255,255,.12)}
+.cmp-t-label:first-child{border-left:none}
+.cmp-t-val{padding:16px 20px;font-size:13px;text-align:center;border-left:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap}
+.cmp-t-val--name{font-weight:700;font-size:14px;color:var(--dk)}
+.cmp-t-head .cmp-t-val--name{color:#fff}
+.cmp-t-row{transition:background .12s}
+.cmp-t-row:hover{background:rgba(255,107,44,.04)}
+.cmp-t-row--alt{background:var(--cream)}
+.cmp-t-win{background:rgba(45,90,39,.07);font-weight:600;color:var(--green)}
+.cmp-win-ico{color:var(--green);font-weight:700;font-size:12px}
+
+/* ---- Estado con un solo dispositivo ---- */
+.cmp-empty{text-align:center;padding:48px 24px;background:#fff;border-radius:16px;border:1.5px dashed var(--border);color:var(--gray)}
+.cmp-empty svg{display:block;margin:0 auto 14px;opacity:.4}
+.cmp-empty p{font-size:14px}
+
+/* ---- Acciones ---- */
+.compare-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+.cmp-clear{background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:12px;padding:12px 28px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.cmp-clear:hover{border-color:var(--red);color:var(--red)}
+
+/* ---- Responsive ---- */
+@media(max-width:767px){
+  .compare-ctr{padding:24px var(--pad)}
+  .compare-hdr h1{font-size:24px}
+  .cmp-pick{grid-template-columns:1fr;gap:16px;margin-bottom:32px}
+  .cmp-swap{padding-top:0;order:-1;justify-content:center}
+  .cmp-swap-btn{width:44px;height:44px;transform:rotate(90deg)}
+  .cmp-swap-btn:hover{transform:rotate(90deg) scale(1.1)}
+  .cmp-slot{padding:16px;min-height:0}
+  .cmp-slot-head h3{font-size:14px}
+}
+@media(max-width:639px){
+  .compare-ctr{padding:16px var(--pad)}
+  .compare-hdr h1{font-size:20px;margin-bottom:4px}
+  .cmp-t-head{position:static}
+}
+@media(max-width:480px){
+  .compare-ctr{padding:12px .75rem}
+  .compare-hdr h1{font-size:18px}
+  .cmp-slot{padding:12px}
+  .cmp-slot-head h3{font-size:13px}
+  .cmp-search-input{padding:10px 12px 10px 36px;font-size:12px}
+  .cmp-t-label,.cmp-t-val{padding:11px 12px;font-size:11.5px}
+  .cmp-t-val--name{font-size:12px}
+}

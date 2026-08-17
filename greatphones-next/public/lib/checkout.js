@@ -657,7 +657,7 @@ function renderCheckoutSummaryStep(){
   var container=document.getElementById('checkout-summary-items');
   if(!container)return;
   if(Cart.length===0){
-    container.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:36px;margin-bottom:.5rem">🛒</p><p style="font-size:14px">No hay productos en el carrito</p></div>';
+    container.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5" style="display:block;margin:0 auto .5rem" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><p style="font-size:14px">No hay productos en el carrito</p></div>';
     updateCheckoutSummaryPrices();
     return;
   }
@@ -767,7 +767,7 @@ function renderCheckoutSummary(){
   if(!itemsContainer)return;
 
   if(Cart.length===0){
-    itemsContainer.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:36px;margin-bottom:.5rem">🛒</p><p style="font-size:14px">No hay productos en el carrito</p></div>';
+    itemsContainer.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5" style="display:block;margin:0 auto .5rem" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><p style="font-size:14px">No hay productos en el carrito</p></div>';
     if(subtotalEl)subtotalEl.textContent='$0';
     if(totalEl)totalEl.textContent='$0';
     return;
@@ -797,7 +797,7 @@ function renderCheckoutSummary(){
   }
 
   if(Cart.length===0){
-    itemsContainer.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><p style="font-size:36px;margin-bottom:.5rem">🛒</p><p style="font-size:14px">No hay productos en el carrito</p></div>';
+    itemsContainer.innerHTML='<div style="text-align:center;padding:2rem;color:var(--gray)"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5" style="display:block;margin:0 auto .5rem" aria-hidden="true"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg><p style="font-size:14px">No hay productos en el carrito</p></div>';
     if(subtotalEl)subtotalEl.textContent='$0';
     if(totalEl)totalEl.textContent='$0';
     return;
