@@ -121,8 +121,10 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
     }
     var snapSrc=p||a;
     if(snapSrc){
-      var snapBasePrice=snapSrc.price||0;
-      var snapIsOffer=!!(snapSrc.isOffer&&snapSrc.discount>0);
+      // Precio base consistente: si el producto tiene IMEIs, usamos el mínimo
+      // targetPrice (igual que la card y el detalle).
+      var snapBasePrice=((p&&p.minTargetPrice&&p.minTargetPrice>0)?p.minTargetPrice:(snapSrc.price||0));
+      var snapIsOffer=typeof isOfferValid==='function'&&isOfferValid(snapSrc);
       var snapFinalPrice=snapIsOffer?Math.round(snapBasePrice-snapBasePrice*snapSrc.discount/100):snapBasePrice;
       entry.snapshot={
         name:snapSrc.name||'',
@@ -257,24 +259,27 @@ function cartTotal(){
       return sum+(item.variantInfo.price*item.qty);
     }
     var pid=item.productId||item.id;
+    // El snapshot es la fuente de verdad del precio al agregar (usa el mínimo
+    // targetPrice y validez de oferta, igual que card y detalle).
+    if(item.snapshot&&item.snapshot.finalPrice>0){
+      return sum+(item.snapshot.finalPrice*item.qty);
+    }
     var p=getById(PRODUCTS,pid);
     if(p){
-      var price=p.isOffer?Math.round(p.price-p.price*p.discount/100):p.price;
+      var base=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var price=(typeof isOfferValid==='function'&&isOfferValid(p))?Math.round(base-base*p.discount/100):base;
       return sum+(price*item.qty);
     }
     var a=getById(window.ACCS,item.productId||item.id);
     if(a){
       var now=new Date();
-      var isPromo=a.isOffer&&a.discount>0;
+      var isPromo=(typeof isOfferValid==='function')?isOfferValid(a):(a.isOffer&&a.discount>0);
       var price=isPromo?Math.round(a.price-a.price*a.discount/100):a.price;
       return sum+(price*item.qty);
     }
     var pre=getById(PREORDER_PRODUCTS,pid);
     if(pre){
       return sum+(pre.price*item.qty);
-    }
-    if(item.snapshot&&item.snapshot.finalPrice>0){
-      return sum+(item.snapshot.finalPrice*item.qty);
     }
     return sum;
   },0);
@@ -385,10 +390,11 @@ function renderCartBody(){
     var p=getById(PRODUCTS,pid);
     if(p){
       var now=new Date();
-      var isPromo=p.isOffer&&p.discount>0;
+      var isPromo=typeof isOfferValid==='function'&&isOfferValid(p);
       var variant=item.variantInfo;
       var variantPrice=variant&&variant.price>0?variant.price:null;
-      var finalPrice=variantPrice||(isPromo?Math.round(p.price-p.price*p.discount/100):p.price);
+      var baseP=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var finalPrice=variantPrice||(isPromo?Math.round(baseP-baseP*p.discount/100):baseP);
       var img=variant&&variant.image?'<img src="'+variant.image+'" style="width:100%;height:100%;object-fit:cover">':(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>');
       var sub=variant?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · '):p.sub;
       var displayName=variant&&variant.name?variant.name:p.name;
@@ -396,7 +402,7 @@ function renderCartBody(){
     }
     var a=getById(window.ACCS,item.productId||item.id);
     if(a){
-      var isPromo2=a.isOffer&&a.discount>0;
+      var isPromo2=(typeof isOfferValid==='function')?isOfferValid(a):(a.isOffer&&a.discount>0);
       var finalPrice2=isPromo2?Math.round(a.price-a.price*a.discount/100):a.price;
       var img2=a.imageUrl?'<img src="'+a.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">'+(a.ico||'📦')+'</span>';
       return ciHtml(item, a.id, null, a, img2, (a.brand||'')+' '+(a.color||''), a.name, finalPrice2, isPromo2);

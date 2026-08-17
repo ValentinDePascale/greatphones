@@ -69,6 +69,37 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
+    // Precio mínimo real por producto (IMEIs disponibles): lo usan las cards y
+    // el detalle para mostrar el mismo precio. Solo para productos no-preventa.
+    let variantStats: Record<string, { minTargetPrice: number; variantCount: number }> = {}
+    try {
+      if (products.length > 0 && prisma.inventoryItem && typeof prisma.inventoryItem.groupBy === 'function') {
+        const agg = await prisma.inventoryItem.groupBy({
+          by: ['productId'],
+          _min: { targetPrice: true },
+          _count: { _all: true },
+          where: {
+            productId: { in: products.map((p: any) => p.id) },
+            status: 'IN_STOCK',
+          },
+        })
+        variantStats = {}
+        agg.forEach((r: any) => {
+          variantStats[r.productId] = {
+            minTargetPrice: r._min.targetPrice || 0,
+            variantCount: r._count._all || 0,
+          }
+        })
+        products.forEach((p: any) => {
+          const st = variantStats[p.id]
+          p.minTargetPrice = st ? st.minTargetPrice : 0
+          p.variantCount = st ? st.variantCount : 0
+        })
+      }
+    } catch (aggErr) {
+      console.error('[Products] Error computing variant stats:', aggErr)
+    }
+
     const response = {
       data: products,
       page,

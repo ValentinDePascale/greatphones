@@ -39,7 +39,7 @@
             <label for="regTyC" style="font-size:11px;color:var(--gray);line-height:1.5">Acepto los <a onclick="nav('terminos')" style="color:var(--orange);cursor:pointer">Terminos y Condiciones</a> y las <a onclick="nav('privacidad')" style="color:var(--orange);cursor:pointer">Politicas de Privacidad</a>. Conozco y acepto la garantia legal de 6 meses y el derecho de arrepentimiento segun Resolucion 424/2020.</label>
           </div>
           
-          <button onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
+          <button id="regSubmitBtn" onclick="doRegister()" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:1rem">Crear cuenta</button>
           
           <p style="text-align:center;font-size:12px;color:var(--gray)">Ya tenes cuenta? <button onclick="openLogin()" style="background:none;border:none;color:var(--orange);font-size:12px;font-weight:600;cursor:pointer">Iniciar sesión</button></p>
         </div>
@@ -47,7 +47,7 @@
         <div id="pageVerifyStep" style="display:none">
           <h3 style="font-size:16px;margin-bottom:8px;text-align:center">Verificá tu email</h3>
           <p style="font-size:13px;color:var(--gray);text-align:center;margin-bottom:4px">Te enviamos un código a <span id="pageVerifyEmail" style="font-weight:600"></span></p>
-          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">10:00</span></p>
+          <p style="font-size:11px;color:var(--orange);text-align:center;margin-bottom:16px">El código vence en <span id="pageCodeTimer" style="font-weight:700">02:00</span></p>
           <div style="display:flex;gap:8px;justify-content:center;margin-bottom:16px">
             <input type="text" id="pv1" maxlength="1" onpaste="handleOtpPaste(event)" oninput="moveToNext(this,'pv2')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700;outline:none">
             <input type="text" id="pv2" maxlength="1" oninput="moveToNext(this,'pv3')" onkeydown="moveBack(event,'pv1')" style="width:44px;height:54px;border:2px solid var(--border);border-radius:10px;font-size:24px;text-align:center;font-weight:700">

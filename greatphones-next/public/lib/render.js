@@ -593,6 +593,28 @@ function renderGrid(gid,prods){
       return pills.length?'<div class="pcard-specs">'+pills.join('')+'</div>':'';
     }
 
+    // === ACCESSORY EN GRID MIXTO (búsqueda, favoritos) ===
+    // Los accesorios tienen 'category' y NO 'condition'. Misma estructura que
+    // la tarjeta de producto (con spacer de cuota) para alturas consistentes.
+    if(p.category&&!p.condition){
+      var accPromo=isOfferValid(p);
+      var accFinal=accPromo?Math.round(p.price*(1-p.discount/100)):p.price;
+      var accOos=p.stock===0;
+      return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard'+(accOos?' pcard-out-of-stock':'')+'">'+
+        '<div class="pcard-img">'+badgeHTML(p,accOos)+'<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+imgHtml(p.imageUrl,p.ico,accOos)+'</div>'+
+        '<div class="pcard-body">'+
+          '<div class="pcard-brand">'+esc(p.brand||'Accesorio')+'</div>'+
+          '<div class="pcard-name">'+esc(p.name)+'</div>'+
+          (p.category?'<div class="pcard-subtitle">'+esc(p.category)+'</div>':'')+
+          '<div class="pcard-discount-row">'+(accPromo?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
+          '<span class="pcard-price">'+fmt(accFinal)+'</span>'+
+          '<span class="pcard-cuota" aria-hidden="true"></span>'+
+          (accOos?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
+          (p.stock<=5&&p.stock>0?'<span class="pcard-stock">Solo '+p.stock+' disponibles</span>':'')+
+        '</div>'+
+      '</article></a>';
+    }
+
     // === GROUP CARD ===
     if(p.isGroup){
       var gBadge=p.stock===0?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(p.discount>0?'<div class="pcard-badge">Hasta -'+p.discount+'%</div>':'');
@@ -619,7 +641,9 @@ function renderGrid(gid,prods){
 
     // === SINGLE PRODUCT CARD ===
     var isPromoActive=isOfferValid(p);
-    var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
+    var basePrice=displayBasePrice(p);
+    var priceLabel=(p.variantCount>1?'Desde ':'');
+    var finalPrice=isPromoActive?Math.round(basePrice-basePrice*p.discount/100):basePrice;
     var cuota=Math.round(finalPrice/12);
     var badge=badgeHTML(p,isOutOfStock);
     var timerBadge='';
@@ -651,14 +675,15 @@ function renderGrid(gid,prods){
         (subtitle?'<div class="pcard-subtitle">'+esc(subtitle)+'</div>':'')+
         condPillsHTML(p)+
         (timerBadge?'<div style="margin-bottom:4px">'+timerBadge+'</div>':'')+
-        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
-        '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
+        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(basePrice)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
+        '<span class="pcard-price">'+priceLabel+fmt(finalPrice)+'</span>'+
         '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(cuota)+' sin interes</span>'+
         (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center;margin-top:4px">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
         (p.stock<=5&&p.stock>0?'<span class="pcard-stock">Solo '+p.stock+' disponibles</span>':'')+
       '</div>'+
     '</article></a>';
   }).join('');
+  if(window.GPAnim&&window.GPAnim.refresh)window.GPAnim.refresh();
 }
 function renderHomeRail(){
   var rail=document.getElementById('homeRail');
@@ -669,32 +694,9 @@ function renderHomeRail(){
     if(stockA!==stockB)return stockA-stockB;
     return new Date(b.createdAt||0)-new Date(a.createdAt||0);
   });
-  var items=sorted.slice(0,8);
-  var now=new Date();
-  rail.innerHTML=items.map(function(p){
-    var isPromoActive=isOfferValid(p);
-    var finalPrice=isPromoActive?Math.round(p.price-p.price*p.discount/100):p.price;
-    var isOutOfStock=p.stock===0;
-    var isFav=isFavorite(p.id);
-    var heartSvg='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-    var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" onerror="this.onerror=null;this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'" style="object-fit:contain;width:100%;height:100%'+(isOutOfStock?';filter:grayscale(100%) opacity(.6)':'')+'"><span style="font-size:56px;display:none;align-items:center;justify-content:center;width:100%;height:100%">'+(p.ico||'\u{1F4F1}')+'</span>':'<span style="font-size:56px'+(isOutOfStock?';filter:grayscale(100%) opacity(.5)':'')+'">'+p.ico+'</span>';
-    var badge=isOutOfStock?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(isPromoActive?'<div class="pcard-badge">-'+p.discount+'%</div>':'');
-    return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard'+(isOutOfStock?' pcard-out-of-stock':'')+'">'+
-      '<div class="pcard-img">'+
-        badge+
-        '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
-        imgHtml+
-      '</div>'+
-      '<div class="pcard-body">'+
-        '<div class="pcard-brand">'+esc(p.brand||'')+'</div>'+
-        '<div class="pcard-name">'+esc(p.name||p.brand)+'</div>'+
-        '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(p.price)+'</span><span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+'</div>'+
-        '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
-        (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
-        (p.stock<=5&&p.stock>0?'<span class="pcard-stock">Solo '+p.stock+' disponibles</span>':'')+
-      '</div>'+
-    '</article></a>';
-  }).join('');
+  // Misma tarjeta que el catálogo (descripción, cuotas, specs) para que
+  // "Los más vendidos" luzca igual que "Los más buscados".
+  renderGrid('homeRail',sorted.slice(0,8));
 }
 function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
@@ -936,7 +938,7 @@ function renderAccGrid(){
           (category?'<div class="pcard-subtitle">'+category+'</div>':'')+
           '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(accData.price)+'</span><span class="pcard-discount-badge">-'+accData.discount+'%</span>':'')+'</div>'+
           '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
-          '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round(finalPrice/12))+' sin interes</span>'+
+          '<span class="pcard-cuota" aria-hidden="true"></span>'+
           (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();openAccDetail(\''+g.id+'\')">Ver variantes</button>')+
           stockLine+
         '</div>'+
@@ -956,13 +958,14 @@ function renderAccGrid(){
         (category?'<div class="pcard-subtitle">'+category+'</div>':'')+
         '<div class="pcard-discount-row">'+(isPromoActive?'<span class="pcard-old">'+fmt(accData.price)+'</span><span class="pcard-discount-badge">-'+accData.discount+'%</span>':'')+'</div>'+
         '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
-        '<span class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round(finalPrice/12))+' sin interes</span>'+
+        '<span class="pcard-cuota" aria-hidden="true"></span>'+
         (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+accData.id+'\',this)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
         stockLine+
       '</div>'+
     '</article></a>';
   }).join('');
   if(!grid.dataset.svRevealed){grid.classList.add('pgrid-reveal');grid.dataset.svRevealed='1';}else{grid.classList.remove('pgrid-reveal');}
+  if(window.GPAnim&&window.GPAnim.refresh)window.GPAnim.refresh();
 }
 function openAccDetail(id){
   if(window.__INITIAL_ACCS_DETAIL__&&window.__INITIAL_ACCS_DETAIL_ID__===id){
@@ -2152,8 +2155,18 @@ function restoreSession(){
           amt.innerHTML='$<span id="cuentaSaldo" style="font-family:\'Playfair Display\',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px">'+(w.balance||0).toLocaleString('es-AR')+'</span>';
         }).catch(function(){});
       }
+      if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
     }
-  }).catch(function(){});
+  }).catch(function(e) {
+    // Sesión inexistente o expirada → estado invitado sin redirigir a login.
+    if (e && e.status === 401) {
+      try { Storage.remove('user'); } catch (e2) {}
+      if (window.currentUser) {
+        currentUser = null;
+        if (typeof updateUserUI === 'function') updateUserUI();
+      }
+    }
+  });
 }
 
 // =========== SLIDER ===========
@@ -2248,6 +2261,11 @@ function isOfferValid(p){
   if(p.offerStart&&new Date(p.offerStart)>now)return false;
   if(p.offerEnd&&new Date(p.offerEnd)<now)return false;
   return true;
+}
+// Precio base consistente entre card / detalle / carrito: si el producto tiene
+// IMEIs disponibles se usa el mínimo targetPrice (minTargetPrice del API).
+function displayBasePrice(p){
+  return (p&&p.minTargetPrice&&p.minTargetPrice>0)?p.minTargetPrice:p.price;
 }
 function startTimer(){
   if(_timerInterval)clearInterval(_timerInterval);

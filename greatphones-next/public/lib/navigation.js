@@ -93,20 +93,7 @@ function nav(id){
   if(id==='notebooks')renderNotebookConfig();
   if(id==='mayorista')renderMayorista();
   if(id==='cuenta'){
-    renderOrderHistory();
-    loadClientQuotes();
-    if(typeof cpnRenderCuentaSection==='function')cpnRenderCuentaSection('ACTIVE');
-    if(typeof getWallet==='function'){
-      getWallet().then(function(w){
-        var amt=document.getElementById('cuBalanceAmount');
-        if(amt)amt.innerHTML='$<span id="cuentaSaldo" style="font-family:\'Playfair Display\',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px">'+(w.balance||0).toLocaleString('es-AR')+'</span>';
-        if(typeof cpnRenderLegacyWallet==='function')cpnRenderLegacyWallet(w.balance);
-      }).catch(function(){
-        var amt=document.getElementById('cuBalanceAmount');
-        if(amt)amt.innerHTML='<span class="cu-balance-amount-error">$ —</span><button class="cu-btn cu-btn-retry" style="margin-left:12px;font-size:12px;padding:6px 14px" onclick="location.reload()">Reintentar</button>';
-      });
-    }
-    if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
+    refreshCuentaPanels();
   }
   if(id==='admin'){
     // Prefer the tab the user was already viewing (preserved across SPA navs),
@@ -306,7 +293,10 @@ async function doLogin(){
     initCart();
     loadProducts();
     window.location.href = '/';
-  }catch(e){showLoginError('Error de conexion');}
+  }catch(e){
+    var msg=(e&&e.status)?((e.body&&e.body.error)||e.message||'Error de conexion'):'Error de conexion';
+    showLoginError(msg);
+  }
 }
 async function signInWithGoogle(){
   try{
@@ -351,7 +341,10 @@ async function sendForgotCode(){
     sucEl.textContent='Codigo enviado. Revisa tu email.';sucEl.style.display='block';
     document.getElementById('resetEmail').value=email;
     setTimeout(function(){window.location.href='/reset-password';},1500);
-  }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
+  }catch(e){
+    var msg=(e&&e.status)?((e.body&&e.body.error)||e.message||'Error de conexion'):'Error de conexion';
+    errEl.textContent=msg;errEl.style.display='block';
+  }
 }
 async function doResetPassword(){
   var email=document.getElementById('resetEmail').value.trim();
@@ -370,7 +363,10 @@ async function doResetPassword(){
     if(data.error){errEl.textContent=data.error;errEl.style.display='block';return;}
     sucEl.textContent='Contraseña actualizada! Redirigiendo...';sucEl.style.display='block';
     setTimeout(function(){window.location.href='/login';},2000);
-  }catch(e){errEl.textContent='Error de conexion';errEl.style.display='block';}
+  }catch(e){
+    var msg=(e&&e.status)?((e.body&&e.body.error)||e.message||'Error de conexion'):'Error de conexion';
+    errEl.textContent=msg;errEl.style.display='block';
+  }
 }
 function clearAuthCookies(){
   // Mejor-esfuerzo del lado cliente. Las cookies Secure/HttpOnly se limpian
@@ -495,13 +491,30 @@ document.addEventListener('click',function(e){
   var dd=document.getElementById('searchDD');if(dd&&!e.target.closest('.nav-search'))dd.classList.remove('open');
   if(!e.target.closest('.notif-wrap'))closeNotifPanel();
 });
+// Refresca todas las secciones de /cuenta. Se usa tanto en navegación SPA
+// como cuando la página se carga nativa (para que no queden paneles vacíos).
+function refreshCuentaPanels(){
+  if(typeof renderOrderHistory==='function')renderOrderHistory();
+  if(typeof loadClientQuotes==='function')loadClientQuotes();
+  if(typeof cpnRenderCuentaSection==='function')cpnRenderCuentaSection('ACTIVE');
+  if(typeof renderRedeemSection==='function')renderRedeemSection('walletRedeemSection');
+  if(typeof getWallet==='function'){
+    getWallet().then(function(w){
+      var amt=document.getElementById('cuBalanceAmount');
+      if(amt)amt.innerHTML='$<span id="cuentaSaldo" style="font-family:\'Playfair Display\',Georgia,serif;font-size:52px;font-weight:700;letter-spacing:-2px">'+(w.balance||0).toLocaleString('es-AR')+'</span>';
+      if(typeof cpnRenderLegacyWallet==='function')cpnRenderLegacyWallet(w.balance);
+    }).catch(function(){
+      var amt=document.getElementById('cuBalanceAmount');
+      if(amt)amt.innerHTML='<span class="cu-balance-amount-error">$ —</span><button class="cu-btn cu-btn-retry" style="margin-left:12px;font-size:12px;padding:6px 14px" onclick="location.reload()">Reintentar</button>';
+    });
+  }
+}
 (function(){
   var saved=Storage.get('user');
   if(saved){
     try{currentUser=saved;updateUserUI();loadUserFavorites();
       if(document.getElementById('p-cuenta')&&document.getElementById('p-cuenta').classList.contains('act')){
-        if(typeof renderOrderHistory==='function')renderOrderHistory();
-        if(typeof loadClientQuotes==='function')loadClientQuotes();
+        refreshCuentaPanels();
       }
     }catch(e){}
   }
@@ -520,6 +533,9 @@ function checkGoogleSession(){
           initCart();
           loadProducts();
           if(window.location.pathname==='/login')window.location.href='/';
+          if(document.getElementById('p-cuenta')&&document.getElementById('p-cuenta').classList.contains('act')){
+            refreshCuentaPanels();
+          }
           if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){
             renderCheckoutSummary();
             resetCheckoutSelections();
@@ -571,9 +587,9 @@ function showSignupStep1(){
   if(signupCodeTimer)clearInterval(signupCodeTimer);
 }
 function startSignupTimer(seconds){
-  // Expiración del código: 10 minutos. Cooldown de reenvío: 60s.
+  // Expiración del código: 2 minutos. Cooldown de reenvío: 60s.
   if(signupCodeTimer)clearInterval(signupCodeTimer);
-  var remaining=seconds||600;
+  var remaining=seconds||120;
   var timerEl=document.getElementById('codeTimer');
   var fmtT=function(){var m=Math.floor(remaining/60);var s=remaining%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;};
   if(timerEl)timerEl.textContent=fmtT();
@@ -633,6 +649,21 @@ async function resendSignupCode(){
     document.getElementById('v1').focus();
   }catch(e){showLoginError('Error de conexion');}
 }
+function setLoadBtn(btn, on, loadingText){
+  if(!btn)return;
+  if(on){
+    btn.disabled=true;
+    btn.style.opacity='.75';
+    btn.style.pointerEvents='none';
+    btn.dataset.origLabel=btn.dataset.origLabel||btn.textContent;
+    btn.innerHTML='<span style="display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:8px"></span>'+(loadingText||'Procesando...');
+  }else{
+    btn.disabled=false;
+    btn.style.opacity='';
+    btn.style.pointerEvents='';
+    btn.textContent=btn.dataset.origLabel||'';
+  }
+}
 async function doRegister(){
   var name=document.getElementById('regName').value;
   var lastname=document.getElementById('regLastname').value;
@@ -647,6 +678,8 @@ async function doRegister(){
   if(!isPasswordStrong(password)){showToast(passwordPolicyMsg());return;}
   if(password!==confirmPassword){showToast('Las contraseñas no coinciden');return;}
   if(tyC&&!tyC.checked){showToast('Debes aceptar los Terminos y Condiciones');return;}
+  var submitBtn=document.getElementById('regSubmitBtn');
+  setLoadBtn(submitBtn,true,'Enviando código');
   try{
     var res=await fetch(API_URL+'/api/auth/verify-email',{
       method:'POST',
@@ -654,10 +687,10 @@ async function doRegister(){
       body:JSON.stringify({action:'send',email:email})
     });
     var data=await res.json();
-    if(data.error){showToast(data.error);return;}
+    if(data.error){setLoadBtn(submitBtn,false);showToast(data.error);return;}
     registerTempData={name:fullName,email:email,phone:phone,password:password};
     showPageRegisterStep2(email);
-  }catch(e){showToast('Error de conexion');}
+  }catch(e){setLoadBtn(submitBtn,false);showToast('Error de conexion');}
 }
 function showPageRegisterStep2(email){
   document.getElementById('registerFormStep1').style.display='none';
@@ -672,9 +705,9 @@ function showPageRegisterStep(){
   if(registerCodeTimer)clearInterval(registerCodeTimer);
 }
 function startCodeTimer(){
-  // Expiración del código: 10 minutos (coincide con backend/mail).
+  // Expiración del código: 2 minutos (coincide con backend/mail).
   if(registerCodeTimer)clearInterval(registerCodeTimer);
-  var remaining=600;
+  var remaining=120;
   var timerEl=document.getElementById('pageCodeTimer');
   var fmtT=function(){var m=Math.floor(remaining/60);var s=remaining%60;return(m<10?'0':'')+m+':'+(s<10?'0':'')+s;};
   if(timerEl)timerEl.textContent=fmtT();

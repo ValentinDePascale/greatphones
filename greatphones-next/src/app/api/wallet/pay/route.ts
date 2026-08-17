@@ -40,6 +40,21 @@ export async function POST(request: NextRequest) {
     const products = await prisma.product.findMany({ where: { id: { in: productIds } } })
     const productMap = new Map(products.map((p: any) => [p.id, p]))
 
+    // Precio mínimo real (IMEIs disponibles) para cobrar lo mismo que la card/detalle.
+    const minTargetMap = new Map<string, number>()
+    try {
+      if (prisma.inventoryItem && typeof prisma.inventoryItem.groupBy === 'function') {
+        const minTargets = await prisma.inventoryItem.groupBy({
+          by: ['productId'],
+          _min: { targetPrice: true },
+          where: { productId: { in: productIds }, status: 'IN_STOCK' },
+        })
+        minTargets.forEach((r: any) => { if (r._min.targetPrice) minTargetMap.set(r.productId, r._min.targetPrice) })
+      }
+    } catch (aggErr) {
+      console.error('[WalletPay] Error computing min target prices:', aggErr)
+    }
+
     // Validate IMEI items
     const imeiMap = new Map<string, any>()
     const imeiItems = items.filter((item: any) => item.imei)
@@ -47,7 +62,7 @@ export async function POST(request: NextRequest) {
       const imeis = imeiItems.map((item: any) => item.imei)
       const inventoryUnits = await prisma.inventoryItem.findMany({
         where: { imei: { in: imeis } },
-        select: { id: true, imei: true, productId: true, status: true },
+        select: { id: true, imei: true, productId: true, status: true, targetPrice: true },
       })
       for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit)
 
@@ -78,7 +93,11 @@ export async function POST(request: NextRequest) {
       if (product.stock < item.quantity) {
         throw { status: 400, message: `Stock insuficiente para ${item.name}` }
       }
-      const unitPrice = getEffectivePrice(product)
+      const imeiUnit = item.imei ? imeiMap.get(item.imei) : undefined
+      const override = item.imei && imeiUnit && imeiUnit.targetPrice
+        ? imeiUnit.targetPrice
+        : (minTargetMap.get(item.id) || 0)
+      const unitPrice = getEffectivePrice(product, override)
       return { ...item, product, unitPrice }
     })
 

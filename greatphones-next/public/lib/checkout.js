@@ -574,7 +574,8 @@ function submitOrder(){
     var lookupId=item.productId||item.id;
     var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
-      var price=isOfferValid(p)?Math.round(p.price-p.price*p.discount/100):p.price;
+      var base=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var price=isOfferValid(p)?Math.round(base-base*p.discount/100):base;
       return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty,isPreorder:!!item.isPreorder,availableFrom:item.availableFrom||null};
     }
     var a=getById(window.ACCS,lookupId);
@@ -665,7 +666,8 @@ function renderCheckoutSummaryStep(){
     var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
       var isPromo=isOfferValid(p);
-      var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
+      var basePrice=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var price=isPromo?Math.round(basePrice-basePrice*p.discount/100):basePrice;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
         '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
@@ -817,11 +819,12 @@ function renderCheckoutItems(items){
     var p=getById(PRODUCTS,lookupId)||getById(PREORDER_PRODUCTS,lookupId);
     if(p){
       var isPromo=isOfferValid(p);
-      var price=isPromo?Math.round(p.price-p.price*p.discount/100):p.price;
+      var basePrice=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var price=isPromo?Math.round(basePrice-basePrice*p.discount/100):basePrice;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       var priceHtml=isPromo?
         '<div style="font-size:13px;font-weight:700;color:var(--dk)">'+fmt(price*item.qty)+'</div>'+
-        '<div style="font-size:9px;color:var(--gray);text-decoration:line-through">'+fmt(p.price*item.qty)+'</div>'+
+        '<div style="font-size:9px;color:var(--gray);text-decoration:line-through">'+fmt(basePrice*item.qty)+'</div>'+
         '<div style="font-size:9px;color:var(--red);font-weight:600">-'+p.discount+'%</div>':
         '<div style="font-size:13px;font-weight:700;color:var(--dk)">'+fmt(price*item.qty)+'</div>';
       return'<div class="checkout-item" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+

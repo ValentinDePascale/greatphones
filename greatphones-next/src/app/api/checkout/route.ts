@@ -117,10 +117,28 @@ export async function POST(request: NextRequest) {
 
     // Fetch products from DB
     const productMap = new Map();
+    let minTargetMap = new Map<string, number>();
     if (productItems.length > 0) {
       const productIds = productItems.map((item: any) => item.id);
       const products = await prisma.product.findMany({ where: { id: { in: productIds } } });
       for (const p of products) productMap.set(p.id, p);
+      // Precio mínimo real (IMEIs disponibles) para cobrar lo mismo que muestra
+      // la card / detalle en productos con variantes.
+      try {
+        if (prisma.inventoryItem && typeof prisma.inventoryItem.groupBy === 'function') {
+          const minTargets = await prisma.inventoryItem.groupBy({
+            by: ['productId'],
+            _min: { targetPrice: true },
+            where: { productId: { in: productIds }, status: 'IN_STOCK' },
+          });
+          minTargetMap = new Map<string, number>();
+          minTargets.forEach((r: any) => {
+            if (r._min.targetPrice) minTargetMap.set(r.productId, r._min.targetPrice);
+          });
+        }
+      } catch (aggErr) {
+        console.error('[Checkout] Error computing min target prices:', aggErr);
+      }
     }
 
     // Fetch accessories from DB
@@ -138,7 +156,7 @@ export async function POST(request: NextRequest) {
       const imeis = imeiItems.map((item: any) => item.imei);
       const inventoryUnits = await prisma.inventoryItem.findMany({
         where: { imei: { in: imeis } },
-        select: { id: true, imei: true, productId: true, status: true, salePrice: true },
+        select: { id: true, imei: true, productId: true, status: true, salePrice: true, targetPrice: true },
       });
       for (const unit of inventoryUnits) imeiMap.set(unit.imei, unit);
 
@@ -173,7 +191,11 @@ export async function POST(request: NextRequest) {
         if (!item.isPreorder && product.stock < item.quantity) {
           throw { status: 400, message: `Stock insuficiente para ${item.name}. Disponible: ${product.stock}` };
         }
-        const unitPrice = getEffectivePrice(product);
+        const imeiUnit = item.imei ? imeiMap.get(item.imei) : undefined;
+        const override = item.imei && imeiUnit && imeiUnit.targetPrice
+          ? imeiUnit.targetPrice
+          : (minTargetMap.get(item.id) || 0);
+        const unitPrice = getEffectivePrice(product, override);
         enrichedItems.push({ ...item, product, unitPrice, accessory: null });
       }
     }

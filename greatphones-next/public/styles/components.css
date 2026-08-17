@@ -39,7 +39,7 @@
 .nsi:focus{border-color:var(--orange);background:#fff;box-shadow:0 0 0 4px rgba(255,107,44,.08)}
 .srdd{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border-radius:12px;border:1px solid var(--border);box-shadow:var(--shlg);z-index:300;overflow:hidden;display:none}
 .srdd.open{display:block}
-.srdd-item{display:flex;align-items:center;gap:10px;padding:.6rem 1rem;cursor:pointer;font-size:12px;transition:background .12s}
+.srdd-item{display:flex;align-items:center;gap:10px;padding:.6rem 1rem;cursor:pointer;font-size:12px;transition:background .12s;min-height:44px;box-sizing:border-box}
 .srdd-item:hover{background:var(--cream)}
 .srdd-cat{font-size:10px;color:var(--gray);margin-left:auto}
 .nav-acts{display:flex;align-items:center;gap:2px;flex-shrink:0}
@@ -456,7 +456,7 @@
   background:var(--red);color:#fff;font-size:10px;font-weight:700;
   padding:2px 7px;border-radius:6px;flex-shrink:0
 }
-.pcard-cuota{font-size:11px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px}
+.pcard-cuota{font-size:11px;color:var(--green);font-weight:600;display:flex;align-items:center;gap:4px;min-height:20px}
 .pcard-stock{
   font-size:11px;color:var(--red);display:flex;align-items:center;gap:4px;font-weight:600
 }

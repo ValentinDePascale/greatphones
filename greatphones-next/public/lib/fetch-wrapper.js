@@ -26,7 +26,7 @@
       : window.location.origin)
 
   function isAuthEndpoint(url) {
-    return /\/api\/auth\/(signin|signup|forgot-password|reset-password|verify-email|csrf|signout|logout)/.test(url)
+    return /\/api\/auth\/(signin|signup|forgot-password|reset-password|verify-email|csrf|signout|logout|me|update)/.test(url)
   }
 
   function normalizeUrl(url) {

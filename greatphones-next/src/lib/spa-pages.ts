@@ -36,7 +36,8 @@ function removeAdminStuff(html: string): string {
     result = result.replace(new RegExp(`<script[^>]*${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[^>]*></script>`, 'g'), '')
   })
   result = result.replace(/<link[^>]*\/styles\/admin\.css[^>]*>/g, '')
-  result = result.replace(/<link[^>]*\/styles\/wallet\.css[^>]*>/g, '')
+  // wallet.css NO se remueve: define .gc-amt (modal gift card) y .redeem-*
+  // (canje de gift card en /cuenta), usados en la tienda pública.
   // coupons.css NO se remueve: lo usan los cupones de usuario en /cuenta
   // (no es solo del admin).
   return result

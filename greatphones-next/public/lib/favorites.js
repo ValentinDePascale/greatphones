@@ -113,7 +113,8 @@ function renderFavGrid(){
     grid.style.display='none';empty.style.display='block';
     var trending=PRODUCTS.filter(function(p){return p.stock>0&&p.sold>0;}).sort(function(a,b){return b.sold-a.sold;}).slice(0,4);
     var trendHtml=trending.map(function(p){
-      var fp=p.isOffer&&p.discount>0?Math.round(p.price-p.price*p.discount/100):p.price;
+      var base=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
+      var fp=(typeof isOfferValid==='function'&&isOfferValid(p))?Math.round(base-base*p.discount/100):base;
       return '<div style="display:flex;gap:10px;align-items:center;padding:10px;background:var(--cream2);border-radius:12px;cursor:pointer" onclick="openDetail(\''+p.id+'\')">'+
         '<div style="width:44px;height:44px;background:#fff;border-radius:8px;overflow:hidden;flex-shrink:0">'+(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:20px">'+(p.ico||'📱')+'</span>')+'</div>'+
         '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div><div style="font-size:11px;color:var(--orange);font-weight:700">'+fmt(fp)+'</div></div>'+
@@ -135,9 +136,8 @@ function renderFavGrid(){
       var isProd=!!item.price&&item.brand;
       var isAcc=!isProd||(item.category&&!item.condition);
       if(isAcc){
-        var isPromo=item.isOffer&&item.discount>0;
+        var isPromo=(typeof isOfferValid==='function')?isOfferValid(item):(item.isOffer&&item.discount>0);
         var finalPrice=isPromo?Math.round(item.price-item.price*item.discount/100):item.price;
-        var cuota=Math.round(finalPrice/12);
         var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
         var isFav=isFavorite(item.id);
         var heartSvgA='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
@@ -151,13 +151,14 @@ function renderFavGrid(){
           '<div class="pcard-name">'+item.name+'</div>'+
           '<div class="pcard-discount-row">'+(isPromo?'<span class="pcard-old">'+fmt(item.price)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span>':'')+'</div>'+
           '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
-          '<span class="pcard-cuota">12x '+fmt(cuota)+' sin interes</span>'+
+          '<span class="pcard-cuota" aria-hidden="true"></span>'+
           '</div>'+
           '<button class="pcard-add" onclick="event.stopPropagation();addToCartAcc(\''+item.id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
           '</article>';
       }else{
-        var isPromo2=item.isOffer&&item.discount>0;
-        var finalPrice2=isPromo2?Math.round(item.price-item.price*item.discount/100):item.price;
+        var isPromo2=(typeof isOfferValid==='function')?isOfferValid(item):(item.isOffer&&item.discount>0);
+        var basePrice2=typeof displayBasePrice==='function'?displayBasePrice(item):item.price;
+        var finalPrice2=isPromo2?Math.round(basePrice2-basePrice2*item.discount/100):basePrice2;
         var cuota2=Math.round(finalPrice2/12);
         var imgHtml2=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">\u{1F4F1}</span>';
         var isFav2=isFavorite(item.id);
@@ -173,7 +174,7 @@ function renderFavGrid(){
           '<div class="pcard-body">'+
           '<div class="pcard-brand">'+(item.brand||'')+'</div>'+
           '<div class="pcard-name">'+item.name+'</div>'+
-          (isPromo2?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old">'+fmt(item.price)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span></div>':'')+
+          (isPromo2?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old">'+fmt(basePrice2)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span></div>':'')+
           '<span class="pcard-price">'+fmt(finalPrice2)+'</span>'+
           '<span class="pcard-cuota">12x '+fmt(cuota2)+' sin interes</span>'+
           '</div>'+
@@ -183,4 +184,5 @@ function renderFavGrid(){
     }).join('');
     if(cnt)cnt.textContent=allFavs.length+' guardados';
   }
+  if(window.GPAnim&&window.GPAnim.refresh)window.GPAnim.refresh();
 }

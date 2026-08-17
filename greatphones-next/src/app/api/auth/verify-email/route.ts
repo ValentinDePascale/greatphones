@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       }
 
       const verifyCode = generateCode()
-      const expires = new Date(Date.now() + 10 * 60 * 1000)
+      const expires = new Date(Date.now() + 2 * 60 * 1000)
 
       try {
         await prisma.emailVerification.create({
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
               <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 8px; margin: 20px 0;">
                 ${verifyCode}
               </div>
-              <p style="color: #666; font-size: 14px;">Este codigo expira en 10 minutos.</p>
+              <p style="color: #666; font-size: 14px;">Este codigo expira en 2 minutos.</p>
             </div>
           `,
         })
