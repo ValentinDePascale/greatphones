@@ -2197,7 +2197,6 @@ function restoreSession(){
 }
 
 // =========== SLIDER ===========
-var sliderIdx=0,sliderTimer=null;
 function initSlider(){
   var nav=document.getElementById('sliderNav');
   if(!nav)return;
@@ -2206,27 +2205,97 @@ function initSlider(){
     var d=document.createElement('button');
     d.className='sdot'+(i===0?' act':'');
     d.setAttribute('data-i',i);
-    d.onclick=(function(idx){return function(){goSlide(idx);};})(i);
+    d.setAttribute('aria-label','Ir al slide '+(i+1));
+    d.onclick=(function(idx){return function(){goSlide(idx,true);};})(i);
     nav.appendChild(d);
   }
+  // Plausear autoplay sobre el slider (accesibilidad)
+  var slider=document.getElementById('heroSlider');
+  if(slider){
+    slider.addEventListener('mouseenter',pauseSliderTimer,{passive:true});
+    slider.addEventListener('mouseleave',resumeSliderTimer,{passive:true});
+    slider.addEventListener('focusin',pauseSliderTimer,{passive:true});
+    slider.addEventListener('focusout',resumeSliderTimer,{passive:true});
+  }
+  bindSliderSwipe();
   startSliderTimer();
+  animateHeroEnter();
 }
-function goSlide(idx){
-  sliderIdx=(idx+4)%4;
+function goSlide(idx,manual){
+  idx=(idx+4)%4;
+  var jumping=Math.abs(idx-sliderIdx);
+  if(jumping>2)idx=sliderIdx+(idx>sliderIdx?4:-4);
   var track=document.getElementById('sliderTrack');
-  if(track)track.style.transform='translateX(-'+(sliderIdx*25)+'%)';
-  document.querySelectorAll('.sdot').forEach(function(d,i){d.className='sdot'+(i===sliderIdx?' act':'');});
-  startSliderTimer();
+  if(track)track.style.transform='translateX(-'+(idx*25)+'%)';
+  document.querySelectorAll('.sdot').forEach(function(d,i){d.className='sdot'+(i===idx?' act':'');});
+  // Parallax interno: mover la imagen del slide anterior/siguiente levemente
+  if(window.GPAnim&&GPAnim.enabled){animateSlideParallax(idx);}
+  sliderIdx=idx;
+  // Si el usuario cambió manualmente, reiniciamos el temporizador desde cero
+  // (sin acumulación: cancelamos el timeout pendiente y lo re-armamos).
+  if(manual)restartSliderTimer();else scheduleSliderNext();
 }
-function sliderNext(){goSlide(sliderIdx+1);}
-function sliderPrev(){goSlide(sliderIdx-1);}
-function startSliderTimer(){
-  if(sliderTimer)clearInterval(sliderTimer);
-  sliderTimer=setInterval(function(){
-    var track=document.getElementById('sliderTrack');
-    if(track)goSlide(sliderIdx+1);
-    else{clearInterval(sliderTimer);sliderTimer=null;}
-  },4500);
+function sliderNext(manual){goSlide(sliderIdx+1,manual!==false);}
+function sliderPrev(manual){goSlide(sliderIdx-1,manual!==false);}
+
+// ---- Autoplay por slide (setTimeout, no acumulable) ----
+var _sliderT=null;
+var _sliderPaused=false;
+function clearSliderTimer(){if(_sliderT){clearTimeout(_sliderT);_sliderT=null;}}
+function scheduleSliderNext(){
+  clearSliderTimer();
+  if(_sliderPaused)return;
+  _sliderT=setTimeout(function(){_sliderT=null;goSlide(sliderIdx+1,false);},4500);
+}
+function startSliderTimer(){scheduleSliderNext();}
+function restartSliderTimer(){scheduleSliderNext();}
+function pauseSliderTimer(){_sliderPaused=true;clearSliderTimer();}
+function resumeSliderTimer(){_sliderPaused=false;scheduleSliderNext();}
+
+// ---- Swipe táctil ----
+function bindSliderSwipe(){
+  var slider=document.getElementById('heroSlider');
+  if(!slider)return;
+  var sx=0,sy=0,active=false;
+  slider.addEventListener('pointerdown',function(e){
+    sx=e.clientX;sy=e.clientY;active=true;
+  },{passive:true});
+  slider.addEventListener('pointerup',function(e){
+    if(!active)return;
+    active=false;
+    var dx=e.clientX-sx,dy=e.clientY-sy;
+    // Ignorar si fue un click (poco desplazamiento) o un gesto vertical (scroll)
+    if(Math.abs(dx)<40||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    if(dx<0)sliderNext();else sliderPrev();
+  },{passive:true});
+}
+
+// ---- Parallax interno entre slides (solo transform, reducido-motion aware) ----
+function animateSlideParallax(idx){
+  var slides=document.querySelectorAll('#heroSlider .slide');
+  if(!slides.length)return;
+  try{
+    var toSlide=slides[idx];
+    var prevSlide=slides[(idx-1+slides.length)%slides.length];
+    var nextSlide=slides[(idx+1)%slides.length];
+    // El slide entrante "se desliza" levemente su imagen (fondo)
+    [prevSlide,toSlide,nextSlide].forEach(function(s){
+      var bg=s&&s.children[0]; // el div de imagen de fondo
+      if(bg)gsap.to(bg,{x:0,scale:1,transformOrigin:'center',duration:0.8,ease:'power2.out',overwrite:true});
+    });
+    var bgTo=toSlide&&toSlide.children[0];
+    if(bgTo)gsap.fromTo(bgTo,{scale:1.08},{scale:1,duration:1.2,ease:'power2.out',overwrite:true});
+  }catch(err){}
+}
+function animateHeroEnter(){
+  if(!window.GPAnim||!GPAnim.enabled)return;
+  var slide=document.querySelector('#heroSlider .slide');
+  if(!slide)return;
+  var kids=slide.querySelectorAll('.slide-tag,.slide-h,.slide-s,.slide-ctas');
+  try{
+    gsap.fromTo(kids,{opacity:0,y:24},{opacity:1,y:0,duration:0.6,ease:'power2.out',stagger:0.09,delay:0.1,overwrite:true,
+      onComplete:function(){gsap.set(kids,{clearProps:'transform,opacity'});}});
+  }catch(err){}
 }
 
 // =========== FEATURED GRID ===========
