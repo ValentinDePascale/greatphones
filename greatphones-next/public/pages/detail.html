@@ -16,21 +16,28 @@
         </div>
         <!-- Columna 2: Info -->
         <div class="det-info">
+          <div class="det-skeleton" id="detSkeleton">
+            <div class="sk sk-line w50"></div>
+            <div class="sk sk-title w80"></div>
+            <div class="sk sk-price w40"></div>
+            <div class="sk sk-box"></div>
+            <div class="sk sk-box"></div>
+          </div>
           <nav class="det-breadcrumb" aria-label="Migajas de pan">
-            <span class="det-crumb" id="detBrand">Apple</span>
+            <span class="det-crumb" id="detBrand">&nbsp;</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-            <span id="detType">iPhone</span>
+            <span id="detType">&nbsp;</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-            <span class="det-crumb-current" id="detName2">iPhone 16 Pro</span>
+            <span class="det-crumb-current" id="detName2">&nbsp;</span>
           </nav>
-          <h1 class="det-name" id="detName">iPhone 16 Pro</h1>
+          <h1 class="det-name" id="detName">&nbsp;</h1>
           <!-- Precio -->
           <div class="det-price-wrap" id="detPriceWrap">
-            <span class="det-price" id="detPrice">$1.200.000</span>
+            <span class="det-price" id="detPrice">&nbsp;</span>
             <span class="det-old" id="detOld" style="display:none"></span>
           </div>
           <div id="detOfferTimer" style="display:none;margin-bottom:10px"><span class="offer-countdown" id="detTimerText"></span></div>
-          <span class="det-cuota" id="detCuotaInfo" style="display:inline-block"><span id="detCuotaText">12x $100.000 sin interés</span></span>
+          <span class="det-cuota" id="detCuotaInfo" style="display:none"><span id="detCuotaText"></span></span>
           <!-- Descripción -->
           <div class="det-desc" id="detDesc" style="display:none"></div>
           <!-- Características -->
@@ -50,7 +57,7 @@
           <!-- Total y botones -->
           <div class="det-actions">
             <div class="det-total-row">
-              <div><div class="det-total-label">Total Final</div><div class="det-total" id="detTotal">$1.200.000</div></div>
+              <div><div class="det-total-label">Total Final</div><div class="det-total" id="detTotal">&nbsp;</div></div>
             </div>
             <div class="det-ctas">
               <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Agregar al carrito</button>

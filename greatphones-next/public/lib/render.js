@@ -1007,7 +1007,12 @@ function renderAccGrid(){
   if(!grid.dataset.svRevealed){grid.classList.add('pgrid-reveal');grid.dataset.svRevealed='1';}else{grid.classList.remove('pgrid-reveal');}
   if(window.GPAnim&&window.GPAnim.refresh)window.GPAnim.refresh();
 }
+function setDetLoading(on){
+  var sk=document.getElementById('detSkeleton');
+  if(sk)sk.classList.toggle('hidden',!on);
+}
 function openAccDetail(id){
+  setDetLoading(true);
   if(window.__INITIAL_ACCS_DETAIL__&&window.__INITIAL_ACCS_DETAIL_ID__===id){
     var detailData=window.__INITIAL_ACCS_DETAIL__;
     if(detailData.accessory){
@@ -1084,6 +1089,7 @@ function openAccDetail(id){
   }
   detWMult=0;detDExtra=0;selCuotas=1;resetDetailSelections();updDetTotal();nav('detail');
   renderRelatedAccs();
+  setDetLoading(false);
   var fb=document.getElementById('detFavBtn');
   if(fb){if(isFavorite(currentAcc.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
 }
@@ -1163,6 +1169,7 @@ function renderAccVariants(){
 }
 
 function openDetail(id, variantId){
+  setDetLoading(true);
   window._detailVariants=[];
   window._selectedVariantIdx=-1;
   window._selectedVariant=null;
@@ -1260,6 +1267,7 @@ function openDetail(id, variantId){
       }
     }else if(window._detailVariants.length>0)selectDetailVariant(0);
     renderRelatedAccs();
+    setDetLoading(false);
     nav('detail');
     return;
   }
@@ -1314,11 +1322,13 @@ function openDetail(id, variantId){
     }else if(window._detailVariants.length>0){
       selectDetailVariant(0);
     }
+    setDetLoading(false);
   }).catch(function(){
     if(currentProd.id!==id)return;
     window._detailVariants=[];
     window._variantsLoaded=true;
     renderDetailVariants();
+    setDetLoading(false);
   });
 
   var now=new Date();
