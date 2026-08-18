@@ -937,6 +937,8 @@
 .model-card:hover{border-color:var(--orange);transform:translateY(-3px);box-shadow:0 6px 16px rgba(255,107,44,.12)}
 .model-card.act{border-color:var(--orange);background:#FFF8F5;box-shadow:0 6px 20px rgba(255,107,44,.18)}
 .model-ico{font-size:32px;margin-bottom:8px}
+.model-ico svg{color:#333;display:block;margin:0 auto}
+.model-card.act .model-ico svg{color:var(--orange)}
 .model-name{font-size:12px;font-weight:600;color:var(--dk);margin-bottom:6px;line-height:1.3}
 .model-card.act .model-name{color:var(--orange)}
 .model-price{font-size:11px;color:var(--gray);font-weight:600}
