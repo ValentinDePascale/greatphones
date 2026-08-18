@@ -530,6 +530,17 @@ function toggleMobileSearch(){
         Carrito
       </a>
     </div>
+    <div class="mm-social">
+      <a class="mm-soc" href="https://instagram.com/greatphones.bb" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1.5" fill="currentColor"/></svg>
+      </a>
+      <a class="mm-soc" href="https://facebook.com/greatphones.bb" target="_blank" rel="noopener" aria-label="Facebook" title="Facebook">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+      </a>
+      <a class="mm-soc" href="https://wa.me/5492914727351" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+      </a>
+    </div>
   </div>
 </div>
 
@@ -587,6 +598,95 @@ function toggleMobileSearch(){
     </div>
   </div>
 </div>
+
+<!--GP_PAGES-->
+
+<!-- ============ GLOBAL FOOTER ============ -->
+<footer class="site-footer">
+  <div class="ctr" style="max-width:1200px;margin:0 auto;padding:0 1rem">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1.5rem">
+      <!-- Col 1: Marca + Contacto -->
+      <div>
+        <div style="font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:1rem">Great Phones</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.45);line-height:2">
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" aria-hidden="true"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <span>Zelarrayan 179, Bahia Blanca</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>9hs a 21:30hs lunes a lunes</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            <span>+54 9 2914 72-7351</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <span>@greatphones.bb</span>
+          </div>
+        </div>
+      </div>
+      <!-- Col 2: Comprar -->
+      <div>
+        <h4 class="gfooter-h">Comprar</h4>
+        <ul class="gfooter-list">
+          <li><button onclick="navShop('todos')">Catálogo</button></li>
+          <li><button onclick="navShop('ofertas')">Ofertas</button></li>
+          <li><button onclick="nav('accesorios')">Accesorios</button></li>
+          <li><button onclick="nav('preventas')">Preventas</button></li>
+          <li><button onclick="nav('compare')">Comparar</button></li>
+        </ul>
+      </div>
+      <!-- Col 3: Ayuda -->
+      <div>
+        <h4 class="gfooter-h">Ayuda</h4>
+        <ul class="gfooter-list">
+          <li><button onclick="nav('garantias')">Garantías</button></li>
+          <li><button onclick="nav('sell')">Vender tu equipo</button></li>
+          <li><button onclick="nav('servicio')">Servicio técnico</button></li>
+          <li><button onclick="nav('track-order')">Seguir mi pedido</button></li>
+          <li><button onclick="nav('chats')">Contacto / Chat</button></li>
+        </ul>
+      </div>
+      <!-- Col 4: Legal -->
+      <div>
+        <h4 class="gfooter-h">Legal</h4>
+        <ul class="gfooter-list">
+          <li><button onclick="nav('terminos')">Términos y Condiciones</button></li>
+          <li><button onclick="nav('privacidad')">Políticas de Privacidad</button></li>
+          <li><a href="https://www.argentina.gob.ar/defensaconsumidor" target="_blank" rel="noopener">Defensa del Consumidor</a></li>
+        </ul>
+        <button class="gfooter-arrep" onclick="openArrepentimiento()" style="margin-top:.75rem">Botón de Arrepentimiento</button>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:10px">
+          <div style="background:#fff;padding:8px;border-radius:10px;width:52px;height:52px;display:flex;align-items:center;justify-content:center">
+            <svg width="36" height="36" viewBox="0 0 80 80"><rect width="80" height="80" fill="#fff" stroke="#ddd" rx="4"/><text x="40" y="42" text-anchor="middle" font-size="10" fill="#666">QR</text></svg>
+          </div>
+          <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;line-height:1.4">Data Fiscal<br/>Certificada</div>
+        </div>
+      </div>
+    </div>
+    <!-- Bottom: copyright + redes -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;padding-top:1.25rem">
+      <p style="font-size:12px;color:rgba(255,255,255,.35);margin:0">© 2026 Great Phones — Todos los derechos reservados.</p>
+      <div class="gfooter-social">
+        <span class="gfooter-social-lbl">Seguinos</span>
+        <a class="gfooter-soc" href="https://instagram.com/greatphones.bb" target="_blank" rel="noopener" aria-label="Instagram @greatphones.bb" title="Instagram">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="18" cy="6" r="1.5" fill="currentColor"/></svg>
+          <span>Instagram</span>
+        </a>
+        <a class="gfooter-soc" href="https://facebook.com/greatphones.bb" target="_blank" rel="noopener" aria-label="Facebook Great Phones" title="Facebook">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          <span>Facebook</span>
+        </a>
+        <a class="gfooter-soc" href="https://wa.me/5492914727351" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.2a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>WhatsApp</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</footer>
 
 <script>window.addEventListener('error',function(e){console.error('GP Error:',e.message,'at',e.filename+':'+e.lineno);return false});window.addEventListener('unhandledrejection',function(e){console.error('GP Unhandled rejection:',e.reason)})</script>
 

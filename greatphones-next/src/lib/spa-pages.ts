@@ -73,7 +73,14 @@ export function serveSpa(targetPage?: string): string {
     )
   }
 
-  let html = _shell.replace('</body>', pagesHtml + '</body>')
+  // El shell define un marcador <!--GP_PAGES--> justo antes del footer global:
+  // así las páginas quedan ANTES del footer (que es compartido en todo el sitio).
+  let html
+  if (_shell.includes('<!--GP_PAGES-->')) {
+    html = _shell.replace('<!--GP_PAGES-->', pagesHtml)
+  } else {
+    html = _shell.replace('</body>', pagesHtml + '</body>')
+  }
   html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
   html = wrapMain(html)
   return removeAdminStuff(html)
@@ -88,7 +95,12 @@ export function serveAdminSpa(activeTab?: string): string {
   // del form (#prodId, #accId, etc.) en el DOM. Las páginas inactivas
   // quedan con .page{display:none} y se activan al navegar.
   const allPages = loadAllPages()
-  let html = _shell.replace('</body>', allPages + '</body>')
+  let html
+  if (_shell.includes('<!--GP_PAGES-->')) {
+    html = _shell.replace('<!--GP_PAGES-->', allPages)
+  } else {
+    html = _shell.replace('</body>', allPages + '</body>')
+  }
   html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
   html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
   html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
