@@ -29,7 +29,7 @@ input[type=number]{-moz-appearance:textfield}
 @keyframes fadeOutDown{from{opacity:1;transform:translateX(-50%) translateY(0)}to{opacity:0;transform:translateX(-50%) translateY(10px)}}
 img{max-width:100%}
 html{scroll-behavior:smooth}
-body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--dk);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--dk);overflow-x:clip;-webkit-font-smoothing:antialiased}
 button,input,select,textarea{font-family:inherit}
 .hidden{display:none!important}
 .page{display:none!important;min-height:100vh;animation:pgIn .18s ease;position:relative}
