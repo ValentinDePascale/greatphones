@@ -9,7 +9,7 @@ window.GPAnim = (function(){
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var enabled = typeof window.gsap === 'function' && !reduced;
   var io = null;
-  var SEC_REVEAL = '.sec-hdr,.sec-title,.cat-flex,.srv-grid';
+  var SEC_REVEAL = '.sec-hdr,.sec-title,.cat-flex,.srv-grid,.hm-trust-grid,.hm-cta-card';
   var PRESS_SEL = '.btn,.btn-o,.nbtn,.fchip,.cat-card,.cu-btn,.sec-more,.pcard-add,.cart-qty-btn,.cart-remove-btn';
 
   function safe(fn){ if(!enabled) return; try{ fn(); }catch(err){ /* nunca romper la UI */ } }
@@ -52,7 +52,7 @@ window.GPAnim = (function(){
     obs.observe(el);
   }
   function revealStagger(el){
-    var kids = el.querySelectorAll('.cat-card, .srv-card, .pcard');
+    var kids = el.querySelectorAll('.cat-card, .srv-card, .pcard, .hm-trust-item');
     if(!kids.length){ revealOne(el); return; }
     safe(function(){
       gsap.fromTo(kids, { opacity: 0, y: 22 }, {
@@ -79,7 +79,7 @@ window.GPAnim = (function(){
     document.querySelectorAll(SEC_REVEAL).forEach(function(el){
       if(el.__gpSeen) return;
       el.__gpSeen = 1;
-      el.__gpKind = (el.classList.contains('cat-flex') || el.classList.contains('srv-grid')) ? 'stagger' : 'single';
+      el.__gpKind = (el.classList.contains('cat-flex') || el.classList.contains('srv-grid') || el.classList.contains('hm-trust-grid')) ? 'stagger' : 'single';
       var obs = getIO();
       if(!obs){ gsap.set(el, { opacity: 1, y: 0 }); return; }
       if(el.__gpKind === 'stagger'){ obs.observe(el); }

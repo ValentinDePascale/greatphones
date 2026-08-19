@@ -1,0 +1,67 @@
+/* ============================================================
+   HOME.CSS — Mejoras de calidad sobre el home (base original)
+   Aditivo y scoped a #p-home: marquee, trust band, categorías
+   elevadas, diferenciación de grids, mega CTA, legal.
+   ============================================================ */
+
+/* ============ MARQUEE DE MARCAS ============ */
+.hm-marquee{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:13px 0;position:relative}
+.hm-marquee-track{display:flex;width:max-content;animation:hmMarquee 24s linear infinite}
+.hm-marquee:hover .hm-marquee-track{animation-play-state:paused}
+.hm-marquee-group{display:flex;align-items:center;gap:40px;padding-right:40px;white-space:nowrap}
+.hm-marquee-group span{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gray);letter-spacing:.3px}
+.hm-marquee-group .hm-mq-ghost{color:var(--gray2);font-weight:500}
+.hm-mq-ico{width:22px;height:22px;object-fit:contain}
+@keyframes hmMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){.hm-marquee-track{animation:none;flex-wrap:wrap;width:100%;justify-content:center}}
+
+/* ============ TRUST BAND ============ */
+.hm-trust{background:#fff;border-bottom:1px solid var(--border);padding:clamp(1.25rem,3vw,2rem) 0}
+.hm-trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.hm-trust-item{display:flex;align-items:center;gap:14px;padding:6px}
+.hm-trust-ico{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(255,107,44,.05));color:var(--orange);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .25s}
+.hm-trust-ico svg{width:22px;height:22px}
+.hm-trust-item:hover .hm-trust-ico{transform:scale(1.1) rotate(-4deg)}
+.hm-trust-t{font-size:13px;font-weight:700;color:var(--dk)}
+.hm-trust-d{font-size:11px;color:var(--gray);margin-top:2px}
+
+/* ============ CATEGORÍAS ELEVADAS (números + barra) ============ */
+#p-home .cat-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.25rem .9rem;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
+#p-home .cat-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.1);border-color:rgba(255,107,44,.35)}
+#p-home .cat-card:active{transform:translateY(-2px) scale(.97)}
+#p-home .cat-num{position:absolute;top:10px;right:12px;font-family:'Playfair Display',Georgia,serif;font-size:12px;color:var(--gray2);font-weight:700;letter-spacing:1px;transition:color .2s;pointer-events:none}
+#p-home .cat-card:hover .cat-num{color:var(--orange)}
+#p-home .cat-card::after{content:'';position:absolute;left:12px;right:12px;bottom:7px;height:3px;border-radius:3px;background:var(--cream2);overflow:hidden}
+#p-home .cat-card:hover::after{background:linear-gradient(90deg,var(--orange),var(--orange2))}
+#p-home .cat-card .cat-ico-wrap{transition:all .3s cubic-bezier(.2,.8,.2,1)}
+#p-home .cat-card:hover .cat-ico-wrap{background:linear-gradient(135deg,rgba(255,107,44,.2),rgba(255,107,44,.08));color:var(--orange);transform:scale(1.08)}
+
+/* ============ DIFERENCIACIÓN GRIDS ============ */
+/* Más buscados sobre blanco con spotlight */
+#p-home .sec-white .pcard{border:1.5px solid var(--border);border-radius:18px;transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .35s;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+#p-home .sec-white .pcard:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(0,0,0,.12);border-color:rgba(255,107,44,.4)}
+/* Más vendidos sobre cream: ligero elevado */
+
+/* ============ GIFT SVG (ya en HTML) ============ */
+
+/* ============ MEGA CTA ============ */
+.hm-cta-final{padding:clamp(2rem,4vw,3rem) 0 var(--pad)}
+.hm-cta-card{position:relative;overflow:hidden;background:var(--dk);border-radius:28px;padding:clamp(2.5rem,6vw,4.5rem);text-align:center;color:#fff}
+.hm-cta-card::before{content:'';position:absolute;top:-120px;right:-80px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,44,.28),transparent 70%)}
+.hm-cta-card::after{content:'';position:absolute;bottom:-140px;left:-80px;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(255,107,44,.16),transparent 70%)}
+.hm-cta-tag{position:relative;z-index:1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,107,44,.9);margin-bottom:.75rem}
+.hm-cta-title{position:relative;z-index:1;font-family:'Playfair Display',Georgia,serif;font-size:clamp(26px,4vw,42px);line-height:1.08;margin-bottom:.75rem}
+.hm-cta-title em{font-style:italic;color:var(--orange)}
+.hm-cta-desc{position:relative;z-index:1;font-size:14px;color:rgba(255,255,255,.6);margin-bottom:1.5rem;max-width:520px;margin-left:auto;margin-right:auto}
+.hm-cta-card .btn-o{position:relative;z-index:1;box-shadow:0 8px 24px rgba(255,107,44,.4)}
+
+/* ============ LEGAL ============ */
+.hm-legal{background:#F0EBE3;padding:14px;text-align:center;font-size:11px;color:var(--gray);border-top:1px solid var(--border)}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:900px){.hm-trust-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){
+  .hm-trust-grid{grid-template-columns:1fr;gap:18px}
+  .hm-marquee-group{gap:26px;padding-right:26px}
+  .hm-cta-card{border-radius:22px;padding:2.2rem 1.4rem}
+}

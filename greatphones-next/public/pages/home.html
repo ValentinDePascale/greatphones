@@ -74,6 +74,54 @@
     <div class="slider-nav" id="sliderNav"></div>
   </div>
 
+  <!-- MARQUEE DE MARCAS -->
+  <section class="hm-marquee" aria-hidden="true">
+    <div class="hm-marquee-track">
+      <div class="hm-marquee-group">
+        <span><img src="/icons/apple-logo-svgrepo-com.svg" alt="" class="hm-mq-ico"> Apple</span>
+        <span><img src="/icons/samsung-svgrepo-com.svg" alt="" class="hm-mq-ico"> Samsung</span>
+        <span><img src="/icons/macbook.svg" alt="" class="hm-mq-ico"> MacBook</span>
+        <span><img src="/icons/ipad.svg" alt="" class="hm-mq-ico"> iPad</span>
+        <span class="hm-mq-ghost">Garantía 12 meses</span>
+        <span class="hm-mq-ghost">Envío a todo el país</span>
+        <span class="hm-mq-ghost">Hasta 24 cuotas</span>
+      </div>
+      <div class="hm-marquee-group">
+        <span><img src="/icons/apple-logo-svgrepo-com.svg" alt="" class="hm-mq-ico"> Apple</span>
+        <span><img src="/icons/samsung-svgrepo-com.svg" alt="" class="hm-mq-ico"> Samsung</span>
+        <span><img src="/icons/macbook.svg" alt="" class="hm-mq-ico"> MacBook</span>
+        <span><img src="/icons/ipad.svg" alt="" class="hm-mq-ico"> iPad</span>
+        <span class="hm-mq-ghost">Garantía 12 meses</span>
+        <span class="hm-mq-ghost">Envío a todo el país</span>
+        <span class="hm-mq-ghost">Hasta 24 cuotas</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST BAND -->
+  <section class="hm-trust">
+    <div class="ctr">
+      <div class="hm-trust-grid">
+        <div class="hm-trust-item">
+          <div class="hm-trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+          <div><div class="hm-trust-t">Envío a todo el país</div><div class="hm-trust-d">Rápido y asegurado</div></div>
+        </div>
+        <div class="hm-trust-item">
+          <div class="hm-trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></div>
+          <div><div class="hm-trust-t">12 meses garantía</div><div class="hm-trust-d">En todos los equipos</div></div>
+        </div>
+        <div class="hm-trust-item">
+          <div class="hm-trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></div>
+          <div><div class="hm-trust-t">Devolución 7 días</div><div class="hm-trust-d">Sin preguntas</div></div>
+        </div>
+        <div class="hm-trust-item">
+          <div class="hm-trust-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+          <div><div class="hm-trust-t">Hasta 24 cuotas</div><div class="hm-trust-d">Sin interés hasta 12</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- CATEGORIAS -->
   <section class="mb-section-gap">
     <div class="ctr">
@@ -84,24 +132,28 @@
       <div class="cat-scroll">
         <div class="cat-flex">
           <button class="cat-card" onclick="navShop('iPhone')">
+            <span class="cat-num">01</span>
             <div class="cat-ico-wrap">
               <img src="/icons/apple-logo-svgrepo-com.svg" alt="Apple" style="width:28px;height:28px;filter:invert(1)">
             </div>
             <span class="cat-label">iPhone</span>
           </button>
           <button class="cat-card" onclick="navShop('MacBook')">
+            <span class="cat-num">02</span>
             <div class="cat-ico-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
             </div>
             <span class="cat-label">MacBook</span>
           </button>
           <button class="cat-card" onclick="navShop('iPad')">
+            <span class="cat-num">03</span>
             <div class="cat-ico-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="12" y1="18" x2="12" y2="18"/></svg>
             </div>
             <span class="cat-label">iPad</span>
           </button>
           <button class="cat-card" onclick="navShop('Samsung')">
+            <span class="cat-num">04</span>
             <div class="cat-ico-wrap">
               <img src="/icons/samsung-svgrepo-com.svg" alt="Samsung" style="width:32px;height:auto;filter:invert(1)">
             </div>
@@ -114,18 +166,21 @@
             <span class="cat-label">Notebooks</span>
           </button>
           <button class="cat-card" onclick="nav('accesorios')">
+            <span class="cat-num">05</span>
             <div class="cat-ico-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><circle cx="9" cy="8" r="4"/><path d="M21 18v-2a4 4 0 00-4-4"/><circle cx="15" cy="8" r="4"/></svg>
             </div>
             <span class="cat-label">Accesorios</span>
           </button>
           <button class="cat-card" onclick="nav('garantias')">
+            <span class="cat-num">06</span>
             <div class="cat-ico-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
             </div>
             <span class="cat-label">Garantías</span>
           </button>
           <button class="cat-card cat-card-accent" onclick="navShop('ofertas')">
+            <span class="cat-num">07</span>
             <div class="cat-ico-wrap">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
@@ -165,14 +220,6 @@
       <div class="pgrid" id="offerStrip" style="padding-top:4px"></div>
     </div>
   </section>
-
-  <!-- LEGAL BANNER HOME -->
-  <div style="background:#F5F0EB;padding:12px;text-align:center;font-size:11px;color:var(--gray);border-bottom:1px solid var(--border)">
-    <span style="font-weight:600">Garantía legal 6 meses</span> &nbsp;|&nbsp; 
-    <span style="font-weight:600">Botón de Arrepentimiento</span> (10 días corridos) &nbsp;|&nbsp; 
-    <span style="font-weight:600">Data Fiscal</span>: Great Phones - CUIT: 30-12345678-9 &nbsp;|&nbsp; 
-    <a onclick="nav('terminos')" style="color:var(--orange);text-decoration:none;cursor:pointer">Términos y Condiciones</a>
-  </div>
 
   <!-- MAS VENDIDOS -->
 <div class="sec sec-cream" style="position:relative">
@@ -315,7 +362,7 @@
       <div class="gift-wrap">
         <div class="gift-card-new" onclick="showGiftCard()">
           <div class="gift-card-new-glow"></div>
-          <div class="gift-card-new-ico">&#127873;</div>
+          <div class="gift-card-new-ico"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></svg></div>
           <div class="gift-card-new-body">
             <div class="gift-card-new-label">
               <span class="material-symbols-outlined" style="font-variation-settings:'FILL'1">card_giftcard</span>
@@ -389,6 +436,26 @@
       </div>
     </div>
   </section>
+
+  <!-- MEGA CTA -->
+  <section class="hm-cta-final">
+    <div class="ctr">
+      <div class="hm-cta-card">
+        <div class="hm-cta-tag">¿Tenés un equipo en desuso?</div>
+        <h2 class="hm-cta-title">Cotizá tu equipo y cobrá <em>en 24hs</em></h2>
+        <p class="hm-cta-desc">Revisión técnica incluida y +5% de bonus si elegís saldo GP.</p>
+        <button class="btn btn-o btn-lg" onclick="nav('sell')" style="display:inline-flex">Empezar cotización</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- LEGAL BANNER -->
+  <div class="hm-legal">
+    <span style="font-weight:600">Garantía legal 6 meses</span> &nbsp;|&nbsp;
+    <span style="font-weight:600">Botón de Arrepentimiento</span> (10 días corridos) &nbsp;|&nbsp;
+    <span style="font-weight:600">Data Fiscal</span>: Great Phones - CUIT: 30-12345678-9 &nbsp;|&nbsp;
+    <a onclick="nav('terminos')" style="color:var(--orange);text-decoration:none;cursor:pointer">Términos y Condiciones</a>
+  </div>
 </div>
 
 <!-- ============================= PAGE: SHOP ============================= -->
