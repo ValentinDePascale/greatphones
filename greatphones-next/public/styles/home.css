@@ -4,17 +4,6 @@
    elevadas, diferenciación de grids, mega CTA, legal.
    ============================================================ */
 
-/* ============ MARQUEE DE MARCAS ============ */
-.hm-marquee{background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border);overflow:hidden;padding:13px 0;position:relative}
-.hm-marquee-track{display:flex;width:max-content;animation:hmMarquee 24s linear infinite}
-.hm-marquee:hover .hm-marquee-track{animation-play-state:paused}
-.hm-marquee-group{display:flex;align-items:center;gap:40px;padding-right:40px;white-space:nowrap}
-.hm-marquee-group span{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--gray);letter-spacing:.3px}
-.hm-marquee-group .hm-mq-ghost{color:var(--gray2);font-weight:500}
-.hm-mq-ico{width:22px;height:22px;object-fit:contain}
-@keyframes hmMarquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-@media (prefers-reduced-motion: reduce){.hm-marquee-track{animation:none;flex-wrap:wrap;width:100%;justify-content:center}}
-
 /* ============ TRUST BAND ============ */
 .hm-trust{background:#fff;border-bottom:1px solid var(--border);padding:clamp(1.25rem,3vw,2rem) 0}
 .hm-trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
@@ -26,15 +15,17 @@
 .hm-trust-d{font-size:11px;color:var(--gray);margin-top:2px}
 
 /* ============ CATEGORÍAS ELEVADAS (números + barra) ============ */
-#p-home .cat-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.25rem .9rem;transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s,border-color .3s}
-#p-home .cat-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.1);border-color:rgba(255,107,44,.35)}
+/* Se conserva el fondo oscuro original (--dk2) para que el texto blanco sea
+   legible; solo se refina borde, hover, numeración y la barra inferior. */
+#p-home .cat-card{padding:1.5rem 1rem;border-radius:16px}
+#p-home .cat-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);border-color:rgba(255,107,44,.45)}
 #p-home .cat-card:active{transform:translateY(-2px) scale(.97)}
-#p-home .cat-num{position:absolute;top:10px;right:12px;font-family:'Playfair Display',Georgia,serif;font-size:12px;color:var(--gray2);font-weight:700;letter-spacing:1px;transition:color .2s;pointer-events:none}
+#p-home .cat-num{position:absolute;top:10px;right:12px;font-family:'Playfair Display',Georgia,serif;font-size:12px;color:rgba(255,255,255,.45);font-weight:700;letter-spacing:1px;transition:color .2s;pointer-events:none}
 #p-home .cat-card:hover .cat-num{color:var(--orange)}
-#p-home .cat-card::after{content:'';position:absolute;left:12px;right:12px;bottom:7px;height:3px;border-radius:3px;background:var(--cream2);overflow:hidden}
+#p-home .cat-card::after{content:'';position:absolute;left:12px;right:12px;bottom:7px;height:3px;border-radius:3px;background:rgba(255,255,255,.18);overflow:hidden;transition:background .3s}
 #p-home .cat-card:hover::after{background:linear-gradient(90deg,var(--orange),var(--orange2))}
-#p-home .cat-card .cat-ico-wrap{transition:all .3s cubic-bezier(.2,.8,.2,1)}
-#p-home .cat-card:hover .cat-ico-wrap{background:linear-gradient(135deg,rgba(255,107,44,.2),rgba(255,107,44,.08));color:var(--orange);transform:scale(1.08)}
+/* La card de ofertas conserva su acento naranja */
+#p-home .cat-card-accent .cat-num{color:var(--orange)}
 
 /* ============ DIFERENCIACIÓN GRIDS ============ */
 /* Más buscados sobre blanco con spotlight */
@@ -62,6 +53,5 @@
 @media(max-width:900px){.hm-trust-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:520px){
   .hm-trust-grid{grid-template-columns:1fr;gap:18px}
-  .hm-marquee-group{gap:26px;padding-right:26px}
   .hm-cta-card{border-radius:22px;padding:2.2rem 1.4rem}
 }
