@@ -27,14 +27,14 @@ export async function expireOffers(): Promise<{ products: number; accessories: n
         isOffer: true,
         offerEnd: { not: null, lt: now },
       },
-      data: { isOffer: false },
+      data: { isOffer: false, discount: 0 },
     }),
     prisma.accessory.updateMany({
       where: {
         isOffer: true,
         offerEnd: { not: null, lt: now },
       },
-      data: { isOffer: false },
+      data: { isOffer: false, discount: 0 },
     }),
   ])
 
