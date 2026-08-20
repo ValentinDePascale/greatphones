@@ -76,7 +76,16 @@ function _renderAdminLegacy(tab){
           '<input type="number" id="adminDolarRate" value="'+dolarVal+'" placeholder="Ej: 1200" oninput="window.dolarRate=parseFloat(this.value)||0;localStorage.setItem(\'dolarRate\',this.value);renderAdminProductsFiltered(document.getElementById(\'adminProdSearch\').value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:12px;width:120px;outline:none"></div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" id="admin-prods-grid"></div>';
-    waitForFn('renderAdminProductsFiltered',function(){renderAdminProductsFiltered('');});
+    waitForFn('renderAdminProductsFiltered',function(){
+      renderAdminProductsFiltered('');
+      // Cargar cotización de dólar automáticamente (dolarapi.com) si el admin
+      // no definió un valor manual guardado en localStorage.
+      if(typeof loadDolarRate==='function'){
+        var manual=parseFloat(localStorage.getItem('dolarRate'));
+        if(manual>0){window.dolarRate=manual;renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');}
+        else loadDolarRate();
+      }
+    });
   }else if(tab==='acc'){
     var accs=window.ACCS||[];
     content.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
@@ -101,7 +110,14 @@ function _renderAdminLegacy(tab){
           '</select></div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px" id="admin-acc-grid"></div>';
-    waitForFn('renderAdminAccFiltered',function(){renderAdminAccFiltered('');});
+    waitForFn('renderAdminAccFiltered',function(){
+      renderAdminAccFiltered('');
+      if(typeof loadDolarRate==='function'){
+        var manual=parseFloat(localStorage.getItem('dolarRate'));
+        if(manual>0){window.dolarRate=manual;renderAdminAccFiltered('');}
+        else loadDolarRate();
+      }
+    });
   }else if(tab==='orders'){
     content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
       '<button class="ord-btn ord-btn-act" id="btnPendingOrders" onclick="loadPendingOrders()">Pedidos en Espera</button>'+
