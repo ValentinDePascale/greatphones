@@ -95,9 +95,12 @@ export default function PurchasedClient() {
   }
 
   return (
-    <div style={{ background: 'var(--admin-bg)', minHeight: '100vh' }}>
+    <div style={{ background: 'var(--cream)', minHeight: '100vh' }}>
       <header className="admin-topbar">
         <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+          <button className="admin-hamburger" onClick={() => { try { (window as any).toggleMobileSidebar && (window as any).toggleMobileSidebar() } catch {} }} aria-label="Abrir menu">
+            <span className="material-symbols-outlined">menu</span>
+          </button>
           <h1 className="admin-topbar-title">Comprados</h1>
         </div>
         <div className="admin-topbar-actions" />
