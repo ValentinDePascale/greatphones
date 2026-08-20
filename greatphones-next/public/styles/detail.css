@@ -113,7 +113,7 @@
 /* ---- Related ---- */
 #p-detail .det-related-section{margin-top:24px;padding-top:18px;border-top:1px solid var(--border)}
 #p-detail .det-related-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;color:var(--dk);margin-bottom:16px}
-#p-detail .det-related-scroll{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#p-detail .det-related-scroll{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
 #p-detail .det-related-card{display:block;background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;transition:all .25s cubic-bezier(.22,.68,.36,1)}
 #p-detail .det-related-card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.1);border-color:rgba(255,107,44,.35)}
 #p-detail .det-related-img{width:100%;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden;position:relative;padding:10px;box-sizing:border-box}
