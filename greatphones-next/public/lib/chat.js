@@ -1309,7 +1309,16 @@ function submitQuoteFromChat(){
 var adminActiveConvId=null;
 var _adminConvSearchQuery='';
 function loadAdminConversations(){
-  if(!currentUser||currentUser.role!=='ADMIN')return;
+  // Retry robusto si el contexto admin aún no está listo (evita que el div
+  // quede vacío por un race de sesión al entrar a la sección Chat).
+  if(!currentUser||currentUser.role!=='ADMIN'){
+    window._adminConvRetry=(window._adminConvRetry||0)+1;
+    if(window._adminConvRetry<=20){
+      setTimeout(loadAdminConversations,150);
+    }
+    return;
+  }
+  window._adminConvRetry=0;
   var list=document.getElementById('adminConvList');
   if(!list){
     setTimeout(loadAdminConversations,100);
@@ -1317,6 +1326,7 @@ function loadAdminConversations(){
   }
   list.innerHTML='<div class="loader-spinner"><span>Cargando conversaciones...</span></div>';
   fetch(API_URL+'/api/admin/conversations',{
+    credentials:'include',
     headers:{}
   })
     .then(function(r){
@@ -1324,14 +1334,16 @@ function loadAdminConversations(){
       return r.json();
     })
     .then(function(data){
-      if(!Array.isArray(data)){
+      // El endpoint puede devolver un array directo o un objeto { conversations }.
+      var convs=Array.isArray(data)?data:((data&&data.conversations)||[]);
+      if(!Array.isArray(convs)){
         console.error('Invalid admin conversations response:',data);
         var list=document.getElementById('adminConvList');
         if(list)list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--red)"><p style="font-size:14px;font-weight:600;margin-bottom:8px">Error al cargar conversaciones</p><p style="font-size:12px">Respuesta invalida del servidor</p><button class="ord-btn" onclick="loadAdminConversations()" style="margin-top:12px">Reintentar</button></div>';
         return;
       }
-      window._adminConvs=data;
-      filterAndRenderAdminConvs(data);
+      window._adminConvs=convs;
+      filterAndRenderAdminConvs(convs);
     })
     .catch(function(e){
       console.error('Error loading admin conversations:',e);
