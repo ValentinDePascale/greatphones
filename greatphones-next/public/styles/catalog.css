@@ -1,0 +1,185 @@
+/* ============================================================
+   CATALOG.CSS — Rediseño del catálogo (productos / ofertas / accesorios)
+   Solo retoca la cabecera (.sh-hdr) y la barra de filtros (.sh-filterbar)
+   y sus hijos. NO toca el diseño de los artículos (.pcard).
+   Scoped a las páginas del catálogo para no afectar otras vistas.
+   ============================================================ */
+
+/* ---- El transform de pgIn rompe el sticky de la filterbar: se neutraliza
+        igual que en shop. ---- */
+#p-ofertas.page,#p-accesorios.page{animation:none}
+#p-ofertas.act,#p-accesorios.act{transform:none;will-change:auto}
+
+/* ============================================================
+   1. CABECERA (.sh-hdr)
+   ============================================================ */
+#p-shop .sh-hdr,
+#p-ofertas .sh-hdr,
+#p-accesorios .sh-hdr{
+  background:linear-gradient(160deg,#201508 0%,#2E2116 48%,#1A1208 100%);
+  padding:3.25rem 0 2.25rem;
+  position:relative;
+  overflow:hidden;
+  isolation:isolate
+}
+
+/* Línea de acento superior */
+#p-shop .sh-hdr::before,
+#p-ofertas .sh-hdr::before,
+#p-accesorios .sh-hdr::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,var(--orange) 30%,var(--orange2) 70%,transparent);
+  z-index:1
+}
+
+/* Rejilla sutil + orbes de luz (sustituye el ruido original) */
+#p-shop .sh-hdr::after,
+#p-ofertas .sh-hdr::after,
+#p-accesorios .sh-hdr::after{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(circle at 82% 0%,rgba(255,107,44,.20) 0%,transparent 42%),
+    radial-gradient(circle at 12% 100%,rgba(255,107,44,.12) 0%,transparent 45%),
+    radial-gradient(rgba(255,255,255,.028) 1px,transparent 1.5px);
+  background-size:auto,auto,26px 26px;
+  pointer-events:none;z-index:0
+}
+
+/* Contenedor por encima de los ornamentos */
+#p-shop .sh-hdr .ctr,
+#p-ofertas .sh-hdr .ctr,
+#p-accesorios .sh-hdr .ctr{position:relative;z-index:2}
+
+/* Eyebrow pill sobre el título */
+#p-shop .sh-hdr .sh-eyebrow,
+#p-ofertas .sh-hdr .sh-eyebrow,
+#p-accesorios .sh-hdr .sh-eyebrow{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,107,44,.14);border:1px solid rgba(255,107,44,.35);
+  color:var(--orange2);font-size:10.5px;font-weight:700;
+  letter-spacing:1.6px;text-transform:uppercase;
+  padding:5px 13px;border-radius:100px;margin-bottom:14px
+}
+#p-shop .sh-hdr .sh-eyebrow svg,
+#p-ofertas .sh-hdr .sh-eyebrow svg,
+#p-accesorios .sh-hdr .sh-eyebrow svg{width:13px;height:13px}
+
+/* Título con Playfair Display, más presente */
+#p-shop .sh-title,
+#p-ofertas .sh-title,
+#p-accesorios .sh-title{
+  font-family:'Playfair Display',Georgia,serif;
+  font-weight:700;font-size:clamp(28px,4vw,42px);
+  color:#fff;letter-spacing:-.4px;line-height:1.1;margin:0 0 6px
+}
+
+/* Subtítulo */
+#p-shop .sh-sub,
+#p-ofertas .sh-sub,
+#p-accesorios .sh-sub{
+  font-size:12.5px;color:rgba(255,255,255,.55);
+  font-weight:400;margin:0;display:flex;align-items:center;gap:8px
+}
+#p-shop .sh-sub::before,
+#p-ofertas .sh-sub::before,
+#p-accesorios .sh-sub::before{
+  content:'';display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:var(--orange);flex-shrink:0
+}
+
+/* Acento: píldora flotante con icono vectorial */
+#p-shop .sh-accent,
+#p-ofertas .sh-accent,
+#p-accesorios .sh-accent{
+  width:56px;height:56px;border-radius:18px;opacity:1;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--orange2);
+  box-shadow:0 10px 30px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(6px)
+}
+#p-shop .sh-accent svg,
+#p-ofertas .sh-accent svg,
+#p-accesorios .sh-accent svg{width:26px;height:26px}
+
+/* ============================================================
+   2. BARRA DE FILTROS (.sh-filterbar)
+   ============================================================ */
+#p-shop .sh-filterbar,
+#p-accesorios .sh-filterbar{
+  background:rgba(255,255,255,.86);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid rgba(0,0,0,.06);
+  position:sticky;top:64px;z-index:100;
+  box-shadow:0 8px 30px rgba(26,18,8,.06);
+  transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .2s ease,box-shadow .25s ease
+}
+#p-shop .sh-filterbar.sh-filterbar--hidden,
+#p-accesorios .sh-filterbar.sh-filterbar--hidden{transform:translateY(-100%);opacity:0;box-shadow:none}
+#p-shop .sh-filter-inner,
+#p-accesorios .sh-filter-inner{padding:12px 0;gap:14px}
+
+/* Chips */
+#p-shop .sh-chips,
+#p-accesorios .sh-chips{gap:8px;padding:2px 0}
+#p-shop .fchip,
+#p-accesorios .fchip{
+  height:40px;padding:0 20px;border-radius:12px;
+  border:1px solid rgba(0,0,0,.08);background:#fff;
+  font-size:12.5px;color:var(--dk);font-weight:600;
+  box-shadow:0 1px 2px rgba(0,0,0,.04)
+}
+#p-shop .fchip:hover,
+#p-accesorios .fchip:hover{
+  border-color:var(--orange);color:var(--orange);background:#fff;
+  transform:translateY(-1.5px);box-shadow:0 6px 16px rgba(255,107,44,.16)
+}
+#p-shop .fchip.act,
+#p-accesorios .fchip.act{
+  background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);
+  border-color:transparent;color:#fff!important;
+  box-shadow:0 6px 18px rgba(255,107,44,.32)
+}
+
+/* Selector de orden + botón filtros */
+#p-shop #sortBtn,
+#p-accesorios #sortAccBtn,
+#p-shop button[onclick="toggleFilterPanel()"]{
+  height:40px;padding:0 16px;border-radius:12px;
+  border:1px solid rgba(0,0,0,.08);background:#fff;
+  font-size:12px;font-weight:600;color:var(--dk);
+  box-shadow:0 1px 2px rgba(0,0,0,.04)
+}
+#p-shop #sortBtn:hover,
+#p-accesorios #sortAccBtn:hover,
+#p-shop button[onclick="toggleFilterPanel()"]:hover{border-color:var(--orange);color:var(--orange)}
+
+/* Menú de orden */
+#p-shop #sortMenu,
+#p-accesorios #sortAccMenu{
+  border-radius:14px;border:1px solid rgba(0,0,0,.07);
+  box-shadow:0 16px 40px rgba(26,18,8,.16);overflow:hidden
+}
+#p-shop .sort-opt,
+#p-accesorios .sort-opt{padding:13px 16px;font-size:13px}
+#p-shop .sort-opt.act,
+#p-accesorios .sort-opt.act{color:var(--orange);font-weight:700}
+
+/* ---- Aviso insignia de regalo (accesorios) ---- */
+#p-accesorios .acc-gift-note{
+  background:linear-gradient(135deg,rgba(45,90,39,.06),rgba(45,90,39,.10));
+  border:1px solid rgba(45,90,39,.16);border-radius:12px;
+  padding:.7rem 1rem;font-size:11.5px;color:var(--green);margin:1rem 0;
+  display:flex;align-items:center;gap:9px
+}
+#p-accesorios .acc-gift-note svg{width:15px;height:15px;flex-shrink:0}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:640px){
+  #p-shop .sh-hdr,#p-ofertas .sh-hdr,#p-accesorios .sh-hdr{padding:2.4rem 0 1.6rem}
+  #p-shop .sh-title,#p-ofertas .sh-title,#p-accesorios .sh-title{font-size:28px}
+  #p-shop .sh-accent,#p-ofertas .sh-accent,#p-accesorios .sh-accent{width:48px;height:48px;border-radius:15px}
+}
