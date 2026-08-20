@@ -1059,7 +1059,16 @@ function checkPasswordStrength(){
   var missing=document.getElementById('passwordMissing');
   if(!pw)return;
   var val=pw.value;
-  if(!val.length){if(el)el.textContent='';if(missing)missing.textContent='';return;}
+  var meter=document.getElementById('pwMeter');
+  function paintMeter(n,color){
+    if(!meter)return;
+    var bars=meter.querySelectorAll('i');
+    for(var k=0;k<bars.length;k++){
+      if(k<n){bars[k].style.background=color;}
+      else{bars[k].style.background='';}
+    }
+  }
+  if(!val.length){if(el)el.textContent='';if(missing)missing.textContent='';paintMeter(0,'');return;}
   var strength=0;
   if(val.length>=8)strength++;
   if(val.length>=10)strength++;
@@ -1075,6 +1084,7 @@ function checkPasswordStrength(){
   ];
   var lvl=levels[Math.min(strength,4)];
   if(el){el.textContent=lvl.label;el.style.color=lvl.color;}
+  paintMeter(Math.min(strength,4),lvl.color);
   if(missing){
     var missingText=[];
     if(val.length<8)missingText.push('minimo 8 caracteres');
