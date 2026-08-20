@@ -2347,6 +2347,14 @@ function combineDateTime(dateId, timeId){
   if(!dateVal)return null;
   return dateVal+'T'+(timeVal||'23:59');
 }
+// Lee un input datetime-local y devuelve un ISO string válido (o null si vacío)
+function promoDatetimeLocal(id){
+  var el=document.getElementById(id);
+  if(!el||!el.value)return null;
+  var val=el.value; // formato "YYYY-MM-DDTHH:MM"
+  var d=new Date(val);
+  return isNaN(d.getTime())?null:d.toISOString();
+}
 function toDatetimeLocal(d){
   var tz=new Date(d.getTime()-d.getTimezoneOffset()*60000);
   return tz.toISOString().slice(0,16);
@@ -3910,8 +3918,8 @@ function applyPromo(){
   if(discount<=0){showAlert('Descuento inválido', 'Ingresa un descuento mayor a 0', 'warning');return;}
   var checkboxes=document.querySelectorAll('[id^="promo-chk-"]:checked');
   if(checkboxes.length===0){showAlert('Selección requerida', 'Selecciona al menos un producto', 'warning');return;}
-  var offerStart=combineDateTime('promoOfferStartDate','promoOfferStartTime');
-  var offerEnd=combineDateTime('promoOfferEndDate','promoOfferEndTime');
+  var offerStart=promoDatetimeLocal('promoOfferStartDate');
+  var offerEnd=promoDatetimeLocal('promoOfferEndDate');
   var promises=[];
   var prodCount=0,accCount=0;
   checkboxes.forEach(function(chk){
@@ -3963,7 +3971,7 @@ function renderActivePromos(){
   }
   var offers=allOffers.filter(function(p){
     if(filterBrand&&p.brand!==filterBrand)return false;
-    if(filterStatus==='activa'){var oe=p.offerEnd?new Date(p.offerEnd):null;var os=p.offerStart?new Date(p.offerStart):null;if(!oe||oe<=new Date())return false;if(os&&os>new Date())return false;}
+    if(filterStatus==='activa'){var oe2=p.offerEnd?new Date(p.offerEnd):null;var os2=p.offerStart?new Date(p.offerStart):null;if(os2&&os2>new Date())return false;if(oe2&&oe2<=new Date())return false;}
     if(filterStatus==='programada'){var ps=p.offerStart?new Date(p.offerStart):null;if(!ps||ps<=new Date())return false;}
     return true;
   });
@@ -4523,11 +4531,12 @@ function renderAdminUsers(users,total,page,limit){
 
   var totalPages=Math.max(1,Math.ceil(total/limit));
   var html='<div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;font-size:12px;color:var(--gray)">'+
-    '<span>'+total+' usuario'+(total===1?'':'s')+'</span>'+
+    '<div style="display:flex;gap:12px;align-items:center"><span>'+total+' usuario'+(total===1?'':'s')+'</span><button onclick="deleteSelectedUsers()" style="background:var(--red);color:#fff;border:none;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">Eliminar seleccionados</button></div>'+
     '<span>Página '+page+' de '+totalPages+'</span>'+
   '</div>'+
   '<table style="width:100%;border-collapse:collapse;font-size:13px">'+
     '<thead><tr style="border-bottom:2px solid var(--border)">'+
+      '<th style="width:40px;padding:10px 8px 10px 16px"><input type="checkbox" onclick="toggleSelectAllUsers(this)" style="width:17px;height:17px;cursor:pointer;accent-color:var(--orange)"></th>'+
       '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Usuario</th>'+
       '<th style="text-align:left;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Email</th>'+
       '<th style="text-align:center;padding:10px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Rol</th>'+
@@ -4540,7 +4549,8 @@ function renderAdminUsers(users,total,page,limit){
     var roleColor=u.role==='ADMIN'?'var(--orange)':'var(--green)';
     var roleBg=u.role==='ADMIN'?'rgba(255,107,44,.1)':'rgba(45,90,39,.1)';
     var date=new Date(u.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    html+='<tr style="border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
+    html+='<tr data-uid="'+u.id+'" style="border-bottom:1px solid var(--border)" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">'+
+      '<td style="padding:10px 8px 10px 16px;text-align:center"><input type="checkbox" class="admin-user-chk" value="'+u.id+'" '+(u.role==='ADMIN'||u.id===currentUser.id?'disabled':'')+' style="width:17px;height:17px;cursor:pointer;accent-color:var(--orange)"></td>'+
       '<td style="padding:10px 16px"><div style="font-weight:600">'+escapeHtml(u.name||'Sin nombre')+'</div></td>'+
       '<td style="padding:10px 16px;font-size:12px;color:var(--gray)">'+escapeHtml(u.email||'—')+'</td>'+
       '<td style="padding:10px 16px;text-align:center">'+
@@ -4552,7 +4562,7 @@ function renderAdminUsers(users,total,page,limit){
       '<td style="padding:10px 16px;font-size:12px;color:var(--gray)">'+escapeHtml(u.phone||'—')+'</td>'+
       '<td style="padding:10px 16px;text-align:right;font-size:12px;color:var(--gray)">'+date+'</td>'+
       '<td style="padding:10px 16px;text-align:center">'+
-        '<button onclick="deleteAdminUser(\''+u.id+'\',\''+escapeHtml(u.name||'Usuario').replace(/'/g,"\\'")+'\')" style="background:none;border:1px solid var(--red);color:var(--red);padding:4px 10px;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;font-family:inherit">Eliminar</button>'+
+        '<button onclick="deleteAdminUser(\''+u.id+'\',\''+escapeHtml(u.name||'Usuario').replace(/'/g,"\\'")+'\')" '+(u.role==='ADMIN'||u.id===currentUser.id?'disabled':'')+' style="background:none;border:1px solid '+(u.role==='ADMIN'?'var(--gray)':'var(--red)')+';color:'+(u.role==='ADMIN'?'var(--gray)':'var(--red)')+';padding:4px 10px;border-radius:8px;font-size:11px;cursor:'+(u.role==='ADMIN'?'not-allowed':'pointer')+';font-weight:600;font-family:inherit">Eliminar</button>'+
       '</td>'+
     '</tr>';
   });
@@ -4588,17 +4598,62 @@ function changeUserRole(userId,newRole){
   }).catch(function(){showToast({title:'Error',message:'Error al actualizar',type:'error'});});
 }
 
+function toggleSelectAllUsers(checkboxEl){
+  var checked=checkboxEl.checked;
+  document.querySelectorAll('.admin-user-chk').forEach(function(chk){
+    if(!chk.disabled)chk.checked=checked;
+  });
+}
+function buildAdminDeleteModal(title, bodyHtml, onConfirm){
+  var existing=document.getElementById('adminDeleteModal');
+  if(existing)existing.remove();
+  var overlay=document.createElement('div');
+  overlay.id='adminDeleteModal';
+  overlay.style.cssText='position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter:blur(3px)';
+  overlay.innerHTML=
+    '<div style="background:#fff;border-radius:18px;width:min(420px,92vw);padding:1.5rem;box-shadow:0 24px 80px rgba(0,0,0,.35)">'+
+      '<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:1.25rem">'+
+        '<div style="width:46px;height:46px;border-radius:13px;background:rgba(192,57,43,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg></div>'+
+        '<div><div style="font-family:\'Playfair Display\',Georgia,serif;font-size:18px;font-weight:700;color:var(--dk)">'+title+'</div></div>'+
+      '</div>'+
+      '<div style="font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:1.5rem">'+bodyHtml+'</div>'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end">'+
+        '<button id="adminDelCancel" style="padding:11px 18px;background:var(--cream2);color:var(--dk);border:1px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">Cancelar</button>'+
+        '<button id="adminDelOk" style="padding:11px 20px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Confirmar</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(overlay);
+  overlay.querySelector('#adminDelCancel').onclick=function(){overlay.remove()};
+  overlay.querySelector('#adminDelOk').onclick=function(){overlay.remove();onConfirm();};
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  return overlay;
+}
 function deleteAdminUser(userId,userName){
   if(!currentUser||!currentUser.id)return showToast({title:'Error',message:'No autorizado',type:'error'});
   if(userId===currentUser.id)return showToast({title:'Error',message:'No podes eliminarte a vos mismo',type:'error'});
-  if(!confirm('¿Eliminar a '+userName+'? Esta accion no se puede deshacer.'))return;
-
-  fetch(API_URL+'/api/admin/users?id='+userId,{
-    method:'DELETE',
-    headers:{}
-  }).then(function(r){return r.json();}).then(function(res){
-    if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
-    showToast({title:'Exito',message:'Usuario eliminado',type:'success'});
-    loadAdminUsers();
-  }).catch(function(){showToast({title:'Error',message:'Error al eliminar',type:'error'});});
+  buildAdminDeleteModal('Eliminar usuario','¿Eliminar a <strong style="color:var(--dk)">'+userName+'</strong>? Esta acción no se puede deshacer y eliminará todos sus datos asociados.',function(){
+    fetch(API_URL+'/api/admin/users?id='+userId,{
+      method:'DELETE',
+      headers:{}
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
+      showToast({title:'Exito',message:'Usuario eliminado',type:'success'});
+      loadAdminUsers();
+    }).catch(function(){showToast({title:'Error',message:'Error al eliminar',type:'error'});});
+  });
+}
+function deleteSelectedUsers(){
+  if(!currentUser||!currentUser.id)return showToast({title:'Error',message:'No autorizado',type:'error'});
+  var ids=Array.from(document.querySelectorAll('.admin-user-chk:checked')).map(function(c){return c.value;});
+  if(!ids.length)return showToast({title:'Aviso',message:'Seleccioná al menos un usuario',type:'warning'});
+  buildAdminDeleteModal('Eliminar '+ids.length+' usuario(s)','¿Eliminar <strong style="color:var(--dk)">'+ids.length+'</strong> usuario(s) seleccionados? Esta acción no se puede deshacer y eliminará todos sus datos asociados.',function(){
+    fetch(API_URL+'/api/admin/users?ids='+ids.join(','),{
+      method:'DELETE',
+      headers:{}
+    }).then(function(r){return r.json();}).then(function(res){
+      if(res.error)return showToast({title:'Error',message:res.error,type:'error'});
+      showToast({title:'Exito',message:ids.length+' usuario(s) eliminados',type:'success'});
+      loadAdminUsers();
+    }).catch(function(){showToast({title:'Error',message:'Error al eliminar',type:'error'});});
+  });
 }
