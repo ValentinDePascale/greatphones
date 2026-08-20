@@ -51,6 +51,7 @@ export default function AdminPageClient({ html, tab }: Props) {
 
   return (
     <div
+      key={tab}
       dangerouslySetInnerHTML={{ __html: html }}
       suppressHydrationWarning
     />
