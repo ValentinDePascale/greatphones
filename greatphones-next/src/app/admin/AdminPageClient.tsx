@@ -25,6 +25,24 @@ export default function AdminPageClient({ html, tab }: Props) {
       pAdmin.querySelector('.admin-main')?.classList.add('act')
     }
 
+    // Actualizar el título del topbar y activar el botón del sidebar de forma
+    // inmediata (antes de que renderAdminContent cargue) para evitar que
+    // parpadee "Dashboard" al navegar directo a /admin/<tab>.
+    const titles: Record<string, string> = {
+      dashboard: 'Dashboard', prods: 'Productos', inventory: 'Inventario',
+      acc: 'Accesorios', stock: 'Stock', promos: 'Promociones',
+      orders: 'Pedidos', arrep: 'Arrepentimientos', chat: 'Chat',
+      quotes: 'Cotizaciones', instore: 'Venta en Tienda', preventa: 'Preventas',
+      sales: 'Historial de Ventas', users: 'Usuarios',
+    }
+    const titleEl = document.getElementById('adminPageTitle')
+    if (titleEl && titles[tab]) titleEl.textContent = titles[tab]
+    const navBtn = document.getElementById('adm-' + tab)
+    if (navBtn) {
+      document.querySelectorAll('.admin-nav-item').forEach(b => b.classList.remove('act'))
+      navBtn.classList.add('act')
+    }
+
     setTimeout(() => {
       const fn = (window as any).renderAdminContent || window.renderAdminContent
       if (typeof fn === 'function') fn(tab)
