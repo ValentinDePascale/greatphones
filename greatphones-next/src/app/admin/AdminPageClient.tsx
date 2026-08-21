@@ -33,7 +33,7 @@ export default function AdminPageClient({ html, tab }: Props) {
       acc: 'Accesorios', stock: 'Stock', promos: 'Promociones',
       orders: 'Pedidos', arrep: 'Arrepentimientos', chat: 'Chat',
       quotes: 'Cotizaciones', instore: 'Venta en Tienda', preventa: 'Preventas',
-      sales: 'Historial de Ventas', users: 'Usuarios',
+      sales: 'Historial de Ventas', users: 'Usuarios', cupones: 'Cupones',
     }
     const titleEl = document.getElementById('adminPageTitle')
     if (titleEl && titles[tab]) titleEl.textContent = titles[tab]

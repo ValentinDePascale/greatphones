@@ -92,13 +92,20 @@ function buildSpecsForProduct(p){
 
 function renderSpecsGrid(specs){
   var el=document.getElementById('detSpecs');if(!el)return;
-  if(!specs.length){el.style.display='none';return;}
+  var section=document.getElementById('detSpecsSection');
+  if(!specs.length){
+    el.style.display='none';
+    if(section)section.style.display='none';
+    return;
+  }
   el.style.display='grid';
+  if(section)section.style.display='block';
   el.innerHTML=specs.map(function(s){
-    return '<div class="sp-card">'+
+    var wide=(s.key==='storage'||s.key==='stock'||s.key==='date')?' sp-wide':'';
+    return '<div class="sp-card'+wide+'">'+
       '<div class="sp-ico">'+detIco(s.key||'stock')+'</div>'+
       '<div class="sp-text"><div class="sp-label">'+s.label+'</div>'+
-      '<div class="sp-val"'+(s.color?';color:'+s.color:'')+'>'+s.val+'</div></div></div>';
+      '<div class="sp-val"'+(s.color?' style="color:'+s.color+'"':'')+'>'+s.val+'</div></div></div>';
   }).join('');
 }
 
@@ -110,15 +117,12 @@ function renderDetBadges(p,extraCond){
   if(isPromo){
     badges.push({ico:'percent',text:p.discount+'% OFF',c:'red'});
   }
-  badges.push({ico:'check',text:'12 Meses Garantia',c:'green'});
   badges.push({ico:'check',text:'Cable + funda gratis',c:'green'});
-  badges.push({ico:'dev',text:'Dev. 7 dias',c:'green'});
-  if(type==='celular')badges.splice(2,0,{ico:'phone',text:'IMEI Verificado',c:'green'});
+  if(type==='celular')badges.splice(1,0,{ico:'phone',text:'IMEI Verificado',c:'green'});
   if(p.isPreorder){
     var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
     badges.unshift({ico:'star',text:'Preventa — Disponible '+dateStr,c:'orange'});
   }
-  if(extraCond)badges.unshift({ico:'phone',text:extraCond,c:'green'});
   el.innerHTML=badges.map(function(b){
     return '<div class="det-pill" data-c="'+b.c+'">'+detIco(b.ico||'check')+' '+b.text+'</div>';
   }).join('');
@@ -1470,6 +1474,11 @@ function selectDetailVariant(idx){
       }
     }
   }
+  // Fallback final: el producto actual es el que aparece en el detalle.
+  // Sus campos isOffer/discount determinan si hay promo (el inventario IMEI no
+  // los tiene), así el descuento se aplica igual aunque el producto no esté
+  // cargado en PRODUCTS (ej: apertura directa del detalle via SSR/prefetch).
+  if(!variantProd)variantProd=currentProd;
   
   var isPromo=isOfferValid(variantProd);
   var bestDiscount=isPromo?variantProd.discount:0;
@@ -1492,7 +1501,7 @@ function selectDetailVariant(idx){
   var cuotaText=document.getElementById('detCuotaText');
   if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
 
-  // Update name to reflect variant details
+  // Update name to reflect variant details (solo breadcrumb)
   var suffixParts=[];
   if(v.color)suffixParts.push(v.color);
   if(v.storage)suffixParts.push(v.storage);
@@ -1500,7 +1509,7 @@ function selectDetailVariant(idx){
   var name2El=document.getElementById('detName2');
   if(name2El)name2El.textContent=currentProd.name+variantSuffix;
   var nameEl=document.getElementById('detName');
-  if(nameEl)nameEl.textContent=currentProd.name+variantSuffix;
+  if(nameEl)nameEl.textContent=currentProd.name;
 
   // Rebuild specs grid with variant-specific data
   var mergedProd={
@@ -1938,9 +1947,16 @@ function renderRelatedAccs(){
 
   if(!related.length)return;
   container.style.display='block';
+  var linkHref='';
+  var linkLabel='';
+  if(clickFn==='openAccDetail'){linkHref='/accesorios';linkLabel='Ver todos';}
+  else if(clickFn==='openDetail'){linkHref='/productos';linkLabel='Ver todos';}
   container.innerHTML=
     '<div class="det-related-section">'+
-      '<div class="det-related-title">'+title+'</div>'+
+      '<div class="det-related-header">'+
+        '<div class="det-related-title">'+title+'</div>'+
+        (linkHref?'<a class="det-related-link" href="'+linkHref+'" onclick="event.preventDefault();event.stopPropagation();nav(\''+(clickFn==='openAccDetail'?'accesorios':'shop')+'\')">'+linkLabel+'</a>':'')+
+      '</div>'+
       '<div class="det-related-scroll">'+
         related.map(function(item){
           var isPromo=isOfferValid(item);
@@ -3345,7 +3361,8 @@ var ADMIN_TITLES={
   instore:'Venta en Tienda',
   preventa:'Preventas',
   sales:'Historial de Ventas',
-  users:'Usuarios'
+  users:'Usuarios',
+  cupones:'Cupones'
 };
 
 // Wrapper unificado que delega al renderAdminContent de admin.js (que maneja
@@ -3366,7 +3383,7 @@ function renderAdminContent(tab){
   if(titleEl&&ADMIN_TITLES[tab])titleEl.textContent=ADMIN_TITLES[tab];
 
   // Reset tab buttons y activar el actual
-  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa,#adm-sales,#adm-users').forEach(function(b){b.classList.remove('act');});
+  document.querySelectorAll('#adm-prods,#adm-acc,#adm-stock,#adm-promos,#adm-cupones,#adm-orders,#adm-arrep,#adm-dashboard,#adm-chat,#adm-quotes,#adm-instore,#adm-preventa,#adm-sales,#adm-users').forEach(function(b){b.classList.remove('act');});
   var activeBtn=document.getElementById('adm-'+tab);
   if(activeBtn)activeBtn.classList.add('act');
 

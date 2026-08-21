@@ -161,7 +161,10 @@ export async function PATCH(request: Request) {
     // Flujo especial: aprobación emite factura ARCA automáticamente
     if (status === 'APPROVED') {
       const adminUser = await requireAdmin(request)
-      const quote = await prisma.quote.findUnique({ where: { id } })
+      const quote = await prisma.quote.findUnique({
+        where: { id },
+        include: { purchasedDevice: true },
+      })
       if (!quote) {
         return NextResponse.json({ error: 'Cotización no encontrada' }, { status: 404 })
       }
@@ -179,6 +182,7 @@ export async function PATCH(request: Request) {
 
       let invoice = null
       let arcaError: string | null = null
+      let createdById = adminUser.id
 
       if (arcaIsConfigured()) {
         try {
@@ -224,28 +228,6 @@ export async function PATCH(request: Request) {
             { quoteId: id, invoiceId: invoice.id, cae: invoice.cae, total: invoice.total },
             'Invoice created from approved quote'
           )
-
-          // Crear registro en historial de comprados
-          await prisma.purchasedDevice.create({
-            data: {
-              code: `PUR-${Date.now()}`,
-              quoteId: id,
-              brand: quote.device.split(' ')[0] || 'Genérico',
-              device: quote.device,
-              storage: quote.storage,
-              condition: quote.condition,
-              batteryHealth: quote.batteryHealth,
-              clientName: quote.clientName || 'Sin nombre',
-              clientDni: quote.clientDni,
-              clientPhone: quote.clientPhone,
-              clientCity: quote.clientCity,
-              clientProvince: quote.clientProvince,
-              purchasePrice: quote.finalPrice,
-              invoiceId: invoice.id,
-              createdById: adminUser.id,
-            },
-          })
-          logger.info({ quoteId: id }, 'PurchasedDevice registered')
         } catch (err) {
           const message = err instanceof Error ? err.message : 'Error desconocido de ARCA'
           logger.error({ err, quoteId: id }, 'ARCA error while creating invoice')
@@ -257,6 +239,32 @@ export async function PATCH(request: Request) {
       } else {
         arcaError = 'ARCA no está configurado. Aceptada sin factura.'
         logger.warn({ quoteId: id }, 'ARCA not configured, approving quote without invoice')
+      }
+
+      // Registrar la compra en "Dispositivos comprados" siempre que la
+      // cotización se apruebe, haya factura ARCA o no. Así toda cotización
+      // aprobada queda visible en el historial de comprados.
+      if (!quote.purchasedDevice) {
+        await prisma.purchasedDevice.create({
+          data: {
+            code: `PUR-${Date.now()}`,
+            quoteId: id,
+            brand: quote.device.split(' ')[0] || 'Genérico',
+            device: quote.device,
+            storage: quote.storage,
+            condition: quote.condition,
+            batteryHealth: quote.batteryHealth,
+            clientName: quote.clientName || 'Sin nombre',
+            clientDni: quote.clientDni,
+            clientPhone: quote.clientPhone,
+            clientCity: quote.clientCity,
+            clientProvince: quote.clientProvince,
+            purchasePrice: quote.finalPrice,
+            invoiceId: invoice ? invoice.id : null,
+            createdById,
+          },
+        })
+        logger.info({ quoteId: id }, 'PurchasedDevice registered')
       }
 
       // Actualizar estado de la cotización (siempre, haya factura o no)

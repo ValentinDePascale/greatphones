@@ -86,37 +86,46 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
   if(!p) p=getById(PREORDER_PRODUCTS,variant?variant.productId||id:id);
   var a=getById(window.ACCS,id);
   if(!p&&!a)return;
-  var itemId=variant?id+'::'+variant.imei:id;
-  var stock=variant?1:(p?p.stock:(a?a.stock:0));
+  // Identidad unificada: el carrito agrupa por producto, no por IMEI. Así
+  // sumar desde el catálogo (con producto) y desde el detalle (con variante)
+  // suman a la MISMA línea del carrito.
+  var itemId=p?(p.id||id):(a?(a.id||id):id);
+  var stock=p?p.stock:(a?a.stock:0);
   var existing=Cart.find(function(item){return item.id===itemId;});
   var currentQty=existing?existing.qty:0;
-  if(!isPreorder&&!variant&&currentQty>=stock){
+  if(!isPreorder&&currentQty>=stock){
     showToast('Solo hay '+stock+' disponible'+(stock>1?'s':''));
     return;
   }
   if(existing){
     existing.qty++;
+    if(variant&&existing.variantInfo){
+      existing.variantInfo=null;
+      existing.variantId=variant.imei;
+      existing.variantInfo={
+        color:variant.color,
+        storage:variant.storage,
+        ram:variant.ram,
+        condition:variant.cosmeticCondition,
+        price:variant.targetPrice
+      };
+    }
   }else{
-    var entry={id:itemId,productId:id,qty:1};
+    var entry={id:itemId,productId:itemId,qty:1};
     if(isPreorder){
       entry.isPreorder=true;
       if(availableFrom)entry.availableFrom=availableFrom;
     }
     if(variant){
       entry.variantId=variant.imei;
-      var cleanName=[p.brand||'',p.modelGroup||p.name,variant.color,variant.storage].filter(Boolean).join(' ');
-      var variantPrice=variant.targetPrice;
-      if(p&&p.isOffer&&p.discount>0&&variantPrice>0){
-        variantPrice=Math.round(variantPrice*(1-p.discount/100));
-      }
       entry.variantInfo={
         color:variant.color,
         storage:variant.storage,
         ram:variant.ram,
         condition:variant.cosmeticCondition,
-        price:variantPrice,
+        price:variant.targetPrice,
         image:variant.imageUrl,
-        name:cleanName
+        name:p?(p.name||p.modelGroup||''):''
       };
     }
     var snapSrc=p||a;
@@ -225,7 +234,7 @@ function updateCartQty(id,delta){
   var pid=item.productId||id;
   var p=getById(PRODUCTS,pid);
   var a=getById(window.ACCS,pid);
-  var stock=item.variantInfo?1:(p?p.stock:(a?a.stock:0));
+  var stock=p?p.stock:(a?a.stock:0);
   item.qty+=delta;
   if(item.qty<=0){
     removeFromCart(id);
@@ -396,7 +405,9 @@ function renderCartBody(){
       var baseP=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
       var finalPrice=variantPrice||(isPromo?Math.round(baseP-baseP*p.discount/100):baseP);
       var img=variant&&variant.image?'<img src="'+variant.image+'" style="width:100%;height:100%;object-fit:cover">':(p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:24px">📱</span>');
-      var sub=variant?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · '):p.sub;
+      var sub=variant
+        ?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · ')
+        :([p.color,p.storage,p.condition].filter(Boolean).join(' · ')||p.sub);
       var displayName=variant&&variant.name?variant.name:p.name;
       return ciHtml(item, item.id, p, null, img, sub, displayName, finalPrice, isPromo);
     }

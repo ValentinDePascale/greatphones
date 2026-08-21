@@ -178,7 +178,7 @@ describe('PATCH /api/quotes', () => {
       batteryHealth: 95,
     }
 
-    it('approves without ARCA configured (no invoice, no PurchasedDevice)', async () => {
+    it('approves without ARCA configured (no invoice, but still registers PurchasedDevice)', async () => {
       const { requireAdmin } = await import('@/lib/auth-guard')
       const { prisma } = await import('@/lib/prisma')
       const arca = await import('@/lib/arca')
@@ -186,7 +186,8 @@ describe('PATCH /api/quotes', () => {
       vi.mocked(requireAdmin).mockResolvedValue({ id: 'a1', email: 'admin@test.com', role: 'ADMIN' })
       vi.mocked(arca.arcaIsConfigured).mockReturnValue(false)
       vi.mocked(prisma.invoice.findUnique).mockResolvedValue(null)
-      vi.mocked(prisma.quote.findUnique).mockResolvedValue(mockQuote as any)
+      vi.mocked(prisma.quote.findUnique).mockResolvedValue({ ...mockQuote, purchasedDevice: null } as any)
+      vi.mocked(prisma.purchasedDevice.create).mockResolvedValue({ id: 'pd1' } as any)
       vi.mocked(prisma.quote.update).mockResolvedValue({
         ...mockQuote,
         status: 'APPROVED',
@@ -205,7 +206,12 @@ describe('PATCH /api/quotes', () => {
       expect(data.invoice).toBeNull()
       expect(data.warning).toContain('ARCA no está configurado')
       expect(prisma.invoice.create).not.toHaveBeenCalled()
-      expect(prisma.purchasedDevice.create).not.toHaveBeenCalled()
+      // Aún sin ARCA, la cotización aprobada debe registrarse en comprados
+      expect(prisma.purchasedDevice.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ quoteId: 'q1', invoiceId: null }),
+        })
+      )
     })
 
     it('approves with ARCA configured: creates Invoice + PurchasedDevice', async () => {

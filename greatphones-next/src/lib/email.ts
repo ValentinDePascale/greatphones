@@ -489,6 +489,63 @@ export async function sendOrderStatusEmail(data: {
   return { success: true }
 }
 
+export async function sendCouponEmail(data: {
+  email: string
+  userName: string
+  code: string
+  amount: number
+  expiresAt?: Date | null
+  gift?: boolean
+  note?: string
+}) {
+  const expiresText = data.expiresAt
+    ? `Vence el <strong>${new Date(data.expiresAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>.`
+    : 'Sin fecha de vencimiento.'
+
+  const giftBadge = data.gift
+    ? '<div style="background:#fef2f2;padding:10px 16px;border-radius:8px;border-left:4px solid #dc2626;margin:16px 0;font-size:13px"><strong>🎁 Cupón de regalo</strong><br>Este cupón fue emitido como regalo y <strong>no genera ganancia</strong> para la tienda.</div>'
+    : ''
+
+  const noteHtml = data.note
+    ? `<p style="margin-top:12px;color:#666;font-size:13px;line-height:1.6"><strong>Nota:</strong> ${escapeHtml(data.note)}</p>`
+    : ''
+
+  await sendEmail({
+    to: data.email,
+    subject: `¡Tenés un cupón de $${data.amount.toLocaleString('es-AR')}! - Great Phones`,
+    html: `
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
+        <h2 style="color: #ff6b2c;">¡Tenés un cupón!</h2>
+        <p>Hola ${escapeHtml(data.userName)},</p>
+        <p>Te asignamos un cupón de <strong>$${data.amount.toLocaleString('es-AR')}</strong> para usar en tu próxima compra.</p>
+        ${giftBadge}
+        <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0; border-radius: 10px;">
+          <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Tu código</div>
+          <div style="font-family: monospace; font-size: 26px; font-weight: bold; letter-spacing: 4px; color: #d97706; background: #fff; border: 2px dashed #f59e0b; padding: 10px; border-radius: 8px;">
+            ${escapeHtml(data.code)}
+          </div>
+        </div>
+        <p style="font-size: 13px; color: #666; line-height: 1.6;">
+          ${expiresText}
+        </p>
+        <p style="font-size: 13px; color: #666; line-height: 1.6;">
+          Copiá el código y aplicalo en el checkout cuando vayas a pagar, o revisalo en la sección <strong>"Mis Cupones"</strong> de tu cuenta.
+        </p>
+        ${noteHtml}
+        <p style="margin-top: 20px; color: #666; font-size: 12px;">
+          ¿Dudas? Escribinos a <a href="mailto:${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}">${process.env.EMAIL_USER || 'contacto@greatphones.com.ar'}</a>
+        </p>
+        <p style="margin-top: 30px; color: #666; font-size: 12px;">
+          — El equipo de Great Phones<br>
+          Zelarrayan 179, Bahia Blanca
+        </p>
+      </div>
+    `
+  })
+
+  return { success: true }
+}
+
 export async function sendPreorderConfirmationEmail(data: {
   email: string;
   clientName: string;

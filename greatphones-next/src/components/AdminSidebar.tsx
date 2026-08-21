@@ -4,20 +4,21 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 const tabs = [
-  { href: '/admin', label: 'Dashboard', icon: '📊', exact: true },
-  { href: '/admin/productos', label: 'Productos', icon: '📱' },
-  { href: '/admin/accesorios', label: 'Accesorios', icon: '📦' },
-  { href: '/admin/stock', label: 'Stock', icon: '📋' },
-  { href: '/admin/promos', label: 'Promociones', icon: '🏷️' },
-  { href: '/admin/pedidos', label: 'Pedidos', icon: '📑' },
-  { href: '/admin/ventas', label: 'Ventas', icon: '📈' },
-  { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: '↩️' },
-  { href: '/admin/chat', label: 'Chat', icon: '💬' },
-  { href: '/admin/cotizaciones', label: 'Cotizaciones', icon: '💵' },
-  { href: '/admin/instore', label: 'Venta en Tienda', icon: '🏪' },
-  { href: '/admin/preventa', label: 'Preventas', icon: '⭐' },
-  { href: '/admin/comprados', label: 'Comprados', icon: '🛒' },
-  { href: '/admin/usuarios', label: 'Usuarios', icon: '👥' },
+  { href: '/admin', label: 'Dashboard', icon: 'dashboard', exact: true },
+  { href: '/admin/productos', label: 'Productos', icon: 'smartphone' },
+  { href: '/admin/accesorios', label: 'Accesorios', icon: 'headphones' },
+  { href: '/admin/stock', label: 'Stock', icon: 'inventory_2' },
+  { href: '/admin/promos', label: 'Promociones', icon: 'local_offer' },
+  { href: '/admin/cupones', label: 'Cupones', icon: 'confirmation_number' },
+  { href: '/admin/pedidos', label: 'Pedidos', icon: 'shopping_bag' },
+  { href: '/admin/ventas', label: 'Ventas', icon: 'payments' },
+  { href: '/admin/cotizaciones', label: 'Cotizaciones', icon: 'request_quote' },
+  { href: '/admin/comprados', label: 'Cotizaciones Dashboard', icon: 'space_dashboard' },
+  { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: 'undo' },
+  { href: '/admin/chat', label: 'Chat', icon: 'chat' },
+  { href: '/admin/instore', label: 'Venta en Tienda', icon: 'point_of_sale' },
+  { href: '/admin/preventa', label: 'Preventas', icon: 'event' },
+  { href: '/admin/usuarios', label: 'Usuarios', icon: 'group' },
 ]
 
 export default function AdminSidebar() {
@@ -53,7 +54,7 @@ export default function AdminSidebar() {
               fontSize: 13, fontWeight: active ? 600 : 500,
               transition: 'all .15s',
             }}>
-              <span style={{ fontSize: 16 }}>{t.icon}</span>
+              <span className="material-symbols-outlined" style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true">{t.icon}</span>
               {t.label}
             </Link>
           )
