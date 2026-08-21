@@ -44,7 +44,8 @@ export default function AdminPageClient({ html, tab }: Props) {
     }
 
     setTimeout(() => {
-      const fn = (window as any).renderAdminContent || window.renderAdminContent
+      const w = window as any
+      const fn = w.renderAdminContent
       if (typeof fn === 'function') fn(tab)
     }, 300)
   }, [tab])

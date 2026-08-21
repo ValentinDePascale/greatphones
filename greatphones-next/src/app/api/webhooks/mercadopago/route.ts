@@ -372,7 +372,7 @@ export async function POST(request: NextRequest) {
             await sendLowStockAlert({
               productName: item.product?.name || 'Producto',
               stock: item.product?.stock ?? 0,
-              productId: item.productId,
+              productId: item.productId || 'unknown',
             })
           }
         } catch { /* non-blocking */ }

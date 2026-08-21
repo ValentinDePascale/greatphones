@@ -532,7 +532,7 @@ export async function POST(request: NextRequest) {
 
       sendNewOrderAdminNotification({
         orderCode: order.code,
-        clientName,
+        clientName: user.name || email.split('@')[0],
         total: order.total,
         itemCount: enrichedItems.length,
         paymentMethod: validatedCoupons.map(c => c.code).join(', ') || 'Cupón',

@@ -56,9 +56,9 @@ describe('POST /api/upload', () => {
     const { requireSession } = await import('@/lib/auth-guard')
     vi.mocked(requireSession).mockResolvedValue({ id: 'u1', email: 'test@test.com', role: 'CLIENT' })
     const cloudinary = await import('cloudinary')
-    vi.mocked(cloudinary.v2.uploader.upload).mockImplementation((_base64: string, _opts: any, cb: any) => {
+    vi.mocked(cloudinary.v2.uploader.upload).mockImplementation(((_base64: string, _opts: any, cb: any) => {
       cb(null, { secure_url: 'https://cloudinary.com/test.png', public_id: 'greatphones/test' })
-    })
+    }) as any)
 
     const { POST } = await import('./route')
     const formData = new FormData()
