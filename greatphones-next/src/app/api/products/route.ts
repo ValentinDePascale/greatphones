@@ -237,7 +237,26 @@ export async function PUT(request: Request) {
 
     productCache.clear()
 
-    return NextResponse.json(updatedProduct, { headers: corsHeaders })
+    // Sincronizar el precio de los IMEIs en stock del producto: el precio que
+    // ve el cliente (card / detalle / checkout) se calcula desde minTargetPrice
+    // de los IMEIs. Si el admin cambia el precio del producto, propagarlo a los
+    // IMEIs para que no queden precios viejos inconsistentes.
+    let syncedImeis = 0
+    if (body.price !== undefined) {
+      try {
+        if (prisma.inventoryItem && typeof prisma.inventoryItem.updateMany === 'function') {
+          const sync = await prisma.inventoryItem.updateMany({
+            where: { productId: id, status: 'IN_STOCK' },
+            data: { targetPrice: Number(body.price) },
+          })
+          syncedImeis = sync.count
+        }
+      } catch (syncErr) {
+        console.error('[Products] Error syncing inventory prices:', syncErr)
+      }
+    }
+
+    return NextResponse.json({ ...updatedProduct, syncedImeis }, { headers: corsHeaders })
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500
     return NextResponse.json({ error: 'Error al actualizar producto' }, { status, headers: corsHeaders })

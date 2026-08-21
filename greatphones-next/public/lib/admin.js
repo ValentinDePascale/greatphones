@@ -143,7 +143,7 @@ function _renderAdminLegacy(tab){
       '<button class="ord-btn" id="quoteBtnApproved" onclick="loadQuotes(\'APPROVED\')">Aceptadas</button>'+
       '<button class="ord-btn" id="quoteBtnRejected" onclick="loadQuotes(\'REJECTED\')">Rechazadas</button>'+
       '<input type="text" id="quoteSearchInput" placeholder="Buscar por nombre, telefono o codigo..." oninput="searchQuotes(this.value)" style="flex:1;max-width:400px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
-      '<a href="/admin/cotizaciones?tab=dashboard" class="btn btn-o btn-sm" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none">📊 Dashboard</a>'+
+      '<a href="/admin/comprados" class="btn btn-o btn-sm" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none"><span class="material-symbols-outlined" style="font-size:15px">space_dashboard</span> Cotizaciones Dashboard</a>'+
     '</div>'+
     '<div class="adm-list" id="quoteList"></div><div id="quotePagination"></div>';
     waitForFn('loadQuotes',function(){loadQuotes('all');});
@@ -205,6 +205,31 @@ function _renderAdminLegacy(tab){
       '</div>'+
     '</div>';
     waitForFn('renderPromoProducts',function(){renderPromoProducts();if(typeof renderActivePromos==='function')renderActivePromos();});
+  }else if(tab==='cupones'){
+    content.innerHTML=
+      '<div style="margin-bottom:2rem">'+
+        '<div style="display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;margin-bottom:1.5rem">'+
+          '<div>'+
+            '<h3 style="font-size:24px;font-family:\'Playfair Display\',Georgia,serif;margin-bottom:.25rem">Cupones</h3>'+
+            '<p style="font-size:13px;color:var(--gray);margin:0">Generá cupones, asignalos a usuarios y seguí la ganancia que aportan a la tienda.</p>'+
+          '</div>'+
+          '<button onclick="openCuponModal()" style="display:inline-flex;align-items:center;gap:8px;background:var(--orange);color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;font-weight:700;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(255,107,44,.3)">+ Crear cupón</button>'+
+        '</div>'+
+        '<div id="cuponStatsRow" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.5rem"></div>'+
+        '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">'+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+            '<button class="ord-btn ord-btn-act" id="cupBtnAll" onclick="filterCuponTable(null)">Todos</button>'+
+            '<button class="ord-btn" id="cupBtnActive" onclick="filterCuponTable(\'ACTIVE\')">Activos</button>'+
+            '<button class="ord-btn" id="cupBtnUsed" onclick="filterCuponTable(\'USED\')">Usados</button>'+
+            '<button class="ord-btn" id="cupBtnExpired" onclick="filterCuponTable(\'EXPIRED\')">Expirados</button>'+
+          '</div>'+
+          '<input type="text" id="cuponSearchInput" placeholder="Buscar por código, email o nombre..." oninput="loadAdminCoupons(this.value)" style="flex:1;max-width:340px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none">'+
+        '</div>'+
+        '<div id="cuponTableWrap"></div>'+
+        '<div id="cuponPagination"></div>'+
+      '</div>'+
+      '<div id="cuponModalHost"></div>';
+    waitForFn('loadAdminCoupons',function(){loadAdminCoupons();loadCuponUsers();});
   }else if(tab==='arrep'){
     content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
       '<button class="ord-btn ord-btn-act" id="arrepBtnPendientes" onclick="loadArrepPendientes()">Pendientes</button>'+
@@ -2080,3 +2105,346 @@ function showToast(msg, type) {
   }
 }
 window.__adminLoaded = true;
+
+// =========== ADMIN CUPONES ===========
+
+var _cuponPage = 1
+var _cuponLimit = 25
+var _cuponAll = []
+var _cuponStats = null
+var cuponUsersCache = null
+
+function loadCuponUsers() {
+  fetch(API_URL + '/api/admin/users?page=1&limit=200', { headers: {} })
+    .then(function (r) { return r.json() })
+    .then(function (res) {
+      cuponUsersCache = (res.users || [])
+      cuponLoadUserDatalist()
+    })
+    .catch(function () { cuponUsersCache = [] })
+}
+
+function cuFmt(n) { return '$' + Number(n || 0).toLocaleString('es-AR') }
+
+function cupStatusLabel(s) {
+  return { ACTIVE: 'Activo', USED: 'Usado', EXPIRED: 'Expirado' }[s] || s
+}
+function cupStatusColor(s) {
+  return { ACTIVE: 'var(--green)', USED: 'var(--gray)', EXPIRED: 'var(--red)' }[s] || 'var(--gray)'
+}
+function cuFmtDate(d) {
+  if (!d) return '—'
+  var dt = new Date(d)
+  if (isNaN(dt.getTime())) return '—'
+  return dt.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function loadAdminCoupons(search) {
+  var url = API_URL + '/api/admin/coupons?page=' + _cuponPage + '&limit=' + _cuponLimit
+  if (search && String(search).trim()) url += '&search=' + encodeURIComponent(String(search).trim())
+  fetch(url, { headers: {} })
+    .then(function (r) { return r.json() })
+    .then(function (res) {
+      if (res.error) { showToast(res.error, 'error'); return }
+      _cuponAll = res.coupons || []
+      _cuponStats = res.stats || null
+      renderAdminCoupons(res)
+    })
+    .catch(function () {
+      var el = document.getElementById('cuponTableWrap')
+      if (el) el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--red)">Error al cargar cupones</div>'
+    })
+}
+
+function renderAdminCoupons(res) {
+  renderCuponStats(_cuponStats || res.stats)
+  renderCuponList(res.coupons || [])
+  renderCuponPagination(res.page || _cuponPage, res.totalPages || 1, res.total || 0)
+}
+
+function renderCuponStats(stats) {
+  var el = document.getElementById('cuponStatsRow')
+  if (!el) return
+  var s = stats || {}
+  var cards = [
+    { label: 'Ingreso generado', val: cuFmt(s.emitido), sub: 'total emitido', color: 'var(--dk)', icon: '💰' },
+    { label: 'Usado en compras', val: cuFmt(s.usado), sub: 'descontado del total', color: 'var(--orange)', icon: '🧾' },
+    { label: 'Pendiente por usar', val: cuFmt(s.pendiente), sub: 'emitido - usado', color: 'var(--green)', icon: '⏳' },
+  ]
+  el.innerHTML = cards.map(function (c) {
+    return '<div style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px"><span>' + c.label + '</span></div>' +
+      '<div style="font-size:26px;font-weight:700;font-family:\'Playfair Display\',serif;color:' + c.color + ';line-height:1.1">' + c.val + '</div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-top:6px">' + c.sub + '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--gray)">' +
+        '<span>Activos <strong style="color:var(--green)">' + (s.counts && s.counts.ACTIVE || 0) + '</strong></span>' +
+        '<span>· Usados <strong style="color:var(--gray)">' + (s.counts && s.counts.USED || 0) + '</strong></span>' +
+        '<span>· Expirados <strong style="color:var(--red)">' + (s.counts && s.counts.EXPIRED || 0) + '</strong></span>' +
+      '</div>' +
+      '</div>'
+  }).join('')
+}
+
+function cupBadge(c) {
+  var giftBadge = c.countsToProfit === false ? '<span style="font-size:10px;color:var(--red);font-weight:600;background:#fef2f2;border:1px solid #fecaca;padding:2px 8px;border-radius:8px;margin-left:6px">regalo</span>' : ''
+  var srcLabel = c.source === 'ADMIN' ? 'Admin' : (c.source || '—')
+  return '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px">' +
+    '<span style="font-family:monospace;font-weight:700;color:var(--dk)">' + esc(c.code) + '</span>' + giftBadge +
+    '<span style="font-size:10px;color:var(--gray);background:var(--cream2);padding:2px 8px;border-radius:8px">' + esc(srcLabel) + '</span>' +
+    '</div>'
+}
+
+function renderCuponList(cupones) {
+  var el = document.getElementById('cuponTableWrap')
+  if (!el) return
+  if (!cupones || cupones.length === 0) {
+    el.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--gray)">No hay cupones</div>'
+    return
+  }
+  var html = '<div style="background:#fff;border-radius:16px;overflow:hidden;border:1px solid var(--border)">' +
+    '<table style="width:100%;text-align:left;border-collapse:collapse;font-size:13px">' +
+    '<thead><tr style="border-bottom:2px solid var(--border)">' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Cupón</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Usuario</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase;text-align:right">Emitido</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase;text-align:right">Usado</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase;text-align:right">Restante</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Estado</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase">Vence</th>' +
+    '<th style="padding:12px 16px;color:var(--gray);font-weight:600;font-size:10px;text-transform:uppercase;text-align:center">Acciones</th>' +
+    '</tr></thead><tbody>'
+  html += cupones.map(function (c) {
+    var user = c.user ? (esc(c.user.name || '') + '<br><span style="font-size:11px;color:var(--gray)">' + esc(c.user.email || '') + '</span>') : '<span style="color:var(--gray)">—</span>'
+    var statusColor = cupStatusColor(c.status)
+    return '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:14px 16px">' + cupBadge(c) + (c.note ? '<div style="font-size:11px;color:var(--gray);margin-top:4px">' + esc(c.note) + '</div>' : '') + '</td>' +
+      '<td style="padding:14px 16px">' + user + '</td>' +
+      '<td style="padding:14px 16px;text-align:right;font-weight:600">' + cuFmt(c.originalAmount) + '</td>' +
+      '<td style="padding:14px 16px;text-align:right;color:var(--orange);font-weight:600">' + cuFmt(c.usedAmount) + '</td>' +
+      '<td style="padding:14px 16px;text-align:right;color:var(--green);font-weight:600">' + cuFmt(c.remainingAmount) + '</td>' +
+      '<td style="padding:14px 16px"><span style="font-weight:700;color:' + statusColor + '">' + cupStatusLabel(c.status) + '</span></td>' +
+      '<td style="padding:14px 16px;color:var(--gray);font-size:12px">' + cuFmtDate(c.expiresAt) + '</td>' +
+      '<td style="padding:14px 16px;text-align:center;white-space:nowrap">' + cupRowActions(c) + '</td>' +
+      '</tr>'
+  }).join('')
+  html += '</tbody></table></div>'
+  el.innerHTML = html
+}
+
+function cupRowActions(c) {
+  var btns = []
+  if (c.status === 'ACTIVE') {
+    btns.push(cupActionBtn('EXPIRED', 'Expirar', 'var(--red)', c.id))
+    if (!c.expiresAt) btns.push(cupActionBtn('EXTEND', 'Extender', 'var(--green)', c.id))
+  } else if (c.status === 'EXPIRED' || c.status === 'USED') {
+    btns.push(cupActionBtn('ACTIVE', 'Reactivar', 'var(--green)', c.id))
+  }
+  return btns.join('')
+}
+function cupActionBtn(action, label, color, id) {
+  return '<button onclick="updateAdminCoupon(\'' + action + '\')" data-cid="' + id + '" style="background:none;border:1px solid ' + color + ';color:' + color + ';padding:5px 10px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;margin:0 2px;font-family:inherit">' + label + '</button>'
+}
+
+function renderCuponPagination(page, totalPages, total) {
+  var el = document.getElementById('cuponPagination')
+  if (!el) return
+  var html = '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 4px;font-size:12px;color:var(--gray)">'
+  html += '<span>' + total + ' cupón' + (total === 1 ? '' : 'es') + '</span>'
+  html += '<span style="display:flex;gap:6px;align-items:center">'
+  html += '<button onclick="cuponChangePage(' + (page - 1) + ')" ' + (page <= 1 ? 'disabled' : '') + ' style="padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:12px">← Anterior</button>'
+  html += '<span>Página ' + page + ' de ' + totalPages + '</span>'
+  html += '<button onclick="cuponChangePage(' + (page + 1) + ')" ' + (page >= totalPages ? 'disabled' : '') + ' style="padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-size:12px">Siguiente →</button>'
+  html += '</span></div>'
+  el.innerHTML = html
+}
+
+function cuponChangePage(p) {
+  if (p < 1) return
+  _cuponPage = p
+  loadAdminCoupons(document.getElementById('cuponSearchInput') ? document.getElementById('cuponSearchInput').value : '')
+}
+
+function filterCuponTable(status) {
+  var shown = _cuponAll
+  if (status) shown = _cuponAll.filter(function (c) { return c.status === status })
+  renderCuponList(shown)
+  document.querySelectorAll('#cupBtnAll,#cupBtnActive,#cupBtnUsed,#cupBtnExpired').forEach(function (b) { b.classList.remove('ord-btn-act') })
+  if (status) {
+    var btn = document.getElementById('cupBtn' + status.charAt(0) + status.slice(1).toLowerCase())
+    if (btn) btn.classList.add('ord-btn-act')
+  } else {
+    var allBtn = document.getElementById('cupBtnAll')
+    if (allBtn) allBtn.classList.add('ord-btn-act')
+  }
+}
+
+// Buscador de usuarios para asignar cupones
+function cuponLoadUserDatalist() {
+  if (!cuponUsersCache) return
+  var dl = document.getElementById('cuponUsersList')
+  if (dl) dl.innerHTML = cuponUsersCache.map(function (u) { return '<option value="' + esc(u.name) + ' · ' + esc(u.email) + '">' }).join('')
+}
+
+function cuponFindUser(text) {
+  if (!text) return null
+  var needle = String(text).trim().toLowerCase()
+  if (!cuponUsersCache) return null
+  for (var i = 0; i < cuponUsersCache.length; i++) {
+    var u = cuponUsersCache[i]
+    var name = (u.name || '').toLowerCase()
+    var email = (u.email || '').toLowerCase()
+    // El input guarda "Nombre · email" (datalist). Aceptamos coincidencia de
+    // email dentro del texto, nombre exacto, o texto == email.
+    if (needle === email || (email && needle.indexOf(email) >= 0) || needle === name) return u
+  }
+  return null
+}
+
+function openCuponModal() {
+  loadCuponUsers()
+  var host = document.getElementById('cuponModalHost')
+  if (!host) return
+  host.innerHTML =
+    '<div id="cuponModalOverlay" style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:1200;display:flex;align-items:flex-start;justify-content:center;padding:8vh 16px 16px;overflow-y:auto">' +
+      '<div style="background:#fff;border-radius:18px;box-shadow:0 24px 60px rgba(0,0,0,.2);width:100%;max-width:560px;overflow:hidden;font-family:inherit">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--border);background:var(--cream)">' +
+          '<div>' +
+            '<div style="font-size:18px;font-weight:700;color:var(--dk);font-family:\'Playfair Display\',serif">Crear cupón</div>' +
+            '<div style="font-size:12px;color:var(--gray);margin-top:2px">Asigná un cupón a un usuario y notificalo por email e in-app</div>' +
+          '</div>' +
+          '<button onclick="closeCuponModal()" aria-label="Cerrar" style="background:none;border:none;font-size:24px;line-height:1;color:var(--gray);cursor:pointer;padding:4px 8px">×</button>' +
+        '</div>' +
+        '<div style="padding:22px;display:flex;flex-direction:column;gap:16px">' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Usuario *</label>' +
+            '<input id="cuponUserSearch" list="cuponUsersList" placeholder="Buscar por nombre o email..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;box-sizing:border-box">' +
+            '<datalist id="cuponUsersList"></datalist>' +
+            '<div style="font-size:11px;color:var(--gray);margin-top:4px">Elegí el usuario del listado que aparece al escribir.</div>' +
+          '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">' +
+            '<div>' +
+              '<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Monto ($) *</label>' +
+              '<input id="cuponAmount" type="number" min="1" placeholder="10000" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+            '<div>' +
+              '<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Vencimiento</label>' +
+              '<input id="cuponExpires" type="datetime-local" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none;box-sizing:border-box">' +
+            '</div>' +
+          '</div>' +
+          '<div style="background:var(--cream2);border:1px solid var(--border);border-radius:12px;padding:14px">' +
+            '<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Suma a la ganancia de la tienda</label>' +
+            '<select id="cuponCountsProfit" style="width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:#fff">' +
+              '<option value="true" selected>✓ Sí, suma a la ganancia</option>' +
+              '<option value="false">✗ No (es un regalo)</option>' +
+            '</select>' +
+            '<div style="font-size:11px;color:var(--gray);margin-top:6px">Si es un regalo promocional, no se cuenta como ingreso de la tienda.</div>' +
+          '</div>' +
+          '<div>' +
+            '<label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray)">Nota (opcional)</label>' +
+            '<textarea id="cuponNote" rows="2" placeholder="Ej: regalo por cumpleaños, compensación..." style="width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical"></textarea>' +
+          '</div>' +
+          '<div id="cuponFormFeedback" style="font-size:12px;min-height:0"></div>' +
+        '</div>' +
+        '<div style="padding:16px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px">' +
+          '<button onclick="closeCuponModal()" style="padding:11px 18px;background:none;border:1.5px solid var(--border);color:var(--gray);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">Cancelar</button>' +
+          '<button id="cuponSubmitBtn" onclick="createAdminCoupon()" style="padding:11px 22px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">Generar y notificar</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>'
+  var overlay = document.getElementById('cuponModalOverlay')
+  if (overlay) overlay.addEventListener('click', function (e) { if (e.target === overlay) closeCuponModal() })
+  var input = document.getElementById('cuponUserSearch')
+  if (input) { setTimeout(function () { input.focus() }, 30) }
+}
+
+function closeCuponModal() {
+  var host = document.getElementById('cuponModalHost')
+  if (host) host.innerHTML = ''
+}
+
+function createAdminCoupon() {
+  var userInput = document.getElementById('cuponUserSearch')
+  var amountInput = document.getElementById('cuponAmount')
+  var expiresInput = document.getElementById('cuponExpires')
+  var countsSel = document.getElementById('cuponCountsProfit')
+  var noteInput = document.getElementById('cuponNote')
+  var fb = document.getElementById('cuponFormFeedback')
+  if (fb) fb.innerHTML = ''
+
+  var user = cuponFindUser(userInput ? userInput.value : '')
+  if (!user) {
+    if (fb) { fb.innerHTML = '<span style="color:var(--red)">Seleccioná un usuario válido (por nombre o email) del listado.</span>' }
+    return
+  }
+  var amount = parseInt(amountInput ? amountInput.value : '0', 10)
+  if (!amount || amount <= 0) {
+    if (fb) { fb.innerHTML = '<span style="color:var(--red)">Ingresá un monto válido.</span>' }
+    return
+  }
+
+  var payload = {
+    userId: user.id,
+    amount: amount,
+    countsToProfit: countsSel ? countsSel.value !== 'false' : true,
+    note: noteInput ? (noteInput.value || undefined) : undefined,
+  }
+  if (expiresInput && expiresInput.value) payload.expiresAt = new Date(expiresInput.value).toISOString()
+
+  var btn = document.getElementById('cuponSubmitBtn')
+  if (btn) { btn.disabled = true; btn.textContent = 'Generando...' }
+
+  fetch(API_URL + '/api/admin/coupons', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(function (r) { return r.json() })
+    .then(function (res) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Generar y notificar' }
+      if (res.error) { if (fb) fb.innerHTML = '<span style="color:var(--red)">' + esc(res.error) + '</span>'; return }
+      if (fb) fb.innerHTML = '<span style="color:var(--green)">Cupón <strong>' + esc(res.coupon.code) + '</strong> generado. ' + (res.emailSent ? 'Email enviado.' : (res.notice || 'Email no enviado.')) + '</span>'
+      _cuponPage = 1
+      closeCuponModal()
+      loadAdminCoupons()
+      showToast('Cupón ' + res.coupon.code + ' generado', 'success')
+    })
+    .catch(function (e) {
+      if (btn) { btn.disabled = false; btn.textContent = 'Generar y notificar' }
+      if (fb) fb.innerHTML = '<span style="color:var(--red)">Error al generar cupón: ' + esc(e.message) + '</span>'
+    })
+}
+
+function updateAdminCoupon(action) {
+  var btn = event && event.target ? event.target : null
+  var id = null
+  // El botón no lleva el id; lo resolvemos por el código más reciente no es fiable.
+  // Mejor: cada botón guarda el id del cupón en un atributo data.
+  if (btn && btn.getAttribute('data-cid')) id = btn.getAttribute('data-cid')
+
+  // Fallback: resolver el cupón por fila/clic es complejo. Requerimos data-cid.
+  if (!id) { showToast('Error: falta identificador del cupón', 'error'); return }
+
+  var payload = {}
+  if (action === 'ACTIVE') payload.status = 'ACTIVE'
+  else if (action === 'EXPIRED') payload.status = 'EXPIRED'
+  else if (action === 'EXTEND') {
+    var defaultExp = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString()
+    var newExp = prompt('Nueva fecha de vencimiento (YYYY-MM-DD):', defaultExp.slice(0, 10))
+    if (!newExp) return
+    payload.expiresAt = new Date(newExp + 'T23:59:59').toISOString()
+    payload.status = 'ACTIVE'
+  } else return
+
+  fetch(API_URL + '/api/admin/coupons/' + id, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  })
+    .then(function (r) { return r.json() })
+    .then(function (res) {
+      if (res.error) { showToast(res.error, 'error'); return }
+      showToast('Cupón actualizado', 'success')
+      loadAdminCoupons(document.getElementById('cuponSearchInput') ? document.getElementById('cuponSearchInput').value : '')
+    })
+    .catch(function (e) { showToast(e.message, 'error') })
+}

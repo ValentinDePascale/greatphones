@@ -54,10 +54,12 @@ export async function GET(request: Request) {
         receivedAt: i.receivedAt.toISOString(),
         createdAt: i.createdAt.toISOString(),
         updatedAt: i.updatedAt.toISOString(),
-        invoice: {
-          ...i.invoice,
-          createdAt: i.invoice.createdAt.toISOString(),
-        },
+        invoice: i.invoice
+          ? {
+              ...i.invoice,
+              createdAt: i.invoice.createdAt.toISOString(),
+            }
+          : null,
       })),
       page,
       limit,

@@ -339,13 +339,13 @@ model PurchasedDevice {
   clientCity      String?
   clientProvince  String?
   purchasePrice   Int
-  invoiceId       String   @unique
+  invoiceId       String?  @unique
   receivedAt      DateTime @default(now())
   createdById     String
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   quote           Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  invoice         Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice         Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   createdBy       User     @relation(fields: [createdById], references: [id])
 }
 
@@ -496,6 +496,8 @@ model Coupon {
   status          CouponStatus  @default(ACTIVE)
   source          String?
   sourceId        String?
+  countsToProfit  Boolean       @default(true)
+  note            String?
   expiresAt       DateTime?
   createdAt       DateTime      @default(now())
   usedAt          DateTime?

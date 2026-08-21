@@ -2,18 +2,23 @@
   <div class="det-back-wrap"><button class="det-back" onclick="goBackFromDetail()">← Volver</button></div>
   <div style="background:var(--cream);padding:1.5rem var(--pad) 3rem;min-height:100vh;position:relative;z-index:1">
     <div class="det-page-wrap" style="max-width:1200px;margin:0 auto">
+      <!-- Breadcrumbs -->
+      <nav class="det-breadcrumb" aria-label="Migajas de pan">
+        <span class="det-crumb" id="detBrand">&nbsp;</span>
+        <span class="det-bc-sep">/</span>
+        <span id="detType">&nbsp;</span>
+        <span class="det-bc-sep">/</span>
+        <span class="det-crumb-current" id="detName2">&nbsp;</span>
+      </nav>
+
+      <!-- ============ HERO : Galería + Info ============ -->
       <div class="det-grid">
-        <!-- Columna 1: Galería -->
+        <!-- Columna 1: Galería (un poco más ancha) -->
         <div class="det-gallery">
-          <div class="det-main-img" id="detImgMain" style="height:720px;border-radius:20px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-            <span class="det-img-counter" id="detImgCounter" style="display:none"></span>
-            <button id="detFavBtn" onclick="toggleDetFav()" class="fav-btn" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;z-index:10;color:var(--gray)">♡</button>
-            <button id="detImgPrev" onclick="prevDetailImage()" aria-label="Imagen anterior" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">←</button>
-            <button id="detImgNext" onclick="nextDetailImage()" aria-label="Imagen siguiente" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.9);border:1px solid var(--border);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:18px;z-index:10;color:var(--dk);box-shadow:0 2px 8px rgba(0,0,0,.1)">→</button>
-            <span id="detIco" style="font-size:80px"></span>
-          </div>
+          <div class="det-main-img" id="detImgMain"></div>
           <div class="det-thumbnails" id="detThumbnails"></div>
         </div>
+
         <!-- Columna 2: Info -->
         <div class="det-info">
           <div class="det-skeleton" id="detSkeleton">
@@ -23,72 +28,80 @@
             <div class="sk sk-box"></div>
             <div class="sk sk-box"></div>
           </div>
-          <nav class="det-breadcrumb" aria-label="Migajas de pan">
-            <span class="det-crumb" id="detBrand">&nbsp;</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-            <span id="detType">&nbsp;</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
-            <span class="det-crumb-current" id="detName2">&nbsp;</span>
-          </nav>
+
           <h1 class="det-name" id="detName">&nbsp;</h1>
+
           <!-- Precio -->
           <div class="det-price-wrap" id="detPriceWrap">
             <span class="det-price" id="detPrice">&nbsp;</span>
             <span class="det-old" id="detOld" style="display:none"></span>
           </div>
-          <div id="detOfferTimer" style="display:none;margin-bottom:10px"><span class="offer-countdown" id="detTimerText"></span></div>
-          <span class="det-cuota" id="detCuotaInfo" style="display:none"><span id="detCuotaText"></span></span>
-          <!-- Descripción -->
-          <div class="det-desc" id="detDesc" style="display:none"></div>
-          <!-- Características -->
-          <div style="margin-bottom:24px">
-            <div class="det-variants-hd">Características</div>
-            <div class="det-specs" id="detSpecs"></div>
-          </div>
-          <!-- Badges de confianza -->
+
+          <div id="detOfferTimer" style="display:none;margin-bottom:16px"><span class="offer-countdown" id="detTimerText"></span></div>
+
+          <!-- Cuota -->
+          <span class="det-cuota" id="detCuotaInfo" style="display:none">
+            <span class="material-symbols-outlined" style="font-size:15px;line-height:1">local_offer</span>
+            <span id="detCuotaText"></span>
+          </span>
+
+          <!-- Badges -->
           <div class="det-badges" id="detBadges"></div>
-          <!-- Preventa info -->
+
+          <!-- Preventa -->
           <div class="det-preorder" id="detPreorderInfo" style="display:none"></div>
-          <!-- Selector de variantes -->
-          <div class="det-variants" id="detVariants" style="display:none;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid var(--border)">
+
+          <!-- Variantes -->
+          <div class="det-variants" id="detVariants" style="display:none">
             <div class="det-variants-hd">Variantes disponibles</div>
-            <div id="detVariantsList" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+            <div id="detVariantsList"></div>
           </div>
-          <!-- Total y botones -->
+
+          <!-- Acciones -->
           <div class="det-actions">
             <div class="det-total-row">
-              <div><div class="det-total-label">Total Final</div><div class="det-total" id="detTotal">&nbsp;</div></div>
+              <div class="det-total-label">Total Final</div>
+              <div class="det-total" id="detTotal">&nbsp;</div>
             </div>
             <div class="det-ctas">
-              <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Agregar al carrito</button>
-              <button class="det-btn det-btn-buy" id="detBuyNow" onclick="buyNow()" style="flex:1;padding:14px;color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer">Comprar ahora</button>
+              <button class="det-btn det-btn-cart" id="detAddCart" onclick="addToCartFromDetail()">Agregar al carrito</button>
+              <button class="det-btn det-btn-buy" id="detBuyNow" onclick="buyNow()">Comprar ahora</button>
             </div>
             <button onclick="consultarProducto()" id="detConsultBtn" class="det-consult">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
               Consultar por chat
             </button>
           </div>
+
           <!-- Trust strip -->
           <div class="det-trust">
             <div class="det-trust-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-              12 meses garantía
+              <span>12 meses garantía</span>
             </div>
             <div class="det-trust-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              Envío a todo el país
+              <span>Envío a todo el país</span>
             </div>
             <div class="det-trust-item">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-              Devolución 7 días
+              <span>Devolución 7 días</span>
             </div>
           </div>
         </div>
       </div>
-      <!-- Accesorios relacionados -->
+
+      <!-- ============ CARACTERÍSTICAS (bento grid) ============ -->
+      <section class="det-specs-section" id="detSpecsSection">
+        <h2 class="det-section-title">Características</h2>
+        <div class="det-specs" id="detSpecs"></div>
+      </section>
+
+      <!-- ============ ACCESORIOS RELACIONADOS ============ -->
       <div id="detRelated"></div>
     </div>
   </div>
+
   <!-- Barra sticky (móvil) -->
   <div class="det-sticky" aria-hidden="true">
     <div class="det-sticky-price">
@@ -98,5 +111,3 @@
     <button class="det-btn det-btn-cart" id="detStickyAdd">Agregar al carrito</button>
   </div>
 </div>
-
-<!-- ============================= PAGE: GARANTIAS ============================= -->

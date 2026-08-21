@@ -192,38 +192,30 @@
 
 /* --- Product Detail (p-detail) --- */
 
-/* <1024px: Narrow desktop / tablet landscape */
 @media(max-width:1023px){
-  #detImgMain{height:500px !important}
-  #p-detail > div:last-child > div > div{gap:32px !important}
-  #p-detail > div:last-child{padding:1.25rem var(--pad) 2.5rem !important}
+  #detImgMain{height:540px !important}
 }
 
 /* <768px: Tablet portrait — single column */
 @media(max-width:767px){
-  #p-detail > div:last-child > div > div{
-    grid-template-columns:1fr !important;
-    gap:24px !important
-  }
-  #p-detail > div:last-child > div > div > div:first-child{
-    position:static !important
-  }
-  #detImgMain{height:400px !important}
+  #p-detail .det-grid{grid-template-columns:1fr !important;gap:24px !important}
+  #p-detail .det-gallery{position:static !important}
+  #detImgMain{height:420px !important}
   .det-thumbnails{grid-template-columns:repeat(3,1fr) !important}
   #p-detail .det-back-wrap{padding:.5rem var(--pad) 0 !important}
-  #p-detail > div:last-child{padding:1rem var(--pad) 2rem !important}
+  #p-detail > div:nth-child(2){padding:1rem var(--pad) 2rem !important}
   #detSpecs{gap:8px !important}
 }
 
 /* <480px: Mobile */
 @media(max-width:480px){
-  #detImgMain{height:300px !important}
+  #detImgMain{height:340px !important}
   .det-thumbnails{
     grid-template-columns:repeat(2,1fr) !important;
     height:60px !important;
     gap:8px !important
   }
-  #detSpecs{grid-template-columns:1fr !important}
+  #detSpecs{grid-template-columns:1fr 1fr !important}
   #p-detail div:has(> .det-btn-cart):has(> .det-btn-buy){
     flex-direction:column !important;
     gap:8px !important
@@ -235,7 +227,7 @@
   }
   #detTotal{font-size:22px !important}
   #p-detail nav{font-size:11px !important}
-  #p-detail > div:last-child{padding:.75rem .75rem 1.5rem !important}
+  #p-detail > div:nth-child(2){padding:.75rem .75rem 1.5rem !important}
 }
 
 /* --- Hero --- */
