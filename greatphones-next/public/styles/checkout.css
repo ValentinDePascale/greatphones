@@ -1,0 +1,250 @@
+/* ============================================================
+   CHECKOUT V2 — Wizard de compra premium (frontend nuevo de cero)
+   Estética: clean corporate, tarjetas grandes, stepper suave.
+   Mantiene el contrato de checkout.js (ids/classes/datos) para
+   que el backend real siga funcionando. Solo cambia la UI.
+   ============================================================ */
+
+#p-checkout.page{animation:none}
+#p-checkout.act{transform:none;will-change:auto}
+#p-checkout{background:var(--cream)}
+
+/* ---- Layout general ---- */
+.cov-shell{
+  max-width:1200px;margin:0 auto;padding:2.5rem clamp(1rem,4vw,2rem) 4rem;
+}
+.cov-back{
+  display:inline-flex;align-items:center;gap:7px;background:none;border:none;cursor:pointer;
+  color:var(--gray);font-size:13px;font-weight:600;margin-bottom:1.5rem;padding:7px 10px;border-radius:9px;
+  transition:color .15s,background .15s
+}
+.cov-back:hover{color:var(--orange);background:rgba(255,107,44,.06)}
+.cov-back svg{width:16px;height:16px}
+
+/* ---- Cabecera ---- */
+.cov-hdr{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:2rem}
+.cov-hdr-ttl{font-family:'Playfair Display',Georgia,serif;font-size:clamp(24px,3vw,30px);font-weight:700;color:var(--dk);letter-spacing:-.3px;margin:0 0 4px}
+.cov-hdr-sub{font-size:13px;color:var(--gray);margin:0}
+.cov-hdr-secure{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--green);font-weight:600;white-space:nowrap}
+.cov-hdr-secure svg{width:14px;height:14px}
+
+/* ============================================================
+   STEPPER
+   ============================================================ */
+.cov-stepper{display:flex;align-items:center;margin-bottom:2.5rem}
+.cov-step{display:flex;flex-direction:column;align-items:center;gap:7px;flex:0 0 auto}
+.cov-step-dot{
+  width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:700;border:2px solid var(--border);color:var(--gray2);background:#fff;
+  position:relative;transition:all .25s cubic-bezier(.34,1.56,.64,1)
+}
+.cov-step-t{font-size:11px;color:var(--gray2);font-weight:600;letter-spacing:.2px}
+.cov-stepbar{flex:1;height:2px;border-radius:2px;background:var(--cream3);margin:0 12px;position:relative;top:-15px;min-width:20px}
+.cov-stepbar.done{background:var(--green)}
+
+/* ============================================================
+   GRID: contenido + sidebar
+   ============================================================ */
+.cov-grid{display:grid;grid-template-columns:1fr 340px;gap:28px;align-items:start;min-width:0}
+#checkout-steps{min-width:0}
+.cov-card{min-width:0}
+.cov-side{min-width:0}
+
+/* ---- Tarjetas de paso ---- */
+.cov-card{
+  background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:1.75rem;
+  box-shadow:0 2px 14px rgba(26,18,8,.03);margin-bottom:16px
+}
+.cov-lockup{display:flex;align-items:center;gap:14px;margin-bottom:1.5rem;padding-bottom:1.25rem;border-bottom:1px solid var(--border)}
+.cov-lockup-n{width:34px;height:34px;border-radius:10px;background:var(--dk);color:var(--orange2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;font-family:'Playfair Display',Georgia,serif;flex-shrink:0}
+.cov-lockup-ttl{font-size:17px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--dk);margin:0}
+.cov-lockup-sub{font-size:12px;color:var(--gray);margin:2px 0 0}
+
+/* ---- Campos ---- */
+.cov-field{margin-bottom:1rem}
+.cov-field.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cov-field.row21{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.cov-lb{font-size:11.5px;font-weight:600;color:var(--dk);margin-bottom:6px;display:block}
+.cov-lb .req{color:var(--orange)}
+.cov-inp,.cov-sel{
+  width:100%;padding:13px 15px;border:1.5px solid var(--border);border-radius:11px;
+  font-size:13.5px;outline:none;background:#fff;color:var(--dk);
+  transition:border-color .18s,box-shadow .18s,background .18s;box-sizing:border-box
+}
+.cov-inp:focus,.cov-sel:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,107,44,.10)}
+.cov-inp.err,.cov-sel.err{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,57,43,.10)}
+.cov-inp::placeholder{color:var(--gray2)}
+.cov-sel{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236B6259' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.cov-field-h{font-size:12px;color:var(--gray);margin:-6px 0 14px 2px}
+
+/* ---- Opciones de tarjeta (radio-like) ---- */
+.cov-opts{display:flex;flex-direction:column;gap:10px}
+.cov-opt{
+  display:flex;align-items:center;gap:13px;padding:15px 18px;border:1.5px solid var(--border);
+  border-radius:13px;background:#fff;cursor:pointer;transition:all .18s;position:relative
+}
+.cov-opt:hover{border-color:var(--orange);box-shadow:0 8px 22px rgba(26,18,8,.06)}
+.cov-opt-radio{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .18s
+}
+.cov-opt[data-sel="1"] .cov-opt-radio{border-color:var(--orange)}
+.cov-opt[data-sel="1"] .cov-opt-radio::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--orange)}
+.cov-opt-main{flex:1;min-width:0}
+.cov-opt-ttl{font-size:14px;font-weight:600;color:var(--dk)}
+.cov-opt-desc{font-size:12px;color:var(--gray);margin-top:2px}
+.cov-opt-price{font-weight:700;font-size:14px;color:var(--orange);white-space:nowrap}
+.cov-opt-price.free{color:var(--green)}
+
+/* ---- Toggle envío ---- */
+.cov-toggle-row{display:flex;gap:10px;margin-bottom:1rem}
+.cov-toggle{
+  flex:1;padding:14px;border:1.5px solid var(--border);border-radius:13px;background:#fff;
+  cursor:pointer;text-align:center;transition:all .18s
+}
+.cov-toggle[data-sel="1"]{border-color:var(--orange);background:rgba(255,107,44,.05)}
+.cov-toggle-ico{font-size:20px;display:block;margin-bottom:4px}
+.cov-toggle-lb{font-size:13px;font-weight:600;color:var(--dk)}
+
+/* ============================================================
+   PLAN DE CUOTAS — grid de tarjetas premium
+   ============================================================ */
+#checkout-cuotas{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.cuota-btn{
+  display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:18px 18px 16px;
+  border-radius:16px;cursor:pointer;transition:all .2s;text-align:left;width:100%;
+  box-sizing:border-box;border:1.5px solid var(--border);background:#fff;position:relative;
+  overflow:hidden
+}
+.cuota-btn:hover{border-color:var(--orange);box-shadow:0 12px 28px rgba(26,18,8,.08);transform:translateY(-2px)}
+.cuota-btn::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;background:transparent;transition:background .2s
+}
+.cuota-btn[class*="sel"]::before,
+.cuota-btn[data-sel="1"]::before{background:var(--orange)}
+.cuota-top{display:flex;align-items:center;justify-content:space-between;width:100%}
+.cuota-icon{
+  width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:19px;font-weight:800;font-family:'Playfair Display',Georgia,serif
+}
+.cuota-check{
+  width:24px;height:24px;border-radius:50%;border:2px solid var(--border);display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;color:transparent
+}
+.cuota-check svg{width:13px;height:13px}
+.cuota-btn[data-sel="1"] .cuota-check{background:var(--orange);border-color:var(--orange);color:#fff}
+/* Estado seleccionado: el JS pone background var(--green) inline en la cuota activa */
+.cuota-btn[style*="var(--green)"]{border-color:var(--green)!important;box-shadow:0 10px 28px rgba(45,90,39,.22)}
+.cuota-btn[style*="var(--green)"]::before{background:var(--green)}
+.cuota-btn > svg{
+  position:absolute;top:16px;right:16px;width:20px;height:20px;
+  display:flex!important;opacity:0;transform:scale(.5);transition:all .2s
+}
+.cuota-btn > svg path{stroke:var(--green)}
+.cuota-btn[style*="var(--green)"] > svg{opacity:1;transform:scale(1)}
+.cuota-btn[style*="var(--green)"] > svg path{stroke:#fff}
+.cuota-txt{width:100%}
+.cuota-ttl{font-size:15px;font-weight:700;color:var(--dk);line-height:1.2}
+.cuota-badge{font-size:9px;padding:3px 8px;border-radius:20px;font-weight:700;letter-spacing:.3px;display:inline-block;margin-top:6px}
+.cuota-monthly{font-size:13px;color:var(--dk);font-weight:600;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.cuota-monthly small{display:block;font-size:11px;color:var(--gray);font-weight:400;margin-top:1px}
+.cuota-btn .cuota-arr{display:none}
+
+/* ============================================================
+   MÉTODOS DE PAGO — lista radio premium
+   ============================================================ */
+#checkout-paymethods{display:flex;flex-direction:column;gap:0}
+.payment-method-card{
+  padding:16px 16px;border:1.5px solid var(--border);border-radius:14px;cursor:pointer;
+  transition:all .2s;display:flex;align-items:center;gap:16px;background:#fff;position:relative
+}
+.payment-method-card + .payment-method-card{margin-top:0}
+.payment-method-card .pm-radio{
+  width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;transition:all .18s
+}
+.payment-method-card .pm-radio::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--orange);transform:scale(0);transition:transform .18s}
+.payment-method-card:hover{border-color:var(--orange);box-shadow:0 8px 22px rgba(26,18,8,.05)}
+.payment-method-card:hover .pm-radio{border-color:var(--orange)}
+/* Estado seleccionado: el JS pone borderColor var(--orange) inline */
+.payment-method-card[style*="var(--orange)"]{border-color:var(--orange)!important;background:rgba(255,107,44,.04)!important;box-shadow:0 8px 22px rgba(255,107,44,.12)}
+.payment-method-card[style*="var(--orange)"] .pm-radio{border-color:var(--orange)}
+.payment-method-card[style*="var(--orange)"] .pm-radio::after{transform:scale(1)}
+.pm-logo{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.cm-ico{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff}
+.pm-name{font-size:14.5px;font-weight:700;color:var(--dk)}
+.pm-desc{font-size:12px;color:var(--gray);margin-top:2px}
+.pm-badges{display:flex;align-items:center;gap:8px}
+.cpn-count{font-size:12px;font-weight:600;color:var(--gray2);white-space:nowrap}
+
+/* ---- Acciones---- */
+.cov-actions{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem}
+.cov-actions.right{justify-content:flex-end}
+.cov-btn{
+  padding:14px 26px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;
+  display:inline-flex;align-items:center;gap:8px;transition:all .18s;border:none
+}
+.cov-btn svg{width:17px;height:17px}
+.cov-btn.primary{background:var(--dk);color:#fff}
+.cov-btn.primary:hover{background:var(--dk2);transform:translateY(-1px);box-shadow:0 10px 26px rgba(26,18,8,.2)}
+.cov-btn.ghost{background:transparent;color:var(--gray);border:1.5px solid var(--border)}
+.cov-btn.ghost:hover{border-color:var(--dk);color:var(--dk)}
+.cov-btn.pay{background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;font-weight:700;padding:15px 34px;font-size:15px}
+.cov-btn.pay:hover{transform:translateY(-1px);box-shadow:0 10px 28px rgba(255,107,44,.35)}
+
+/* ---- Resumen sidebar ---- */
+.cov-side{position:sticky;top:96px}
+.cov-side-card{background:#fff;border:1px solid rgba(0,0,0,.06);border-radius:18px;padding:1.5rem;box-shadow:0 18px 50px rgba(26,18,8,.06)}
+.cov-side-ttl{font-size:16px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin:0 0 1.25rem;color:var(--dk)}
+#checkout-items{max-height:230px;overflow-y:auto;border-bottom:1px solid var(--border);margin-bottom:1rem;padding-right:3px}
+#checkout-items::-webkit-scrollbar{width:6px}
+#checkout-items::-webkit-scrollbar-thumb{background:var(--cream3);border-radius:6px}
+.checkout-item{padding:9px 0}
+.cov-price{display:flex;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:7px}
+.cov-price b{color:var(--dk)}
+.cov-price.disc span{color:var(--orange);font-weight:700}
+.cov-total{display:flex;justify-content:space-between;align-items:center;padding-top:1rem;border-top:1.5px solid var(--dk);margin-top:.5rem}
+.cov-total-lb{font-size:15px;font-weight:700;color:var(--dk)}
+.cov-total-val{font-size:24px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)}
+#checkout-cuotas-box{background:linear-gradient(135deg,rgba(45,90,39,.06),rgba(45,90,39,.10));border:1px solid rgba(45,90,39,.15);border-radius:11px;padding:12px 14px;margin:.85rem 0;justify-content:space-between;align-items:center}
+#checkout-cuotas-label{font-size:13px;font-weight:600;color:var(--dk)}
+#checkout-cuotas-sidebar-total{font-size:11px;color:var(--gray);display:block;margin-top:1px}
+#checkout-cuotas-amount{font-size:15px;font-weight:700;color:var(--green)}
+.cov-secure{display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--green);font-weight:600;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)}
+.cov-secure svg{width:14px;height:14px}
+.cov-protected{background:linear-gradient(135deg,rgba(255,107,44,.05),rgba(255,107,44,.09));border:1px dashed rgba(255,107,44,.3);border-radius:14px;padding:1rem;margin-top:1rem;display:flex;gap:10px}
+.cov-protected svg{width:20px;height:20px;color:var(--orange);flex-shrink:0}
+.cov-protected-ttl{font-size:13px;font-weight:600;color:var(--dk);margin-bottom:2px}
+.cov-protected p{font-size:11px;color:var(--gray);margin:0;line-height:1.5}
+
+/* ---- Preventa ---- */
+#preorder-agreement-section{background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border:1.5px solid #FED7AA;border-radius:14px;padding:18px;margin-top:16px}
+#preorder-agreement-section input{width:22px;height:22px;margin-top:2px;flex-shrink:0;accent-color:var(--orange)}
+
+/* ---- Aviso ---- */
+.cov-note{display:flex;gap:9px;align-items:flex-start;padding:12px 14px;background:var(--cream);border-radius:11px;border:1px solid rgba(0,0,0,.04);margin-top:1rem;font-size:12px;color:var(--dk);line-height:1.5}
+.cov-note svg{width:16px;height:16px;color:var(--green);flex-shrink:0;margin-top:1px}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:960px){
+  .cov-grid{grid-template-columns:1fr;gap:20px}
+  .cov-side{position:static}
+}
+@media(max-width:560px){
+  .cov-shell{padding:1.5rem 1rem 2.5rem}
+  .cov-field.row2,.cov-field.row21{grid-template-columns:1fr}
+  .cov-stepper{justify-content:space-between}
+  .cov-step-t{display:none}
+  .cov-stepbar{min-width:8px}
+  .cov-hdr-secure{display:none}
+  .cov-toggle-row{flex-direction:column}
+  #checkout-cuotas{grid-template-columns:1fr}
+  .cuota-btn{padding:16px 14px}
+  .pm-badges img{height:20px!important}
+  .cov-btn.pay{padding:15px 20px;font-size:14px}
+  .payment-method-card{gap:12px;padding:14px 14px}
+  .cuota-txt,.cov-opt-main,.payment-method-card>div{min-width:0}
+  .cuota-ttl,.pm-name{overflow-wrap:break-word}
+}

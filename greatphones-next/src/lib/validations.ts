@@ -44,8 +44,8 @@ export const ProductCreateSchema = z.object({
   cost: z.number().int().optional().default(0),
   isOffer: z.boolean().optional(),
   discount: z.number().int().min(0).max(100).optional(),
-  offerStart: z.string().datetime().optional(),
-  offerEnd: z.string().datetime().optional(),
+  offerStart: z.coerce.date().nullable().optional(),
+  offerEnd: z.coerce.date().nullable().optional(),
 })
 
 export const ProductQuerySchema = z.object({
@@ -74,8 +74,8 @@ export const AccessoryCreateSchema = z.object({
   description: z.string().optional(),
   discount: z.number().int().min(0).max(100).nullable().optional(),
   isOffer: z.boolean().optional(),
-  offerStart: z.string().datetime().nullable().optional(),
-  offerEnd: z.string().datetime().nullable().optional(),
+  offerStart: z.coerce.date().nullable().optional(),
+  offerEnd: z.coerce.date().nullable().optional(),
 })
 
 export const AccessoryQuerySchema = z.object({
@@ -153,6 +153,9 @@ export const CheckoutSchema = z.object({
   total: z.number().int().positive(),
   paymentMethod: plainText().optional().default('mercadopago'),
   coupons: z.array(z.string()).optional(),
+  carrier: plainText().optional().nullable(),
+  carrierService: plainText().optional().nullable(),
+  deliveredType: z.enum(['D', 'S']).optional().nullable(),
 })
 
 // === WALLET PAY ===

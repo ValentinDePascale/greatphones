@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
 
     const { 
       items, email, phone, street, number, floor, zip, city, province, document,
-      warranty, delivery, cuotas, carrier, carrierService, paymentMethod,
+      warranty, delivery, cuotas, carrier, carrierService, deliveredType, paymentMethod,
       coupons: couponIds, agreedToTerms,
     } = validation.data as any;
 

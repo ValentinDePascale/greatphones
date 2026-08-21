@@ -2347,11 +2347,15 @@ function combineDateTime(dateId, timeId){
   if(!dateVal)return null;
   return dateVal+'T'+(timeVal||'23:59');
 }
-// Lee un input datetime-local y devuelve un ISO string válido (o null si vacío)
+// Lee un input datetime-local y devuelve un ISO string válido (o null si vacío).
+// El input type=datetime-local entrega "YYYY-MM-DDTHH:MM" (hora local); lo
+// convertimos a ISO (UTC con Z) que el validador Zod z.string().datetime()
+// acepta de forma consistente.
 function promoDatetimeLocal(id){
   var el=document.getElementById(id);
-  if(!el||!el.value)return null;
-  var val=el.value; // formato "YYYY-MM-DDTHH:MM"
+  if(!el)return null;
+  var val=el.value;
+  if(!val)return null;
   var d=new Date(val);
   return isNaN(d.getTime())?null:d.toISOString();
 }
@@ -2444,8 +2448,7 @@ function adminTab(tab,btn){
 }
 
 window.addEventListener('hashchange',function(){
-  if(!currentUser||currentUser.role!=='ADMIN')return;
-  var hashTab=location.hash.replace('#','');
+  if(!currentUser||currentUser.role!=='ADMIN')return;  var hashTab=location.hash.replace('#','');
   if(hashTab&&['dashboard','prods','acc','stock','promos','orders','arrep','chat','quotes','instore','preventa','sales','users'].indexOf(hashTab)!==-1){
     var btn=document.getElementById('adm-'+hashTab);
     if(btn&&hashTab!==window.currentAdminTab)adminTab(hashTab,btn);

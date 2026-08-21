@@ -105,7 +105,7 @@ function calcEnvioPackShipping(){
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Calculando...';
   }
 
-  fetch(API_URL+'/api/shipping/enviopack',{
+  fetch(API_URL+'/api/shipping/correoargentino',{
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({
@@ -121,12 +121,27 @@ function calcEnvioPackShipping(){
   .then(function(r){return r.json();})
   .then(function(data){
     if(data.error)throw new Error(data.error);
+    // Nuevo formato (Correo Argentino real): modalidades agrupadas
+    var modalidades=Array.isArray(data.modalidades)?data.modalidades:null;
+    // Formato viejo (fallback/otro): lista plana
     var options=data.options||[];
-    if(options.length===0)throw new Error('No hay opciones de envío disponibles');
-    renderEnvioPackOptions(options);
-    if(priceEl)priceEl.textContent=options.length+' opciones';
+    var flat=[];
+    if(modalidades){
+      modalidades.forEach(function(m){
+        (m.options||[]).forEach(function(o){
+          o.tipoEnvio=m.tipoEnvio;
+          o.tipoEnvioLabel=m.label;
+          flat.push(o);
+        });
+      });
+    }else{
+      flat=options.slice();
+    }
+    if(flat.length===0)throw new Error('No hay opciones de envío disponibles');
+    renderEnvioPackOptions(flat, modalidades);
+    if(priceEl)priceEl.textContent=flat.length+' opciones';
     if(btn){
-      btn.innerHTML='✓ '+options.length+' opciones';
+      btn.innerHTML='✓ '+flat.length+' opciones';
       btn.style.background='rgba(45,90,39,.1)';
       btn.style.borderColor='var(--green)';
       btn.style.color='var(--green)';
@@ -158,38 +173,53 @@ function getCarrierLogo(carrier){
   return'<svg width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="var(--gray)"/><text x="16" y="21" text-anchor="middle" fill="#fff" font-size="14" font-weight="700" font-family="DM Sans,sans-serif">📦</text></svg>';
 }
 
-function renderEnvioPackOptions(options){
+function renderEnvioPackOptions(options, modalidades){
   var optBox=document.getElementById('enviopack-options');
   if(!optBox)return;
-
   var cheapest=options.reduce(function(min,o){return o.costo<min.costo?o:min;},options[0]);
   var fastest=options.reduce(function(min,o){
     var d1=parseInt(o.diasEstimados)||5;
     var d2=parseInt(min.diasEstimados)||5;
     return d1<d2?o:min;
   },options[0]);
-
-  optBox.innerHTML='<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Elige una opción de envío:</div>'+
-    options.map(function(opt){
-      var badge='';
-      if(opt===cheapest&&opt===fastest)badge='<span style="background:var(--green);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Mejor opción</span>';
-      else if(opt===cheapest)badge='<span style="background:rgba(45,90,39,.1);color:var(--green);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más económico</span>';
-      else if(opt===fastest)badge='<span style="background:rgba(255,107,44,.1);color:var(--orange);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más rápido</span>';
-
-      return'<div class="ep-option" onclick="selectEnvioPackOption(this,'+JSON.stringify(opt).replace(/"/g,'&quot;')+
-        ')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s;margin-bottom:6px">'+
-        getCarrierLogo(opt.carrier)+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--dk)">'+opt.carrier+'</span><span style="font-size:11px;color:var(--gray)">· '+opt.service+'</span></div>'+
-          '<div style="font-size:11px;color:var(--gray);margin-top:2px">'+opt.diasEstimados+'</div>'+
-        '</div>'+
-        '<div style="text-align:right">'+
-          '<div style="font-size:15px;font-weight:700;color:var(--orange)">$'+opt.costo.toLocaleString('es-AR')+'</div>'+
-          badge+
-        '</div>'+
-      '</div>';
-    }).join('');
-
+  function optHtml(opt){
+    var badge='';
+    if(opt===cheapest&&opt===fastest)badge='<span style="background:var(--green);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Mejor opción</span>';
+    else if(opt===cheapest)badge='<span style="background:rgba(45,90,39,.1);color:var(--green);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más económico</span>';
+    else if(opt===fastest)badge='<span style="background:rgba(255,107,44,.1);color:var(--orange);font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600">Más rápido</span>';
+    var modalBadge=opt.tipoEnvioLabel
+      ?'<span style="display:block;font-size:10px;color:var(--orange2);font-weight:600;margin-top:2px">'+(opt.tipoEnvio==='S'?'🏬 Retiro en punto':'🚚 A domicilio')+'</span>'
+      :'';
+    return '<div class="ep-option" onclick="selectEnvioPackOption(this,'+JSON.stringify(opt).replace(/"/g,'&quot;')+
+      ')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s;margin-bottom:6px">'+
+      getCarrierLogo(opt.carrier)+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:600;color:var(--dk)">'+opt.carrier+'</span><span style="font-size:11px;color:var(--gray)">· '+opt.service+'</span></div>'+
+        '<div style="font-size:11px;color:var(--gray);margin-top:2px">'+opt.diasEstimados+'</div>'+
+        modalBadge+
+      '</div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-size:15px;font-weight:700;color:var(--orange)">$'+opt.costo.toLocaleString('es-AR')+'</div>'+
+        badge+
+      '</div>'+
+    '</div>';
+  }
+  var html='';
+  if(modalidades){
+    html='<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Elige una opción de envío:</div>';
+    modalidades.forEach(function(m){
+      html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--orange2);margin:14px 0 6px;padding-top:10px;border-top:1px solid var(--border)">'+m.label+'</div>';
+      (m.options||[]).forEach(function(o){
+        o.tipoEnvio=m.tipoEnvio;
+        o.tipoEnvioLabel=m.label;
+        html+=optHtml(o);
+      });
+    });
+  }else{
+    html='<div style="font-size:12px;font-weight:600;color:var(--dk);margin-bottom:8px">Elige una opción de envío:</div>'+
+      options.map(optHtml).join('');
+  }
+  optBox.innerHTML=html;
   optBox.style.display='block';
 }
 
@@ -205,6 +235,7 @@ function selectEnvioPackOption(el,opt){
   checkoutState.shippingCalculated=true;
   checkoutState.selectedCarrier=opt.carrier;
   checkoutState.selectedService=opt.service;
+  checkoutState.deliveredType=opt.tipoEnvio||'D';
 
   var priceEl=document.getElementById('enviopack-price');
   if(priceEl)priceEl.textContent='+$'+opt.costo.toLocaleString('es-AR');
@@ -589,7 +620,11 @@ function submitOrder(){
   var warrantyLabel=checkoutState.warranty>0?(checkoutState.warranty===85000?'+12 meses cobertura completa':'+24 meses'):'12 meses';
   var deliveryLabel=checkoutState.delivery===0?'Retiro en tienda':(checkoutState.delivery===5000?'Express':'Envío 24-48hs');
   if(checkoutState.delivery==='enviopack')deliveryLabel='Envío Pack';
-  if(checkoutState.selectedCarrier)deliveryLabel=checkoutState.selectedCarrier;
+  if(checkoutState.selectedCarrier&&checkoutState.deliveredType){
+    deliveryLabel=checkoutState.selectedCarrier+' · '+(checkoutState.deliveredType==='S'?'retiro en punto':'a domicilio');
+  }else if(checkoutState.selectedCarrier){
+    deliveryLabel=checkoutState.selectedCarrier;
+  }
 
   var actualPaymentMethod = (hasCoupons && remaining <= 0) ? 'coupons' : (_selectedPaymentMethod || 'mercadopago');
 
@@ -614,6 +649,7 @@ function submitOrder(){
     paymentMethod:actualPaymentMethod,
     carrier:checkoutState.selectedCarrier||null,
     carrierService:checkoutState.selectedService||null,
+    deliveredType:checkoutState.deliveredType||null,
     coupons:hasCoupons?CPN.applied.map(function(c){return c.id}):[],
     agreedToTerms: hasPreorder
   };

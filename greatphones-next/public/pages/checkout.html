@@ -1,535 +1,486 @@
 <div class="page" id="p-checkout" data-testid="checkout-page">
-<div style="min-height:100vh;background:var(--cream);padding:2rem var(--pad)">
-  <div style="max-width:1280px;margin:0 auto">
-    <button onclick="openCart()" style="display:flex;align-items:center;gap:8px;background:none;border:none;cursor:pointer;color:var(--gray);font-size:14px;margin-bottom:.75rem" data-testid="back-to-cart">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Volver al carrito
-    </button>
-    <!-- Progress Stepper -->
-    <div style="display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:2rem;padding:0 1rem">
-      <div class="checkout-step" data-step="1" style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">1</div>
-        <span style="font-size:12px;font-weight:600;color:var(--dk)">Datos</span>
-      </div>
-      <div style="width:60px;height:2px;background:var(--border);margin:0 10px"></div>
-      <div class="checkout-step" data-step="2" style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--cream2);color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">2</div>
-        <span style="font-size:12px;font-weight:500;color:var(--gray)">Garantías</span>
-      </div>
-      <div style="width:60px;height:2px;background:var(--border);margin:0 10px"></div>
-      <div class="checkout-step" data-step="3" style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--cream2);color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">3</div>
-        <span style="font-size:12px;font-weight:500;color:var(--gray)">Resumen</span>
-      </div>
-      <div style="width:60px;height:2px;background:var(--border);margin:0 10px"></div>
-      <div class="checkout-step" data-step="4" style="display:flex;align-items:center;gap:8px">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--cream2);color:var(--gray);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">4</div>
-        <span style="font-size:12px;font-weight:500;color:var(--gray)">Pago</span>
-      </div>
+<div class="cov-shell">
+
+  <button class="cov-back" onclick="openCart()" data-testid="back-to-cart">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Volver al carrito
+  </button>
+
+  <div class="cov-hdr">
+    <div>
+      <h1 class="cov-hdr-ttl">Completá tu compra</h1>
+      <p class="cov-hdr-sub">4 pasos simples y tu equipo queda listo</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start">
+    <div class="cov-hdr-secure">
+      <svg viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      Conexión segura
+    </div>
+  </div>
 
-      <!-- ===== LEFT COLUMN: STEP CONTENT ===== -->
-      <div id="checkout-steps">
+  <!-- STEPPER -->
+  <div class="cov-stepper">
+    <div class="checkout-step cov-step" data-step="1" style="display:flex;flex-direction:column;align-items:center;gap:7px">
+      <div class="cov-step-dot" style="border-color:var(--orange);color:#fff;background:var(--orange)">1</div>
+      <span style="color:var(--dk)">Datos</span>
+    </div>
+    <div class="cov-stepbar"></div>
+    <div class="checkout-step cov-step" data-step="2" style="display:flex;flex-direction:column;align-items:center;gap:7px">
+      <div class="cov-step-dot">2</div>
+      <span>Garantía</span>
+    </div>
+    <div class="cov-stepbar"></div>
+    <div class="checkout-step cov-step" data-step="3" style="display:flex;flex-direction:column;align-items:center;gap:7px">
+      <div class="cov-step-dot">3</div>
+      <span>Envío</span>
+    </div>
+    <div class="cov-stepbar"></div>
+    <div class="checkout-step cov-step" data-step="4" style="display:flex;flex-direction:column;align-items:center;gap:7px">
+      <div class="cov-step-dot">4</div>
+      <span>Pago</span>
+    </div>
+  </div>
 
-        <!-- ===== STEP 1: DATOS PERSONALES ===== -->
-        <div class="checkout-step-content" data-step="1">
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Datos personales</h2>
+  <div class="cov-grid">
+
+    <!-- ============ CONTENIDO DE PASOS ============ -->
+    <div id="checkout-steps">
+
+      <!-- ===== PASO 1: DATOS ===== -->
+      <div class="checkout-step-content" data-step="1">
+        <div class="cov-card">
+          <div class="cov-lockup">
+            <div class="cov-lockup-n">1</div>
+            <div>
+              <div class="cov-lockup-ttl">Datos de contacto y envío</div>
+              <div class="cov-lockup-sub">Necesitamos estos datos para procesar tu pedido</div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Email *</label>
-                <input id="checkout-email" type="email" placeholder="nombre@ejemplo.com" required data-testid="checkout-email" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Teléfono *</label>
-                <input id="checkout-phone" type="tel" placeholder="11 2345 6789" data-testid="checkout-phone" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
+          </div>
+
+          <div class="cov-field row2">
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-email">Email <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-email" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" data-testid="checkout-email">
             </div>
-            <div style="margin-bottom:12px">
-              <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">DNI o CUIT *</label>
-              <input id="checkout-document" type="text" placeholder="20-34567890-9" required data-testid="checkout-document" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-phone">Teléfono <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-phone" type="tel" placeholder="11 2345 6789" autocomplete="tel" data-testid="checkout-phone">
             </div>
-            <div style="height:1px;background:var(--border);margin:16px 0"></div>
-            <div style="font-size:13px;font-weight:600;color:var(--dk);margin-bottom:12px">Dirección de envío</div>
-            <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:12px">
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Calle *</label>
-                <input id="checkout-street" type="text" placeholder="Av. del Libertador" required data-testid="checkout-street" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Número *</label>
-                <input id="checkout-number" type="text" placeholder="1234" required data-testid="checkout-number" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
+          </div>
+
+          <div class="cov-field">
+            <label class="cov-lb" for="checkout-document">DNI o CUIT <span class="req">*</span></label>
+            <input class="cov-inp" id="checkout-document" type="text" inputmode="numeric" placeholder="20-34567890-9" data-testid="checkout-document">
+          </div>
+
+          <div class="cov-field-h" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:1rem;font-weight:600;color:var(--dk)">Dirección de entrega</div>
+
+          <div class="cov-field row21">
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-street">Calle <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-street" type="text" placeholder="Av. del Libertador" autocomplete="street-address" data-testid="checkout-street">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Piso / Depto (opcional)</label>
-                <input id="checkout-floor" type="text" placeholder="4° B" data-testid="checkout-floor" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Código Postal *</label>
-                <input id="checkout-zip" type="text" placeholder="1425" required data-testid="checkout-zip" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-number">Número <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-number" type="text" inputmode="numeric" placeholder="1234" data-testid="checkout-number">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Ciudad *</label>
-                <input id="checkout-city" type="text" placeholder="CABA" required data-testid="checkout-city" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;transition:border-color .2s;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-              </div>
-              <div>
-                <label style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:4px;display:block;margin-left:4px">Provincia *</label>
-                <select id="checkout-province" required data-testid="checkout-province" style="width:100%;padding:12px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;outline:none;background:#fff;appearance:none;cursor:pointer;box-sizing:border-box" onfocus="this.style.borderColor='var(--orange)'" onblur="this.style.borderColor='var(--border)'">
-                  <option value="">Seleccionar...</option>
-                  <option value="Buenos Aires">Buenos Aires</option>
-                  <option value="CABA">Capital Federal</option>
-                  <option value="Córdoba">Córdoba</option>
-                  <option value="Santa Fe">Santa Fe</option>
-                  <option value="Mendoza">Mendoza</option>
-                  <option value="Tucumán">Tucumán</option>
-                  <option value="Entre Ríos">Entre Ríos</option>
-                  <option value="Salta">Salta</option>
-                  <option value="Neuquén">Neuquén</option>
-                  <option value="Río Negro">Río Negro</option>
-                  <option value="Chubut">Chubut</option>
-                  <option value="Santa Cruz">Santa Cruz</option>
-                  <option value="Tierra del Fuego">Tierra del Fuego</option>
-                  <option value="San Juan">San Juan</option>
-                  <option value="San Luis">San Luis</option>
-                  <option value="La Rioja">La Rioja</option>
-                  <option value="Catamarca">Catamarca</option>
-                  <option value="Santiago del Estero">Santiago del Estero</option>
-                  <option value="Formosa">Formosa</option>
-                  <option value="Corrientes">Corrientes</option>
-                  <option value="Misiones">Misiones</option>
-                  <option value="La Pampa">La Pampa</option>
-                </select>
-              </div>
+          </div>
+
+          <div class="cov-field row2">
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-floor">Piso / Depto (opcional)</label>
+              <input class="cov-inp" id="checkout-floor" type="text" placeholder="4° B" data-testid="checkout-floor">
             </div>
-            <div style="display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;background:var(--cream);border-radius:12px;border:1px solid rgba(0,0,0,.04)">
-              <input type="checkbox" id="checkoutSaveData" checked style="width:18px;height:18px;accent-color:var(--orange);cursor:pointer;flex-shrink:0">
-              <label for="checkoutSaveData" style="font-size:12px;color:var(--dk);cursor:pointer">Guardá mis datos de contacto y envío para futuras compras</label>
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-zip">Código Postal <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-zip" type="text" placeholder="1425" data-testid="checkout-zip">
             </div>
-          </section>
-          <div style="display:flex;justify-content:flex-end;margin-top:16px">
-            <button onclick="checkoutNextStep(2)" id="btn-step1-next" style="padding:14px 32px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-              Continuar
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
+          </div>
+
+          <div class="cov-field row2">
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-city">Ciudad <span class="req">*</span></label>
+              <input class="cov-inp" id="checkout-city" type="text" placeholder="CABA" data-testid="checkout-city">
+            </div>
+            <div class="cov-field">
+              <label class="cov-lb" for="checkout-province">Provincia <span class="req">*</span></label>
+              <select class="cov-sel" id="checkout-province" data-testid="checkout-province">
+                <option value="">Seleccionar...</option>
+                <option value="Buenos Aires">Buenos Aires</option>
+                <option value="CABA">Capital Federal</option>
+                <option value="Córdoba">Córdoba</option>
+                <option value="Santa Fe">Santa Fe</option>
+                <option value="Mendoza">Mendoza</option>
+                <option value="Tucumán">Tucumán</option>
+                <option value="Entre Ríos">Entre Ríos</option>
+                <option value="Salta">Salta</option>
+                <option value="Neuquén">Neuquén</option>
+                <option value="Río Negro">Río Negro</option>
+                <option value="Chubut">Chubut</option>
+                <option value="Santa Cruz">Santa Cruz</option>
+                <option value="Tierra del Fuego">Tierra del Fuego</option>
+                <option value="San Juan">San Juan</option>
+                <option value="San Luis">San Luis</option>
+                <option value="La Rioja">La Rioja</option>
+                <option value="Catamarca">Catamarca</option>
+                <option value="Santiago del Estero">Santiago del Estero</option>
+                <option value="Formosa">Formosa</option>
+                <option value="Corrientes">Corrientes</option>
+                <option value="Misiones">Misiones</option>
+                <option value="La Pampa">La Pampa</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="cov-note" style="margin-top:1.25rem">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+            <label for="checkoutSaveData" style="cursor:pointer;flex:1">Guardá mis datos de contacto y envío para futuras compras</label>
+            <input type="checkbox" id="checkoutSaveData" checked style="width:17px;height:17px;accent-color:var(--orange);cursor:pointer;flex-shrink:0">
           </div>
         </div>
 
-        <!-- ===== STEP 2: GARANTÍAS Y ENTREGA ===== -->
-        <div class="checkout-step-content" data-step="2" style="display:none">
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Garantía extendida</h2>
-            </div>
-            <div id="checkout-warranty" style="display:flex;flex-direction:column;gap:8px" data-testid="checkout-warranty">
-              <div class="warranty-btn" data-w="0" onclick="selCheckoutWarranty(this,0)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">12 meses</span><span style="color:var(--green);font-weight:700;font-size:14px">GRATIS</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Cobertura básica incluida en tu compra</div>
-              </div>
-              <div class="warranty-btn" data-w="85000" onclick="selCheckoutWarranty(this,85000)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">+12 meses cobertura completa</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$85.000</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Protección extendida por un año adicional</div>
-              </div>
-              <div class="warranty-btn" data-w="150000" onclick="selCheckoutWarranty(this,150000)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">+24 meses</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$150.000</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">La protección más completa, dos años de cobertura</div>
-              </div>
-            </div>
-          </section>
+        <div class="cov-actions right">
+          <button class="cov-btn primary" onclick="checkoutNextStep(2)" id="btn-step1-next">
+            Continuar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
 
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-top:16px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.5rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
-              </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Entrega</h2>
+      <!-- ===== PASO 2: GARANTÍA ===== -->
+      <div class="checkout-step-content" data-step="2" style="display:none">
+        <div class="cov-card">
+          <div class="cov-lockup">
+            <div class="cov-lockup-n">2</div>
+            <div>
+              <div class="cov-lockup-ttl">Protegé tu equipo</div>
+              <div class="cov-lockup-sub">Sumá cobertura extendida a tu compra</div>
             </div>
-            <div id="checkout-delivery" style="display:flex;flex-direction:column;gap:8px" data-testid="checkout-delivery">
-              <div class="delivery-btn" data-d="0" onclick="selCheckoutDelivery(this,0)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--green);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Retiro en Tienda</span><span style="color:var(--green);font-weight:700;font-size:14px">GRATIS</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Zelarrayan 179, Bahía Blanca · Lun a Vie 10-19hs</div>
+          </div>
+          <div id="checkout-warranty" class="cov-opts" data-testid="checkout-warranty">
+            <div class="warranty-btn cov-opt" data-w="0" onclick="selCheckoutWarranty(this,0)" style="border-color:var(--green)" data-sel="1">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">12 meses · incluida</div>
+                <div class="cov-opt-desc">Cobertura básica incluida en tu compra</div>
               </div>
-              <div class="delivery-btn" data-d="5000" onclick="selCheckoutDelivery(this,5000)" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Express</span><span style="color:var(--orange);font-weight:700;font-size:14px">+$5.000</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Dentro de Bahía Blanca · 24-48hs hábiles</div>
+              <div class="cov-opt-price free">GRATIS</div>
+            </div>
+            <div class="warranty-btn cov-opt" data-w="85000" onclick="selCheckoutWarranty(this,85000)">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">+6 meses</div>
+                <div class="cov-opt-desc">Garantía extendida por 6 meses adicionales</div>
               </div>
-              <div class="delivery-btn" data-d="enviopack" onclick="selCheckoutDelivery(this,'enviopack')" style="padding:14px 16px;border-radius:12px;background:#fff;border:2px solid var(--border);cursor:pointer;transition:all .15s">
-                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:14px;font-weight:600">Envío a todo el país</span><span id="enviopack-price" style="color:var(--orange);font-weight:700;font-size:14px">Calcular</span></div>
-                <div style="font-size:12px;color:var(--gray);margin-top:3px">Múltiples opciones de correo</div>
-                <button id="btn-calc-shipping" onclick="event.stopPropagation();calcEnvioPackShipping()" style="margin-top:10px;width:100%;padding:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='var(--cream)'">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              <div class="cov-opt-price">+$85.000</div>
+            </div>
+            <div class="warranty-btn cov-opt" data-w="150000" onclick="selCheckoutWarranty(this,150000)">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">+12 meses</div>
+                <div class="cov-opt-desc">La protección más completa, un año nuevo de cobertura</div>
+              </div>
+              <div class="cov-opt-price">+$150.000</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cov-actions">
+          <button class="cov-btn ghost" onclick="checkoutPrevStep(1)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Atrás
+          </button>
+          <button class="cov-btn primary" onclick="checkoutNextStep(3)" id="btn-step2-next">
+            Continuar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== PASO 3: ENVÍO ===== -->
+      <div class="checkout-step-content" data-step="3" style="display:none">
+        <div class="cov-card">
+          <div class="cov-lockup">
+            <div class="cov-lockup-n">3</div>
+            <div>
+              <div class="cov-lockup-ttl">¿Cómo lo recibís?</div>
+              <div class="cov-lockup-sub">Elegí retiro en tienda o envío a domicilio</div>
+            </div>
+          </div>
+          <div id="checkout-delivery" class="cov-opts" data-testid="checkout-delivery">
+            <div class="delivery-btn cov-opt" data-d="0" onclick="selCheckoutDelivery(this,0)" style="border-color:var(--green)" data-sel="1">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">Retiro en tienda</div>
+                <div class="cov-opt-desc">Zelarrayan 179, Bahía Blanca · Lun a Vie 10-19hs</div>
+              </div>
+              <div class="cov-opt-price free">GRATIS</div>
+            </div>
+            <div class="delivery-btn cov-opt" data-d="5000" onclick="selCheckoutDelivery(this,5000)">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">Express</div>
+                <div class="cov-opt-desc">Dentro de Bahía Blanca · 24-48hs hábiles</div>
+              </div>
+              <div class="cov-opt-price">+$5.000</div>
+            </div>
+            <div class="delivery-btn cov-opt" data-d="enviopack" onclick="selCheckoutDelivery(this,'enviopack')">
+              <div class="cov-opt-radio"></div>
+              <div class="cov-opt-main">
+                <div class="cov-opt-ttl">Envío a todo el país</div>
+                <div class="cov-opt-desc">Múltiples opciones de correo</div>
+                <button id="btn-calc-shipping" onclick="event.stopPropagation();calcEnvioPackShipping()" style="margin-top:10px;width:100%;padding:10px;background:var(--cream);border:1px solid var(--border);border-radius:10px;font-size:12px;font-weight:600;color:var(--dk);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s" onmouseover="this.style.background='var(--cream2)'" onmouseout="this.style.background='var(--cream)'">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
                   Calcular envío
                 </button>
               </div>
-              <div id="enviopack-options" style="display:none;margin-top:4px"></div>
+              <div class="cov-opt-price" id="enviopack-price">Calcular</div>
             </div>
-          </section>
-          <div style="display:flex;justify-content:space-between;margin-top:16px">
-            <button onclick="checkoutPrevStep(1)" style="padding:14px 24px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s" onmouseover="this.style.borderColor='var(--dk)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Atrás
-            </button>
-            <button onclick="checkoutNextStep(3)" id="btn-step2-next" style="padding:14px 32px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-              Continuar
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
+            <div id="enviopack-options" style="display:none"></div>
           </div>
         </div>
 
-        <!-- ===== STEP 3: RESUMEN ===== -->
-        <div class="checkout-step-content" data-step="3" style="display:none">
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+        <div class="cov-actions">
+          <button class="cov-btn ghost" onclick="checkoutPrevStep(2)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Atrás
+          </button>
+          <button class="cov-btn primary" onclick="checkoutNextStep(4)" id="btn-step3-next">
+            Continuar
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== PASO 4: PAGO Y CUOTAS ===== -->
+      <div class="checkout-step-content" data-step="4" style="display:none">
+        <div class="cov-card">
+          <div class="cov-lockup">
+            <div class="cov-lockup-n">4</div>
+            <div>
+              <div class="cov-lockup-ttl">Plan de cuotas y pago</div>
+              <div class="cov-lockup-sub">Elegí cómo querés abonar</div>
+            </div>
+          </div>
+
+          <div class="cov-field-h" style="font-weight:600;color:var(--dk)">Plan de cuotas</div>
+          <div id="checkout-cuotas" data-testid="checkout-cuotas">
+            <button class="cuota-btn" data-cuota="1" data-sel="1" onclick="selCheckoutCuota(this,1)">
+              <div class="cuota-icon" style="background:var(--cream)"><span style="color:var(--dk)">1</span></div>
+              <div class="cuota-txt">
+                <div class="cuota-ttl">
+                  <span class="cuota-badge" style="background:none;color:var(--green)">SIN INTERÉS</span>
+                  Pago único
+                </div>
+                <div class="cuota-monthly">Total hoy<small>Pagás todo de una vez</small></div>
               </div>
-              <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif">Revisá tu pedido</h2>
-            </div>
-            <div id="checkout-summary-items" style="margin-bottom:16px"></div>
-            <div style="height:1px;background:var(--border);margin:16px 0"></div>
-            <div id="checkout-summary-details" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
-              <div><span style="color:var(--gray)">Garantía:</span> <strong id="sum-warranty">12 meses</strong></div>
-              <div><span style="color:var(--gray)">Entrega:</span> <strong id="sum-delivery">Retiro en tienda</strong></div>
-            </div>
-            <div style="height:1px;background:var(--border);margin:16px 0"></div>
-            <div id="checkout-summary-prices" style="font-size:14px">
-              <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Subtotal</span><span id="sum-subtotal">$0</span></div>
-              <div id="sum-warranty-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Garantía extendida</span><span id="sum-warranty-cost" style="color:var(--orange);font-weight:600">+$0</span></div>
-              <div id="sum-delivery-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--gray)">Envío</span><span id="sum-delivery-cost" style="color:var(--orange);font-weight:600">+$0</span></div>
-              <div id="sum-coupon-line" style="display:none;justify-content:space-between;margin-bottom:8px"><span style="color:var(--orange)">Descuento cupones</span><span id="sum-coupon-cost" style="color:var(--orange);font-weight:700">-$0</span></div>
-              <div style="display:flex;justify-content:space-between;padding-top:12px;border-top:2px solid var(--dk);margin-top:4px">
-                <span style="font-weight:700">Total</span>
-                <span id="sum-total" style="font-weight:700;font-size:20px;color:var(--orange);font-family:'Playfair Display',Georgia,serif">$0</span>
-              </div>
-            </div>
-          </section>
-          <div style="display:flex;justify-content:space-between;margin-top:16px">
-            <button onclick="checkoutPrevStep(2)" style="padding:14px 24px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s" onmouseover="this.style.borderColor='var(--dk)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Atrás
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
             </button>
-            <button onclick="checkoutNextStep(4)" id="btn-step3-next" style="padding:14px 32px;background:var(--orange);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 12px rgba(255,107,44,.3)" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
-              Ir a pagar
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)">
+              <div class="cuota-icon" style="background:var(--cream)"><span style="color:var(--dk)">3</span></div>
+              <div class="cuota-txt">
+                <div class="cuota-ttl">
+                  <span class="cuota-badge" style="background:rgba(45,90,39,.1);color:var(--green)">SIN INTERÉS</span>
+                  3 cuotas fijas
+                </div>
+                <div class="cuota-monthly">$0/mes<small>× 3 · iguales y sin recargo</small></div>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            </button>
+            <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)">
+              <div class="cuota-icon" style="background:var(--cream)"><span style="color:var(--dk)">6</span></div>
+              <div class="cuota-txt">
+                <div class="cuota-ttl">
+                  <span class="cuota-badge" style="background:rgba(45,90,39,.1);color:var(--green)">SIN INTERÉS</span>
+                  6 cuotas fijas
+                </div>
+                <div class="cuota-monthly">$0/mes<small>× 6 · iguales y sin recargo</small></div>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
+            </button>
+            <button class="cuota-btn" data-cuota="12" onclick="selCheckoutCuota(this,12)">
+              <div class="cuota-icon" style="background:var(--cream)"><span style="color:var(--dk)">12</span></div>
+              <div class="cuota-txt">
+                <div class="cuota-ttl">
+                  <span class="cuota-badge" style="background:rgba(255,107,44,.12);color:var(--orange)">CON INTERÉS</span>
+                  12 cuotas fijas
+                </div>
+                <div class="cuota-monthly">$0/mes<small>× 12 · tasa fija mensual</small></div>
+              </div>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg>
             </button>
           </div>
-        </div>
 
-        <!-- ===== STEP 4: PAGO ===== -->
-        <div class="checkout-step-content" data-step="4" style="display:none">
-          <!-- PLAN DE CUOTAS -->
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;margin-bottom:16px">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,107,44,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          <div class="cov-field-h" style="font-weight:600;color:var(--dk);margin-top:1.25rem">Método de pago</div>
+          <div id="cpnAppliedContainer" style="margin-bottom:1rem;display:none"></div>
+          <div id="checkout-paymethods">
+            <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card">
+              <div class="pm-radio"></div>
+              <div class="pm-logo" style="background:#009EE3">
+                <img src="/icons/payments/mercadopago.png" alt="Mercado Pago" style="width:100%;height:100%;object-fit:contain">
               </div>
-              <div>
-                <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin:0">Plan de cuotas</h2>
-                <p style="font-size:12px;color:var(--gray);margin:2px 0 0">Elegí cuántas cuotas querés</p>
+              <div style="flex:1">
+                <div class="pm-name">Mercado Pago</div>
+                <div class="pm-desc">Saldo, QR, link de pago o tarjeta</div>
               </div>
-            </div>
-            <div id="checkout-cuotas" style="display:flex;flex-direction:column;gap:10px" data-testid="checkout-cuotas">
-              <!-- 1 cuota - default -->
-              <button class="cuota-btn" data-cuota="1" onclick="selCheckoutCuota(this,1)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:var(--green);color:#fff;border:2px solid var(--green);cursor:pointer;transition:all .2s;text-align:left;width:100%">
-                <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <span style="font-size:22px;font-weight:800">1</span>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px">
-                    Pago único
-                    <span style="font-size:9px;background:rgba(255,255,255,.3);padding:4px 10px;border-radius:4px;font-weight:600;white-space:nowrap">SIN INTERÉS</span>
-                  </div>
-                  <div style="font-size:12px;opacity:.85;margin-top:2px">Abonás todo de una</div>
-                </div>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
-              </button>
-
-              <!-- 3 cuotas -->
-              <button class="cuota-btn" data-cuota="3" onclick="selCheckoutCuota(this,3)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
-                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <span style="font-size:22px;font-weight:800;color:var(--dk)">3</span>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
-                    3 cuotas fijas
-                    <span style="font-size:9px;color:var(--green);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">SIN INTERÉS</span>
-                  </div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Iguales y sin recargo</div>
-                </div>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-
-              <!-- 6 cuotas -->
-              <button class="cuota-btn" data-cuota="6" onclick="selCheckoutCuota(this,6)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
-                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <span style="font-size:22px;font-weight:800;color:var(--dk)">6</span>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
-                    6 cuotas fijas
-                    <span style="font-size:9px;color:var(--green);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">SIN INTERÉS</span>
-                  </div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Iguales y sin recargo</div>
-                </div>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-
-              <!-- 12 cuotas -->
-              <button class="cuota-btn" data-cuota="12" onclick="selCheckoutCuota(this,12)" style="display:flex;align-items:center;gap:16px;padding:16px 20px;border-radius:14px;background:#fff;color:var(--dk);border:2px solid var(--border);cursor:pointer;transition:all .2s;text-align:left;width:100%">
-                <div style="width:48px;height:48px;border-radius:12px;background:var(--cream2);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <span style="font-size:22px;font-weight:800;color:var(--dk)">12</span>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--dk)">
-                    12 cuotas fijas
-                    <span style="font-size:9px;color:var(--orange);font-weight:600;white-space:nowrap;border-radius:4px;padding:4px 10px">CON INTERÉS</span>
-                  </div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px" class="cuota-monthly">Tasa fija mensual</div>
-                </div>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            </div>
-          </section>
-
-          <!-- MÉTODO DE PAGO -->
-          <section style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem">
-              <div style="width:40px;height:40px;border-radius:50%;background:rgba(45,90,39,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              </div>
-              <div>
-                <h2 style="font-size:18px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin:0">Método de pago</h2>
-                <p style="font-size:12px;color:var(--gray);margin:2px 0 0">Elegí cómo querés abonar</p>
+              <div class="pm-badges">
+                <img src="/icons/payments/Visa.webp" alt="Visa" style="height:20px;opacity:.7;border-radius:3px">
+                <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:20px;opacity:.7;border-radius:3px">
               </div>
             </div>
-            <div id="cpnAppliedContainer" style="margin-bottom:16px;display:none"></div>
-            <div style="display:flex;flex-direction:column;gap:12px">
-              <!-- Mercado Pago -->
-              <div onclick="selectPaymentMethod('mercadopago',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:52px;height:52px;border-radius:14px;background:#009EE3;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden">
-                  <img src="/icons/payments/mercadopago.png" alt="Mercado Pago" style="width:100%;height:100%;object-fit:contain">
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Mercado Pago</div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Saldo, QR, link de pago o tarjeta</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                  <img src="/icons/payments/Visa.webp" alt="Visa" style="height:20px;opacity:.7;border-radius:3px">
-                  <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:20px;opacity:.7;border-radius:3px">
-                </div>
+            <div onclick="selectPaymentMethod('coupons',this)" class="payment-method-card" id="cpnCheckoutCard">
+              <div class="pm-radio"></div>
+              <div class="cm-ico" style="background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
               </div>
-
-              <!-- Cupones / Saldo GP -->
-              <div onclick="selectPaymentMethod('coupons',this)" class="payment-method-card" id="cpnCheckoutCard" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--dk) 0%,#2a2520 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/></svg>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Cupones / Saldo GP</div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá con cupones de descuento</div>
-                </div>
-                <div id="cpnCouponCount" style="font-size:12px;font-weight:600;color:var(--gray2);white-space:nowrap"><span class="loader-spinner" style="padding:0;display:inline-flex;gap:4px"><span>Cargando...</span></span></div>
+              <div style="flex:1">
+                <div class="pm-name">Cupones / Saldo GP</div>
+                <div class="pm-desc">Pagá con cupones de descuento</div>
               </div>
-
-              <!-- Tarjeta de crédito/débito -->
-              <div onclick="selectPaymentMethod('tarjeta',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Tarjeta de crédito o débito</div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Visa y Mastercard</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <img src="/icons/payments/Visa.webp" alt="Visa" style="height:24px;border-radius:4px;border:1px solid var(--border)">
-                  <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:24px;border-radius:4px;border:1px solid var(--border)">
-                </div>
+              <div class="cpn-count" id="cpnCouponCount"><span class="loader-spinner" style="padding:0;display:inline-flex;gap:4px"><span>Cargando...</span></span></div>
+            </div>
+            <div onclick="selectPaymentMethod('tarjeta',this)" class="payment-method-card">
+              <div class="pm-radio"></div>
+              <div class="cm-ico" style="background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
               </div>
-
-              <!-- Pago Fácil / Rapi Pago -->
-              <div onclick="selectPaymentMethod('efectivo',this)" class="payment-method-card" style="padding:18px 20px;border:2px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:16px" onmouseover="this.style.borderColor='var(--orange)';this.style.background='rgba(255,107,44,.03)'" onmouseout="this.style.borderColor='var(--border)';this.style.background='none'">
-                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#e53935 0%,#b71c1c 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                </div>
-                <div style="flex:1">
-                  <div style="font-size:15px;font-weight:700;color:var(--dk)">Pago Fácil / Rapi Pago</div>
-                  <div style="font-size:12px;color:var(--gray);margin-top:2px">Pagá en efectivo en cualquier sucursal</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                  <img src="/icons/payments/Pagofacil.png" alt="Pago Fácil" style="height:28px;border-radius:4px;border:1px solid var(--border)">
-                  <img src="/icons/payments/rapipago.webp" alt="Rapi Pago" style="height:28px;border-radius:4px;border:1px solid var(--border)">
-                </div>
+              <div style="flex:1">
+                <div class="pm-name">Tarjeta de crédito o débito</div>
+                <div class="pm-desc">Visa y Mastercard</div>
+              </div>
+              <div class="pm-badges">
+                <img src="/icons/payments/Visa.webp" alt="Visa" style="height:24px;border-radius:4px;border:1px solid var(--border)">
+                <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:24px;border-radius:4px;border:1px solid var(--border)">
               </div>
             </div>
-          </section>
-          <div id="preorder-agreement-section" style="display:none;background:var(--cream);border:1.5px solid var(--orange);border-radius:14px;padding:18px;margin-top:16px">
+            <div onclick="selectPaymentMethod('efectivo',this)" class="payment-method-card">
+              <div class="pm-radio"></div>
+              <div class="cm-ico" style="background:linear-gradient(135deg,#e53935 0%,#b71c1c 100%)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              </div>
+              <div style="flex:1">
+                <div class="pm-name">Pago Fácil / Rapi Pago</div>
+                <div class="pm-desc">Pagá en efectivo en cualquier sucursal</div>
+              </div>
+              <div class="pm-badges">
+                <img src="/icons/payments/Pagofacil.png" alt="Pago Fácil" style="height:28px;border-radius:4px;border:1px solid var(--border)">
+                <img src="/icons/payments/rapipago.webp" alt="Rapi Pago" style="height:28px;border-radius:4px;border:1px solid var(--border)">
+              </div>
+            </div>
+          </div>
+
+          <div id="preorder-agreement-section" style="display:none">
             <label style="display:flex;align-items:flex-start;gap:14px;cursor:pointer">
-              <input type="checkbox" id="preorder-agreement" style="width:22px;height:22px;margin-top:2px;flex-shrink:0;accent-color:var(--orange)" onchange="togPreorderAgreement()">
+              <input type="checkbox" id="preorder-agreement" onchange="togPreorderAgreement()">
               <div>
-                <div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:6px">Terminos de preventa</div>
+                <div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:6px">Términos de preventa</div>
                 <div style="font-size:12px;color:#8B7355;line-height:1.6">
                   Entiendo y acepto que:
                   <ul style="margin:6px 0 0 16px;padding:0">
-                    <li>Este producto <strong>aun no se encuentra en stock</strong> y su disponibilidad es futura.</li>
-                    <li>La fecha de disponibilidad es <strong>estimada</strong> y puede variar segun stock del proveedor.</li>
-                    <li>Recibire actualizaciones por email sobre el estado de mi preventa.</li>
+                    <li>Este producto <strong>aún no se encuentra en stock</strong> y su disponibilidad es futura.</li>
+                    <li>La fecha de disponibilidad es <strong>estimada</strong> y puede variar según stock del proveedor.</li>
+                    <li>Recibiré actualizaciones por email sobre el estado de mi preventa.</li>
                   </ul>
                 </div>
               </div>
             </label>
           </div>
-          <div style="display:flex;justify-content:space-between;margin-top:16px">
-            <button onclick="checkoutPrevStep(3)" style="padding:14px 24px;background:transparent;color:var(--gray);border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s" onmouseover="this.style.borderColor='var(--dk)';this.style.color='var(--dk)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--gray)'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-              Atras
-            </button>
-            <button onclick="submitOrder()" id="btn-final-pay" style="padding:14px 36px;background:linear-gradient(135deg,var(--orange) 0%,#e55a1a 100%);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .15s;box-shadow:0 4px 16px rgba(255,107,44,.35)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(255,107,44,.45)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(255,107,44,.35)'">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-              Pagar ahora
-            </button>
-          </div>
         </div>
 
+        <div class="cov-actions">
+          <button class="cov-btn ghost" onclick="checkoutPrevStep(3)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Atrás
+          </button>
+          <button class="cov-btn pay" onclick="submitOrder()" id="btn-final-pay">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            Finalizar compra
+          </button>
+        </div>
       </div>
 
-      <!-- ===== RIGHT COLUMN: SIDEBAR RESUMEN ===== -->
-      <aside style="position:sticky;top:100px">
-        <div style="background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.5rem;box-shadow:var(--sh)">
-          <h3 style="font-size:16px;font-weight:700;font-family:'Playfair Display',Georgia,serif;margin-bottom:1rem">Resumen de compra</h3>
-          
-          <div id="checkout-items" style="margin-bottom:1rem;max-height:260px;overflow-y:auto" data-testid="checkout-items"></div>
-
-          <div style="border-top:1px solid var(--border);padding-top:.875rem;margin-bottom:.875rem">
-            <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
-              <span>Subtotal</span>
-              <span id="checkout-subtotal" data-testid="checkout-subtotal">$0</span>
-            </div>
-            <div id="checkout-warranty-line" style="display:none;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
-              <span>Garantía</span>
-              <span id="checkout-warranty-cost" style="color:var(--orange);font-weight:600">+$0</span>
-            </div>
-            <div id="checkout-delivery-line" style="display:none;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px">
-              <span>Envío</span>
-              <span id="checkout-delivery-cost" style="color:var(--orange);font-weight:600">+$0</span>
-            </div>
-            <div id="checkout-coupon-line" style="display:none;justify-content:space-between;font-size:13px;color:var(--orange);margin-bottom:6px">
-              <span>Descuento cupones</span>
-              <span id="checkout-coupon-cost" style="font-weight:700">-$0</span>
-            </div>
-          </div>
-
-          <div id="checkout-cuotas-box" style="background:var(--cream);border-radius:10px;padding:12px 14px;margin-bottom:.875rem;display:none;justify-content:space-between;align-items:center">
-            <div>
-              <span style="font-size:13px;font-weight:600;color:var(--dk)" id="checkout-cuotas-label">1x sin interés</span>
-              <span style="font-size:11px;color:var(--gray);display:block;margin-top:1px" id="checkout-cuotas-sidebar-total"></span>
-            </div>
-            <span style="font-size:15px;font-weight:700;color:var(--green)" id="checkout-cuotas-amount">$0<span style="font-size:10px;font-weight:500;color:var(--gray)">/mes</span></span>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:16px;font-weight:700">Total</span>
-            <span id="checkout-total" data-testid="checkout-total" style="font-size:22px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:var(--orange)">$0</span>
-          </div>
-
-          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
-            <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:var(--green);font-weight:600;margin-bottom:8px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>Compra 100% segura</span>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">
-              <img src="/icons/payments/mercadopago.png" alt="Mercado Pago" style="height:22px;border-radius:4px;border:1px solid var(--border);object-fit:contain">
-              <img src="/icons/payments/Visa.webp" alt="Visa" style="height:22px;border-radius:4px;border:1px solid var(--border)">
-              <img src="/icons/payments/mastercard.webp" alt="Mastercard" style="height:22px;border-radius:4px;border:1px solid var(--border)">
-            </div>
-            <div style="text-align:center;font-size:10px;color:var(--gray);line-height:1.6">
-              <a onclick="nav('terminos')" style="cursor:pointer;text-decoration:underline;color:var(--gray)">Política de devoluciones</a> · Garantía legal 6 meses
-            </div>
-          </div>
-        </div>
-
-        <div style="background:rgba(255,107,44,.05);border:1px dashed rgba(255,107,44,.25);border-radius:14px;padding:1rem;margin-top:1rem">
-          <div style="display:flex;gap:10px">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2" style="flex-shrink:0;margin-top:1px"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <div>
-              <div style="font-size:13px;font-weight:600;color:var(--dk);margin-bottom:2px">Compra Protegida</div>
-              <p style="font-size:11px;color:var(--gray);margin:0;line-height:1.5">Si no recibís lo que esperabas, te devolvemos tu dinero.</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
     </div>
+
+    <!-- ============ SIDEBAR RESUMEN ============ -->
+    <div class="cov-side">
+      <div class="cov-side-card">
+        <h3 class="cov-side-ttl">Tu pedido</h3>
+        <div id="checkout-items" data-testid="checkout-items"></div>
+        <div class="cov-price"><span>Subtotal</span><b id="checkout-subtotal" data-testid="checkout-subtotal">$0</b></div>
+        <div class="cov-price" id="checkout-warranty-line" style="display:none"><span>Garantía</span><b id="checkout-warranty-cost" style="color:var(--orange)">+$0</b></div>
+        <div class="cov-price" id="checkout-delivery-line" style="display:none"><span>Envío</span><b id="checkout-delivery-cost" style="color:var(--orange)">+$0</b></div>
+        <div class="cov-price disc" id="checkout-coupon-line" style="display:none"><span>Descuento cupones</span><span id="checkout-coupon-cost">-$0</span></div>
+        <div id="checkout-cuotas-box" style="display:none">
+          <div>
+            <span id="checkout-cuotas-label">1x sin interés</span>
+            <span id="checkout-cuotas-sidebar-total"></span>
+          </div>
+          <span id="checkout-cuotas-amount">$0<span style="font-size:10px;font-weight:500;color:var(--gray)">/mes</span></span>
+        </div>
+        <div class="cov-total">
+          <span class="cov-total-lb">Total</span>
+          <span class="cov-total-val" id="checkout-total" data-testid="checkout-total">$0</span>
+        </div>
+        <div class="cov-secure">
+          <svg viewBox="0 0 24 24" fill="var(--green)" stroke="none"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Compra 100% segura
+        </div>
+      </div>
+      <div class="cov-protected">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div>
+          <div class="cov-protected-ttl">Compra Protegida</div>
+          <p>Si no recibís lo que esperabas, te devolvemos tu dinero.</p>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 </div>
 
-<!-- ===== CART OVERLAY ===== -->
 <!-- ===== ARREPENTIMIENTO MODAL (Resolución 424/2020) ===== -->
 <div id="arrepentimientoModal" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeArrepentimiento()"></div>
   <div style="position:relative;background:#fff;border-radius:24px;width:min(500px,90%);padding:2.5rem;box-shadow:0 25px 80px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;transform:scale(.9);transition:transform .3s">
     <button onclick="closeArrepentimiento()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .2s" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">×</button>
-    
     <div style="width:72px;height:72px;background:linear-gradient(135deg,#FF6B2C,#FF8F5E);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem;box-shadow:0 8px 24px rgba(255,107,44,.3)">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
     </div>
-    
     <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;margin-bottom:.75rem;color:var(--dk);text-align:center">Botón de Arrepentimiento</h2>
     <p style="font-size:14px;color:var(--gray);margin-bottom:1.75rem;line-height:1.6;text-align:center">Según la Resolución 424/2020 de la Secretaría de Comercio Interior, podés desistir de tu compra dentro de los <strong style="color:var(--orange)">10 días corridos</strong> desde la recepción del producto, sin costo y sin expresión de causa.</p>
-    
     <form id="formArrepentimiento" onsubmit="submitArrepentimiento(event)">
       <div style="margin-bottom:1rem">
         <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Número de Orden *</label>
-        <input type="text" id="arrepOrden" required placeholder="Ej: GP-2026-XXXXX" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+        <input type="text" id="arrepOrden" required placeholder="Ej: GP-2026-XXXXX" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s;outline:none" onfocus="this.style.borderColor='var(--orange)'">
       </div>
-      
       <div style="margin-bottom:1rem">
         <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Email de compra *</label>
-        <input type="email" id="arrepEmail" required placeholder="tu@email.com" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+        <input type="email" id="arrepEmail" required placeholder="tu@email.com" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s;outline:none" onfocus="this.style.borderColor='var(--orange)'">
       </div>
-      
       <div style="margin-bottom:1rem">
         <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Teléfono de contacto</label>
-        <input type="tel" id="arrepTelefono" placeholder="+54 9 291 1234567" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'">
+        <input type="tel" id="arrepTelefono" placeholder="+54 9 291 1234567" style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;transition:border-color .2s;outline:none" onfocus="this.style.borderColor='var(--orange)'">
       </div>
-      
       <div style="margin-bottom:1.25rem">
         <label style="font-size:12px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px;letter-spacing:.5px;text-transform:uppercase">Motivo (opcional)</label>
-        <textarea id="arrepMotivo" rows="3" placeholder="Contanos por qué desistís de la compra..." style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='var(--orange)'"></textarea>
+        <textarea id="arrepMotivo" rows="3" placeholder="Contanos por qué desistís de la compra..." style="width:100%;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;box-sizing:border-box;resize:vertical;transition:border-color .2s;outline:none;font-family:inherit" onfocus="this.style.borderColor='var(--orange)'"></textarea>
       </div>
-      
       <label style="display:flex;align-items:flex-start;gap:14px;cursor:pointer;margin-bottom:1.75rem;text-align:left;padding:16px;background:linear-gradient(135deg,#FFF7ED,#FFEDD5);border-radius:14px;border:1px solid #FED7AA" onclick="event.stopPropagation()">
         <input type="checkbox" id="arrepConfirm" required style="width:22px;height:22px;margin-top:2px;accent-color:var(--orange);cursor:pointer">
         <span style="font-size:14px;color:var(--dk);line-height:1.4">Confirmo que quiero desistir de mi compra según el Artículo 34 de la Ley 24.240 de Defensa del Consumidor.</span>
       </label>
-      
       <button type="submit" style="width:100%;padding:16px;background:linear-gradient(135deg,#FF6B2C,#FF8F5E);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,107,44,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255,107,44,.4)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 16px rgba(255,107,44,.3)'">Enviar Solicitud</button>
     </form>
   </div>
 </div>
 
-<!-- ===== ARREPENTIMIENTO MODAL ===== -->
+<!-- ===== ARREPENTIMIENTO MODAL (gestión) ===== -->
 <div id="arrepModal" style="display:none;position:fixed;inset:0;z-index:950;align-items:center;justify-content:center;opacity:0;transition:opacity .3s">
   <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)" onclick="closeArrepModal()"></div>
   <div style="position:relative;background:#fff;border-radius:20px;width:min(500px,90%);padding:2rem;box-shadow:0 25px 80px rgba(0,0,0,.35);max-height:90vh;overflow-y:auto;transform:scale(.9);transition:transform .3s">
     <button onclick="closeArrepModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:28px;cursor:pointer;color:var(--gray);width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%">×</button>
-    
     <h2 style="font-family:'Playfair Display',Georgia,serif;font-size:22px;font-weight:700;margin-bottom:1.5rem;color:var(--dk)">Gestionar Arrepentimiento</h2>
-    
     <input type="hidden" id="arrepId">
-    
     <div style="display:grid;gap:1rem;margin-bottom:1.5rem">
       <div>
         <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">ID Trámite</label>
@@ -558,17 +509,15 @@
         <div id="arrepDetailMotivo" style="font-size:13px;color:var(--dk);background:var(--cream);padding:12px;border-radius:8px;min-height:60px"></div>
       </div>
     </div>
-    
     <div style="margin-bottom:1.5rem">
       <label style="font-size:11px;font-weight:600;color:var(--gray);display:block;margin-bottom:8px">Cambiar Estado</label>
-      <select id="arrepNewEstado" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px">
+      <select id="arrepNewEstado" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;outline:none">
         <option value="PENDIENTE">PENDIENTE</option>
         <option value="EN PROCESO">EN PROCESO</option>
         <option value="RESUELTO">RESUELTO</option>
         <option value="RECHAZADO">RECHAZADO</option>
       </select>
     </div>
-    
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <button onclick="closeArrepModal()" style="padding:14px;border:1.5px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk)">Cancelar</button>
       <button onclick="saveArrepEstado()" style="padding:14px;border:none;border-radius:12px;background:var(--orange);color:#fff;font-size:14px;font-weight:600;cursor:pointer">Guardar Cambios</button>
@@ -583,11 +532,11 @@
     <div style="width:72px;height:72px;background:linear-gradient(135deg,#FEE2E2,#FECACA);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;box-shadow:0 8px 24px rgba(220,38,38,.15)">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
     </div>
-    <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Confirmar eliminaci�n</h3>
-    <p style="font-size:15px;color:var(--gray);margin-bottom:1.5rem;line-height:1.6">�Est�s seguro de que quer�s eliminar este elemento? Esta acci�n es <strong style="color:#DC2626">permanente</strong> y no se puede deshacer.</p>
+    <h3 style="font-family:'Playfair Display',Georgia,serif;font-size:24px;font-weight:700;margin-bottom:.5rem;color:var(--dk)">Confirmar eliminación</h3>
+    <p style="font-size:15px;color:var(--gray);margin-bottom:1.5rem;line-height:1.6">¿Estás seguro de que querés eliminar este elemento? Esta acción es <strong style="color:#DC2626">permanente</strong> y no se puede deshacer.</p>
     <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;margin-bottom:1.5rem;text-align:left;padding:14px;background:linear-gradient(135deg,#FEF2F2,#FEE2E2);border-radius:12px;border:1px solid #FECACA" onclick="event.stopPropagation()">
       <input type="checkbox" id="deleteConfirmCheck" onchange="toggleDeleteBtn()" style="width:20px;height:20px;margin-top:1px;accent-color:#DC2626;cursor:pointer;flex-shrink:0">
-      <span style="font-size:13px;color:var(--dk);line-height:1.5">Entiendo que esta acci�n es irreversible y que perder� permanentemente todos los datos asociados</span>
+      <span style="font-size:13px;color:var(--dk);line-height:1.5">Entiendo que esta acción es irreversible y que perderé permanentemente todos los datos asociados</span>
     </label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <button onclick="closeConfirm()" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:600;cursor:pointer;color:var(--dk);transition:all .2s" onmouseover="this.style.borderColor='var(--orange)'" onmouseout="this.style.borderColor='var(--border)'">Cancelar</button>
@@ -595,4 +544,3 @@
     </div>
   </div>
 </div>
-
