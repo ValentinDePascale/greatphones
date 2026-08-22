@@ -2238,15 +2238,25 @@ function initSlider(){
   animateHeroEnter();
 }
 function goSlide(idx,manual){
-  idx=(idx+4)%4;
-  var jumping=Math.abs(idx-sliderIdx);
-  if(jumping>2)idx=sliderIdx+(idx>sliderIdx?4:-4);
+  var target=(idx+4)%4;
+  var jumping=Math.abs(target-sliderIdx);
+  // Al envolver (3→0 o 0→3) el salto sería largo y pasaría por un hueco
+  // vacío fuera del track. La resolvemos con un salto instantáneo (sin
+  // transición) hacia la posición destino para que nunca se vea un slide
+  // fantasma en blanco entre el 4º y el 1º.
+  var jumpOverHole=jumping>2;
   var track=document.getElementById('sliderTrack');
-  if(track)track.style.transform='translateX(-'+(idx*25)+'%)';
-  document.querySelectorAll('.sdot').forEach(function(d,i){d.className='sdot'+(i===idx?' act':'');});
+  if(track&&jumpOverHole){track.style.transition='none';}
+  if(track)track.style.transform='translateX(-'+(target*25)+'%)';
+  if(track&&jumpOverHole){
+    // Forzar reflow para que el cambio de transform se aplique sin animar
+    void track.offsetWidth;
+    track.style.transition='';
+  }
+  document.querySelectorAll('.sdot').forEach(function(d,i){d.className='sdot'+(i===target?' act':'');});
   // Parallax interno: mover la imagen del slide anterior/siguiente levemente
-  if(window.GPAnim&&GPAnim.enabled){animateSlideParallax(idx);}
-  sliderIdx=idx;
+  if(window.GPAnim&&GPAnim.enabled){animateSlideParallax(target);}
+  sliderIdx=target;
   // Si el usuario cambió manualmente, reiniciamos el temporizador desde cero
   // (sin acumulación: cancelamos el timeout pendiente y lo re-armamos).
   if(manual)restartSliderTimer();else scheduleSliderNext();
