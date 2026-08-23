@@ -661,22 +661,28 @@ function renderGrid(gid,prods){
 
     // === GROUP CARD ===
     if(p.isGroup){
-      // Grupo de preventa
+      // Grupo de preventa: misma card que una de grupo normal, pero con
+      // badge de preventa y fecha de disponibilidad más cercana.
       if(p.isPreorder){
         var gDate=preorderDateLabel(p);
-        var gAvail='<div class="pcard-badge" style="background:rgba(128,90,213,.12);color:#6d4fc7;border:1px solid rgba(128,90,213,.25)">⏳ Preventa · '+gDate.label+'</div>';
-        return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard pcard-group pcard-preorder">'+
+        var gAvailLabel=gDate.label.indexOf('a partir')===0?gDate.label:('Disponible '+gDate.label);
+        var gAvail='<div class="pcard-badge pcard-badge--preorder">⏳ Preventa · '+gAvailLabel+'</div>';
+        var gSub=p.progroupCount+(p.progroupCount===1?' variante':' variantes');
+        return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
+          '<article class="pcard pcard-group pcard-preorder">'+
           '<div class="pcard-img">'+
             gAvail+
             '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
             imgHtml(p.imageUrl,p.ico,false)+
-            '<div class="pcard-var-badge">'+(p.progroupCount||p.variantCount||2)+' variantes</div>'+
+            '<div class="pcard-var-badge">'+gSub+'</div>'+
           '</div>'+
           '<div class="pcard-body">'+
             '<div class="pcard-brand">'+esc(p.brand||'')+'</div>'+
             '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
+            '<div class="pcard-subtitle">'+esc(gSub)+'</div>'+
+            condPillsHTML(p)+
             '<div class="pcard-price-row"><span class="pcard-price">Desde '+fmt(p.progroupMin||p.price)+'</span></div>'+
-            '<div style="font-size:11px;color:#6d4fc7;font-weight:600;margin:2px 0 6px">'+gDate.label+'</div>'+
+            '<div class="pcard-preorder-avail">'+esc(gAvailLabel)+'</div>'+
             '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();openDetail(\''+p.id+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ver preventa</button>'+
           '</div>'+
         '</article></a>';
@@ -706,20 +712,21 @@ function renderGrid(gid,prods){
     // === PREORDER CARDS ===
     // Un producto isPreorder se muestra en el catálogo con badge de preventa,
     // su fecha de disponibilidad más cercana y botón "Reservar".
-    function preorderDateLabel(p){
-      if(!p.availableFrom)return { label:'Próximamente', days:null };
-      var d=new Date(p.availableFrom);
-      var now=new Date();
-      var days=Math.ceil((d-now)/86400000);
-      if(days<=1)return { label:'Disponible pronto', days:0 };
-      if(days<60)return { label:'Disponible en ~'+days+' días', days:days };
-      return { label:'Disponible '+d.toLocaleDateString('es-AR',{month:'short',year:'numeric'}), days:days };
-    }
+function preorderDateLabel(p){
+  if(!p.availableFrom)return { label:'Próximamente', days:null };
+  var d=new Date(p.availableFrom);
+  var now=new Date();
+  var days=Math.ceil((d-now)/86400000);
+  if(days<=1)return { label:'Pronto', days:0 };
+  if(days<60)return { label:'en ~'+days+' días', days:days };
+  return { label:'a partir del '+d.toLocaleDateString('es-AR',{day:'numeric',month:'long'}), days:days };
+}
 
     if(p.isPreorder){
       var avail=preorderDateLabel(p);
-      var availBadge='<div class="pcard-badge" style="background:rgba(128,90,213,.12);color:#6d4fc7;border:1px solid rgba(128,90,213,.25)">⏳ Preventa · '+avail.label+'</div>';
-      // Preventa única (una sola combinación)
+      var availLabel=avail.label.indexOf('a partir')===0?avail.label:('Disponible '+avail.label);
+      var availBadge='<div class="pcard-badge pcard-badge--preorder">⏳ Preventa · '+availLabel+'</div>';
+      var preCuota=Math.round((p.price||0)/12);
       return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard pcard-preorder">'+
         '<div class="pcard-img">'+
           availBadge+
@@ -732,7 +739,7 @@ function renderGrid(gid,prods){
           (p.sub?'<div class="pcard-subtitle">'+esc(p.sub)+'</div>':condPillsHTML(p))+
           '<div class="pcard-discount-row"></div>'+
           '<span class="pcard-price">'+fmt(p.price)+'</span>'+
-          '<div style="font-size:11px;color:#6d4fc7;font-weight:600;margin:2px 0 6px">'+avail.label+'</div>'+
+          '<div class="pcard-preorder-avail">'+esc(availLabel)+'</div>'+
           '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Reservar</button>'+
         '</div>'+
       '</article></a>';
@@ -1559,6 +1566,8 @@ function nextDetailImage(){
 function selectDetailVariant(idx){
   var vars=window._detailVariants||[];
   if(idx<0||idx>=vars.length)return;
+  // Guard anti-loop: si ya tenemos esta variante seleccionada, no re-render
+  if(idx===window._selectedVariantIdx&&window._selectedVariant&&vars[idx]&&window._selectedVariant.id===vars[idx].id)return;
   window._selectedVariantIdx=idx;
   window._selectedVariant=vars[idx];
   var v=vars[idx];
@@ -1646,7 +1655,8 @@ function selectDetailVariant(idx){
     screen:currentProd.screen,
     isOffer:isPromo,
     discount:bestDiscount,
-    price:finalPrice
+    price:finalPrice,
+    isPreorder:!!(window._isPreorderDetail||currentProd.isPreorder)
   };
   renderSpecsGrid(buildSpecsForProduct(mergedProd));
 

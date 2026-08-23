@@ -581,15 +581,6 @@ function renderPrevWizardStep(step) {
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Tipo</label><select class="sel-f" id="pw-type"><option value="celular"'+(m.type==='celular'||!m.type?' selected':'')+'>Celular</option><option value="tablet"'+(m.type==='tablet'?' selected':'')+'>Tablet</option><option value="laptop"'+(m.type==='laptop'?' selected':'')+'>Laptop</option><option value="smartwatch"'+(m.type==='smartwatch'?' selected':'')+'>Smartwatch</option></select></div>' +
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Condición</label><select class="sel-f" id="pw-condition"><option value="Nuevo" selected>Nuevo</option><option value="Impecable">Impecable</option></select></div>' +
         '</div>' +
-        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Imagen de referencia</label>' +
-          '<div style="display:flex;gap:10px;align-items:center">' +
-            '<input class="inp-f" type="text" id="pw-imageUrl" value="' + (m.imageUrl || '') + '" placeholder="https://..." style="flex:1">' +
-            '<label style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer;color:var(--dk);white-space:nowrap">' +
-              'Subir' +
-              '<input type="file" accept="image/*" style="display:none" onchange="uploadWizardImage(this)">' +
-            '</label>' +
-          '</div>' +
-        '</div>' +
         '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Descripción</label>' +
           '<textarea class="inp-f" id="pw-description" rows="2" placeholder="Detalle de la preventa (opcional)" style="resize:none">' + (m.description || '') + '</textarea></div>' +
       '</div>'
@@ -637,11 +628,8 @@ function onPrevWizardModel() {
 }
 
 function uploadWizardImage(input) {
-  if (!input.files || !input.files[0]) return
-  var fd = new FormData(); fd.append('file', input.files[0])
-  fetch(API_URL + '/api/upload', { method: 'POST', body: fd })
-    .then(function(r) { return r.json() })
-    .then(function(d) { if (d.url) document.getElementById('pw-imageUrl').value = d.url })
+  // Deprecado: la imagen principal ya no se pide (las imágenes vienen por variante)
+  void input
 }
 
 function addPrevWizardRow() {
@@ -796,10 +784,9 @@ function prevWizardNext() {
     _prevWizardData.brand = document.getElementById('pw-brand').value
     _prevWizardData.type = document.getElementById('pw-type').value
     _prevWizardData.condition = document.getElementById('pw-condition').value
-    _prevWizardData.imageUrl = document.getElementById('pw-imageUrl').value || null
     _prevWizardData.description = document.getElementById('pw-description').value
     // Pre-llenar una fila vacía si no hay ninguna
-    if (!_prevWizardData.rows.length) _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '' })
+    if (!_prevWizardData.rows.length) _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '', imageUrl: '' })
   }
   renderPrevWizardStep(_prevWizardStep + 1)
 }
