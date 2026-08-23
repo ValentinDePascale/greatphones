@@ -645,7 +645,7 @@ function uploadWizardImage(input) {
 }
 
 function addPrevWizardRow() {
-  _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '' })
+  _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '', imageUrl: '' })
   renderPrevWizardRows()
 }
 
@@ -662,24 +662,66 @@ function renderPrevWizardRows() {
     return
   }
   wrap.innerHTML = _prevWizardData.rows.map(function(r, i) {
+    var colorHex = r.color ? (_cssColor ? _cssColor(r.color) : '#ccc') : '#fff'
+    var imgPreview = r.imageUrl
+      ? '<img src="' + r.imageUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:8px">'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--gray)"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
     return '<div class="prev-row" style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">' +
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
         '<span style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.4px">Combinación ' + (i + 1) + '</span>' +
         '<button onclick="removePrevWizardRow(' + i + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px">✕</button>' +
       '</div>' +
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Color *</label>' +
-          '<div style="display:flex;gap:6px;align-items:center">' +
-            '<input class="inp-f" type="text" id="pw-row-color-' + i + '" value="' + esc(r.color) + '" placeholder="Negro" style="flex:1">' +
-            '<button onclick="openPrevColorPicker(' + i + ')" title="Elegir color" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:' + _cssColor(r.color) + ';cursor:pointer"></button>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start">' +
+        // Columna izquierda: color (círculo) + imagen
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:5px">Color *</label>' +
+            '<div style="display:flex;gap:8px;align-items:center">' +
+              '<button onclick="openPrevColorPicker(' + i + ')" title="Elegir color" style="width:40px;height:40px;flex-shrink:0;border:2px solid var(--border);border-radius:50%;background:' + colorHex + ';cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden">' +
+                (r.color ? '' : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gray)" stroke-width="2"><circle cx="12" cy="12" r="8"/></svg>') +
+              '</button>' +
+              '<input class="inp-f" type="text" id="pw-row-color-' + i + '" value="' + esc(r.color) + '" placeholder="Negro" oninput="updatePrevRow(' + i + ')" style="flex:1;min-width:0">' +
+            '</div>' +
+          '</div>' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:5px">Imagen de la variante</label>' +
+            '<label class="pw-var-img" ondragover="event.preventDefault();this.style.borderColor=\'var(--orange)\'" ondragleave="this.style.borderColor=\'var(--border)\'" ondrop="event.preventDefault();this.style.borderColor=\'var(--border)\';handlePrevWizardDrop(event,' + i + ')" style="display:flex;align-items:center;justify-content:center;width:72px;height:72px;border:1.5px dashed var(--border);border-radius:10px;background:#fff;cursor:pointer;overflow:hidden;transition:border-color .15s">' +
+              '<input type="file" accept="image/*" style="display:none" onchange="uploadPrevWizardImage(this,' + i + ')">' + imgPreview +
+            '</label>' +
           '</div>' +
         '</div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Almacenamiento *</label><select class="sel-f" id="pw-row-storage-' + i + '" onchange="updatePrevRow(' + i + ')"><option value="">...</option><option value="64 GB"' + (r.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (r.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (r.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (r.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (r.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="pw-row-price-' + i + '" value="' + r.price + '" placeholder="1320000" onchange="updatePrevRow(' + i + ')"></div>' +
-        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Disponible desde *</label><input class="inp-f" type="date" id="pw-row-date-' + i + '" value="' + r.availableFrom + '" onchange="updatePrevRow(' + i + ')"></div>' +
+        // Columna derecha: storage, precio, fecha
+        '<div style="display:flex;flex-direction:column;gap:10px">' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:5px">Almacenamiento *</label><select class="sel-f" id="pw-row-storage-' + i + '" onchange="updatePrevRow(' + i + ')"><option value="">...</option><option value="64 GB"' + (r.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (r.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (r.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (r.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (r.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:5px">Precio *</label><input class="inp-f" type="number" id="pw-row-price-' + i + '" value="' + r.price + '" placeholder="1320000" oninput="updatePrevRow(' + i + ')"></div>' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:5px">Disponible desde *</label><input class="inp-f" type="date" id="pw-row-date-' + i + '" value="' + r.availableFrom + '" onchange="updatePrevRow(' + i + ')"></div>' +
+        '</div>' +
       '</div>' +
     '</div>'
   }).join('')
+}
+
+function uploadPrevWizardImage(input, i) {
+  if (!input.files || !input.files[0]) return
+  var fd = new FormData(); fd.append('file', input.files[0])
+  var inner = input.parentElement
+  if (inner) { inner.innerHTML = '<div style="width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--orange);border-radius:50%;animation:spin .7s linear infinite"></div>' }
+  fetch(API_URL + '/api/upload', { method: 'POST', body: fd })
+    .then(function(r) { return r.json() })
+    .then(function(d) {
+      if (d.url && _prevWizardData.rows[i]) {
+        _prevWizardData.rows[i].imageUrl = d.url
+        renderPrevWizardRows()
+      } else if (inner && !(d && d.url)) { inner.innerHTML = '<span style="font-size:10px;color:var(--red)">Error</span>' }
+    })
+    .catch(function() { if (inner) inner.innerHTML = '<span style="font-size:10px;color:var(--red)">Error</span>' })
+}
+
+function handlePrevWizardDrop(e, i) {
+  e.preventDefault()
+  var f = e.dataTransfer.files && e.dataTransfer.files[0]
+  if (f) {
+    var fake = { files: [f] }
+    uploadPrevWizardImage(fake, i)
+  }
 }
 
 function updatePrevRow(i) {
@@ -701,16 +743,28 @@ function openPrevColorPicker(i) {
   var host = document.getElementById('prevColorPickerHost')
   if (!host) return
   host.style.display = 'flex'
-  host.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:100%" onclick="event.stopPropagation()">' +
+  var colors = []
+  var modelName = document.getElementById('pw-model') ? document.getElementById('pw-model').value : ''
+  if (window.MODEL_COLORS && modelName && window.MODEL_COLORS[modelName]) {
+    colors = window.MODEL_COLORS[modelName].map(function(c) { return { name: c, hex: (window.COLOR_HEX && window.COLOR_HEX[c]) || '#ccc' } })
+  } else {
+    colors = (COLOR_PALETTE || []).map(function(c) { return { name: c, hex: _cssColor(c) } })
+  }
+  host.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:440px;width:100%" onclick="event.stopPropagation()">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
       '<div style="font-size:16px;font-weight:700">Elegir color</div>' +
       '<button onclick="closePrevColorPicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray)">✕</button>' +
     '</div>' +
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (COLOR_PALETTE || []).map(function(c) {
-      return '<div onclick="selectPrevWizardColor(\'' + c.replace(/'/g, "\\'") + '\')" style="width:34px;height:34px;border-radius:50%;background:' + _cssColor(c) + ';cursor:pointer;border:2px solid var(--border)" title="' + c + '"></div>'
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' + colors.map(function(c) {
+      return '<div onclick="selectPrevWizardColor(\'' + c.name.replace(/'/g, "\\'") + '\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:8px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor=\'var(--orange)\'">' +
+        '<div style="width:38px;height:38px;border-radius:50%;background:' + c.hex + ';border:1px solid rgba(0,0,0,.08)"></div>' +
+        '<span style="font-size:10px;color:var(--dk);font-weight:600;text-align:center;line-height:1.1">' + esc(c.name) + '</span>' +
+      '</div>'
     }).join('') + '</div>' +
-    '<input type="text" id="prevColorCustom" placeholder="Otro color..." style="width:100%;margin-top:12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">' +
-    '<button onclick="selectPrevWizardCustom()" style="width:100%;margin-top:8px;padding:10px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600">Usar color</button>' +
+    '<div style="display:flex;gap:8px;margin-top:14px">' +
+      '<input type="text" id="prevColorCustom" placeholder="Otro color..." style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">' +
+      '<button onclick="selectPrevWizardCustom()" style="padding:9px 16px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600">Usar</button>' +
+    '</div>' +
   '</div>'
 }
 
@@ -720,6 +774,7 @@ function selectPrevWizardColor(c) {
   if (input) input.value = c
   updatePrevRow(_prevColorPickerTarget)
   closePrevColorPicker()
+  renderPrevWizardRows()
 }
 
 function selectPrevWizardCustom() {
@@ -776,10 +831,12 @@ function renderPrevSummary() {
   var rows = _prevWizardData.rows || []
   var invalid = rows.filter(function(r) { return !r.color || !r.storage || !r.price || !r.availableFrom })
   var rowsHtml = rows.length ? rows.map(function(r) {
-    return '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--cream2);border-radius:8px;margin-bottom:6px;align-items:center">' +
-      '<span style="font-weight:600;font-size:13px">' + esc(r.color) + ' · ' + esc(r.storage) + '</span>' +
-      '<span style="color:var(--orange);font-weight:700;font-size:13px">' + fmt(parseInt(r.price) || 0) + '</span>' +
-      '<span style="font-size:11px;color:var(--blue)">Disp. ' + esc(r.availableFrom) + '</span>' +
+    var dot = '<span style="width:16px;height:16px;border-radius:50%;background:' + (_cssColor ? _cssColor(r.color) : '#ccc') + ';border:1px solid rgba(0,0,0,.1);flex-shrink:0;display:inline-block;vertical-align:middle"></span>'
+    var img = r.imageUrl ? '<img src="' + r.imageUrl + '" style="width:28px;height:28px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px">' : ''
+    return '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--cream2);border-radius:8px;margin-bottom:6px;align-items:center;gap:8px">' +
+      '<span style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;min-width:0;overflow:hidden">' + img + dot + ' <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.color) + ' · ' + esc(r.storage) + '</span></span>' +
+      '<span style="color:var(--orange);font-weight:700;font-size:13px;flex-shrink:0">' + fmt(parseInt(r.price) || 0) + '</span>' +
+      '<span style="font-size:11px;color:var(--blue);flex-shrink:0">Disp. ' + esc(r.availableFrom) + '</span>' +
     '</div>'
   }).join('') : '<div style="color:var(--gray);font-size:12px;padding:8px 0">Sin combinaciones</div>'
 
@@ -887,9 +944,9 @@ function savePreventaProduct() {
       cost: 0,
       stock: 0,
       availableFrom: r.availableFrom ? r.availableFrom + 'T00:00:00.000Z' : null,
-      imageUrl: img || null,
-      images: img ? [img] : [],
-      description: desc || null,
+      imageUrl: r.imageUrl || img || null,
+      images: r.imageUrl ? [r.imageUrl] : (img ? [img] : []),
+      description: desc || '',
       sub: sub || null,
       isPreorder: true,
       ico: '📱',
