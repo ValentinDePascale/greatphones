@@ -94,7 +94,9 @@ function buildSpecsForProduct(p){
   }
   if(p.stock!==undefined){
     if(p.isPreorder){
-      // La disponibilidad va junto al color; acá no agregamos el spec suelto.
+      // Preventa: la disponibilidad se muestra en su propia card a partir de la
+      // fecha elegida en el admin (availableFrom).
+      specs.push({key:'date',label:'Disponibilidad',val:preorderShortDate(p.availableFrom),color:'var(--orange)'});
     }else{
       var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
       specs.push({key:'stock',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
@@ -1376,7 +1378,11 @@ function openDetail(id, variantId){
     // Cerrar otras secciones del detalle que no aplican a preventa
     var preOldEl=document.getElementById('detOld');if(preOldEl)preOldEl.style.display='none';
     var preCuotaEl=document.getElementById('detCuotaInfo');if(preCuotaEl)preCuotaEl.style.display='none';
-    if(typeof renderDetailImages==='function')renderDetailImages();
+    // Garantizar que haya una variante seleccionada con su imagen/precio: así no
+    // se mezclan imagen del producto base con precio de la variante a la entrada.
+    if(window._selectedVariantIdx<0&&preVariants.length>0){
+      selectDetailVariant(0);
+    }
     if(typeof renderRelatedAccs==='function'){try{renderRelatedAccs();}catch(e){}}
     setDetLoading(false);
     nav('detail');
@@ -1704,6 +1710,7 @@ function selectDetailVariant(idx){
     battery:v.batteryHealth,
     batteryFrom:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryFrom||85):undefined,
     batteryTo:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryTo||95):undefined,
+    availableFrom:(window._isPreorderDetail||currentProd.isPreorder)?(v.availableFrom||v._availableFrom||currentProd.availableFrom):undefined,
     color:v.color,
     ram:currentProd.ram,
     storage:v.storage||currentProd.storage,
@@ -1714,6 +1721,7 @@ function selectDetailVariant(idx){
     isOffer:isPromo,
     discount:bestDiscount,
     price:finalPrice,
+    availableFrom:v.availableFrom||currentProd.availableFrom,
     isPreorder:!!(window._isPreorderDetail||currentProd.isPreorder)
   };
   renderSpecsGrid(buildSpecsForProduct(mergedProd));
