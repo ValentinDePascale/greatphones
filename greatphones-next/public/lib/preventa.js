@@ -805,27 +805,18 @@ function prevWizardNext() {
 }
 
 function renderPrevSummary() {
-  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : (_prevWizardData.modelName || '')
-  var brand = document.getElementById('pw-brand') ? document.getElementById('pw-brand').value : (_prevWizardData.brand || '')
-  var type = document.getElementById('pw-type') ? document.getElementById('pw-type').value : (_prevWizardData.type || 'celular')
-  var cond = document.getElementById('pw-condition') ? document.getElementById('pw-condition').value : (_prevWizardData.condition || 'Nuevo')
-  var img = document.getElementById('pw-imageUrl') ? document.getElementById('pw-imageUrl').value : (_prevWizardData.imageUrl || '')
-  var desc = document.getElementById('pw-description') ? document.getElementById('pw-description').value : (_prevWizardData.description || '')
+  // Al llegar al paso 3 los inputs del paso 1 ya no están en el DOM, así que
+  // usamos lo guardado en _prevWizardData durante prevWizardNext().
+  var model = (_prevWizardData.modelName || (_prevWizardData.model && _prevWizardData.model.name) || (_prevWizardData.resolved && _prevWizardData.resolved.model) || '')
+  var brand = (_prevWizardData.brand || 'iPhone')
+var type = (_prevWizardData.type || 'celular')
+  var cond = (_prevWizardData.condition || 'Nuevo')
+  var img = (_prevWizardData.imageUrl || '')
+  var desc = (_prevWizardData.description || '')
 
-  // Update rows from inputs (last-chance)
-  if (_prevWizardData.rows) {
-    _prevWizardData.rows.forEach(function(r, i) {
-      var c = document.getElementById('pw-row-color-' + i)
-      var s = document.getElementById('pw-row-storage-' + i)
-      var p = document.getElementById('pw-row-price-' + i)
-      var d = document.getElementById('pw-row-date-' + i)
-      if (c) r.color = c.value
-      if (s) r.storage = s.value
-      if (p) r.price = p.value
-      if (d) r.availableFrom = d.value
-    })
-  }
-
+  // Las filas ya se mantienen actualizadas en vivo por updatePrevRow(), así que
+  // en el paso 3 usamos directamente _prevWizardData.rows (los inputs del paso 2
+  // ya no existen en el DOM).
   _prevWizardData.resolved = { model: model, brand: brand, type: type, condition: cond, imageUrl: img, description: desc }
 
   var rows = _prevWizardData.rows || []
