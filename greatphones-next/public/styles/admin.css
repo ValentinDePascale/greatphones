@@ -193,15 +193,7 @@
   border-color:var(--orange2)
 }
 
-/* ========== HAMBURGER & BACKDROP ========== */
-.admin-hamburger{
-  display:none;align-items:center;justify-content:center;
-  width:36px;height:36px;border:none;border-radius:8px;
-  background:var(--admin-surface-hover);color:var(--admin-text);
-  font-size:20px;cursor:pointer;flex-shrink:0;
-  transition:background .15s;margin-right:8px
-}
-.admin-hamburger:hover{background:var(--admin-border)}
+/* ========== BACKDROP ========== */
 .admin-sidebar-backdrop{
   display:none;position:fixed;inset:0;z-index:501;
   background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
@@ -228,7 +220,6 @@
 
 /* Mobile: sidebar como drawer overlay */
 @media(max-width:768px){
-  .admin-hamburger{display:flex}
   .admin-sidebar-backdrop{display:block}
   .admin-sidebar{
     position:fixed;top:0;left:0;z-index:502;
@@ -356,9 +347,8 @@
   .admin-content{padding:20px}
 }
 
-/* Hide hamburger + backdrop on tablet+ */
+/* Hide backdrop + chat back btn on tablet+ */
 @media(min-width:769px){
-  .admin-hamburger{display:none!important}
   .admin-sidebar-backdrop{display:none!important}
   .chat-back-btn{display:none!important}
 }
@@ -1323,3 +1313,53 @@ body:has(#p-admin-acc.act) #lightbox,
 body:has(#p-admin-acc.act) #splash,
 body:has(#p-admin-acc.act) #p-admin-acc .sh-hdr,
 body:has(#p-admin-acc.act) #cartFab{display:none!important}
+
+/* ===== ADMIN SIDEBAR RESPONSIVE ===== */
+/* El sidebar React (AdminSidebar.tsx) usa la clase .admin-sidebar. En desktop
+   se comporta como sticky; en <900px se convierte en drawer off-canvas. */
+
+.admin-sidebar{
+  border-right:1px solid #e5e7eb;
+  box-shadow:1px 0 3px rgba(0,0,0,.04);
+}
+
+.admin-sidebar-scrim{display:none}
+
+.admin-mobile-bar{display:none}
+
+@media(max-width:900px){
+  .admin-sidebar{
+    position:fixed !important;
+    left:0;
+    top:0;
+    height:100vh;
+    z-index:99;
+    transform:translateX(-110%);
+    transition:transform .25s cubic-bezier(.4,0,.2,1);
+    visibility:hidden;
+  }
+  .admin-sidebar.admin-sidebar-open{
+    transform:translateX(0);
+    visibility:visible;
+    box-shadow:4px 0 24px rgba(0,0,0,.18);
+  }
+  .admin-sidebar-scrim{
+    display:block;
+  }
+  .admin-mobile-bar{display:flex}
+}
+
+@media(min-width:901px){
+  .admin-mobile-bar{display:none!important}
+}
+
+/* ===== ADMIN CONTENT RESPONSIVE ===== */
+@media(max-width:1024px){
+  .admin-content{max-width:100% !important}
+}
+@media(max-width:767px){
+  .admin-content{padding:16px 12px !important}
+}
+@media(max-width:639px){
+  .admin-content{padding:12px !important}
+}
