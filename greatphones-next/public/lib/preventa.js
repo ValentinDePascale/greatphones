@@ -885,8 +885,8 @@ function renderPrevSummary() {
   // Al llegar al paso 3 los inputs del paso 1 ya no están en el DOM, así que
   // usamos lo guardado en _prevWizardData durante prevWizardNext().
   var model = (_prevWizardData.modelName || (_prevWizardData.model && _prevWizardData.model.name) || (_prevWizardData.resolved && _prevWizardData.resolved.model) || '')
-  var brand = (_prevWizardData.brand || 'iPhone')
-var type = (_prevWizardData.type || 'celular')
+  var brand = (_prevWizardData.brand || (_prevWizardData.model && _prevWizardData.model.brand) || 'Apple')
+  var type = (_prevWizardData.type || 'celular')
   var cond = (_prevWizardData.condition || 'Nuevo')
   var img = (_prevWizardData.imageUrl || '')
   var desc = (_prevWizardData.description || '')
@@ -921,8 +921,8 @@ var type = (_prevWizardData.type || 'celular')
       '</div>' +
       '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
         '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Combinaciones</div>' +
-        '<div style="font-size:22px;font-weight:700;color:var(--orange)">' + rows.length + '</div>' +
-        '<div style="font-size:11px;color:var(--green)" id="pwSummaryValidity">' + (invalid.length ? invalid.length + ' incompletas' : '✓ Completas') + '</div>' +
+        '<div style="font-size:22px;font-weight:700;color:var(--orange)">' + active.length + '</div>' +
+        '<div style="font-size:11px;color:var(--green)" id="pwSummaryValidity">' + (invalid.length ? invalid.length + ' sin precio/fecha' : '✓ Completas') + '</div>' +
       '</div>' +
     '</div>' +
     '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
