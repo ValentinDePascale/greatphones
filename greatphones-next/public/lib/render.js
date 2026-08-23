@@ -68,6 +68,7 @@ function buildSpecsForProduct(p){
     if(cond==='Nuevo'){specs.push({key:'check',label:'Estado',val:'Nuevo',color:'var(--green)'});}
     else if(cond){specs.push({key:'status',label:'Estado',val:cond,color:'var(--orange)'});}
     if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({key:'battery',label:'Bateria',val:batPct+'%',color:batColor});}
+    else if(p.isPreorder||p.batteryFrom){specs.push({key:'battery',label:'Bateria',val:'Entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %',color:'var(--green)'});}
     if(p.color)specs.push({key:'color',label:'Color',val:p.color});
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
     if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
@@ -677,11 +678,12 @@ function renderGrid(gid,prods){
             '<div class="pcard-var-badge">'+gSub+'</div>'+
           '</div>'+
           '<div class="pcard-body">'+
-            '<div class="pcard-brand">'+esc(p.brand||'')+'</div>'+
+            '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
             '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
             '<div class="pcard-subtitle">'+esc(gSub)+'</div>'+
-            condPillsHTML(p)+
+            preorderSpecsHTML(p)+
             '<div class="pcard-price-row"><span class="pcard-price">Desde '+fmt(p.progroupMin||p.price)+'</span></div>'+
+            '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.progroupMin||p.price||0)/12))+' cuotas fijas</div>'+
             '<div class="pcard-preorder-avail">'+esc(gAvailLabel)+'</div>'+
             '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();openDetail(\''+p.id+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ver preventa</button>'+
           '</div>'+
@@ -722,6 +724,25 @@ function preorderDateLabel(p){
   return { label:'a partir del '+d.toLocaleDateString('es-AR',{day:'numeric',month:'long'}), days:days };
 }
 
+function preorderSpecsHTML(p){
+  var pills=[];
+  if(p.condition&&p.condition!=='Nuevo')pills.push('<span class="pcard-spec">Estado: '+esc(p.condition)+'</span>');
+  else pills.push('<span class="pcard-spec">Estado: Nuevo</span>');
+  var hasBattery=p.battery!=null&&p.battery>0&&p.battery<=100;
+  var hasRange=p.batteryFrom!=null||p.batteryTo!=null;
+  if(hasRange)pills.push('<span class="pcard-spec">Batería entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %</span>');
+  else if(hasBattery)pills.push('<span class="pcard-spec">Batería '+p.battery+'%</span>');
+  else pills.push('<span class="pcard-spec">Batería entre 85 y 95 %</span>');
+  if(p.ram)pills.push('<span class="pcard-spec">'+esc(p.ram)+'</span>');
+  return pills.length?'<div class="pcard-specs">'+pills.join('')+'</div>':'';
+}
+
+function preorderBrand(p){
+  var b=(p.brand||'');
+  if(b==='iPhone'||b==='Apple')return 'APPLE';
+  return b||'';
+}
+
     if(p.isPreorder){
       var avail=preorderDateLabel(p);
       var availLabel=avail.label.indexOf('a partir')===0?avail.label:('Disponible '+avail.label);
@@ -734,11 +755,12 @@ function preorderDateLabel(p){
           imgHtml(p.imageUrl,p.ico,false)+
         '</div>'+
         '<div class="pcard-body">'+
-          '<div class="pcard-brand">'+esc(p.brand||'')+'</div>'+
+          '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
           '<div class="pcard-name">'+esc(p.name)+'</div>'+
-          (p.sub?'<div class="pcard-subtitle">'+esc(p.sub)+'</div>':condPillsHTML(p))+
+          (p.sub?'<div class="pcard-subtitle">'+esc(p.sub)+'</div>':preorderSpecsHTML(p))+
           '<div class="pcard-discount-row"></div>'+
           '<span class="pcard-price">'+fmt(p.price)+'</span>'+
+          '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
           '<div class="pcard-preorder-avail">'+esc(availLabel)+'</div>'+
           '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Reservar</button>'+
         '</div>'+
@@ -1305,8 +1327,8 @@ function openDetail(id, variantId){
     var preLabel=preVariants.length>1?'Desde ':'';
     var prePriceEl=document.getElementById('detPrice');if(prePriceEl)prePriceEl.textContent=preLabel+fmt(preFinal);
     var preTotalEl=document.getElementById('detTotal');if(preTotalEl)preTotalEl.textContent=fmt(preFinal);
-    var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=currentProd.brand||'Apple';
-    var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=currentProd.type||'iPhone';
+    var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=(currentProd.brand==='iPhone'||currentProd.brand==='Apple')?'APPLE':(currentProd.brand||'Apple');
+    var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=currentProd.modelGroup||currentProd.name||'iPhone';
     var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=currentProd.name;
     // Botones de Reservar
     var preAddEl=document.getElementById('detAddCart');
@@ -1326,6 +1348,13 @@ function openDetail(id, variantId){
     };}
     if(window._selectedVariant&&window._selectedVariant.availableFrom){}
     if(typeof syncDetSticky==='function')syncDetSticky(document.getElementById('detAddCart'));
+    // Cerrar otras secciones del detalle que no aplican a preventa
+    var preOldEl=document.getElementById('detOld');if(preOldEl)preOldEl.style.display='none';
+    var preCuotaEl=document.getElementById('detCuotaInfo');if(preCuotaEl)preCuotaEl.style.display='none';
+    if(typeof renderDetailImages==='function')renderDetailImages();
+    if(typeof renderRelatedAccs==='function'){try{renderRelatedAccs();}catch(e){}}
+    setDetLoading(false);
+    nav('detail');
     return;
   }
   window._isPreorderDetail=false;
@@ -1615,7 +1644,9 @@ function selectDetailVariant(idx){
   else if(oldEl)oldEl.style.display='none';
   var cuota12=Math.round(finalPrice/12);
   var cuotaText=document.getElementById('detCuotaText');
-  if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+  if(cuotaText)cuotaText.textContent=window._isPreorderDetail
+    ?('12x '+fmt(cuota12)+' cuotas fijas')
+    :('12x '+fmt(cuota12)+' sin interes');
 
   // Preventa: mostrar la disponibilidad estimada de la combinación elegida
   if(window._isPreorderDetail){
@@ -1646,6 +1677,8 @@ function selectDetailVariant(idx){
     type:v.deviceType||currentProd.type,
     condition:v.cosmeticCondition||currentProd.condition,
     battery:v.batteryHealth,
+    batteryFrom:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryFrom||85):undefined,
+    batteryTo:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryTo||95):undefined,
     color:v.color,
     ram:currentProd.ram,
     storage:v.storage||currentProd.storage,
