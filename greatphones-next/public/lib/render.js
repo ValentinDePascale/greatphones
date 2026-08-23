@@ -3065,9 +3065,13 @@ window.showQrDownloadModal=function(qrDataUrl,code,label){
 };
 function getUniqueBrands(){
   var brands={};
-  var fallback=['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Apple','Google','OnePlus','Nokia'];
+  // iPhone no es una marca: la marca real es Apple.
+  var fallback=['Apple','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','OnePlus','Nokia'];
   fallback.forEach(function(b){brands[b]=true;});
-  (PRODUCTS||[]).forEach(function(p){if(p.brand)brands[p.brand]=true;});
+  (PRODUCTS||[]).forEach(function(p){
+    if(p.brand&&p.brand!=='iPhone')brands[p.brand]=true;
+  });
+  if(brands['Apple'])delete brands['iPhone'];
   return Object.keys(brands).sort();
 }
 function uploadProductImage(input){
