@@ -135,8 +135,13 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
       var snapBasePrice=((p&&p.minTargetPrice&&p.minTargetPrice>0)?p.minTargetPrice:(snapSrc.price||0));
       var snapIsOffer=typeof isOfferValid==='function'&&isOfferValid(snapSrc);
       var snapFinalPrice=snapIsOffer?Math.round(snapBasePrice-snapBasePrice*snapSrc.discount/100):snapBasePrice;
+      // Limpiar nombre duplicado (p.ej. brand 'iPhone' + name 'iPhone 14')
+      var snapName=(snapSrc.name||'');
+      if(snapSrc.brand&&snapName.indexOf(snapSrc.brand)===0&&snapName.trim()!==snapSrc.brand.trim()){
+        snapName=snapName.slice(snapSrc.brand.length).replace(/^\s+/,'');
+      }
       entry.snapshot={
-        name:snapSrc.name||'',
+        name:snapName,
         price:snapBasePrice,
         finalPrice:snapFinalPrice,
         imageUrl:snapSrc.imageUrl||'',

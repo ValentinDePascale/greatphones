@@ -60,6 +60,13 @@ function detMainImgHTML(imgUrl, isFav, total, currentIdx, accMode){
     '</div>';
 }
 
+function cleanPreorderName(p){
+  var name=(p.name||p.modelGroup||'');
+  var b=(p.brand||'');
+  if(b&&name.indexOf(b)===0&&name.trim()!==b.trim())name=name.slice(b.length).replace(/^\s+/,'');
+  return name||p.modelGroup||'';
+}
+
 function buildSpecsForProduct(p){
   var specs=[];
   var type=(p.type||'').toLowerCase();
@@ -1328,8 +1335,8 @@ function openDetail(id, variantId){
     var prePriceEl=document.getElementById('detPrice');if(prePriceEl)prePriceEl.textContent=preLabel+fmt(preFinal);
     var preTotalEl=document.getElementById('detTotal');if(preTotalEl)preTotalEl.textContent=fmt(preFinal);
     var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=(currentProd.brand==='iPhone'||currentProd.brand==='Apple')?'APPLE':(currentProd.brand||'Apple');
-    var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=currentProd.modelGroup||currentProd.name||'iPhone';
-    var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=currentProd.name;
+    var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=cleanPreorderName(currentProd);
+    var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=cleanPreorderName(currentProd);
     // Botones de Reservar
     var preAddEl=document.getElementById('detAddCart');
     if(preAddEl){preAddEl.style.display='';preAddEl.textContent='Reservar preventa';preAddEl.onclick=function(){
@@ -1668,9 +1675,9 @@ function selectDetailVariant(idx){
   if(v.storage)suffixParts.push(v.storage);
   var variantSuffix=suffixParts.length?' ('+suffixParts.join(' / ')+')':'';
   var name2El=document.getElementById('detName2');
-  if(name2El)name2El.textContent=currentProd.name+variantSuffix;
+  if(name2El)name2El.textContent=(window._isPreorderDetail?cleanPreorderName(currentProd):currentProd.name)+variantSuffix;
   var nameEl=document.getElementById('detName');
-  if(nameEl)nameEl.textContent=currentProd.name;
+  if(nameEl)nameEl.textContent=window._isPreorderDetail?cleanPreorderName(currentProd):currentProd.name;
 
   // Rebuild specs grid with variant-specific data
   var mergedProd={
@@ -1755,6 +1762,70 @@ function renderDetailVariants(){
   if(!modelName&&currentProd)modelName=currentProd.name;
   var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[modelName];
   var hexMap=window.COLOR_HEX||{};
+
+  // Use color circles for known iPhone models (y para preventas: círculos
+  // armados desde los colores de las variantes del grupo).
+  if(window._isPreorderDetail){
+    if(!window._colorCircleState)window._colorCircleState={selectedColor:null,selectedStorage:null};
+    var state=window._colorCircleState;
+
+    // Group variants by color
+    var colorMap={};
+    variants.forEach(function(v){
+      if(!v.color)return;
+      if(!colorMap[v.color])colorMap[v.color]=[];
+      colorMap[v.color].push(v);
+    });
+
+    var circlesHtml=Object.keys(colorMap).map(function(c){
+      var hex=(window.COLOR_HEX&&window.COLOR_HEX[c])||'#ccc';
+      var isSelected=c===state.selectedColor;
+      if(!state.selectedColor)state.selectedColor=c;
+      return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
+    }).join('');
+
+    // Storage boxes for selected color
+    var storageHtml='';
+    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
+    if(storagesForColor&&storagesForColor.length){
+      if(!state.selectedStorage)state.selectedStorage=storagesForColor[0].storage||'';
+      var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
+      var allColorStorages={};
+      Object.keys(colorMap).forEach(function(col){
+        allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
+      });
+      var validStorages=allColorStorages[state.selectedColor]||[];
+      storageHtml='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        allStorages.map(function(s){
+          var isAvailable=validStorages.indexOf(s)>=0;
+          var isSelected=s===state.selectedStorage;
+          if(isAvailable){
+            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
+          }
+          return '<div class="variant-chip disabled">'+s+'</div>';
+        }).join('')+'</div></div>';
+    }else if(state.selectedColor&&!storagesForColor){
+      storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
+    }
+
+    list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      circlesHtml+'</div>'+storageHtml+'</div>';
+
+    // Auto-select variant based on selected color+storage
+    if(state.selectedColor&&state.selectedStorage){
+      var foundIdx=-1;
+      for(var vi=0;vi<variants.length;vi++){
+        var v=variants[vi];
+        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
+          foundIdx=vi;break;
+        }
+      }
+      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
+      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
+    }else if(variants.length>0)selectDetailVariant(0);
+    return;
+  }
 
   // Use color circles for known iPhone models
   if(modelColors&&modelColors.length&&variants.some(function(v){return v.color;})){

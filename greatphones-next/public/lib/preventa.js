@@ -911,7 +911,7 @@ function savePreventaProduct() {
     var storage = (r.storage || '').trim()
     var sub = [color, storage].filter(Boolean).join(' · ')
     return {
-      name: brand + ' ' + model,
+      name: model,
       modelGroup: model,
       brand: brand,
       type: type,
