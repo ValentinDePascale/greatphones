@@ -487,48 +487,319 @@ function loadPreventaProducts() {
     })
 }
 
+var _prevWizardData = { rows: [] }
+var _prevWizardStep = 1
+
 function openPreventaForm(editData) {
   var sub = document.getElementById('preventa-subview')
   if (!sub) return
-  var isEdit = !!editData
+  var isEdit = !!editData && editData.modelGroup
   var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','Apple']
   var currentBrand = isEdit ? (editData.brand || 'iPhone') : 'iPhone'
   var brandOpts = brands.map(function(b) { return '<option value="' + b + '"' + (b === currentBrand ? ' selected' : '') + '>' + b + '</option>' }).join('')
   var iphoneModels = (window.SELL_MODELS && window.SELL_MODELS['iPhone']) || []
-  var currentModel = isEdit ? (editData.modelGroup || editData.name || '') : ''
-  var currentColor = isEdit ? (editData.color || '') : ''
+
+  // En edición, cargamos las combinaciones del grupo y vamos al paso 2
+  var preRows = []
+  if (isEdit) {
+    var grp = editData.modelGroup
+    if (typeof PRODUCTS !== 'undefined' && PRODUCTS) {
+      PRODUCTS.forEach(function(p) {
+        if (p.isPreorder && p.modelGroup === grp) {
+          preRows.push({ color: p.color || '', storage: p.storage || '', price: p.price || '', availableFrom: p.availableFrom ? p.availableFrom.split('T')[0] : '' })
+        }
+      })
+    }
+  }
+  _prevWizardData = { model: editData || null, rows: preRows }
+  _prevWizardStep = 1
 
   sub.innerHTML =
-    '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.5rem;max-width:700px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
-        '<div style="font-size:18px;font-weight:700;color:var(--dk)">' + (isEdit ? 'Editar producto de preventa' : 'Nuevo producto de preventa') + '</div>' +
-        '<button onclick="renderPreventaCatalogo()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px">← Volver al listado</button>' +
+    '<div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:1.75rem;max-width:820px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px">' +
+        '<div><div style="font-size:20px;font-weight:700;color:var(--dk);font-family:\'Playfair Display\',serif">' + (isEdit ? 'Editar preventa' : 'Nueva preventa') + '</div>' +
+        '<div style="font-size:12px;color:var(--gray);margin-top:2px">Creá un modelo y sumá las combinaciones color × almacenamiento con su precio y disponibilidad.</div></div>' +
+        '<button onclick="renderPreventaCatalogo()" style="background:none;border:1px solid var(--border);color:var(--gray);cursor:pointer;font-size:13px;padding:8px 14px;border-radius:10px">← Volver</button>' +
       '</div>' +
-      '<div style="display:grid;gap:12px">' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo *</label><select class="sel-f" id="prevf-model" onchange="onPrevModelSelect()"><option value="">Seleccionar modelo...</option>' + iphoneModels.map(function(m) { return '<option value="' + m + '"' + (m === currentModel ? ' selected' : '') + '>' + m + '</option>' }).join('') + '</select></div>' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><div id="prevf-colorCircles" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px;align-items:center;margin-bottom:4px"></div><input type="hidden" id="prevf-color-hidden" value="' + currentColor + '"></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prevf-brand">' + brandOpts + '</select></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prevf-type"><option value="celular"' + (isEdit && editData.type==='celular'?' selected':'') + '>Celular</option><option value="tablet"' + (isEdit && editData.type==='tablet'?' selected':'') + '>Tablet</option><option value="laptop"' + (isEdit && editData.type==='laptop'?' selected':'') + '>Laptop</option><option value="smartwatch"' + (isEdit && editData.type==='smartwatch'?' selected':'') + '>Smartwatch</option></select></div>' +
+      renderWizardSteps() +
+      '<div id="prevWizardBody" style="margin-top:1.5rem"></div>' +
+      '<div id="prevWizardNav" style="margin-top:1.5rem"></div>' +
+    '</div>' +
+    '<div id="prevColorPickerHost" style="position:fixed;display:none;inset:0;z-index:1300;background:rgba(0,0,0,.5);align-items:center;justify-content:center" onclick="if(event.target===this)closePrevColorPicker()"></div>'
+
+  renderPrevWizardStep(_prevWizardStep)
+}
+
+function renderWizardSteps() {
+  var steps = [
+    ['1','Datos del modelo','var(--green)'],
+    ['2','Combinaciones','var(--orange)'],
+    ['3','Revisar y guardar','var(--blue)'],
+  ]
+  var dots = {}
+  return '<div style="display:flex;gap:8px;margin-bottom:.25rem;flex-wrap:wrap">' + steps.map(function(s) {
+    return '<button onclick="_prevWizardStep=' + s[0] + ';renderPrevWizardStep(' + s[0] + ')" data-step="' + s[0] + '" class="prev-step-dot" style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .18s">' +
+      '<span style="width:22px;height:22px;border-radius:50%;background:' + s[1] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">' + s[0] + '</span>' + s[1] +
+    '</button>'
+  }).join('') + '</div>'
+}
+
+function setPrevStepActive(step) {
+  document.querySelectorAll('.prev-step-dot').forEach(function(b,i) {
+    var n = parseInt(b.getAttribute('data-step'),10)
+    b.style.borderColor = n === step ? 'var(--orange)' : 'var(--border)'
+    b.style.background = n === step ? 'rgba(255,107,44,.06)' : '#fff'
+    b.style.color = n === step ? 'var(--dk)' : 'var(--gray)'
+  })
+}
+
+function renderPrevWizardStep(step) {
+  _prevWizardStep = step
+  var body = document.getElementById('prevWizardBody')
+  var nav = document.getElementById('prevWizardNav')
+  setPrevStepActive(step)
+  var isEdit = !!(_prevWizardData && _prevWizardData.model && _prevWizardData.model.modelGroup)
+  var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','Apple']
+  var iphoneModels = (window.SELL_MODELS && window.SELL_MODELS['iPhone']) || []
+  var m = (_prevWizardData && _prevWizardData.model) || {}
+  var _curModel = m.modelGroup || m.name || ''
+  var brandOpts = brands.map(function(b) { return '<option value="' + b + '"' + (b === (m.brand || 'iPhone') ? ' selected' : '') + '>' + b + '</option>' }).join('')
+
+  if (step === 1) {
+    body.innerHTML =
+      '<div style="display:grid;gap:14px">' +
+        '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:6px">' +
+          '<span style="width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">1</span>' +
+          '<div><div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:2px">Datos del modelo</div>' +
+          '<div style="font-size:12px;color:var(--gray)">Definí qué dispositivo vas a ofrecer en preventa.</div></div>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><select class="sel-f" id="prevf-storage"><option value="">Seleccionar...</option><option value="64 GB"' + (isEdit && editData.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (isEdit && editData.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (isEdit && editData.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (isEdit && editData.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (isEdit && editData.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condición</label><select class="sel-f" id="prevf-condition"><option value="Nuevo"' + (isEdit && editData.condition==='Nuevo'?' selected':'') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition==='Impecable'?' selected':'') + '>Impecable</option></select></div>' +
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Marca</label><select class="sel-f" id="pw-brand">' + brandOpts + '</select></div>' +
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Modelo *</label><select class="sel-f" id="pw-model" onchange="onPrevWizardModel()"><option value="">Seleccionar modelo...</option>' + iphoneModels.map(function(opt){return '<option value="'+opt+'"'+(opt===_curModel?' selected':'')+'>'+opt+'</option>';}).join('') + '</select></div>' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" placeholder="0"></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Disponible desde</label><input class="inp-f" type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '"></div>' +
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Tipo</label><select class="sel-f" id="pw-type"><option value="celular"'+(m.type==='celular'||!m.type?' selected':'')+'>Celular</option><option value="tablet"'+(m.type==='tablet'?' selected':'')+'>Tablet</option><option value="laptop"'+(m.type==='laptop'?' selected':'')+'>Laptop</option><option value="smartwatch"'+(m.type==='smartwatch'?' selected':'')+'>Smartwatch</option></select></div>' +
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Condición</label><select class="sel-f" id="pw-condition"><option value="Nuevo" selected>Nuevo</option><option value="Impecable">Impecable</option></select></div>' +
         '</div>' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">URL Imagen</label><input class="inp-f" type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..."></div>' +
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Imagen de referencia</label>' +
+          '<div style="display:flex;gap:10px;align-items:center">' +
+            '<input class="inp-f" type="text" id="pw-imageUrl" value="' + (m.imageUrl || '') + '" placeholder="https://..." style="flex:1">' +
+            '<label style="display:flex;align-items:center;gap:6px;padding:9px 14px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:12px;cursor:pointer;color:var(--dk);white-space:nowrap">' +
+              'Subir' +
+              '<input type="file" accept="image/*" style="display:none" onchange="uploadWizardImage(this)">' +
+            '</label>' +
+          '</div>' +
+        '</div>' +
+        '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px;color:var(--gray)">Descripción</label>' +
+          '<textarea class="inp-f" id="pw-description" rows="2" placeholder="Detalle de la preventa (opcional)" style="resize:none">' + (m.description || '') + '</textarea></div>' +
+      '</div>'
+    if (isEdit && m.modelGroup) document.getElementById('pw-model').value = m.modelGroup
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:flex-end;gap:10px">' +
+        '<button class="btn btn-o" onclick="prevWizardNext()" style="padding:12px 26px;font-weight:700">Siguiente: Combinaciones →</button>' +
+      '</div>'
+  } else if (step === 2) {
+    body.innerHTML =
+      '<div style="background:rgba(255,107,44,.06);border:1px solid rgba(255,107,44,.25);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">' +
+        '<span style="width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">2</span>' +
+        '<div><div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:2px">Combinaciones</div>' +
+        '<div style="font-size:12px;color:var(--gray)">Agregá cada color con su almacenamiento, precio y fecha de disponibilidad. Cada fila será una variante.</div></div>' +
       '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">' +
-        '<button class="btn btn-g" onclick="renderPreventaCatalogo()">Cancelar</button>' +
-        '<button class="btn btn-o" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
+      '<div id="pw-rows-wrap"></div>' +
+      '<button onclick="addPrevWizardRow()" class="btn" style="width:100%;padding:14px;border:1.5px dashed var(--orange);background:rgba(255,107,44,.05);color:var(--orange);font-weight:700;margin-top:12px;cursor:pointer">+ Agregar combinación</button>'
+    renderPrevWizardRows()
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:10px">' +
+        '<button class="btn btn-ghost" onclick="_prevWizardStep=1;renderPrevWizardStep(1)" style="padding:12px 24px;color:var(--gray);border:1px solid var(--border);background:#fff">← Datos</button>' +
+        '<button class="btn btn-o" onclick="prevWizardNext()" style="padding:12px 26px;font-weight:700;background:var(--orange)">Siguiente: Revisar →</button>' +
+      '</div>'
+  } else if (step === 3) {
+    // Recoger datos y mostrar resumen
+    var summary = renderPrevSummary()
+    body.innerHTML =
+      '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">' +
+        '<span style="width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">3</span>' +
+        '<div><div style="font-size:14px;font-weight:700;color:var(--dk);margin-bottom:2px">Revisar y guardar</div>' +
+        '<div style="font-size:12px;color:var(--gray)">Confirmá los datos. Se guardará una variante por cada combinación.</div></div>' +
+      '</div>' +
+      summary
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:10px">' +
+        '<button class="btn btn-ghost" onclick="_prevWizardStep=2;renderPrevWizardStep(2)" style="padding:12px 24px;color:var(--gray);border:1px solid var(--border);background:#fff">← Combinaciones</button>' +
+        '<button class="btn" onclick="savePreventaProduct()" style="padding:12px 30px;background:var(--green);color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(34,197,94,.3)">✓ Guardar preventa</button>' +
+      '</div>'
+  }
+}
+
+function onPrevWizardModel() {
+  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : ''
+  _prevWizardData.modelName = model
+}
+
+function uploadWizardImage(input) {
+  if (!input.files || !input.files[0]) return
+  var fd = new FormData(); fd.append('file', input.files[0])
+  fetch(API_URL + '/api/upload', { method: 'POST', body: fd })
+    .then(function(r) { return r.json() })
+    .then(function(d) { if (d.url) document.getElementById('pw-imageUrl').value = d.url })
+}
+
+function addPrevWizardRow() {
+  _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '' })
+  renderPrevWizardRows()
+}
+
+function removePrevWizardRow(i) {
+  _prevWizardData.rows.splice(i, 1)
+  renderPrevWizardRows()
+}
+
+function renderPrevWizardRows() {
+  var wrap = document.getElementById('pw-rows-wrap')
+  if (!wrap) return
+  if (!_prevWizardData.rows.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--gray);border:1px dashed var(--border);border-radius:12px;font-size:12px">Todavía no hay combinaciones. Tocá el botón de abajo para agregar la primera.</div>'
+    return
+  }
+  wrap.innerHTML = _prevWizardData.rows.map(function(r, i) {
+    return '<div class="prev-row" style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+        '<span style="font-size:11px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:.4px">Combinación ' + (i + 1) + '</span>' +
+        '<button onclick="removePrevWizardRow(' + i + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px">✕</button>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Color *</label>' +
+          '<div style="display:flex;gap:6px;align-items:center">' +
+            '<input class="inp-f" type="text" id="pw-row-color-' + i + '" value="' + esc(r.color) + '" placeholder="Negro" style="flex:1">' +
+            '<button onclick="openPrevColorPicker(' + i + ')" title="Elegir color" style="width:34px;height:34px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:' + _cssColor(r.color) + ';cursor:pointer"></button>' +
+          '</div>' +
+        '</div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Almacenamiento *</label><select class="sel-f" id="pw-row-storage-' + i + '" onchange="updatePrevRow(' + i + ')"><option value="">...</option><option value="64 GB"' + (r.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (r.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (r.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (r.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (r.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="pw-row-price-' + i + '" value="' + r.price + '" placeholder="1320000" onchange="updatePrevRow(' + i + ')"></div>' +
+        '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Disponible desde *</label><input class="inp-f" type="date" id="pw-row-date-' + i + '" value="' + r.availableFrom + '" onchange="updatePrevRow(' + i + ')"></div>' +
       '</div>' +
     '</div>'
+  }).join('')
+}
 
-  // Render color circles for current model
-  if (currentModel) renderPreventaColorCircles(currentModel, currentColor)
+function updatePrevRow(i) {
+  if (!_prevWizardData.rows[i]) return
+  var c = document.getElementById('pw-row-color-' + i)
+  var s = document.getElementById('pw-row-storage-' + i)
+  var p = document.getElementById('pw-row-price-' + i)
+  var d = document.getElementById('pw-row-date-' + i)
+  if (c) _prevWizardData.rows[i].color = c.value
+  if (s) _prevWizardData.rows[i].storage = s.value
+  if (p) _prevWizardData.rows[i].price = p.value
+  if (d) _prevWizardData.rows[i].availableFrom = d.value
+}
+
+var _prevColorPickerTarget = -1
+
+function openPrevColorPicker(i) {
+  _prevColorPickerTarget = i
+  var host = document.getElementById('prevColorPickerHost')
+  if (!host) return
+  host.style.display = 'flex'
+  host.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:420px;width:100%" onclick="event.stopPropagation()">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div style="font-size:16px;font-weight:700">Elegir color</div>' +
+      '<button onclick="closePrevColorPicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray)">✕</button>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">' + (COLOR_PALETTE || []).map(function(c) {
+      return '<div onclick="selectPrevWizardColor(\'' + c.replace(/'/g, "\\'") + '\')" style="width:34px;height:34px;border-radius:50%;background:' + _cssColor(c) + ';cursor:pointer;border:2px solid var(--border)" title="' + c + '"></div>'
+    }).join('') + '</div>' +
+    '<input type="text" id="prevColorCustom" placeholder="Otro color..." style="width:100%;margin-top:12px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">' +
+    '<button onclick="selectPrevWizardCustom()" style="width:100%;margin-top:8px;padding:10px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600">Usar color</button>' +
+  '</div>'
+}
+
+function selectPrevWizardColor(c) {
+  if (_prevColorPickerTarget < 0) return
+  var input = document.getElementById('pw-row-color-' + _prevColorPickerTarget)
+  if (input) input.value = c
+  updatePrevRow(_prevColorPickerTarget)
+  closePrevColorPicker()
+}
+
+function selectPrevWizardCustom() {
+  var inp = document.getElementById('prevColorCustom')
+  if (inp && inp.value.trim()) selectPrevWizardColor(inp.value.trim())
+}
+
+function closePrevColorPicker() {
+  var host = document.getElementById('prevColorPickerHost')
+  if (host) host.style.display = 'none'
+}
+
+function prevWizardNext() {
+  if (_prevWizardStep === 1) {
+    var model = document.getElementById('pw-model').value
+    if (!model) { showToast('Seleccioná un modelo', 'error'); return }
+    _prevWizardData.modelName = model
+    // mantener marca/tipo/condicion/imagen
+    _prevWizardData.brand = document.getElementById('pw-brand').value
+    _prevWizardData.type = document.getElementById('pw-type').value
+    _prevWizardData.condition = document.getElementById('pw-condition').value
+    _prevWizardData.imageUrl = document.getElementById('pw-imageUrl').value || null
+    _prevWizardData.description = document.getElementById('pw-description').value
+    // Pre-llenar una fila vacía si no hay ninguna
+    if (!_prevWizardData.rows.length) _prevWizardData.rows.push({ color: '', storage: '', price: '', availableFrom: '' })
+  }
+  renderPrevWizardStep(_prevWizardStep + 1)
+}
+
+function renderPrevSummary() {
+  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : (_prevWizardData.modelName || '')
+  var brand = document.getElementById('pw-brand') ? document.getElementById('pw-brand').value : (_prevWizardData.brand || '')
+  var type = document.getElementById('pw-type') ? document.getElementById('pw-type').value : (_prevWizardData.type || 'celular')
+  var cond = document.getElementById('pw-condition') ? document.getElementById('pw-condition').value : (_prevWizardData.condition || 'Nuevo')
+  var img = document.getElementById('pw-imageUrl') ? document.getElementById('pw-imageUrl').value : (_prevWizardData.imageUrl || '')
+  var desc = document.getElementById('pw-description') ? document.getElementById('pw-description').value : (_prevWizardData.description || '')
+
+  // Update rows from inputs (last-chance)
+  if (_prevWizardData.rows) {
+    _prevWizardData.rows.forEach(function(r, i) {
+      var c = document.getElementById('pw-row-color-' + i)
+      var s = document.getElementById('pw-row-storage-' + i)
+      var p = document.getElementById('pw-row-price-' + i)
+      var d = document.getElementById('pw-row-date-' + i)
+      if (c) r.color = c.value
+      if (s) r.storage = s.value
+      if (p) r.price = p.value
+      if (d) r.availableFrom = d.value
+    })
+  }
+
+  _prevWizardData.resolved = { model: model, brand: brand, type: type, condition: cond, imageUrl: img, description: desc }
+
+  var rows = _prevWizardData.rows || []
+  var invalid = rows.filter(function(r) { return !r.color || !r.storage || !r.price || !r.availableFrom })
+  var rowsHtml = rows.length ? rows.map(function(r) {
+    return '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--cream2);border-radius:8px;margin-bottom:6px;align-items:center">' +
+      '<span style="font-weight:600;font-size:13px">' + esc(r.color) + ' · ' + esc(r.storage) + '</span>' +
+      '<span style="color:var(--orange);font-weight:700;font-size:13px">' + fmt(parseInt(r.price) || 0) + '</span>' +
+      '<span style="font-size:11px;color:var(--blue)">Disp. ' + esc(r.availableFrom) + '</span>' +
+    '</div>'
+  }).join('') : '<div style="color:var(--gray);font-size:12px;padding:8px 0">Sin combinaciones</div>'
+
+  return '<div style="display:grid;gap:14px">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Modelo</div>' +
+        '<div style="font-size:15px;font-weight:700;color:var(--dk)">' + esc(brand) + ' ' + esc(model) + '</div>' +
+        '<div style="font-size:11px;color:var(--gray);margin-top:4px">' + esc(type) + ' · ' + esc(cond) + '</div>' +
+      '</div>' +
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Combinaciones</div>' +
+        '<div style="font-size:22px;font-weight:700;color:var(--orange)">' + rows.length + '</div>' +
+        '<div style="font-size:11px;color:var(--green)" id="pwSummaryValidity">' + (invalid.length ? invalid.length + ' incompletas' : '✓ Completas') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px">Detalle</div>' + rowsHtml +
+    '</div>' +
+  '</div>'
 }
 
 function closePreventaModal() {
@@ -567,46 +838,83 @@ function selectPreventaColor(color, el){
   if(el)el.style.borderColor='var(--orange)'
 }
 
-function savePreventaProduct(id) {
-  var isEdit = !!id
-  var model=document.getElementById('prevf-model')?.value||''
-  var data = {
-    name: model,
-    modelGroup: model,
-    brand: document.getElementById('prevf-brand').value || 'iPhone',
-    type: document.getElementById('prevf-type')?.value || 'celular',
-    storage: document.getElementById('prevf-storage').value,
-    color: document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'',
-    condition: document.getElementById('prevf-condition').value || 'Nuevo',
-    price: parseInt(document.getElementById('prevf-price').value) || 0,
-    availableFrom: document.getElementById('prevf-availableFrom').value || null,
-    imageUrl: document.getElementById('prevf-imageUrl').value || null,
-    sub: (document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'') + ' ' + (document.getElementById('prevf-storage').value||''),
-    isPreorder: true,
-    stock: 0,
-    cost: 0,
-    ico: '📱',
-    images: document.getElementById('prevf-imageUrl').value ? [document.getElementById('prevf-imageUrl').value] : []
+function savePreventaProduct() {
+  // Recoger inputs (por si el admin toca y no pasa por el paso 3)
+  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : (_prevWizardData.modelName || (_prevWizardData.model && _prevWizardData.model.name) || '')
+  var brand = document.getElementById('pw-brand') ? document.getElementById('pw-brand').value : (_prevWizardData.brand || 'iPhone')
+  var type = document.getElementById('pw-type') ? document.getElementById('pw-type').value : (_prevWizardData.type || 'celular')
+  var cond = document.getElementById('pw-condition') ? document.getElementById('pw-condition').value : (_prevWizardData.condition || 'Nuevo')
+  var img = document.getElementById('pw-imageUrl') ? document.getElementById('pw-imageUrl').value : (_prevWizardData.imageUrl || '')
+  var desc = document.getElementById('pw-description') ? document.getElementById('pw-description').value : (_prevWizardData.description || '')
+
+  // Sincronizar las filas desde los inputs
+  if (_prevWizardData.rows) {
+    _prevWizardData.rows.forEach(function(r, i) {
+      var c = document.getElementById('pw-row-color-' + i)
+      var s = document.getElementById('pw-row-storage-' + i)
+      var p = document.getElementById('pw-row-price-' + i)
+      var d = document.getElementById('pw-row-date-' + i)
+      if (c) r.color = c.value
+      if (s) r.storage = s.value
+      if (p) r.price = p.value
+      if (d) r.availableFrom = d.value
+    })
   }
 
-  if (!data.name) { showToast({ title: 'Error', message: 'Selecciona un modelo', type: 'error' }); return }
-  if (!data.price || data.price <= 0) { showToast({ title: 'Error', message: 'El precio es obligatorio', type: 'error' }); return }
-
-  var url = API_URL + '/api/products'
-  var method = 'POST'
-  if (isEdit) { url += '?id=' + id; method = 'PUT' }
+  var rows = _prevWizardData.rows || []
+  if (!model) { showToast({ title: 'Error', message: 'Seleccioná un modelo', type: 'error' }); return }
+  if (!rows.length) { showToast({ title: 'Error', message: 'Agregá al menos una combinación', type: 'error' }); return }
+  var invalid = rows.filter(function(r) { return !r.color || !r.storage || !r.price || !r.availableFrom })
+  if (invalid.length) { showToast({ title: 'Error', message: 'Completá todas las combinaciones (color, almacenamiento, precio y fecha)', type: 'error' }); return }
 
   var hdrs = { 'Content-Type': 'application/json' }
-  
+  var isEdit = !!(_prevWizardData && _prevWizardData.model && _prevWizardData.model.id)
+  var baseId = isEdit ? _prevWizardData.model.id : null
 
-  fetch(url, { method: method, headers: hdrs, body: JSON.stringify(data) })
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
-      showToast({ title: 'Exito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
+  function buildPayload(r, index) {
+    var color = (r.color || '').trim()
+    var storage = (r.storage || '').trim()
+    var sub = [color, storage].filter(Boolean).join(' · ')
+    return {
+      name: brand + ' ' + model,
+      modelGroup: model,
+      brand: brand,
+      type: type,
+      condition: cond,
+      storage: storage || null,
+      color: color || null,
+      price: parseInt(r.price) || 0,
+      cost: 0,
+      stock: 0,
+      availableFrom: r.availableFrom ? r.availableFrom + 'T00:00:00.000Z' : null,
+      imageUrl: img || null,
+      images: img ? [img] : [],
+      description: desc || null,
+      sub: sub || null,
+      isPreorder: true,
+      ico: '📱',
+    }
+  }
+
+  function run(i) {
+    if (i >= rows.length) {
+      showToast({ title: 'Éxito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
       renderPreventaCatalogo()
-    })
-    .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
+      return
+    }
+    var payload = buildPayload(rows[i], i)
+    var url = API_URL + '/api/products'
+    var method = 'POST'
+    if (isEdit && i === 0 && baseId) { url += '?id=' + baseId; method = 'PUT' }
+    fetch(url, { method: method, headers: hdrs, body: JSON.stringify(payload) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
+        run(i + 1)
+      })
+      .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
+  }
+  run(0)
 }
 
 function editPreventaProduct(id) {

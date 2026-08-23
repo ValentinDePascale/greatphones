@@ -9,7 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/ofertas',
     '/accesorios',
     '/garantias',
-    '/preventas',
     '/sell',
     '/compare',
     '/track-order',

@@ -125,7 +125,6 @@
     <a href="/sell" class="cni" id="cn-sell">Vender</a>
     <button class="cni" id="cn-servicio" style="display:none" onclick="nav('servicio');setCN('servicio')">Servicio tec.</button>
     <a href="/accesorios" class="cni" id="cn-accesorios">Accesorios</a>
-    <a href="/preventas" class="cni" id="cn-preventas" style="color:var(--orange);font-weight:600">Preventas</a>
     <button class="cni" id="cn-notebooks" style="display:none" onclick="nav('notebooks');setCN('notebooks')">Notebooks</button>
     <button class="cni" id="cn-mayorista" style="display:none" onclick="nav('mayorista');setCN('mayorista')">Mayoristas</button>
     <a href="/garantias" class="cni" id="cn-garantias">Garantías</a>
@@ -144,7 +143,6 @@
   else if(p.startsWith('/productos')){var b=document.getElementById('cn-shop');if(b)b.classList.add('act');}
   else if(p.startsWith('/sell')){var b=document.getElementById('cn-sell');if(b)b.classList.add('act');}
   else if(p.startsWith('/accesorios')){var b=document.getElementById('cn-accesorios');if(b)b.classList.add('act');}
-  else if(p.startsWith('/preventas')){var b=document.getElementById('cn-preventas');if(b)b.classList.add('act');}
   else if(p.startsWith('/garantias')){var b=document.getElementById('cn-garantias');if(b)b.classList.add('act');}
   else if(p.startsWith('/compare')){var b=document.getElementById('cn-compare');if(b)b.classList.add('act');}
   else if(p.startsWith('/ofertas')){var b=document.getElementById('cn-ofertas');if(b)b.classList.add('act');}
@@ -521,7 +519,6 @@ function toggleMobileSearch(){
       <a class="mm-item" href="/garantias" onclick="closeMobileMenu()">Garantias</a>
       <a class="mm-item" style="display:none" onclick="closeMobileMenu()">Servicio tecnico</a>
       <a class="mm-item" href="/compare" onclick="closeMobileMenu()">Comparar</a>
-      <a class="mm-item" href="/preventas" onclick="closeMobileMenu()">Preventas</a>
       <a class="mm-item" href="/ofertas" onclick="closeMobileMenu()">Ofertas</a>
       <a class="mm-item" href="/cuenta" onclick="closeMobileMenu()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:8px"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -640,7 +637,6 @@ function toggleMobileSearch(){
           <li><button onclick="navShop('todos')">Catálogo</button></li>
           <li><button onclick="navShop('ofertas')">Ofertas</button></li>
           <li><button onclick="nav('accesorios')">Accesorios</button></li>
-          <li><button onclick="nav('preventas')">Preventas</button></li>
           <li><button onclick="nav('compare')">Comparar</button></li>
         </ul>
       </div>
