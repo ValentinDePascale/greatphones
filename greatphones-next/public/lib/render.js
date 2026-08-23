@@ -76,7 +76,13 @@ function buildSpecsForProduct(p){
     else if(cond){specs.push({key:'status',label:'Estado',val:cond,color:'var(--orange)'});}
     if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({key:'battery',label:'Bateria',val:batPct+'%',color:batColor});}
     else if(p.isPreorder||p.batteryFrom){specs.push({key:'battery',label:'Bateria',val:'Entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %',color:'var(--green)'});}
-    if(p.color)specs.push({key:'color',label:'Color',val:p.color});
+    if(p.color){
+      var colorVal=p.color;
+      if(p.isPreorder&&p.availableFrom){
+        colorVal += ' · Disponible ' + preorderShortDate(p.availableFrom);
+      }
+      specs.push({key:'color',label:'Color',val:colorVal});
+    }
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
     if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   }else if(type==='laptop'||type==='desktop'){
@@ -88,14 +94,22 @@ function buildSpecsForProduct(p){
   }
   if(p.stock!==undefined){
     if(p.isPreorder){
-      var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
-      specs.push({key:'date',label:'Disponibilidad',val:dateStr,color:'var(--orange)'});
+      // La disponibilidad va junto al color; acá no agregamos el spec suelto.
     }else{
       var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
       specs.push({key:'stock',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
     }
   }
   return specs;
+}
+
+function preorderShortDate(d){
+  if(!d)return 'Próximamente';
+  var dt=new Date(d);
+  var days=Math.ceil((dt-new Date())/86400000);
+  if(days<=1)return 'Pronto';
+  if(days<60)return '~'+days+' días';
+  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
 }
 
 function renderSpecsGrid(specs){
@@ -1331,9 +1345,13 @@ function openDetail(id, variantId){
     }
     var preBase=preMin<Infinity?preMin:currentProd.price;
     var preFinal=prePromo?Math.round(preBase*(1-currentProd.discount/100)):preBase;
-    var preLabel=preVariants.length>1?'Desde ':'';
-    var prePriceEl=document.getElementById('detPrice');if(prePriceEl)prePriceEl.textContent=preLabel+fmt(preFinal);
-    var preTotalEl=document.getElementById('detTotal');if(preTotalEl)preTotalEl.textContent=fmt(preFinal);
+    // No pisar el precio: si ya hay una variante seleccionada, selectDetailVariant
+    // mostró el precio real. "Desde" solo si aún no se seleccionó ninguna.
+    if(window._selectedVariantIdx<0){
+      var preLabel=preVariants.length>1?'Desde ':'';
+      var prePriceEl=document.getElementById('detPrice');if(prePriceEl)prePriceEl.textContent=preLabel+fmt(preFinal);
+      var preTotalEl=document.getElementById('detTotal');if(preTotalEl)preTotalEl.textContent=fmt(preFinal);
+    }
     var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=(currentProd.brand==='iPhone'||currentProd.brand==='Apple')?'APPLE':(currentProd.brand||'Apple');
     var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=cleanPreorderName(currentProd);
     var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=cleanPreorderName(currentProd);
@@ -1712,8 +1730,14 @@ function selectDetailVariant(idx){
   // Show variant-specific image
   if(v.imageUrl){
     var mainImg=document.getElementById('detImgMain');
+    var thumbsEl=document.getElementById('detThumbnails');
     if(mainImg){
       mainImg.innerHTML=detMainImgHTML(v.imageUrl,isFavorite(currentProd.id),1,0,false);
+    }
+    if(window._isPreorderDetail&&thumbsEl){
+      thumbsEl.style.display='none';
+      thumbsEl.style.display='grid';
+      thumbsEl.innerHTML='<div class="det-thumb act" onclick="setDetailImage(0)"><img loading="lazy" src="'+v.imageUrl+'" alt=""></div>';
     }
   }
 

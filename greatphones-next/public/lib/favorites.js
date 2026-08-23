@@ -57,7 +57,13 @@ function updFavBadge(){
   if(b){b.textContent=n;if(n>0)b.classList.remove('hidden');else b.classList.add('hidden');}
 }
 function toggleDetFav(){
-  var targetId=window._selectedVariant&&window._selectedVariant.productId?window._selectedVariant.productId:(currentProd?currentProd.id:(currentAcc?currentAcc.id:null));
+  // En preventa, _selectedVariant es una variante real (con su propio id).
+  // Guardamos el favorito de ESA variante, no del producto base.
+  var targetId=window._selectedVariant&&window._selectedVariant.productId
+    ?window._selectedVariant.productId
+    :(window._selectedVariant&&window._selectedVariant.id&&window._isPreorderDetail
+      ?window._selectedVariant.id
+      :(currentProd?currentProd.id:(currentAcc?currentAcc.id:null)));
   if(!targetId)return;
   var idx=favorites.indexOf(targetId);
   var fb=document.getElementById('detFavBtn');
@@ -130,58 +136,13 @@ function renderFavGrid(){
     if(cnt)cnt.textContent='0 guardados';
   }else{
     grid.style.display='grid';empty.style.display='none';
-    grid.style.gridTemplateColumns='repeat(auto-fill,minmax(180px,1fr))';
-    grid.style.gap='12px';
-    grid.innerHTML=allFavs.map(function(item){
-      var isProd=!!item.price&&item.brand;
-      var isAcc=!isProd||(item.category&&!item.condition);
-      if(isAcc){
-        var isPromo=(typeof isOfferValid==='function')?isOfferValid(item):(item.isOffer&&item.discount>0);
-        var finalPrice=isPromo?Math.round(item.price-item.price*item.discount/100):item.price;
-        var imgHtml=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">'+(item.ico||'\u{1F4E6}')+'</span>';
-        var isFav=isFavorite(item.id);
-        var heartSvgA='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav?'var(--red)':'none')+'" stroke="'+(isFav?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-        return '<article class="pcard" onclick="openAccDetail(\''+item.id+'\')">'+
-          '<div class="pcard-img">'+imgHtml+
-          (isPromo?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+
-          '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')">'+heartSvgA+'</button>'+
-          '</div>'+
-          '<div class="pcard-body">'+
-          '<div class="pcard-brand">'+(item.brand||'Accesorio')+'</div>'+
-          '<div class="pcard-name">'+item.name+'</div>'+
-          '<div class="pcard-discount-row">'+(isPromo?'<span class="pcard-old">'+fmt(item.price)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span>':'')+'</div>'+
-          '<span class="pcard-price">'+fmt(finalPrice)+'</span>'+
-          '<span class="pcard-cuota" aria-hidden="true"></span>'+
-          '</div>'+
-          '<button class="pcard-add" onclick="event.stopPropagation();addToCartAcc(\''+item.id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
-          '</article>';
-      }else{
-        var isPromo2=(typeof isOfferValid==='function')?isOfferValid(item):(item.isOffer&&item.discount>0);
-        var basePrice2=typeof displayBasePrice==='function'?displayBasePrice(item):item.price;
-        var finalPrice2=isPromo2?Math.round(basePrice2-basePrice2*item.discount/100):basePrice2;
-        var cuota2=Math.round(finalPrice2/12);
-        var imgHtml2=item.imageUrl?'<img src="'+item.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:36px">\u{1F4F1}</span>';
-        var isFav2=isFavorite(item.id);
-        var isOutOfStock=item.stock===0;
-        var outClass=isOutOfStock?' pcard-out-of-stock':'';
-        var clickH=isOutOfStock?'':'openDetail(\''+item.id+'\')';
-        var heartSvgP='<svg width="16" height="16" viewBox="0 0 24 24" fill="'+(isFav2?'var(--red)':'none')+'" stroke="'+(isFav2?'var(--red)':'currentColor')+'" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
-        return '<article class="pcard'+outClass+'" onclick="'+clickH+'">'+
-          '<div class="pcard-img">'+imgHtml2+
-          (isPromo2?'<div class="pcard-badge">-'+item.discount+'%</div>':'')+
-          '<button class="pcard-fav '+(isFav2?'on':'')+'" onclick="event.stopPropagation();toggleFavFromCard(\''+item.id+'\')">'+heartSvgP+'</button>'+
-          '</div>'+
-          '<div class="pcard-body">'+
-          '<div class="pcard-brand">'+(item.brand||'')+'</div>'+
-          '<div class="pcard-name">'+item.name+'</div>'+
-          (isPromo2?'<div style="display:flex;align-items:center;gap:8px"><span class="pcard-old">'+fmt(basePrice2)+'</span><span class="pcard-discount-badge">-'+item.discount+'%</span></div>':'')+
-          '<span class="pcard-price">'+fmt(finalPrice2)+'</span>'+
-          '<span class="pcard-cuota">12x '+fmt(cuota2)+' sin interes</span>'+
-          '</div>'+
-          (isOutOfStock?'<div style="width:100%;background:var(--gray);color:#fff;font-size:13px;font-weight:700;padding:12px 14px;border-radius:10px;text-align:center">Agotado</div>':'<button class="pcard-add" onclick="event.stopPropagation();addToCart(\''+item.id+'\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>')+
-          '</article>';
-      }
-    }).join('');
+    // Delegamos a renderGrid para que las cards (incluidas preventas) luzcan
+    // igual que en el catálogo: badge, batería, marca APPLE, "Disponible", Reservar.
+    if(typeof renderGrid==='function'){
+      renderGrid('favGrid', allFavs);
+    }else{
+      grid.style.display='none';
+    }
     if(cnt)cnt.textContent=allFavs.length+' guardados';
   }
   if(window.GPAnim&&window.GPAnim.refresh)window.GPAnim.refresh();
