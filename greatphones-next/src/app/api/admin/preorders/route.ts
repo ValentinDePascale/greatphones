@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
+import { registerEntry } from '@/lib/accounting'
 
 function generatePreOrderCode() {
   const prefix = 'PRE'
@@ -83,6 +84,24 @@ export async function POST(request: Request) {
         createdById: admin.id,
       },
     })
+
+    // Núcleo contable: cobro anticipado de la preventa → asiento INGRESO
+    const amt = price ? Number(price) : 0
+    if (amt > 0) {
+      const means = paymentMethod === 'cash' ? 'EFECTIVO' : paymentMethod === 'transfer' ? 'TRANSFERENCIA' : paymentType === 'card' ? 'CUOTAS' : 'TRANSFERENCIA'
+      try {
+        await registerEntry({
+          source: 'PREORDER',
+          operationId: preOrder.code,
+          description: `Preventa ${preOrder.code} — ${clientName} — ${productModelName || ''}`,
+          category: 'Preventas',
+          type: 'INGRESO',
+          means,
+          amount: amt,
+          createdById: admin.id,
+        })
+      } catch (e) { console.error('[Preorders] asiento:', e) }
+    }
 
     return NextResponse.json(preOrder, { status: 201 })
   } catch (error) {

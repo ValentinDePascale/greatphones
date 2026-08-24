@@ -18,6 +18,7 @@ const tabs = [
   { href: '/admin/chat', label: 'Chat', icon: 'chat' },
   { href: '/admin/instore', label: 'Venta en Tienda', icon: 'point_of_sale' },
   { href: '/admin/preventa', label: 'Preventas', icon: 'event' },
+  { href: '/admin/reparaciones', label: 'Reparaciones', icon: 'build' },
   { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance' },
   { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
   { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },

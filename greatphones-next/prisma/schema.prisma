@@ -389,6 +389,24 @@ model Repair {
   serviceId   String?
   price       Int?
   status      RepairStatus  @default(PENDING)
+  // === Fase 5 ERP: ciclo completo de reparación ===
+  type        String?       // particular / garantia / preventa / interno
+  clientName  String?
+  clientPhone String?
+  clientDni   String?
+  imei        String?
+  pin         String?
+  fault1      String?
+  fault2      String?
+  jobs        String[]      // trabajos: Batería, Pantalla, Cámara, ...
+  diagnosis   String?
+  diagnosisStatus String?   // PENDIENTE / ACEPTADO / RECHAZADO
+  pricePaid   Int?          // precio cobrado (puede ser 0)
+  priceCalc   Int?          // precio calculado por tarifario
+  estimatedHours Int?
+  isDiagnosis Boolean       @default(false)
+  deliveredAt DateTime?
+  operator    String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   deletedAt   DateTime?
@@ -1040,4 +1058,18 @@ model InvestorMovement {
 
   @@index([investorId])
   @@index([createdAt])
+}
+
+// ============================================================
+//  ERP — CONFIGURACIONES (Fase 5: regalos / reutilizable en Fase 7)
+//  Clave-valor genérico para parámetros de negocio editables.
+//  value es JSON.
+// ============================================================
+
+model AppConfig {
+  key       String   @id
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
 }
