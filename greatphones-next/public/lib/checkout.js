@@ -607,7 +607,8 @@ function submitOrder(){
     if(p){
       var base=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
       var price=isOfferValid(p)?Math.round(base-base*p.discount/100):base;
-      return{id:p.id,name:p.name,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty,isPreorder:!!item.isPreorder,availableFrom:item.availableFrom||null};
+      var itName=(p.isPreorder&&typeof cleanPreorderName==='function')?cleanPreorderName(p):p.name;
+      return{id:p.id,name:itName,sub:p.sub,imageUrl:p.imageUrl,price:price,quantity:item.qty,isPreorder:!!item.isPreorder,availableFrom:item.availableFrom||null};
     }
     var a=getById(window.ACCS,lookupId);
     if(a){
@@ -704,11 +705,12 @@ function renderCheckoutSummaryStep(){
       var isPromo=isOfferValid(p);
       var basePrice=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
       var price=isPromo?Math.round(basePrice-basePrice*p.discount/100):basePrice;
+      var itName=(p.isPreorder&&typeof cleanPreorderName==='function')?cleanPreorderName(p):p.name;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       return'<div class="checkout-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
         '<div style="width:52px;height:52px;background:var(--cream2);border-radius:10px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
+          '<div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+itName+'</div>'+
           '<div style="font-size:11px;color:var(--gray)">x'+item.qty+' · '+fmt(price)+'</div>'+
         '</div>'+
         '<div style="font-size:13px;font-weight:700;white-space:nowrap">'+fmt(price*item.qty)+'</div>'+
@@ -857,6 +859,7 @@ function renderCheckoutItems(items){
       var isPromo=isOfferValid(p);
       var basePrice=typeof displayBasePrice==='function'?displayBasePrice(p):p.price;
       var price=isPromo?Math.round(basePrice-basePrice*p.discount/100):basePrice;
+      var itName=(p.isPreorder&&typeof cleanPreorderName==='function')?cleanPreorderName(p):p.name;
       var img=p.imageUrl?'<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:22px">📱</span>';
       var priceHtml=isPromo?
         '<div style="font-size:13px;font-weight:700;color:var(--dk)">'+fmt(price*item.qty)+'</div>'+
@@ -866,7 +869,7 @@ function renderCheckoutItems(items){
       return'<div class="checkout-item" style="display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center">'+
         '<div style="width:48px;height:48px;background:var(--cream2);border-radius:8px;overflow:hidden;flex-shrink:0">'+img+'</div>'+
         '<div style="flex:1;min-width:0">'+
-          '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+p.name+'</div>'+
+          '<div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+itName+'</div>'+
           '<div style="font-size:10px;color:var(--gray)">Cant: '+item.qty+'</div>'+
         '</div>'+
         '<div style="text-align:right">'+priceHtml+'</div>'+

@@ -414,6 +414,7 @@ function renderCartBody(){
         ?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · ')
         :([p.color,p.storage,p.condition].filter(Boolean).join(' · ')||p.sub);
       var displayName=variant&&variant.name?variant.name:p.name;
+      if(p.isPreorder&&typeof cleanPreorderName==='function')displayName=cleanPreorderName(p);
       return ciHtml(item, item.id, p, null, img, sub, displayName, finalPrice, isPromo);
     }
     var a=getById(window.ACCS,item.productId||item.id);
