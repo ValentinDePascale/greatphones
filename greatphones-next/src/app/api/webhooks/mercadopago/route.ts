@@ -6,6 +6,7 @@ import { sendOrderConfirmationEmail, sendPreorderConfirmationEmail, sendNewOrder
 import { productCache } from '@/lib/cache';
 import crypto from 'crypto';
 import { releaseStock, restoreStock } from '@/lib/stock';
+import { registerEntry } from '@/lib/accounting';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!
@@ -375,7 +376,27 @@ export async function POST(request: NextRequest) {
               productId: item.productId || 'unknown',
             })
           }
-        } catch { /* non-blocking */ }
+} catch { /* non-blocking */ }
+      }
+
+      // Núcleo contable: registrar el ingreso del pago online aprobado
+      if (status === 'approved') {
+        try {
+          const pms = paymentMethod?.toLowerCase() || '';
+          const means = pms.includes('card') ? 'PAGO_ONLINE' : pms.includes('wallet') ? 'PAGO_ONLINE' : 'PAGO_ONLINE';
+          await registerEntry({
+            source: order.saleChannel === 'preorder' ? 'PREORDER' : 'ONLINE',
+            operationId: order.code,
+            description: `Pago online ${order.saleChannel === 'preorder' ? '(preventa)' : ''} — ${paymentMethod || 'Mercado Pago'}`,
+            category: order.saleChannel === 'preorder' ? 'Preventas' : 'Ventas',
+            type: 'INGRESO',
+            means,
+            amount: order.total,
+            createdById: null,
+          })
+        } catch (entryErr) {
+          console.error('[MP Webhook] Error registrando asiento:', entryErr)
+        }
       }
 
       console.log('[MP Webhook] Order', order.code, 'updated to', orderStatus, 'payment:', status);

@@ -358,8 +358,12 @@ model Sale {
   condition String?
   imei      String?
   price     Int
+  cost      Int        @default(0)
+  profitReal Int       @default(0)
+  originType String?   // propio / consignacion
   payment   String
   status    SaleStatus @default(PENDING)
+  operator  String?
   createdAt DateTime   @default(now())
   user      User       @relation(fields: [userId], references: [id])
 }
@@ -876,4 +880,63 @@ enum WarrantyExtendStatus {
   EXPIRED
   CANCELLED
   PENDING_PAYMENT
+}
+
+// ============================================================
+//  ERP — NÚCLEO CONTABLE (Fase 1)
+//  Adaptación del libro diario + caja por medio del ERP (Sheets)
+// ============================================================
+
+// Operadores del local (sin login) — lista fija del ERP.
+model Operator {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// Asiento contable: todo movimiento de valor del negocio.
+enum AccountingType {
+  INGRESO
+  EGRESO
+  NEUTRO
+}
+
+enum PaymentMeans {
+  EFECTIVO
+  TRANSFERENCIA
+  CUOTAS
+  USD
+  PAGO_ONLINE
+}
+
+model AccountingEntry {
+  id          String         @id @default(cuid())
+  source      String         // módulo: SALE, PREORDER, PURCHASE, GASTO, CAMBIO, AJUSTE, ONLINE, ...
+  operationId String?        // número de operación vinculada (VTA-xxx, CMP-xxx, PRE-xxx, GST-xxx...)
+  description String
+  category    String?
+  type        AccountingType @default(INGRESO)
+  means       PaymentMeans   @default(EFECTIVO)
+  amount      Int            // en pesos (USD se guarda como dólares reales en amountUsd)
+  amountUsd   Float?
+  createdAt   DateTime       @default(now())
+  opDate      DateTime       @default(now())
+  operator    String?
+  createdById String?
+  metadata    Json?
+
+  @@index([means])
+  @@index([type])
+  @@index([source])
+  @@index([opDate])
+}
+
+// Saldo de caja por medio de pago (pesos y dólares separados, "nunca se mezclan").
+model CashRegister {
+  id         String      @id @default(cuid())
+  means      PaymentMeans @unique
+  balance    Int         @default(0)  // saldo en pesos
+  balanceUsd Float?      @default(0)  // saldo en dólares (solo medio USD)
+  updatedAt  DateTime    @updatedAt
 }
