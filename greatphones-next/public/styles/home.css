@@ -7,7 +7,9 @@
 /* ============ TRUST BAND ============ */
 .hm-trust{background:#fff;border-bottom:1px solid var(--border);padding:clamp(1.25rem,3vw,2rem) 0}
 .hm-trust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.hm-trust-item{display:flex;align-items:center;gap:14px;padding:6px}
+.hm-trust-item{display:flex;align-items:center;gap:14px;padding:10px 12px;border:none;background:transparent;text-align:left;cursor:pointer;border-radius:14px;transition:background .2s,transform .2s;font-family:inherit;width:100%}
+.hm-trust-item:hover{background:var(--cream2)}
+.hm-trust-item:active{transform:scale(.99)}
 .hm-trust-ico{width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(255,107,44,.05));color:var(--orange);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .25s}
 .hm-trust-ico svg{width:22px;height:22px}
 .hm-trust-item:hover .hm-trust-ico{transform:scale(1.1) rotate(-4deg)}

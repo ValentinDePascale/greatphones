@@ -39,8 +39,8 @@
   .nbtn-sell span:not(.nbadge){display:none}
 
   /* CategoryNav */
-  .catnav-inner{height:38px;gap:0}
-  .cni{padding:8px 10px;font-size:11px}
+  .catnav-inner{height:38px;gap:0;max-width:none;width:max-content;justify-content:flex-start}
+  .cni{padding:8px 12px;font-size:11px}
 }
 
 /* --- <640px: Mobile --- */
@@ -68,13 +68,13 @@
   .nsi-ico{left:10px;width:14px;height:14px}
 
   /* CategoryNav */
-  .catnav-inner{height:34px;padding:0 .75rem}
+  .catnav-inner{height:34px;padding:0 .75rem;max-width:none;width:max-content;justify-content:flex-start}
   .cni{padding:6px 8px;font-size:10px}
 
-  /* CategoryCards */
-  .cat-scroll{overflow-x:visible}
-  .cat-flex{flex-wrap:wrap;justify-content:center;gap:.625rem}
-  .cat-card{flex:0 0 calc(50% - .3125rem);width:auto;padding:1.25rem .75rem}
+  /* CategoryCards: carrusel deslizable */
+  .cat-scroll{overflow-x:auto;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .cat-flex{flex-wrap:nowrap;justify-content:flex-start;gap:.625rem;width:max-content;scroll-snap-align:start}
+  .cat-card{flex:0 0 auto;width:120px;padding:1.1rem .75rem}
 }
 
 /* --- <480px: Small mobile --- */
@@ -91,11 +91,11 @@
   .nbtn svg{width:14px;height:14px}
   .nbtn-cart{min-width:28px;padding:0 5px}
 
-  .catnav-inner{height:30px;padding:0 .625rem}
+  .catnav-inner{height:30px;padding:0 .625rem;max-width:none;width:max-content;justify-content:flex-start}
   .cni{padding:4px 6px;font-size:9px}
 
-  .cat-card{padding:1rem .5rem}
-  .cat-ico-wrap{width:2.5rem;height:2.5rem}
+  .cat-card{padding:.9rem .6rem;width:104px}
+  .cat-ico-wrap{width:2.4rem;height:2.4rem}
   .cat-label{font-size:10px}
 }
 
@@ -105,6 +105,31 @@
 }
 
 /* --- Footer --- */
+
+/* --- Hero / Slider --- */
+@media(max-width:900px){
+  .slider{height:clamp(380px,75vw,620px)}
+  .slide-ctr{gap:.85rem}
+}
+@media(max-width:639px){
+  .slider{height:clamp(360px,120vw,520px)}
+  .slide-ctr{gap:.7rem;padding:0 .85rem}
+  .slide-tag{font-size:9.5px;padding:3px 10px}
+  .slide-h{font-size:clamp(22px,7.5vw,38px)}
+  .slide-s{font-size:12px}
+  .sarr{width:34px;height:34px}
+  .sarr svg{width:16px;height:16px}
+  .slider-nav{bottom:12px}
+}
+@media(max-width:480px){
+  .slider{height:clamp(340px,135vw,480px)}
+  .slide-ctr{gap:.6rem}
+  .slide-tag{font-size:9px}
+  .slide-h{font-size:clamp(19px,8.5vw,30px)}
+  .slide-s{font-size:11px;line-height:1.45}
+  .sarr{width:30px;height:30px}
+  .sarr-l{left:8px}.sarr-r{right:8px}
+}
 
 /* 480-767px: 2 columns */
 @media(max-width:767px){

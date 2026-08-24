@@ -435,13 +435,71 @@ function refreshPreventaView() {
 function renderPreventaCatalogo() {
   var sub = document.getElementById('preventa-subview')
   if (!sub) return
+  _prevCatalogAll = []
+  _prevCatalogQuery = ''
+  _prevCatalogBrand = ''
   sub.innerHTML =
     '<div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">' +
       '<button class="btn btn-o" onclick="openPreventaForm()">+ Nueva Preventa</button>' +
+      '<input type="text" id="prevCatalogSearch" placeholder="Buscar por modelo, color o almacenamiento..." oninput="onPrevCatalogSearch()" style="flex:1;min-width:200px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:#fff">' +
+      '<div id="prevCatalogBrands" style="display:flex;gap:6px;flex-wrap:wrap"></div>' +
     '</div>' +
     '<div id="prevCatalogGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem"></div>' +
     '<div id="prevCatalogLoading" style="text-align:center;padding:3rem;color:var(--gray)">Cargando...</div>'
   loadPreventaProducts()
+}
+
+var _prevCatalogAll = []
+var _prevCatalogQuery = ''
+var _prevCatalogBrand = ''
+
+function onPrevCatalogSearch() {
+  _prevCatalogQuery = (document.getElementById('prevCatalogSearch').value || '').trim().toLowerCase()
+  renderPrevCatalogFiltered()
+}
+
+function setPrevCatalogBrand(brand, el) {
+  _prevCatalogBrand = brand
+  document.querySelectorAll('#prevCatalogBrands .prev-cat-chip').forEach(function(c) { c.classList.remove('ord-btn-act') })
+  if (el) el.classList.add('ord-btn-act')
+  renderPrevCatalogFiltered()
+}
+
+function renderPrevCatalogFiltered() {
+  var grid = document.getElementById('prevCatalogGrid')
+  if (!grid) return
+  var q = _prevCatalogQuery
+  var rows = _prevCatalogAll.filter(function(p) {
+    if (_prevCatalogBrand && p.brand !== _prevCatalogBrand) return false
+    if (!q) return true
+    var hay = ((p.modelGroup||'') + ' ' + (p.name||'') + ' ' + (p.color||'') + ' ' + (p.storage||'')).toLowerCase()
+    return hay.indexOf(q) !== -1
+  })
+  if (!rows.length) {
+    grid.innerHTML = '<div style="text-align:center;padding:3rem;grid-column:1/-1;color:var(--gray)">No se encontraron preventas con ese filtro</div>'
+    return
+  }
+  grid.innerHTML = rows.map(prevCatalogCardHtml).join('')
+}
+
+function prevCatalogCardHtml(p) {
+  var img = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:40px">' + (p.ico || '&#x1F4F1;') + '</span>'
+  var dateStr = p.availableFrom ? new Date(p.availableFrom).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' }) : 'S/F'
+  return '<div class="acard" style="padding:1rem">' +
+    '<div style="display:flex;gap:12px;align-items:flex-start">' +
+      '<div style="width:64px;height:64px;background:var(--admin-input-bg);border-radius:10px;overflow:hidden;flex-shrink:0">' + img + '</div>' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + (p.modelGroup || p.name) + '</div>' +
+        '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">' + (p.storage || '') + ' ' + (p.color || '') + ' · ' + (p.condition || '') + '</div>' +
+        '<div style="font-size:12px;color:var(--orange);font-weight:600">Disp. ' + dateStr + '</div>' +
+        '<div style="font-size:16px;font-weight:700;margin:4px 0">' + fmt(p.price) + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:6px;margin-top:10px">' +
+      '<button class="admin-btn" onclick="editPreventaProduct(\'' + p.id + '\')" style="flex:1;font-size:11px;justify-content:center">&#x270F; Editar</button>' +
+      '<button class="admin-btn" onclick="deletePreventaProduct(\'' + p.id + '\')" style="color:var(--red);font-size:11px;justify-content:center">&#x1F5D1; Eliminar</button>' +
+    '</div>' +
+  '</div>'
 }
 
 function loadPreventaProducts() {
@@ -452,34 +510,26 @@ function loadPreventaProducts() {
   if (loading) loading.style.display = 'block'
 
   var hdrs = {};
-  fetch(API_URL + '/api/products?preorder=true&limit=50', { headers: hdrs })
+  fetch(API_URL + '/api/products?preorder=true&limit=200', { headers: hdrs })
     .then(function(r) { return r.json(); })
     .then(function(res) {
       if (loading) loading.style.display = 'none'
       var prods = res.data || res || []
-      if (prods.length === 0) {
+      _prevCatalogAll = prods
+      if (!prods || prods.length === 0) {
         grid.innerHTML = '<div style="text-align:center;padding:3rem;grid-column:1/-1;color:var(--gray)"><p style="font-size:40px;margin-bottom:1rem">&#x1F4E6;</p><p style="font-size:16px;font-weight:600;margin-bottom:8px">No hay productos de preventa</p><p style="font-size:13px">Crea el primer producto desde el boton "Nueva Preventa"</p></div>'
         return
       }
-      grid.innerHTML = prods.map(function(p) {
-        var img = p.imageUrl ? '<img src="' + p.imageUrl + '" style="width:100%;height:100%;object-fit:cover">' : '<span style="font-size:40px">' + (p.ico || '&#x1F4F1;') + '</span>'
-        var dateStr = p.availableFrom ? new Date(p.availableFrom).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' }) : 'Sin fecha'
-        return '<div class="acard" style="padding:1rem">' +
-          '<div style="display:flex;gap:12px;align-items:flex-start">' +
-            '<div style="width:64px;height:64px;background:var(--admin-input-bg);border-radius:10px;overflow:hidden;flex-shrink:0">' + img + '</div>' +
-            '<div style="flex:1;min-width:0">' +
-              '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + p.name + '</div>' +
-              '<div style="font-size:11px;color:var(--gray);margin-bottom:6px">' + (p.storage || '') + ' ' + (p.color || '') + ' · ' + (p.condition || '') + '</div>' +
-              '<div style="font-size:12px;color:var(--orange);font-weight:600">Disponible: ' + dateStr + '</div>' +
-              '<div style="font-size:16px;font-weight:700;margin:4px 0">' + fmt(p.price) + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display:flex;gap:6px;margin-top:10px">' +
-            '<button class="admin-btn" onclick="editPreventaProduct(\'' + p.id + '\')" style="flex:1;font-size:11px;justify-content:center">&#x270F; Editar</button>' +
-            '<button class="admin-btn" onclick="deletePreventaProduct(\'' + p.id + '\')" style="color:var(--red);font-size:11px;justify-content:center">&#x1F5D1; Eliminar</button>' +
-          '</div>' +
-        '</div>';
-      }).join('')
+      // Chips de marca (solo marcas presentes)
+      var brands = []
+      prods.forEach(function(p) { if (p.brand && brands.indexOf(p.brand) === -1 && p.brand !== 'iPhone') brands.push(p.brand) })
+      if (brands.indexOf('Apple') !== -1 && brands.indexOf('iPhone') !== -1) brands.splice(brands.indexOf('iPhone'), 1)
+      var brandHost = document.getElementById('prevCatalogBrands')
+      if (brandHost) {
+        brandHost.innerHTML = '<button class="ord-btn ord-btn-act prev-cat-chip" onclick="setPrevCatalogBrand(\'\',this)">Todas</button>' +
+          brands.map(function(b) { return '<button class="ord-btn prev-cat-chip" onclick="setPrevCatalogBrand(\'' + b + '\',this)">' + b + '</button>' }).join('')
+      }
+      renderPrevCatalogFiltered()
     })
     .catch(function() {
       if (loading) loading.style.display = 'none'
@@ -487,48 +537,398 @@ function loadPreventaProducts() {
     })
 }
 
+var _prevWizardData = { rows: [] }
+var _prevWizardStep = 1
+
+// Normaliza marca para mostrar marcas reales (iPhone → Apple)
+function _prevBrandOptions(current, brands) {
+  var list = brands || (typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['Apple','Samsung','MacBook','iPad','Motorola','Xiaomi','Google'])
+  return list.map(function(b){ return '<option value="'+b+'"'+(b===current?' selected':'')+'>'+b+'</option>' }).join('')
+}
+
+// Modelos disponibles según marca y tipo.
+function _modelsForBrand(brand, type) {
+  if (window.SELL_MODELS && window.SELL_MODELS[brand]) return window.SELL_MODELS[brand]
+  if (window.SELL_MODELS && window.SELL_MODELS[brand==='Apple'?'iPhone':brand]) return window.SELL_MODELS[brand==='Apple'?'iPhone':brand]
+  return []
+}
+
 function openPreventaForm(editData) {
   var sub = document.getElementById('preventa-subview')
   if (!sub) return
-  var isEdit = !!editData
-  var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','Apple']
-  var currentBrand = isEdit ? (editData.brand || 'iPhone') : 'iPhone'
-  var brandOpts = brands.map(function(b) { return '<option value="' + b + '"' + (b === currentBrand ? ' selected' : '') + '>' + b + '</option>' }).join('')
-  var iphoneModels = (window.SELL_MODELS && window.SELL_MODELS['iPhone']) || []
-  var currentModel = isEdit ? (editData.modelGroup || editData.name || '') : ''
-  var currentColor = isEdit ? (editData.color || '') : ''
+  var isEdit = !!editData && editData.modelGroup
+  var brands = typeof getUniqueBrands === 'function' ? getUniqueBrands() : ['Apple','Samsung','MacBook','iPad','Motorola','Xiaomi','Google']
+  var currentBrand = isEdit ? (editData.brand && editData.brand!=='iPhone' ? editData.brand : 'Apple') : 'Apple'
+
+  // En edición cargamos las combinaciones del grupo (preservando precio/fecha)
+  var preRows = []
+  if (isEdit) {
+    var grp = editData.modelGroup
+    if (typeof PRODUCTS !== 'undefined' && PRODUCTS) {
+      PRODUCTS.forEach(function(p) {
+        if (p.isPreorder && p.modelGroup === grp) {
+          preRows.push({ color: p.color || '', storage: p.storage || '', price: p.price ? String(p.price) : '', availableFrom: p.availableFrom ? p.availableFrom.split('T')[0] : '', imageUrl: p.imageUrl || '', _id: p.id })
+        }
+      })
+    }
+  }
+  var curModel = editData ? (editData.modelGroup || editData.name || '') : ''
+  _prevWizardData = { model: editData || null, brand: currentBrand, modelName: curModel, type: isEdit ? (editData.type || 'celular') : 'celular', rows: preRows, imageUrl: editData ? (editData.imageUrl || '') : '' }
+  _prevWizardStep = 1
 
   sub.innerHTML =
-    '<div style="background:#fff;border-radius:12px;border:1px solid var(--border);padding:1.5rem;max-width:700px">' +
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem">' +
-        '<div style="font-size:18px;font-weight:700;color:var(--dk)">' + (isEdit ? 'Editar producto de preventa' : 'Nuevo producto de preventa') + '</div>' +
-        '<button onclick="renderPreventaCatalogo()" style="background:none;border:none;color:var(--gray);cursor:pointer;font-size:14px">← Volver al listado</button>' +
+    '<div style="background:#fff;border-radius:16px;border:1px solid var(--border);padding:1.75rem;max-width:920px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px">' +
+        '<div><div style="font-size:20px;font-weight:700;color:var(--dk);font-family:\'Playfair Display\',serif">' + (isEdit ? 'Editar preventa' : 'Nueva preventa') + '</div>' +
+        '<div style="font-size:12px;color:var(--gray);margin-top:2px">Elegí el modelo y generá todas sus variantes (color × almacenamiento).</div></div>' +
+        '<button onclick="renderPreventaCatalogo()" style="background:none;border:1px solid var(--border);color:var(--gray);cursor:pointer;font-size:13px;padding:8px 14px;border-radius:10px">← Volver</button>' +
       '</div>' +
-      '<div style="display:grid;gap:12px">' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Modelo *</label><select class="sel-f" id="prevf-model" onchange="onPrevModelSelect()"><option value="">Seleccionar modelo...</option>' + iphoneModels.map(function(m) { return '<option value="' + m + '"' + (m === currentModel ? ' selected' : '') + '>' + m + '</option>' }).join('') + '</select></div>' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Color</label><div id="prevf-colorCircles" style="display:flex;gap:8px;flex-wrap:wrap;min-height:32px;align-items:center;margin-bottom:4px"></div><input type="hidden" id="prevf-color-hidden" value="' + currentColor + '"></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Marca</label><select class="sel-f" id="prevf-brand">' + brandOpts + '</select></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Tipo</label><select class="sel-f" id="prevf-type"><option value="celular"' + (isEdit && editData.type==='celular'?' selected':'') + '>Celular</option><option value="tablet"' + (isEdit && editData.type==='tablet'?' selected':'') + '>Tablet</option><option value="laptop"' + (isEdit && editData.type==='laptop'?' selected':'') + '>Laptop</option><option value="smartwatch"' + (isEdit && editData.type==='smartwatch'?' selected':'') + '>Smartwatch</option></select></div>' +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Almacenamiento</label><select class="sel-f" id="prevf-storage"><option value="">Seleccionar...</option><option value="64 GB"' + (isEdit && editData.storage==='64 GB'?' selected':'') + '>64 GB</option><option value="128 GB"' + (isEdit && editData.storage==='128 GB'?' selected':'') + '>128 GB</option><option value="256 GB"' + (isEdit && editData.storage==='256 GB'?' selected':'') + '>256 GB</option><option value="512 GB"' + (isEdit && editData.storage==='512 GB'?' selected':'') + '>512 GB</option><option value="1 TB"' + (isEdit && editData.storage==='1 TB'?' selected':'') + '>1 TB</option></select></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Condición</label><select class="sel-f" id="prevf-condition"><option value="Nuevo"' + (isEdit && editData.condition==='Nuevo'?' selected':'') + '>Nuevo</option><option value="Impecable"' + (isEdit && editData.condition==='Impecable'?' selected':'') + '>Impecable</option></select></div>' +
-        '</div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Precio *</label><input class="inp-f" type="number" id="prevf-price" value="' + (isEdit ? (editData.price || '') : '') + '" placeholder="0"></div>' +
-          '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">Disponible desde</label><input class="inp-f" type="date" id="prevf-availableFrom" value="' + (isEdit && editData.availableFrom ? new Date(editData.availableFrom).toISOString().split('T')[0] : '') + '"></div>' +
-        '</div>' +
-        '<div><label style="font-size:11px;font-weight:500;display:block;margin-bottom:4px">URL Imagen</label><input class="inp-f" type="text" id="prevf-imageUrl" value="' + (isEdit ? (editData.imageUrl || '') : '') + '" placeholder="https://..."></div>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end">' +
-        '<button class="btn btn-g" onclick="renderPreventaCatalogo()">Cancelar</button>' +
-        '<button class="btn btn-o" onclick="savePreventaProduct(\'' + (isEdit ? editData.id : '') + '\')">' + (isEdit ? 'Guardar cambios' : 'Crear preventa') + '</button>' +
-      '</div>' +
-    '</div>'
+      renderWizardSteps() +
+      '<div id="prevWizardBody" style="margin-top:1.5rem"></div>' +
+      '<div id="prevWizardNav" style="margin-top:1.5rem"></div>' +
+    '</div>' +
+    '<div id="prevColorPickerHost" style="position:fixed;display:none;inset:0;z-index:1300;background:rgba(0,0,0,.5);align-items:center;justify-content:center" onclick="if(event.target===this)closePrevColorPicker()"></div>'
 
-  // Render color circles for current model
-  if (currentModel) renderPreventaColorCircles(currentModel, currentColor)
+  renderPrevWizardStep(1)
+}
+
+function renderWizardSteps() {
+  var steps = [
+    ['1','Datos del modelo','var(--green)'],
+    ['2','Combinaciones','var(--orange)'],
+    ['3','Revisar y guardar','var(--blue)'],
+  ]
+  var dots = {}
+  return '<div style="display:flex;gap:8px;margin-bottom:.25rem;flex-wrap:wrap">' + steps.map(function(s) {
+    return '<button onclick="_prevWizardStep=' + s[0] + ';renderPrevWizardStep(' + s[0] + ')" data-step="' + s[0] + '" class="prev-step-dot" style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:100px;border:1.5px solid var(--border);background:#fff;font-size:12px;font-weight:600;color:var(--gray);cursor:pointer;transition:all .18s">' +
+      '<span style="width:22px;height:22px;border-radius:50%;background:' + s[1] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700">' + s[0] + '</span>' + s[1] +
+    '</button>'
+  }).join('') + '</div>'
+}
+
+function setPrevStepActive(step) {
+  document.querySelectorAll('.prev-step-dot').forEach(function(b,i) {
+    var n = parseInt(b.getAttribute('data-step'),10)
+    b.style.borderColor = n === step ? 'var(--orange)' : 'var(--border)'
+    b.style.background = n === step ? 'rgba(255,107,44,.06)' : '#fff'
+    b.style.color = n === step ? 'var(--dk)' : 'var(--gray)'
+  })
+}
+
+function renderPrevWizardStep(step) {
+  _prevWizardStep = step
+  var body = document.getElementById('prevWizardBody')
+  var nav = document.getElementById('prevWizardNav')
+  if (!body || !nav) return
+  setPrevStepActive(step)
+  var brands = _prevBrandOptions(_prevWizardData.brand || 'Apple')
+  var m = _prevWizardData.model || {}
+  var curModel = _prevWizardData.modelName || ''
+  var curType = _prevWizardData.type || 'celular'
+
+  if (step === 1) {
+    body.innerHTML =
+      '<div style="display:grid;gap:16px">' +
+        '<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.22);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start">' +
+          '<span style="width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">1</span>' +
+          '<div><div style="font-size:14px;font-weight:700;color:var(--dk)">Elegí el dispositivo</div>' +
+          '<div style="font-size:12px;color:var(--gray);margin-top:2px">Seleccioná marca, tipo y modelo. El siguiente paso arma todas las variantes.</div></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">' +
+          '<div><label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px">Marca</label>' +
+            '<select class="sel-f" id="pw-brand" onchange="onPrevWizardBrand()">' + brands + '</select></div>' +
+          '<div><label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px">Tipo</label>' +
+            '<select class="sel-f" id="pw-type" onchange="onPrevWizardType()">' +
+              '<option value="celular"'+(curType==='celular'?' selected':'')+'>Celular</option>' +
+              '<option value="tablet"'+(curType==='tablet'?' selected':'')+'>Tablet</option>' +
+              '<option value="laptop"'+(curType==='laptop'?' selected':'')+'>Laptop</option>' +
+              '<option value="smartwatch"'+(curType==='smartwatch'?' selected':'')+'>Smartwatch</option>' +
+            '</select></div>' +
+          '<div><label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px">Modelo</label>' +
+            '<select class="sel-f" id="pw-model" onchange="onPrevWizardModel()"><option value="">Seleccionar...</option>' +
+              (_modelsForBrand(_prevWizardData.brand || 'Apple', curType).map(function(opt){ return '<option value="'+opt+'"'+(opt===curModel?' selected':'')+'>'+opt+'</option>' }).join('')) +
+            '</select></div>' +
+          '<div><label style="font-size:11px;font-weight:700;display:block;margin-bottom:6px;color:var(--gray);text-transform:uppercase;letter-spacing:.4px">Condición</label>' +
+            '<select class="sel-f" id="pw-condition"><option value="Nuevo" selected>Nuevo</option><option value="Impecable">Impecable</option></select></div>' +
+        '</div>' +
+        (curModel ? '<div style="background:var(--cream2);border:1px solid var(--border);border-radius:12px;padding:14px">' +
+          '<div style="font-size:12px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Descripción (opcional)</div>' +
+          '<textarea class="inp-f" id="pw-description" rows="2" placeholder="Detalle de la preventa" style="resize:none;width:100%;box-sizing:border-box">' + (m.description || '') + '</textarea>' +
+        '</div>' : '') +
+      '</div>'
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:flex-end;gap:10px">' +
+        '<button class="btn btn-o" onclick="prevWizardNext()" style="padding:12px 26px;font-weight:700" id="pwNextBtn">Siguiente: Variantes →</button>' +
+      '</div>'
+  } else if (step === 2) {
+    body.innerHTML =
+      '<div style="background:rgba(255,107,44,.06);border:1px solid rgba(255,107,44,.22);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">' +
+        '<span style="width:26px;height:26px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">2</span>' +
+        '<div><div style="font-size:14px;font-weight:700;color:var(--dk)">Variantes del modelo</div>' +
+        '<div style="font-size:12px;color:var(--gray);margin-top:2px">Cargá el precio y la fecha de cada combinación. Desmarcá las que no querés publicar.</div></div>' +
+      '</div>' +
+      '<div id="pw-rows-wrap"></div>' +
+      '<button onclick="addPrevWizardRow()" class="btn" style="width:100%;padding:13px;border:1.5px dashed var(--orange);background:rgba(255,107,44,.05);color:var(--orange);font-weight:700;margin-top:12px;cursor:pointer;border-radius:12px">+ Agregar otra combinación</button>'
+    renderPrevWizardRows()
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:10px">' +
+        '<button class="btn btn-ghost" onclick="_prevWizardStep=1;renderPrevWizardStep(1)" style="padding:12px 24px;color:var(--gray);border:1px solid var(--border);background:#fff">← Modelo</button>' +
+        '<button class="btn btn-o" onclick="prevWizardNext()" style="padding:12px 26px;font-weight:700;background:var(--orange)">Revisar →</button>' +
+      '</div>'
+  } else if (step === 3) {
+    var summary = renderPrevSummary()
+    body.innerHTML =
+      '<div style="background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:12px;padding:12px 16px;display:flex;gap:10px;align-items:flex-start;margin-bottom:14px">' +
+        '<span style="width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">3</span>' +
+        '<div><div style="font-size:14px;font-weight:700;color:var(--dk)">Revisar y guardar</div>' +
+        '<div style="font-size:12px;color:var(--gray);margin-top:2px">Se creará una variante por cada combinación marcada.</div></div>' +
+      '</div>' + summary
+    nav.innerHTML =
+      '<div style="display:flex;justify-content:space-between;gap:10px">' +
+        '<button class="btn btn-ghost" onclick="_prevWizardStep=2;renderPrevWizardStep(2)" style="padding:12px 24px;color:var(--gray);border:1px solid var(--border);background:#fff">← Variantes</button>' +
+        '<button class="btn" onclick="savePreventaProduct()" style="padding:12px 30px;background:var(--green);color:#fff;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(34,197,94,.3)">✓ Guardar preventa</button>' +
+      '</div>'
+  }
+}
+
+function onPrevWizardBrand() {
+  var b = document.getElementById('pw-brand') ? document.getElementById('pw-brand').value : 'Apple'
+  _prevWizardData.brand = b
+  _prevWizardData.modelName = ''
+  if (document.getElementById('pw-model')) document.getElementById('pw-model').value = ''
+  renderPrevWizardStep(1)
+}
+function onPrevWizardType() {
+  var t = document.getElementById('pw-type') ? document.getElementById('pw-type').value : 'celular'
+  _prevWizardData.type = t
+  _prevWizardData.modelName = ''
+  if (document.getElementById('pw-model')) document.getElementById('pw-model').value = ''
+  renderPrevWizardStep(1)
+}
+function onPrevWizardModel() {
+  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : ''
+  _prevWizardData.modelName = model
+  // Al elegir modelo, generar la matriz de variantes automáticamente
+  if (model) buildPrevMatrixRows()
+}
+
+function uploadWizardImage(input) {
+  // Deprecado: la imagen principal ya no se pide (las imágenes vienen por variante)
+  void input
+}
+
+// Genera automáticamente una fila por cada combinación del modelo
+// (color × almacenamiento) con precio/fecha vacíos para cargarlos.
+function buildPrevMatrixRows() {
+  var model = _prevWizardData.modelName
+  if (!model || !window.MODEL_COLORS || !window.MODEL_COLORS[model]) return
+  var colors = window.MODEL_COLORS[model] || []
+  var storages = (window.MODEL_STORAGES && window.MODEL_STORAGES[model]) || ['128 GB','256 GB','512 GB']
+  var rows = []
+  colors.forEach(function(color) {
+    storages.forEach(function(storage) {
+      rows.push({ color: color, storage: storage, price: '', availableFrom: '', imageUrl: '', on: true })
+    })
+  })
+  _prevWizardData.rows = rows
+}
+
+function addPrevWizardRow() {
+  _prevWizardData.rows.push({ color: '', storage: '128 GB', price: '', availableFrom: '', imageUrl: '', on: true })
+  renderPrevWizardRows()
+}
+
+function removePrevWizardRow(i) {
+  _prevWizardData.rows.splice(i, 1)
+  renderPrevWizardRows()
+}
+
+function prevRowDeactivate(i) {
+  if (_prevWizardData.rows[i]) _prevWizardData.rows[i].on = !_prevWizardData.rows[i].on
+  renderPrevWizardRows()
+}
+
+function renderPrevWizardRows() {
+  var wrap = document.getElementById('pw-rows-wrap')
+  if (!wrap) return
+  var rows = _prevWizardData.rows || []
+  if (!rows.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--gray);border:1px dashed var(--border);border-radius:12px;font-size:12px">Elegí un modelo en el paso anterior para generar sus variantes.</div>'
+    return
+  }
+  wrap.innerHTML =
+    '<div style="font-size:11px;color:var(--gray);margin-bottom:10px">' + rows.length + ' variantes generadas para <strong>' + esc(_prevWizardData.modelName || '') + '</strong></div>' +
+    '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px">' +
+    rows.map(function(r, i) {
+      var colorHex = r.color ? (_cssColor ? _cssColor(r.color) : '#ccc') : '#fff'
+      return '<div class="prev-row" style="background:var(--cream);border:1px solid var(--border);border-radius:12px;padding:12px;' + (r.on === false ? 'opacity:.5' : '') + '">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<button onclick="prevRowDeactivate(' + i + ')" title="Incluir/omitir" style="width:20px;height:20px;border-radius:6px;border:2px solid var(--border);background:' + (r.on === false ? 'transparent' : 'var(--green)') + ';cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;line-height:1">' + (r.on === false ? '' : '✓') + '</button>' +
+            '<button onclick="openPrevColorPicker(' + i + ')" title="' + esc(r.color || '') + '" style="width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:' + colorHex + ';cursor:pointer"></button>' +
+            '<span style="font-size:13px;font-weight:700;color:var(--dk)">' + esc(r.color) + ' · ' + esc(r.storage) + '</span>' +
+          '</div>' +
+          '<button onclick="removePrevWizardRow(' + i + ')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:15px">✕</button>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1.2fr;gap:8px;align-items:end">' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Precio</label><input class="inp-f" type="number" id="pw-row-price-' + i + '" value="' + r.price + '" placeholder="0" oninput="updatePrevRow(' + i + ')" style="width:100%;box-sizing:border-box"></div>' +
+          '<div><label style="font-size:10px;font-weight:600;color:var(--gray);display:block;margin-bottom:4px">Fecha</label><input class="inp-f" type="date" id="pw-row-date-' + i + '" value="' + r.availableFrom + '" onchange="updatePrevRow(' + i + ')" style="width:100%;box-sizing:border-box"></div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;margin-top:8px">' +
+          '<label style="display:flex;align-items:center;gap:6px;flex:1;font-size:11px;color:var(--gray);cursor:pointer;background:#fff;border:1px solid var(--border);border-radius:8px;padding:6px 8px;overflow:hidden">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+            '<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (r.imageUrl ? 'Imagen ✓' : 'Imagen') + '</span>' +
+            '<input type="file" accept="image/*" style="display:none" onchange="uploadPrevWizardImage(this,' + i + ')">' +
+          '</label>' +
+          (r.imageUrl ? '<img src="' + r.imageUrl + '" style="width:30px;height:30px;object-fit:cover;border-radius:6px;flex-shrink:0">' : '') +
+        '</div>' +
+      '</div>'
+    }).join('') +
+    '</div>'
+}
+
+function uploadPrevWizardImage(input, i) {
+  if (!input.files || !input.files[0]) return
+  var fd = new FormData(); fd.append('file', input.files[0])
+  fetch(API_URL + '/api/upload', { method: 'POST', body: fd })
+    .then(function(r) { return r.json() })
+    .then(function(d) {
+      if (d.url && _prevWizardData.rows[i]) {
+        _prevWizardData.rows[i].imageUrl = d.url
+        renderPrevWizardRows()
+      } else {
+        showToast({ title: 'Error', message: 'No se pudo subir la imagen', type: 'error' })
+      }
+    })
+    .catch(function() { showToast({ title: 'Error', message: 'Error al subir imagen', type: 'error' }) })
+}
+
+function handlePrevWizardDrop(e, i) {
+  e.preventDefault()
+  var f = e.dataTransfer.files && e.dataTransfer.files[0]
+  if (f) uploadPrevWizardImage({ files: [f] }, i)
+}
+
+function updatePrevRow(i) {
+  if (!_prevWizardData.rows[i]) return
+  var p = document.getElementById('pw-row-price-' + i)
+  var d = document.getElementById('pw-row-date-' + i)
+  if (p) _prevWizardData.rows[i].price = p.value
+  if (d) _prevWizardData.rows[i].availableFrom = d.value
+}
+
+var _prevColorPickerTarget = -1
+
+function openPrevColorPicker(i) {
+  _prevColorPickerTarget = i
+  var host = document.getElementById('prevColorPickerHost')
+  if (!host) return
+  host.style.display = 'flex'
+  var colors = []
+  var modelName = document.getElementById('pw-model') ? document.getElementById('pw-model').value : ''
+  if (window.MODEL_COLORS && modelName && window.MODEL_COLORS[modelName]) {
+    colors = window.MODEL_COLORS[modelName].map(function(c) { return { name: c, hex: (window.COLOR_HEX && window.COLOR_HEX[c]) || '#ccc' } })
+  } else {
+    colors = (COLOR_PALETTE || []).map(function(c) { return { name: c, hex: _cssColor(c) } })
+  }
+  host.innerHTML = '<div style="background:#fff;border-radius:16px;padding:20px;max-width:440px;width:100%" onclick="event.stopPropagation()">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+      '<div style="font-size:16px;font-weight:700">Elegir color</div>' +
+      '<button onclick="closePrevColorPicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray)">✕</button>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' + colors.map(function(c) {
+      return '<div onclick="selectPrevWizardColor(\'' + c.name.replace(/'/g, "\\'") + '\')" style="display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:8px;border:2px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor=\'var(--orange)\'">' +
+        '<div style="width:38px;height:38px;border-radius:50%;background:' + c.hex + ';border:1px solid rgba(0,0,0,.08)"></div>' +
+        '<span style="font-size:10px;color:var(--dk);font-weight:600;text-align:center;line-height:1.1">' + esc(c.name) + '</span>' +
+      '</div>'
+    }).join('') + '</div>' +
+    '<div style="display:flex;gap:8px;margin-top:14px">' +
+      '<input type="text" id="prevColorCustom" placeholder="Otro color..." style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">' +
+      '<button onclick="selectPrevWizardCustom()" style="padding:9px 16px;background:var(--cream2);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-weight:600">Usar</button>' +
+    '</div>' +
+  '</div>'
+}
+
+function selectPrevWizardColor(c) {
+  if (_prevColorPickerTarget < 0) return
+  if (_prevWizardData.rows[_prevColorPickerTarget]) _prevWizardData.rows[_prevColorPickerTarget].color = c
+  closePrevColorPicker()
+  renderPrevWizardRows()
+}
+
+function selectPrevWizardCustom() {
+  var inp = document.getElementById('prevColorCustom')
+  if (inp && inp.value.trim()) selectPrevWizardColor(inp.value.trim())
+}
+
+function closePrevColorPicker() {
+  var host = document.getElementById('prevColorPickerHost')
+  if (host) host.style.display = 'none'
+}
+
+function prevWizardNext() {
+  if (_prevWizardStep === 1) {
+    var model = document.getElementById('pw-model').value
+    if (!model) { showToast('Seleccioná un modelo', 'error'); return }
+    _prevWizardData.modelName = model
+    _prevWizardData.brand = document.getElementById('pw-brand').value
+    _prevWizardData.type = document.getElementById('pw-type').value
+    _prevWizardData.condition = document.getElementById('pw-condition').value
+    _prevWizardData.description = document.getElementById('pw-description') ? document.getElementById('pw-description').value : ''
+    // Generar la matriz de variantes si aún no hay
+    if (!_prevWizardData.rows.length) buildPrevMatrixRows()
+  }
+  renderPrevWizardStep(_prevWizardStep + 1)
+}
+
+function renderPrevSummary() {
+  // Al llegar al paso 3 los inputs del paso 1 ya no están en el DOM, así que
+  // usamos lo guardado en _prevWizardData durante prevWizardNext().
+  var model = (_prevWizardData.modelName || (_prevWizardData.model && _prevWizardData.model.name) || (_prevWizardData.resolved && _prevWizardData.resolved.model) || '')
+  var brand = (_prevWizardData.brand || (_prevWizardData.model && _prevWizardData.model.brand) || 'Apple')
+  var type = (_prevWizardData.type || 'celular')
+  var cond = (_prevWizardData.condition || 'Nuevo')
+  var img = (_prevWizardData.imageUrl || '')
+  var desc = (_prevWizardData.description || '')
+
+  // Las filas ya se mantienen actualizadas en vivo por updatePrevRow(), así que
+  // en el paso 3 usamos directamente _prevWizardData.rows (los inputs del paso 2
+  // ya no existen en el DOM).
+  _prevWizardData.resolved = { model: model, brand: brand, type: type, condition: cond, imageUrl: img, description: desc }
+
+  var rows = _prevWizardData.rows || []
+  var active = rows.filter(function(r) { return r.on !== false })
+  var invalid = active.filter(function(r) { return !r.price || !r.availableFrom })
+  var rowsHtml = rows.length ? rows.map(function(r) {
+    var dot = '<span style="width:16px;height:16px;border-radius:50%;background:' + (_cssColor ? _cssColor(r.color) : '#ccc') + ';border:1px solid rgba(0,0,0,.1);flex-shrink:0;display:inline-block;vertical-align:middle"></span>'
+    var img = r.imageUrl ? '<img src="' + r.imageUrl + '" style="width:28px;height:28px;object-fit:cover;border-radius:6px;vertical-align:middle;margin-right:6px">' : ''
+    if (r.on === false) {
+      return '<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--gray2);opacity:.55;border-radius:8px;margin-bottom:6px;align-items:center;gap:8px"><span style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px"><s>' + img + dot + esc(r.color) + ' · ' + esc(r.storage) + '</s></span><span style="font-size:10px;color:var(--gray)">omitida</span></div>'
+    }
+    return '<div style="display:flex;justify-content:space-between;padding:10px 12px;background:var(--cream2);border-radius:8px;margin-bottom:6px;align-items:center;gap:8px">' +
+      '<span style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:13px;min-width:0;overflow:hidden">' + img + dot + ' <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.color) + ' · ' + esc(r.storage) + '</span></span>' +
+      '<span style="color:var(--orange);font-weight:700;font-size:13px;flex-shrink:0">' + fmt(parseInt(r.price) || 0) + '</span>' +
+      '<span style="font-size:11px;color:var(--blue);flex-shrink:0">Disp. ' + esc(r.availableFrom) + '</span>' +
+    '</div>'
+  }).join('') : '<div style="color:var(--gray);font-size:12px;padding:8px 0">Sin combinaciones</div>'
+
+  return '<div style="display:grid;gap:14px">' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Modelo</div>' +
+        '<div style="font-size:15px;font-weight:700;color:var(--dk)">' + esc(brand) + ' ' + esc(model) + '</div>' +
+        '<div style="font-size:11px;color:var(--gray);margin-top:4px">' + esc(type) + ' · ' + esc(cond) + '</div>' +
+      '</div>' +
+      '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+        '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:6px">Combinaciones</div>' +
+        '<div style="font-size:22px;font-weight:700;color:var(--orange)">' + active.length + '</div>' +
+        '<div style="font-size:11px;color:var(--green)" id="pwSummaryValidity">' + (invalid.length ? invalid.length + ' sin precio/fecha' : '✓ Completas') + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px">' +
+      '<div style="font-size:10px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px">Detalle</div>' + rowsHtml +
+    '</div>' +
+  '</div>'
 }
 
 function closePreventaModal() {
@@ -567,46 +967,73 @@ function selectPreventaColor(color, el){
   if(el)el.style.borderColor='var(--orange)'
 }
 
-function savePreventaProduct(id) {
-  var isEdit = !!id
-  var model=document.getElementById('prevf-model')?.value||''
-  var data = {
-    name: model,
-    modelGroup: model,
-    brand: document.getElementById('prevf-brand').value || 'iPhone',
-    type: document.getElementById('prevf-type')?.value || 'celular',
-    storage: document.getElementById('prevf-storage').value,
-    color: document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'',
-    condition: document.getElementById('prevf-condition').value || 'Nuevo',
-    price: parseInt(document.getElementById('prevf-price').value) || 0,
-    availableFrom: document.getElementById('prevf-availableFrom').value || null,
-    imageUrl: document.getElementById('prevf-imageUrl').value || null,
-    sub: (document.getElementById('prevf-color-hidden')?.value||window._preventaColorSelected||'') + ' ' + (document.getElementById('prevf-storage').value||''),
-    isPreorder: true,
-    stock: 0,
-    cost: 0,
-    ico: '📱',
-    images: document.getElementById('prevf-imageUrl').value ? [document.getElementById('prevf-imageUrl').value] : []
+function savePreventaProduct() {
+  // Recoger inputs de datos del modelo (si existen)
+  var model = document.getElementById('pw-model') ? document.getElementById('pw-model').value : (_prevWizardData.modelName || (_prevWizardData.model && _prevWizardData.model.name) || '')
+  var brand = document.getElementById('pw-brand') ? document.getElementById('pw-brand').value : (_prevWizardData.brand || 'Apple')
+  var type = document.getElementById('pw-type') ? document.getElementById('pw-type').value : (_prevWizardData.type || 'celular')
+  var cond = document.getElementById('pw-condition') ? document.getElementById('pw-condition').value : (_prevWizardData.condition || 'Nuevo')
+  var img = (_prevWizardData.imageUrl || '')
+  var desc = document.getElementById('pw-description') ? document.getElementById('pw-description').value : (_prevWizardData.description || '')
+
+  var allRows = _prevWizardData.rows || []
+  var rows = allRows.filter(function(r) { return r.on !== false })
+  if (!model) { showToast({ title: 'Error', message: 'Seleccioná un modelo', type: 'error' }); return }
+  if (!rows.length) { showToast({ title: 'Error', message: 'Marcá al menos una combinación', type: 'error' }); return }
+  var invalid = rows.filter(function(r) { return !r.price || !r.availableFrom })
+  if (invalid.length) {
+    showToast({ title: 'Error', message: 'Completá el precio y la fecha de todas las variantes marcadas (' + invalid.length + ' pendientes)', type: 'error' })
+    return
   }
 
-  if (!data.name) { showToast({ title: 'Error', message: 'Selecciona un modelo', type: 'error' }); return }
-  if (!data.price || data.price <= 0) { showToast({ title: 'Error', message: 'El precio es obligatorio', type: 'error' }); return }
-
-  var url = API_URL + '/api/products'
-  var method = 'POST'
-  if (isEdit) { url += '?id=' + id; method = 'PUT' }
-
   var hdrs = { 'Content-Type': 'application/json' }
-  
+  var isEdit = !!(_prevWizardData && _prevWizardData.model && _prevWizardData.model.id)
+  var baseId = isEdit ? _prevWizardData.model.id : null
 
-  fetch(url, { method: method, headers: hdrs, body: JSON.stringify(data) })
-    .then(function(r) { return r.json(); })
-    .then(function(res) {
-      if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
-      showToast({ title: 'Exito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
+  function buildPayload(r, index) {
+    var color = (r.color || '').trim()
+    var storage = (r.storage || '').trim()
+    var sub = [color, storage].filter(Boolean).join(' · ')
+    return {
+      name: model,
+      modelGroup: model,
+      brand: brand,
+      type: type,
+      condition: cond,
+      storage: storage || null,
+      color: color || null,
+      price: parseInt(r.price) || 0,
+      cost: 0,
+      stock: 0,
+      availableFrom: r.availableFrom ? r.availableFrom + 'T00:00:00.000Z' : null,
+      imageUrl: r.imageUrl || img || null,
+      images: r.imageUrl ? [r.imageUrl] : (img ? [img] : []),
+      description: desc || '',
+      sub: sub || null,
+      isPreorder: true,
+      ico: '📱',
+    }
+  }
+
+  function run(i) {
+    if (i >= rows.length) {
+      showToast({ title: 'Éxito', message: isEdit ? 'Preventa actualizada' : 'Preventa creada', type: 'success' })
       renderPreventaCatalogo()
-    })
-    .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
+      return
+    }
+    var payload = buildPayload(rows[i], i)
+    var url = API_URL + '/api/products'
+    var method = 'POST'
+    if (isEdit && i === 0 && baseId) { url += '?id=' + baseId; method = 'PUT' }
+    fetch(url, { method: method, headers: hdrs, body: JSON.stringify(payload) })
+      .then(function(r) { return r.json(); })
+      .then(function(res) {
+        if (res.error) { showToast({ title: 'Error', message: res.error, type: 'error' }); return }
+        run(i + 1)
+      })
+      .catch(function() { showToast({ title: 'Error', message: 'Error al guardar preventa', type: 'error' }) })
+  }
+  run(0)
 }
 
 function editPreventaProduct(id) {

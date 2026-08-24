@@ -57,8 +57,12 @@ export async function GET(request: NextRequest) {
 
     if (preorder === 'true') {
       where.isPreorder = true
-    } else if (!isAdmin) {
+    } else if (preorder === 'false') {
       where.isPreorder = { not: true }
+    } else if (!isAdmin) {
+      // Catálogo público: incluye productos de preventa junto al resto.
+      // El admin puede pedir ?preorder=false para ver solo normales.
+      // Sin filtro: se muestran todos (normales + preventa).
     }
 
     const total = await prisma.product.count({ where })
@@ -94,6 +98,26 @@ export async function GET(request: NextRequest) {
           const st = variantStats[p.id]
           p.minTargetPrice = st ? st.minTargetPrice : 0
           p.variantCount = st ? st.variantCount : 0
+        })
+      }
+
+      // Preventas: sin IMEIs en stock. El "Desde/ N variantes" se calcula
+      // agrupando productos con el mismo modelGroup e isPreorder=true.
+      const pregroup = products.filter((p: any) => p.isPreorder && p.modelGroup)
+      if (pregroup.length > 0) {
+        const groups = new Map<string, { min: number; count: number }>()
+        pregroup.forEach((p: any) => {
+          const g = groups.get(p.modelGroup) || { min: Infinity, count: 0 }
+          g.min = Math.min(g.min, Number(p.price) || 0)
+          g.count++ 
+          groups.set(p.modelGroup, g)
+        })
+        products.forEach((p: any) => {
+          if (p.isPreorder && p.modelGroup && groups.has(p.modelGroup)) {
+            const g = groups.get(p.modelGroup)!
+            p.progroupMin = g.min === Infinity ? 0 : g.min
+            p.progroupCount = g.count
+          }
         })
       }
     } catch (aggErr) {
@@ -138,6 +162,8 @@ export async function POST(request: Request) {
         brand: body.brand,
         sub: body.sub,
         condition: body.condition || 'Nuevo',
+        description: body.description || null,
+        modelGroup: body.modelGroup || null,
         price: Number(body.price) || 0,
         cost: Number(body.cost) || 0,
         stock: Number(body.stock) || 0,
@@ -215,6 +241,8 @@ export async function PUT(request: Request) {
         ...(body.brand && { brand: body.brand }),
         ...(body.sub && { sub: body.sub }),
         ...(body.condition && { condition: body.condition }),
+        ...(body.description !== undefined && { description: body.description || null }),
+        ...(body.modelGroup !== undefined && { modelGroup: body.modelGroup || null }),
         ...(body.price !== undefined && { price: Number(body.price) }),
         ...(body.cost !== undefined && { cost: Number(body.cost) }),
         ...(body.stock !== undefined && { stock: Number(body.stock) }),

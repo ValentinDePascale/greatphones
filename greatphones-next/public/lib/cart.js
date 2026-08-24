@@ -135,8 +135,13 @@ function addToCart(id,triggerEl,variant,isPreorder,availableFrom){
       var snapBasePrice=((p&&p.minTargetPrice&&p.minTargetPrice>0)?p.minTargetPrice:(snapSrc.price||0));
       var snapIsOffer=typeof isOfferValid==='function'&&isOfferValid(snapSrc);
       var snapFinalPrice=snapIsOffer?Math.round(snapBasePrice-snapBasePrice*snapSrc.discount/100):snapBasePrice;
+      // Limpiar nombre duplicado (p.ej. brand 'iPhone' + name 'iPhone 14')
+      var snapName=(snapSrc.name||'');
+      if(snapSrc.brand&&snapName.indexOf(snapSrc.brand)===0&&snapName.trim()!==snapSrc.brand.trim()){
+        snapName=snapName.slice(snapSrc.brand.length).replace(/^\s+/,'');
+      }
       entry.snapshot={
-        name:snapSrc.name||'',
+        name:snapName,
         price:snapBasePrice,
         finalPrice:snapFinalPrice,
         imageUrl:snapSrc.imageUrl||'',
@@ -409,6 +414,7 @@ function renderCartBody(){
         ?[variant.color,variant.storage,variant.condition].filter(Boolean).join(' · ')
         :([p.color,p.storage,p.condition].filter(Boolean).join(' · ')||p.sub);
       var displayName=variant&&variant.name?variant.name:p.name;
+      if(p.isPreorder&&typeof cleanPreorderName==='function')displayName=cleanPreorderName(p);
       return ciHtml(item, item.id, p, null, img, sub, displayName, finalPrice, isPromo);
     }
     var a=getById(window.ACCS,item.productId||item.id);

@@ -60,6 +60,24 @@ function detMainImgHTML(imgUrl, isFav, total, currentIdx, accMode){
     '</div>';
 }
 
+function cleanPreorderName(p){
+  var name=(p.name||p.modelGroup||'');
+  var b=(p.brand||'');
+  if(b&&name.indexOf(b)===0&&name.trim()!==b.trim())name=name.slice(b.length).replace(/^\s+/,'');
+  return name||p.modelGroup||'';
+}
+
+// Contador visual de días hasta la disponibilidad de la preventa.
+function preorderCountdown(p){
+  if(!p.availableFrom)return { html:'<div class="pcard-preorder-avail">Próximamente</div>', days:null };
+  var d=new Date(p.availableFrom);
+  var now=new Date();
+  var days=Math.ceil((d-now)/86400000);
+  if(days<=1)return { html:'<div class="pcard-preorder-avail pcard-preorder-count">Listo muy pronto</div>', days:0 };
+  var label=days<60?('En '+days+' días'):('En ~'+Math.round(days/30)+' meses');
+  return { html:'<div class="pcard-preorder-avail pcard-preorder-count"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> '+label+'</div>', days:days };
+}
+
 function buildSpecsForProduct(p){
   var specs=[];
   var type=(p.type||'').toLowerCase();
@@ -68,26 +86,35 @@ function buildSpecsForProduct(p){
     if(cond==='Nuevo'){specs.push({key:'check',label:'Estado',val:'Nuevo',color:'var(--green)'});}
     else if(cond){specs.push({key:'status',label:'Estado',val:cond,color:'var(--orange)'});}
     if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({key:'battery',label:'Bateria',val:batPct+'%',color:batColor});}
+    else if(p.isPreorder||p.batteryFrom){specs.push({key:'battery',label:'Bateria',val:'Entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %',color:'var(--green)'});}
     if(p.color)specs.push({key:'color',label:'Color',val:p.color});
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
-    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   }else if(type==='laptop'||type==='desktop'){
     if(p.processor)specs.push({key:'cpu',label:'Procesador',val:p.processor});
     else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({key:'cpu',label:'Procesador',val:cpuMatch[0]});}
-    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
     if(p.screen)specs.push({key:'screen',label:'Pantalla',val:p.screen+'"'});
   }
   if(p.stock!==undefined){
     if(p.isPreorder){
-      var dateStr=p.availableFrom?new Date(p.availableFrom).toLocaleDateString('es-AR',{month:'long',year:'numeric'}):'Próximamente';
-      specs.push({key:'date',label:'Disponibilidad',val:dateStr,color:'var(--orange)'});
+      // Disponibilidad como card común (no ancha), antes del almacenamiento
+      specs.push({key:'date',label:'Disponibilidad',val:preorderShortDate(p.availableFrom),color:'var(--orange)'});
     }else{
       var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
       specs.push({key:'stock',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
     }
   }
+  if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   return specs;
+}
+
+function preorderShortDate(d){
+  if(!d)return 'Próximamente';
+  var dt=new Date(d);
+  var days=Math.ceil((dt-new Date())/86400000);
+  if(days<=1)return 'Pronto';
+  if(days<60)return '~'+days+' días';
+  return dt.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
 }
 
 function renderSpecsGrid(specs){
@@ -101,7 +128,7 @@ function renderSpecsGrid(specs){
   el.style.display='grid';
   if(section)section.style.display='block';
   el.innerHTML=specs.map(function(s){
-    var wide=(s.key==='storage'||s.key==='stock'||s.key==='date')?' sp-wide':'';
+    var wide=(s.key==='storage'||s.key==='stock')?' sp-wide':'';
     return '<div class="sp-card'+wide+'">'+
       '<div class="sp-ico">'+detIco(s.key||'stock')+'</div>'+
       '<div class="sp-text"><div class="sp-label">'+s.label+'</div>'+
@@ -661,6 +688,32 @@ function renderGrid(gid,prods){
 
     // === GROUP CARD ===
     if(p.isGroup){
+      // Grupo de preventa: igual que una card normal, sin badge, mostrando
+      // precio real (sin "Desde") y un contador de días hasta disponibilidad.
+      if(p.isPreorder){
+        var gInfo=preorderCountdown(p);
+        var gSubParts=[];
+        if(p.color)gSubParts.push(p.color);
+        if(p.storage)gSubParts.push(p.storage);
+        var gSub=gSubParts.length?gSubParts.join(' / '):(p.sub||'');
+        return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
+          '<article class="pcard pcard-group pcard-preorder">'+
+          '<div class="pcard-img">'+
+            '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
+            imgHtml(p.imageUrl,p.ico,false)+
+          '</div>'+
+          '<div class="pcard-body">'+
+            '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
+            '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
+            (gSub?'<div class="pcard-subtitle">'+esc(gSub)+'</div>':'')+
+            preorderSpecsHTML(p)+
+            '<div class="pcard-price-row"><span class="pcard-price">'+fmt(p.price)+'</span></div>'+
+            '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
+            gInfo.html+
+            '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
+          '</div>'+
+        '</article></a>';
+      }
       var gBadge=p.stock===0?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(p.discount>0?'<div class="pcard-badge">Hasta -'+p.discount+'%</div>':'');
       return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
         '<article class="pcard pcard-group'+(p.stock===0?' pcard-out-of-stock':'')+'">'+
@@ -679,6 +732,62 @@ function renderGrid(gid,prods){
             (p.discount>0?'<span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+
           '</div>'+
           '<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();openDetail(\''+p.id+'\')">Ver variantes</button>'+
+        '</div>'+
+      '</article></a>';
+    }
+
+    // === PREORDER CARDS ===
+    // Un producto isPreorder se muestra en el catálogo con badge de preventa,
+    // su fecha de disponibilidad más cercana y botón "Reservar".
+function preorderDateLabel(p){
+  if(!p.availableFrom)return { label:'Próximamente', days:null };
+  var d=new Date(p.availableFrom);
+  var now=new Date();
+  var days=Math.ceil((d-now)/86400000);
+  if(days<=1)return { label:'Pronto', days:0 };
+  if(days<60)return { label:'en ~'+days+' días', days:days };
+  return { label:'a partir del '+d.toLocaleDateString('es-AR',{day:'numeric',month:'long'}), days:days };
+}
+
+function preorderSpecsHTML(p){
+  var pills=[];
+  if(p.condition&&p.condition!=='Nuevo')pills.push('<span class="pcard-spec">Estado: '+esc(p.condition)+'</span>');
+  else pills.push('<span class="pcard-spec">Estado: Nuevo</span>');
+  var hasBattery=p.battery!=null&&p.battery>0&&p.battery<=100;
+  var hasRange=p.batteryFrom!=null||p.batteryTo!=null;
+  if(hasRange)pills.push('<span class="pcard-spec">Batería entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %</span>');
+  else if(hasBattery)pills.push('<span class="pcard-spec">Batería '+p.battery+'%</span>');
+  else pills.push('<span class="pcard-spec">Batería entre 85 y 95 %</span>');
+  if(p.ram)pills.push('<span class="pcard-spec">'+esc(p.ram)+'</span>');
+  return pills.length?'<div class="pcard-specs">'+pills.join('')+'</div>':'';
+}
+
+function preorderBrand(p){
+  var b=(p.brand||'');
+  if(b==='iPhone'||b==='Apple')return 'APPLE';
+  return b||'';
+}
+
+    if(p.isPreorder){
+      var avail=preorderCountdown(p);
+      var subParts=[];
+      if(p.storage)subParts.push(p.storage);
+      if(p.color)subParts.push(p.color);
+      var sub=subParts.length?subParts.join(' / '):(p.sub||'');
+      return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard pcard-preorder">'+
+        '<div class="pcard-img">'+
+          '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
+          imgHtml(p.imageUrl,p.ico,false)+
+        '</div>'+
+        '<div class="pcard-body">'+
+          '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
+          '<div class="pcard-name">'+esc(p.name)+'</div>'+
+          (sub?'<div class="pcard-subtitle">'+esc(sub)+'</div>':preorderSpecsHTML(p))+
+          '<div class="pcard-discount-row"></div>'+
+          '<span class="pcard-price">'+fmt(p.price)+'</span>'+
+          '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
+          avail.html+
+          '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
         '</div>'+
       '</article></a>';
     }
@@ -732,7 +841,7 @@ function renderGrid(gid,prods){
 function renderHomeRail(){
   var rail=document.getElementById('homeRail');
   if(!rail)return;
-  var sorted=PRODUCTS.slice().sort(function(a,b){
+  var sorted=PRODUCTS.slice().filter(function(p){return !p.isPreorder;}).sort(function(a,b){
     var stockA=a.stock>0?0:1;
     var stockB=b.stock>0?0:1;
     if(stockA!==stockB)return stockA-stockB;
@@ -746,7 +855,7 @@ function renderOfferStrip(){
   var strip=document.getElementById('offerStrip');
   if(!strip)return;
   var offers=PRODUCTS.filter(function(p){
-return isOfferValid(p);
+    return !p.isPreorder && isOfferValid(p);
   });
   if(!offers.length){strip.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:3rem;color:rgba(255,255,255,.4);font-size:12px">No hay ofertas activas por ahora</div>';var tb=document.getElementById('offerTimerBanner');if(tb)tb.style.display='none';return;}
 
@@ -854,9 +963,19 @@ function renderShopGrid(){
       stock:inStock?variants.reduce(function(s,v){return s+v.stock;},0):0,
       createdAt:newestDate.toISOString(),
       discount:maxDiscount,
+      // Preventa: exponer datos del más barato (disponibilidad, color, storage)
+      isPreorder:!!cheapest.isPreorder,
+      availableFrom:cheapest.isPreorder?cheapest.availableFrom:null,
+      color:cheapest.isPreorder?cheapest.color:null,
+      storage:cheapest.isPreorder?cheapest.storage:null,
+      progroupCount:variants.length,
+      progroupMin:cheapest.price,
       battery:maxBattery,
       condition:cheapest.condition,
-      variantCount:variants.length
+      variantCount:variants.length,
+      isPreorder:!!cheapest.isPreorder,
+      progroupCount:variants.length,
+      progroupMin:cheapest.price
     });
   });
   displayList=displayList.concat(standalone);
@@ -886,7 +1005,7 @@ function renderShopGrid(){
 function renderOfertasGrid(){
   var grid=document.getElementById('ofertasGrid');
   if(!grid)return;
-  var offers=PRODUCTS.filter(function(p){return isOfferValid(p);});
+  var offers=PRODUCTS.filter(function(p){return !p.isPreorder && isOfferValid(p);});
   var accOffers=(window.ACCS||[]).filter(function(a){return isOfferValid(a);});
   var allOffers=offers.concat(accOffers);
   renderGrid('ofertasGrid',allOffers);
@@ -1215,6 +1334,70 @@ function openDetail(id, variantId){
     return;
   }
   currentAcc=null;
+  // PREVENTA: las variantes son los productos del mismo modelGroup con
+  // isPreorder=true (color × almacenamiento × precio × disponibilidad).
+  if(currentProd.isPreorder){
+    window._isPreorderDetail=true;
+    var preVariants=[];
+    for(var pv=0;pv<PRODUCTS.length;pv++){
+      var ppv=PRODUCTS[pv];
+      if(ppv.isPreorder&&ppv.id===id){preVariants.push(Object.assign({},ppv,{targetPrice:ppv.price}));continue;}
+      if(ppv.isPreorder&&ppv.modelGroup&&currentProd.modelGroup&&ppv.modelGroup===currentProd.modelGroup){
+        preVariants.push(Object.assign({},ppv,{targetPrice:ppv.price}));
+      }
+    }
+    window._detailVariants=preVariants;
+    window._variantsLoaded=true;
+    renderDetailVariants();
+    var prePromo=isOfferValid(currentProd);
+    var preMin=Infinity;
+    for(var pi=0;pi<preVariants.length;pi++){
+      if(preVariants[pi].price&&preVariants[pi].price<preMin)preMin=preVariants[pi].price;
+    }
+    var preBase=preMin<Infinity?preMin:currentProd.price;
+    var preFinal=prePromo?Math.round(preBase*(1-currentProd.discount/100)):preBase;
+    // No pisar el precio: si ya hay una variante seleccionada, selectDetailVariant
+    // mostró el precio real. "Desde" solo si aún no se seleccionó ninguna.
+    if(window._selectedVariantIdx<0){
+      var preLabel=preVariants.length>1?'Desde ':'';
+      var prePriceEl=document.getElementById('detPrice');if(prePriceEl)prePriceEl.textContent=preLabel+fmt(preFinal);
+      var preTotalEl=document.getElementById('detTotal');if(preTotalEl)preTotalEl.textContent=fmt(preFinal);
+    }
+    var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=(currentProd.brand==='iPhone'||currentProd.brand==='Apple')?'APPLE':(currentProd.brand||'Apple');
+    var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=cleanPreorderName(currentProd);
+    var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=cleanPreorderName(currentProd);
+    // Botones de Reservar
+    var preAddEl=document.getElementById('detAddCart');
+    if(preAddEl){preAddEl.style.display='';preAddEl.textContent='Reservar preventa';preAddEl.onclick=function(){
+      var selV=window._selectedVariant;
+      var avail=currentProd.availableFrom;
+      if(selV&&selV.availableFrom)avail=selV.availableFrom;
+      addToCart(currentProd.id,this,null,true,avail);
+    };}
+    var preBuyEl=document.getElementById('detBuyNow');
+    if(preBuyEl){preBuyEl.style.display='';preBuyEl.textContent='Reservar ahora';preBuyEl.onclick=function(){
+      var selV=window._selectedVariant;
+      var avail=currentProd.availableFrom;
+      if(selV&&selV.availableFrom)avail=selV.availableFrom;
+      addToCart(currentProd.id,null,null,true,avail);
+      setTimeout(function(){nav('checkout');},400);
+    };}
+    if(window._selectedVariant&&window._selectedVariant.availableFrom){}
+    if(typeof syncDetSticky==='function')syncDetSticky(document.getElementById('detAddCart'));
+    // Cerrar otras secciones del detalle que no aplican a preventa
+    var preOldEl=document.getElementById('detOld');if(preOldEl)preOldEl.style.display='none';
+    var preCuotaEl=document.getElementById('detCuotaInfo');if(preCuotaEl)preCuotaEl.style.display='none';
+    // Garantizar que haya una variante seleccionada con su imagen/precio: así no
+    // se mezclan imagen del producto base con precio de la variante a la entrada.
+    if(window._selectedVariantIdx<0&&preVariants.length>0){
+      selectDetailVariant(0);
+    }
+    if(typeof renderRelatedAccs==='function'){try{renderRelatedAccs();}catch(e){}}
+    setDetLoading(false);
+    nav('detail');
+    return;
+  }
+  window._isPreorderDetail=false;
   // Collect all product IDs sharing the same modelGroup
   var variantProdIds=[id];
   if(currentProd.modelGroup){
@@ -1452,6 +1635,8 @@ function nextDetailImage(){
 function selectDetailVariant(idx){
   var vars=window._detailVariants||[];
   if(idx<0||idx>=vars.length)return;
+  // Guard anti-loop: si ya tenemos esta variante seleccionada, no re-render
+  if(idx===window._selectedVariantIdx&&window._selectedVariant&&vars[idx]&&window._selectedVariant.id===vars[idx].id)return;
   window._selectedVariantIdx=idx;
   window._selectedVariant=vars[idx];
   var v=vars[idx];
@@ -1499,7 +1684,20 @@ function selectDetailVariant(idx){
   else if(oldEl)oldEl.style.display='none';
   var cuota12=Math.round(finalPrice/12);
   var cuotaText=document.getElementById('detCuotaText');
-  if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+  if(cuotaText)cuotaText.textContent=window._isPreorderDetail
+    ?('12x '+fmt(cuota12)+' cuotas fijas')
+    :('12x '+fmt(cuota12)+' sin interes');
+
+  // Preventa: mostrar la disponibilidad estimada de la combinación elegida
+  if(window._isPreorderDetail){
+    var availFrom=v && (v.availableFrom||v._availableFrom) ? new Date(v.availableFrom||v._availableFrom) : (currentProd.availableFrom?new Date(currentProd.availableFrom):null);
+    var dateEl=document.getElementById('detPreorderInfo');
+    if(dateEl){
+      dateEl.style.display='block';
+      var cd=preorderCountdown({ availableFrom: availFrom ? availFrom.toISOString() : null });
+      dateEl.innerHTML='<div class="det-preorder-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> Preventa</div><p>'+(v.color?esc(v.color)+' · ':'')+(v.storage?esc(v.storage)+' · ':'')+cd.html.replace(/^<div[^>]*>|<\/div>$/g,'')+'</p>';
+    }
+  }
 
   // Update name to reflect variant details (solo breadcrumb)
   var suffixParts=[];
@@ -1507,15 +1705,18 @@ function selectDetailVariant(idx){
   if(v.storage)suffixParts.push(v.storage);
   var variantSuffix=suffixParts.length?' ('+suffixParts.join(' / ')+')':'';
   var name2El=document.getElementById('detName2');
-  if(name2El)name2El.textContent=currentProd.name+variantSuffix;
+  if(name2El)name2El.textContent=(window._isPreorderDetail?cleanPreorderName(currentProd):currentProd.name)+variantSuffix;
   var nameEl=document.getElementById('detName');
-  if(nameEl)nameEl.textContent=currentProd.name;
+  if(nameEl)nameEl.textContent=window._isPreorderDetail?cleanPreorderName(currentProd):currentProd.name;
 
   // Rebuild specs grid with variant-specific data
   var mergedProd={
     type:v.deviceType||currentProd.type,
     condition:v.cosmeticCondition||currentProd.condition,
     battery:v.batteryHealth,
+    batteryFrom:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryFrom||85):undefined,
+    batteryTo:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryTo||95):undefined,
+    availableFrom:(window._isPreorderDetail||currentProd.isPreorder)?(v.availableFrom||v._availableFrom||currentProd.availableFrom):undefined,
     color:v.color,
     ram:currentProd.ram,
     storage:v.storage||currentProd.storage,
@@ -1525,7 +1726,9 @@ function selectDetailVariant(idx){
     screen:currentProd.screen,
     isOffer:isPromo,
     discount:bestDiscount,
-    price:finalPrice
+    price:finalPrice,
+    availableFrom:v.availableFrom||currentProd.availableFrom,
+    isPreorder:!!(window._isPreorderDetail||currentProd.isPreorder)
   };
   renderSpecsGrid(buildSpecsForProduct(mergedProd));
 
@@ -1541,8 +1744,14 @@ function selectDetailVariant(idx){
   // Show variant-specific image
   if(v.imageUrl){
     var mainImg=document.getElementById('detImgMain');
+    var thumbsEl=document.getElementById('detThumbnails');
     if(mainImg){
       mainImg.innerHTML=detMainImgHTML(v.imageUrl,isFavorite(currentProd.id),1,0,false);
+    }
+    if(window._isPreorderDetail&&thumbsEl){
+      thumbsEl.style.display='none';
+      thumbsEl.style.display='grid';
+      thumbsEl.innerHTML='<div class="det-thumb act" onclick="setDetailImage(0)"><img loading="lazy" src="'+v.imageUrl+'" alt=""></div>';
     }
   }
 
@@ -1591,6 +1800,70 @@ function renderDetailVariants(){
   if(!modelName&&currentProd)modelName=currentProd.name;
   var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[modelName];
   var hexMap=window.COLOR_HEX||{};
+
+  // Use color circles for known iPhone models (y para preventas: círculos
+  // armados desde los colores de las variantes del grupo).
+  if(window._isPreorderDetail){
+    if(!window._colorCircleState)window._colorCircleState={selectedColor:null,selectedStorage:null};
+    var state=window._colorCircleState;
+
+    // Group variants by color
+    var colorMap={};
+    variants.forEach(function(v){
+      if(!v.color)return;
+      if(!colorMap[v.color])colorMap[v.color]=[];
+      colorMap[v.color].push(v);
+    });
+
+    var circlesHtml=Object.keys(colorMap).map(function(c){
+      var hex=(window.COLOR_HEX&&window.COLOR_HEX[c])||'#ccc';
+      var isSelected=c===state.selectedColor;
+      if(!state.selectedColor)state.selectedColor=c;
+      return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
+    }).join('');
+
+    // Storage boxes for selected color
+    var storageHtml='';
+    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
+    if(storagesForColor&&storagesForColor.length){
+      if(!state.selectedStorage)state.selectedStorage=storagesForColor[0].storage||'';
+      var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
+      var allColorStorages={};
+      Object.keys(colorMap).forEach(function(col){
+        allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
+      });
+      var validStorages=allColorStorages[state.selectedColor]||[];
+      storageHtml='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        allStorages.map(function(s){
+          var isAvailable=validStorages.indexOf(s)>=0;
+          var isSelected=s===state.selectedStorage;
+          if(isAvailable){
+            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
+          }
+          return '<div class="variant-chip disabled">'+s+'</div>';
+        }).join('')+'</div></div>';
+    }else if(state.selectedColor&&!storagesForColor){
+      storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
+    }
+
+    list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      circlesHtml+'</div>'+storageHtml+'</div>';
+
+    // Auto-select variant based on selected color+storage
+    if(state.selectedColor&&state.selectedStorage){
+      var foundIdx=-1;
+      for(var vi=0;vi<variants.length;vi++){
+        var v=variants[vi];
+        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
+          foundIdx=vi;break;
+        }
+      }
+      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
+      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
+    }else if(variants.length>0)selectDetailVariant(0);
+    return;
+  }
 
   // Use color circles for known iPhone models
   if(modelColors&&modelColors.length&&variants.some(function(v){return v.color;})){
@@ -2328,7 +2601,7 @@ function animateHeroEnter(){
 function renderFeaturedGrid(){
   var grid=document.getElementById('featuredGrid');
   if(!grid)return;
-  var sorted=PRODUCTS.slice().sort(function(a,b){
+  var sorted=PRODUCTS.slice().filter(function(p){return !p.isPreorder;}).sort(function(a,b){
     var stockA=a.stock>0?0:1;
     var stockB=b.stock>0?0:1;
     if(stockA!==stockB)return stockA-stockB;
@@ -2798,9 +3071,13 @@ window.showQrDownloadModal=function(qrDataUrl,code,label){
 };
 function getUniqueBrands(){
   var brands={};
-  var fallback=['iPhone','Samsung','MacBook','iPad','Motorola','Xiaomi','Apple','Google','OnePlus','Nokia'];
+  // iPhone no es una marca: la marca real es Apple.
+  var fallback=['Apple','Samsung','MacBook','iPad','Motorola','Xiaomi','Google','OnePlus','Nokia'];
   fallback.forEach(function(b){brands[b]=true;});
-  (PRODUCTS||[]).forEach(function(p){if(p.brand)brands[p.brand]=true;});
+  (PRODUCTS||[]).forEach(function(p){
+    if(p.brand&&p.brand!=='iPhone')brands[p.brand]=true;
+  });
+  if(brands['Apple'])delete brands['iPhone'];
   return Object.keys(brands).sort();
 }
 function uploadProductImage(input){
@@ -4519,18 +4796,7 @@ function deleteQuote(id){
 })();
 
 // SSR support: auto-navigate to preventas page
-(function initSSRPreventas(){
-  if(window.__INITIAL_PREVENTAS__){
-    delete window.__INITIAL_PREVENTAS__;
-    var checkInterval=setInterval(function(){
-      if(typeof nav === 'function' && typeof loadPreorderProducts === 'function'){
-        clearInterval(checkInterval);
-        nav('preventas');
-      }
-    },50);
-    setTimeout(function(){clearInterval(checkInterval);},5000);
-  }
-})();
+// Preventas ya no tienen página propia: se muestran en el catálogo (/productos).
 
 // ===== ADMIN USERS =====
 var _adminUsersPage = 1;

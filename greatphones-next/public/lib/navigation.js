@@ -1396,3 +1396,81 @@ document.addEventListener('click',function(e){
   }
   if(found)e.preventDefault();
 },false);
+
+// =========== TRUST INFO MODAL (home) ===========
+var TRUST_INFO = {
+  envio: {
+    ico: '&#128666;',
+    title: 'Envío a todo el país',
+    items: [
+      ['Rapidez', 'Despachamos tu pedido en 24/48 hs hábiles.'],
+      ['Cobertura', 'Llegamos a todo el país con correos oficiales y mensajería propia en Bahía Blanca.'],
+      ['Seguridad', 'Los equipos viajan asegurados y con seguimiento en tiempo real.'],
+      ['Sin costo', 'Envíos sin cargo a partir de cierto monto. Consultá el detalle en el checkout.'],
+    ],
+  },
+  garantia: {
+    ico: '&#128737;',
+    title: '12 meses de garantía',
+    items: [
+      ['Garantía legal', 'Todos los equipos incluyen la garantía legal de 6 meses.'],
+      ['Garantía extendida', 'Sumamos 6 meses más de cobertura de forma gratuita en todos nuestros equipos.'],
+      ['Cobertura', 'Fallos de hardware y software cubiertos, sin costo de reparación.'],
+      ['Cómo activarla', 'Podés gestionar tu garantía desde la sección Garantías con el código de compra y el IMEI.'],
+    ],
+  },
+  devolucion: {
+    ico: '&#8634;',
+    title: 'Devolución en 7 días',
+    items: [
+      ['Botón de arrepentimiento', 'Tenés 10 días corridos para arrepentirte de tu compra, sin explicar motivos.'],
+      ['Devolución 7 días', 'Podés devolver el producto dentro de los 7 días de recibido si no quedó conforme.'],
+      ['Estado', 'El equipo debe estar en su estado original y con todos sus accesorios.'],
+      ['Reintegro', 'El dinero se acredita por el mismo medio de pago, sin costos ocultos.'],
+    ],
+  },
+  cuotas: {
+    ico: '&#128179;',
+    title: 'Hasta 24 cuotas fijas',
+    items: [
+      ['Cuotas fijas', 'Financiá tu compra en hasta 24 cuotas fijas con tarjeta de crédito.'],
+      ['Tarjetas', 'Aceptamos Visa, Mastercard, American Express y tarjetas de Mercado Pago.'],
+      ['Checkout', 'Elegí la cantidad de cuotas al momento de pagar y el precio no cambia.'],
+      ['Otros medios', 'También aceptamos transferencia, efectivo y pagos con cupones o gift cards.'],
+    ],
+  },
+};
+
+function openTrustInfo(key) {
+  var info = TRUST_INFO[key];
+  if (!info) return;
+  var existing = document.getElementById('trustInfoModal');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'trustInfoModal';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s ease';
+  overlay.onclick = function (e) { if (e.target === overlay) overlay.remove() };
+
+  var itemsHtml = (info.items || []).map(function (it) {
+    return '<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">' +
+      '<div style="flex-shrink:0;width:34px;height:34px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;color:var(--orange);font-weight:700;font-size:13px">' + esc(it[0].charAt(0)) + '</div>' +
+      '<div style="min-width:0"><div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:2px">' + esc(it[0]) + '</div>' +
+      '<div style="font-size:12px;color:var(--gray);line-height:1.5">' + esc(it[1]) + '</div></div>' +
+    '</div>';
+  }).join('');
+
+  overlay.innerHTML =
+    '<div style="background:#fff;border-radius:22px;max-width:480px;width:100%;padding:1.75rem;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.15);animation:modalIn .25s ease;max-height:88vh;overflow-y:auto">' +
+      '<button onclick="document.getElementById(\'trustInfoModal\').remove()" aria-label="Cerrar" style="position:absolute;top:14px;right:14px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s" onmouseover="this.style.background=\'var(--cream)\'" onmouseout="this.style.background=\'transparent\'">&#10005;</button>' +
+      '<div style="text-align:center;margin-bottom:1rem">' +
+        '<div style="font-size:38px;margin-bottom:8px">' + info.ico + '</div>' +
+        '<h2 style="font-family:\'Playfair Display\',Georgia,serif;font-size:22px;color:var(--dk);margin-bottom:4px">' + esc(info.title) + '</h2>' +
+      '</div>' +
+      '<div style="margin-bottom:.5rem">' + itemsHtml + '</div>' +
+    '</div>';
+
+  document.body.appendChild(overlay);
+  var first = overlay.querySelector('button[aria-label="Cerrar"]');
+  if (first) setTimeout(function () { first.focus() }, 30);
+}
