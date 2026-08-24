@@ -417,6 +417,7 @@ model Supplier {
   createdAt      DateTime        @default(now())
   inventoryItems InventoryItem[]
   products       Product[]
+  accessories    Accessory[]
 }
 
 model Conversation {
@@ -586,7 +587,10 @@ model Accessory {
   description      String?
   category         String
   price            Int
+  cost             Int         @default(0)
   stock            Int         @default(0)
+  reserved         Int         @default(0)
+  sold             Int         @default(0)
   createdAt        DateTime    @default(now())
   brand            String?
   color            String?
@@ -600,10 +604,14 @@ model Accessory {
   offerEnd         DateTime?
   offerStart       DateTime?
   modelGroup       String?
-  reserved         Int         @default(0)
-  sold             Int         @default(0)
+  supplierId       String?
+  supplier         Supplier?   @relation(fields: [supplierId], references: [id])
   cartItems        CartItem[]
   orderItems       OrderItem[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([stock])
 }
 
 model Account {
