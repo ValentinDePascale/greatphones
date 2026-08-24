@@ -1000,3 +1000,44 @@ model AuditLog {
   @@index([action])
   @@index([createdAt])
 }
+
+// ============================================================
+//  ERP — TESORERÍA / INVERSORES (Fase 4)
+//  Cuenta corriente de financistas externos: capital invertido,
+//  retiros (con tope), pago de rendimiento mensual (20%).
+// ============================================================
+
+model Investor {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  capital     Int                @default(0)  // capital invertido actual
+  paidTotal   Int                @default(0)  // acumulado de rendimiento pagado
+  pending     Int                @default(0)  // rendimiento pendiente de pago
+  yieldRate   Int                @default(20) // % mensual
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  movements   InvestorMovement[]
+}
+
+enum InvestorMovementType {
+  INGRESO_CAPITAL
+  RETIRO_CAPITAL
+  PAGO_RENDIMIENTO
+  AJUSTE
+}
+
+model InvestorMovement {
+  id          String               @id @default(cuid())
+  investorId  String
+  type        InvestorMovementType
+  amount      Int                  // en pesos
+  detail      String?
+  capitalAfter Int                 @default(0)
+  operator    String?
+  createdById String?
+  createdAt   DateTime             @default(now())
+  investor    Investor             @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  @@index([investorId])
+  @@index([createdAt])
+}

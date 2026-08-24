@@ -20,6 +20,7 @@ const tabs = [
   { href: '/admin/preventa', label: 'Preventas', icon: 'event' },
   { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance' },
   { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
+  { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'group' },
 ]
 
