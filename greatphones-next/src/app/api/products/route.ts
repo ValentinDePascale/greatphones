@@ -38,6 +38,7 @@ export async function GET(request: NextRequest) {
    try {
     await expireOffers()
     const where: any = {}
+    where.deletedAt = null
 
     if (brand) {
       where.brand = { equals: brand, mode: 'insensitive' }
@@ -298,45 +299,31 @@ export async function DELETE(request: Request) {
     await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    
+    const reason = searchParams.get('reason') || 'Eliminación desde el panel'
+
     if (!id) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
 
-    // Find affected orders before deleting items to recalculate totals
-    const affectedItems = await prisma.orderItem.findMany({
-      where: { productId: id },
-      select: { orderId: true, quantity: true, price: true }
-    })
+    // Integridad (Fase 3): nunca se borra, se anula con soft-delete + auditoría.
+    const { anular } = await import('@/lib/audit')
+    await anular({
+      entityType: 'Product',
+      entityId: id,
+      reason,
+    }).catch((err) => console.error('[Product DELETE] audit:', err))
 
     await prisma.$transaction([
-      prisma.orderItem.deleteMany({ where: { productId: id } }),
-      prisma.favorite.deleteMany({ where: { productId: id } }),
-      prisma.product.delete({ where: { id } }),
+      prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date(), isPreorder: false },
+      }),
     ])
 
-    // Recalculate subtotal and total for each affected order
-    for (const item of affectedItems) {
-      const remainingItems = await prisma.orderItem.findMany({
-        where: { orderId: item.orderId },
-        select: { quantity: true, price: true }
-      })
-      const newSubtotal = remainingItems.reduce((sum, i) => sum + i.price * i.quantity, 0)
-      const removedAmount = item.price * item.quantity
-      await prisma.order.update({
-        where: { id: item.orderId },
-        data: {
-          subtotal: newSubtotal,
-          total: { decrement: removedAmount },
-        }
-      })
-    }
-
     productCache.clear()
-
-    return NextResponse.json({ success: true }, { headers: corsHeaders })
+    return NextResponse.json({ success: true, message: 'Producto anulado correctamente' }, { headers: corsHeaders })
   } catch (error) {
-    const status = error instanceof AuthError ? error.status : 500
-    return NextResponse.json({ error: 'Error al eliminar producto' }, { status, headers: corsHeaders })
+    console.error('Error al anular producto:', error)
+    return NextResponse.json({ error: 'Error al anular producto' }, { status: 500, headers: corsHeaders })
   }
 }

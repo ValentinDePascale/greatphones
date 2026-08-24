@@ -19,6 +19,7 @@ const tabs = [
   { href: '/admin/instore', label: 'Venta en Tienda', icon: 'point_of_sale' },
   { href: '/admin/preventa', label: 'Preventas', icon: 'event' },
   { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance' },
+  { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
   { href: '/admin/usuarios', label: 'Usuarios', icon: 'group' },
 ]
 

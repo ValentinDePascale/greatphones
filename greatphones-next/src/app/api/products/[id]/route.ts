@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const product = await prisma.product.findUnique({
       where: { id }
     })
-    if (!product) {
+    if (!product || product.deletedAt) {
       return NextResponse.json({ error: 'Product not found' }, { status: 404 })
     }
     return NextResponse.json(product, {

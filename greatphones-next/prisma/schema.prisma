@@ -82,6 +82,9 @@ model Product {
   modelGroup     String?
   isPreorder     Boolean         @default(false)
   availableFrom  DateTime?
+  deletedAt      DateTime?
+  deletedBy      String?
+  deleteReason   String?
   cartItems      CartItem[]
   favorites      Favorite[]
   inventoryItems InventoryItem[]
@@ -224,6 +227,9 @@ model Order {
   carrierService      String?
   enviopackId         String?
   trackingUrl         String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  deleteReason        String?
   arrepentimientos    Arrepentimiento[]
   invoice             Invoice?
   admin               User?                @relation("AdminSales", fields: [adminId], references: [id])
@@ -284,6 +290,9 @@ model PreOrder {
   orderId               String?
   mpPaymentId           String?
   mpPreferenceId        String?
+  deletedAt             DateTime?
+  deletedBy             String?
+  deleteReason          String?
   product               Product?  @relation(fields: [productId], references: [id])
   user                  User?     @relation(fields: [userId], references: [id])
   order                 Order?    @relation(fields: [orderId], references: [id])
@@ -316,6 +325,9 @@ model Quote {
   clientProvince  String?
   dniPhotos       String[]
   batteryHealth   Int?
+  deletedAt       DateTime?
+  deletedBy       String?
+  deleteReason    String?
   invoice         Invoice?
   purchasedDevice PurchasedDevice?
   user            User            @relation(fields: [userId], references: [id])
@@ -369,17 +381,20 @@ model Sale {
 }
 
 model Repair {
-  id        String         @id @default(cuid())
-  code      String         @unique
-  userId    String
-  device    String
-  issue     String
-  serviceId String?
-  price     Int?
-  status    RepairStatus   @default(PENDING)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  service   RepairService? @relation(fields: [serviceId], references: [id])
+  id          String        @id @default(cuid())
+  code        String        @unique
+  userId      String
+  device      String
+  issue       String
+  serviceId   String?
+  price       Int?
+  status      RepairStatus  @default(PENDING)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  deletedBy   String?
+  deleteReason String?
+  service     RepairService? @relation(fields: [serviceId], references: [id])
   user      User           @relation(fields: [userId], references: [id])
 }
 
@@ -606,6 +621,9 @@ model Accessory {
   modelGroup       String?
   supplierId       String?
   supplier         Supplier?   @relation(fields: [supplierId], references: [id])
+  deletedAt        DateTime?
+  deletedBy        String?
+  deleteReason     String?
   cartItems        CartItem[]
   orderItems       OrderItem[]
 
@@ -947,4 +965,38 @@ model CashRegister {
   balance    Int         @default(0)  // saldo en pesos
   balanceUsd Float?      @default(0)  // saldo en dólares (solo medio USD)
   updatedAt  DateTime    @updatedAt
+}
+
+// ============================================================
+//  ERP — INTEGRIDAD Y GOBIERNO (Fase 3)
+//  Auditoría genérica: sirve de auditoría + snapshot + registro
+//  de anulaciones en una sola tabla. "Nunca se borra información".
+// ============================================================
+
+enum AuditAction {
+  ANULACION
+  RESTAURACION
+  CORRECCION
+  CREACION
+  UPDATE
+}
+
+// Una entidad anulada se marca con `deletedAt` (nunca se borra físicamente).
+// AuditLog conserva el snapshot completo previo al cambio + responsable + motivo.
+model AuditLog {
+  id          String      @id @default(cuid())
+  entityType  String      // Product, Order, Repair, Quote, Accessory, PreOrder, ...
+  entityId    String
+  action      AuditAction @default(ANULACION)
+  reason      String?
+  operator    String?     // operador del ERP que ejecutó
+  createdById String?
+  snapshot    Json?       // foto del registro completo previo a la acción
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
 }
