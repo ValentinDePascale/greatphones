@@ -418,6 +418,7 @@
 .pcard-badge--gray{background:rgba(100,100,100,.85)}
 .pcard-badge--preorder{background:rgba(109,79,199,.92);color:#fff;box-shadow:0 2px 6px rgba(109,79,199,.3)}
 .pcard-preorder-avail{font-size:11px;color:#6d4fc7;font-weight:600;margin:2px 0 8px;line-height:1.4}
+.pcard-preorder-count{display:inline-flex;align-items:center;gap:5px;background:rgba(109,79,199,.1);border:1px solid rgba(109,79,199,.2);color:#6d4fc7;padding:4px 10px;border-radius:100px;font-weight:700;margin:2px 0 8px}
 
 /* Favorite heart */
 .pcard-fav{

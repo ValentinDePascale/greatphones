@@ -67,6 +67,17 @@ function cleanPreorderName(p){
   return name||p.modelGroup||'';
 }
 
+// Contador visual de días hasta la disponibilidad de la preventa.
+function preorderCountdown(p){
+  if(!p.availableFrom)return { html:'<div class="pcard-preorder-avail">Próximamente</div>', days:null };
+  var d=new Date(p.availableFrom);
+  var now=new Date();
+  var days=Math.ceil((d-now)/86400000);
+  if(days<=1)return { html:'<div class="pcard-preorder-avail pcard-preorder-count">Listo muy pronto</div>', days:0 };
+  var label=days<60?('En '+days+' días'):('En ~'+Math.round(days/30)+' meses');
+  return { html:'<div class="pcard-preorder-avail pcard-preorder-count"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> '+label+'</div>', days:days };
+}
+
 function buildSpecsForProduct(p){
   var specs=[];
   var type=(p.type||'').toLowerCase();
@@ -76,32 +87,24 @@ function buildSpecsForProduct(p){
     else if(cond){specs.push({key:'status',label:'Estado',val:cond,color:'var(--orange)'});}
     if(p.battery){var batPct=p.battery;var batColor=batPct>=90?'var(--green)':batPct>=75?'var(--orange)':'var(--red)';specs.push({key:'battery',label:'Bateria',val:batPct+'%',color:batColor});}
     else if(p.isPreorder||p.batteryFrom){specs.push({key:'battery',label:'Bateria',val:'Entre '+((p.batteryFrom)||85)+' y '+((p.batteryTo)||95)+' %',color:'var(--green)'});}
-    if(p.color){
-      var colorVal=p.color;
-      if(p.isPreorder&&p.availableFrom){
-        colorVal += ' · Disponible ' + preorderShortDate(p.availableFrom);
-      }
-      specs.push({key:'color',label:'Color',val:colorVal});
-    }
+    if(p.color)specs.push({key:'color',label:'Color',val:p.color});
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
-    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   }else if(type==='laptop'||type==='desktop'){
     if(p.processor)specs.push({key:'cpu',label:'Procesador',val:p.processor});
     else if(p.sub){var cpuMatch=p.sub.match(/(M\d|Intel|AMD|Core\s*[i]\w+)/i);if(cpuMatch)specs.push({key:'cpu',label:'Procesador',val:cpuMatch[0]});}
-    if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
     if(p.ram)specs.push({key:'ram',label:'RAM',val:p.ram});
     if(p.screen)specs.push({key:'screen',label:'Pantalla',val:p.screen+'"'});
   }
   if(p.stock!==undefined){
     if(p.isPreorder){
-      // Preventa: la disponibilidad se muestra en su propia card a partir de la
-      // fecha elegida en el admin (availableFrom).
+      // Disponibilidad como card común (no ancha), antes del almacenamiento
       specs.push({key:'date',label:'Disponibilidad',val:preorderShortDate(p.availableFrom),color:'var(--orange)'});
     }else{
       var stockColor=p.stock>5?'var(--green)':p.stock>0?'var(--orange)':'var(--red)';
       specs.push({key:'stock',label:'Stock',val:p.stock>0?p.stock+' disponibles':'Agotado',color:stockColor});
     }
   }
+  if(p.storage)specs.push({key:'storage',label:'Almacenamiento',val:p.storage});
   return specs;
 }
 
@@ -125,7 +128,7 @@ function renderSpecsGrid(specs){
   el.style.display='grid';
   if(section)section.style.display='block';
   el.innerHTML=specs.map(function(s){
-    var wide=(s.key==='storage'||s.key==='stock'||s.key==='date')?' sp-wide':'';
+    var wide=(s.key==='storage'||s.key==='stock')?' sp-wide':'';
     return '<div class="sp-card'+wide+'">'+
       '<div class="sp-ico">'+detIco(s.key||'stock')+'</div>'+
       '<div class="sp-text"><div class="sp-label">'+s.label+'</div>'+
@@ -685,30 +688,29 @@ function renderGrid(gid,prods){
 
     // === GROUP CARD ===
     if(p.isGroup){
-      // Grupo de preventa: misma card que una de grupo normal, pero con
-      // badge de preventa y fecha de disponibilidad más cercana.
+      // Grupo de preventa: igual que una card normal, sin badge, mostrando
+      // precio real (sin "Desde") y un contador de días hasta disponibilidad.
       if(p.isPreorder){
-        var gDate=preorderDateLabel(p);
-        var gAvailLabel=gDate.label.indexOf('a partir')===0?gDate.label:('Disponible '+gDate.label);
-        var gAvail='<div class="pcard-badge pcard-badge--preorder">⏳ Preventa · '+gAvailLabel+'</div>';
-        var gSub=p.progroupCount+(p.progroupCount===1?' variante':' variantes');
+        var gInfo=preorderCountdown(p);
+        var gSubParts=[];
+        if(p.color)gSubParts.push(p.color);
+        if(p.storage)gSubParts.push(p.storage);
+        var gSub=gSubParts.length?gSubParts.join(' / '):(p.sub||'');
         return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
           '<article class="pcard pcard-group pcard-preorder">'+
           '<div class="pcard-img">'+
-            gAvail+
             '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
             imgHtml(p.imageUrl,p.ico,false)+
-            '<div class="pcard-var-badge">'+gSub+'</div>'+
           '</div>'+
           '<div class="pcard-body">'+
             '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
             '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
-            '<div class="pcard-subtitle">'+esc(gSub)+'</div>'+
+            (gSub?'<div class="pcard-subtitle">'+esc(gSub)+'</div>':'')+
             preorderSpecsHTML(p)+
-            '<div class="pcard-price-row"><span class="pcard-price">Desde '+fmt(p.progroupMin||p.price)+'</span></div>'+
-            '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.progroupMin||p.price||0)/12))+' cuotas fijas</div>'+
-            '<div class="pcard-preorder-avail">'+esc(gAvailLabel)+'</div>'+
-            '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();openDetail(\''+p.id+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Ver preventa</button>'+
+            '<div class="pcard-price-row"><span class="pcard-price">'+fmt(p.price)+'</span></div>'+
+            '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
+            gInfo.html+
+            '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
           '</div>'+
         '</article></a>';
       }
@@ -767,25 +769,25 @@ function preorderBrand(p){
 }
 
     if(p.isPreorder){
-      var avail=preorderDateLabel(p);
-      var availLabel=avail.label.indexOf('a partir')===0?avail.label:('Disponible '+avail.label);
-      var availBadge='<div class="pcard-badge pcard-badge--preorder">⏳ Preventa · '+availLabel+'</div>';
-      var preCuota=Math.round((p.price||0)/12);
+      var avail=preorderCountdown(p);
+      var subParts=[];
+      if(p.storage)subParts.push(p.storage);
+      if(p.color)subParts.push(p.color);
+      var sub=subParts.length?subParts.join(' / '):(p.sub||'');
       return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block"><article class="pcard pcard-preorder">'+
         '<div class="pcard-img">'+
-          availBadge+
           '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
           imgHtml(p.imageUrl,p.ico,false)+
         '</div>'+
         '<div class="pcard-body">'+
           '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
           '<div class="pcard-name">'+esc(p.name)+'</div>'+
-          (p.sub?'<div class="pcard-subtitle">'+esc(p.sub)+'</div>':preorderSpecsHTML(p))+
+          (sub?'<div class="pcard-subtitle">'+esc(sub)+'</div>':preorderSpecsHTML(p))+
           '<div class="pcard-discount-row"></div>'+
           '<span class="pcard-price">'+fmt(p.price)+'</span>'+
           '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
-          '<div class="pcard-preorder-avail">'+esc(availLabel)+'</div>'+
-          '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Reservar</button>'+
+          avail.html+
+          '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
         '</div>'+
       '</article></a>';
     }
@@ -961,6 +963,13 @@ function renderShopGrid(){
       stock:inStock?variants.reduce(function(s,v){return s+v.stock;},0):0,
       createdAt:newestDate.toISOString(),
       discount:maxDiscount,
+      // Preventa: exponer datos del más barato (disponibilidad, color, storage)
+      isPreorder:!!cheapest.isPreorder,
+      availableFrom:cheapest.isPreorder?cheapest.availableFrom:null,
+      color:cheapest.isPreorder?cheapest.color:null,
+      storage:cheapest.isPreorder?cheapest.storage:null,
+      progroupCount:variants.length,
+      progroupMin:cheapest.price,
       battery:maxBattery,
       condition:cheapest.condition,
       variantCount:variants.length,
@@ -1683,14 +1692,11 @@ function selectDetailVariant(idx){
   if(window._isPreorderDetail){
     var availFrom=v && (v.availableFrom||v._availableFrom) ? new Date(v.availableFrom||v._availableFrom) : (currentProd.availableFrom?new Date(currentProd.availableFrom):null);
     var dateEl=document.getElementById('detPreorderInfo');
-    if(availFrom&&!isNaN(availFrom.getTime())){
-      var days=Math.ceil((availFrom-new Date())/86400000);
-      var dateLabel=days<=1?'Disponible pronto':(days<60?'Disponible en ~'+days+' días':'Disponible el '+availFrom.toLocaleDateString('es-AR',{day:'numeric',month:'long'}));
-      if(dateEl){
-        dateEl.style.display='block';
-        dateEl.innerHTML='<div class="det-preorder-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Preventa</div><p>'+(v.color?esc(v.color)+' · ':'')+(v.storage?esc(v.storage)+' · ':'')+dateLabel+'</p>';
-      }
-    }else if(dateEl){dateEl.style.display='none';}
+    if(dateEl){
+      dateEl.style.display='block';
+      var cd=preorderCountdown({ availableFrom: availFrom ? availFrom.toISOString() : null });
+      dateEl.innerHTML='<div class="det-preorder-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> Preventa</div><p>'+(v.color?esc(v.color)+' · ':'')+(v.storage?esc(v.storage)+' · ':'')+cd.html.replace(/^<div[^>]*>|<\/div>$/g,'')+'</p>';
+    }
   }
 
   // Update name to reflect variant details (solo breadcrumb)
