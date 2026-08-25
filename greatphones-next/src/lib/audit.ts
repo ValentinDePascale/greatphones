@@ -14,6 +14,7 @@ type AuditableEntity =
   | 'Repair'
   | 'Quote'
   | 'PreOrder'
+  | 'AccountingEntry'
 
 const ENTITY_MODEL: Record<AuditableEntity, string> = {
   Product: 'product',
@@ -22,6 +23,7 @@ const ENTITY_MODEL: Record<AuditableEntity, string> = {
   Repair: 'repair',
   Quote: 'quote',
   PreOrder: 'preOrder',
+  AccountingEntry: 'accountingEntry',
 }
 
 async function getEntitySnapshot(entityType: AuditableEntity, entityId: string) {

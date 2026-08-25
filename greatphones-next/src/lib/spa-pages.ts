@@ -15,6 +15,7 @@ function loadShell() {
 }
 
 let _allPages = ''
+let _adminPages = ''
 
 function loadAllPages(): string {
   if (_allPages) return _allPages
@@ -26,6 +27,17 @@ function loadAllPages(): string {
   }
   _allPages = html
   return _allPages
+}
+
+/** Páginas del panel admin: solo las que el admin realmente necesita (evita
+ *  numerar las ~30 páginas de la tienda pública en el DOM del panel). */
+function loadAdminPages(): string {
+  if (_adminPages) return _adminPages
+  if (!existsSync(pagesDir)) return ''
+  const files = readdirSync(pagesDir)
+    .filter((f: string) => f.endsWith('.html') && (f.startsWith('admin') || f === 'home.html'))
+  _adminPages = files.map(f => readFileSync(join(pagesDir, f), 'utf-8')).join('')
+  return _adminPages
 }
 
 const adminScripts = ['/lib/admin.js', '/lib/admin-ui.js', '/lib/instore.js', '/lib/preventa.js', 'chart.js']
@@ -41,6 +53,40 @@ function removeAdminStuff(html: string): string {
   // coupons.css NO se remueve: lo usan los cupones de usuario en /cuenta
   // (no es solo del admin).
   return result
+}
+
+/**
+ * Scripts que el panel admin realmente necesita. El shell index.html declara
+ * ~31 scripts de la tienda (cart, checkout, wallet, giftcard, coupons, etc.)
+ * que el panel NO usa. Para el panel conservamos solo esta lista blanca y
+ * removemos el resto: menos JS por request (~400KB menos).
+ */
+const ADMIN_ALLOWED_SCRIPTS = [
+  '/vendor/gsap/gsap.min.js',
+  '/lib/constants.js',
+  '/lib/storage.js',
+  '/lib/utils.js',
+  '/lib/fetch-wrapper.js',
+  '/lib/navigation.js',
+  '/lib/notifications.js',
+  '/lib/admin.js',
+  '/lib/admin-ui.js',
+  '/lib/instore.js',
+  '/lib/preventa.js',
+  '/lib/render.js',
+  '/lib/dolarapi.js',
+  '/lib/scanner.js',
+  '/lib/chat.js',
+  'socket.io.min.js',
+  'chart.umd.min.js',
+  'html5-qrcode.min.js',
+]
+
+function removeStoreScripts(html: string): string {
+  const keep = (src: string) => ADMIN_ALLOWED_SCRIPTS.some(a => src.includes(a.replace(/^\//, '')) || src.includes(a))
+  return html.replace(/<script([^>]*)src="([^"]*)"([^>]*)><\/script>/gi, (m, pre: string, src: string, post: string) => {
+    return keep(src) ? m : ''
+  })
 }
 
 function wrapMain(html: string): string {
@@ -90,11 +136,9 @@ export function serveSpa(targetPage?: string): string {
 export function serveAdminSpa(activeTab?: string): string {
   loadShell()
   if (!_shell) return '<h1>Loading...</h1>'
-  // Cargamos TODAS las páginas (incluidas admin-product.html y admin-acc.html)
-  // para que nav('admin-product') y nav('admin-acc') encuentren los inputs
-  // del form (#prodId, #accId, etc.) en el DOM. Las páginas inactivas
-  // quedan con .page{display:none} y se activan al navegar.
-  const allPages = loadAllPages()
+  // Sólo las páginas admin (admin.html + admin-product + admin-acc + admin-login),
+  // NO las ~30 de la tienda pública: el panel no navega a home/shop/checkout/etc.
+  const allPages = loadAdminPages()
   let html
   if (_shell.includes('<!--GP_PAGES-->')) {
     html = _shell.replace('<!--GP_PAGES-->', allPages)
@@ -104,6 +148,7 @@ export function serveAdminSpa(activeTab?: string): string {
   html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
   html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
   html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
+  html = removeStoreScripts(html)
   html = wrapMain(html)
   return html
 }

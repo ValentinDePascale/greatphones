@@ -1073,3 +1073,87 @@ model AppConfig {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
+
+// ============================================================
+//  ERP — PRECIOS (Lista de Precios / Mac-iPad / Toma / Cuotas)
+//  Portados desde el ERP (Google Sheets) a Prisma, editables sin
+//  tocar código desde el panel admin. Los valores en USD se calculan
+//  en vivo con dolarapi, no se guardan acá.
+// ============================================================
+
+model PriceList {
+  id            String       @id @default(cuid())
+  category      PriceCategory // 'CELULAR' | 'MACIPAD'
+  modelo        String
+  almacenamiento String
+  precioARS     Int          @default(0)
+  preventaARS   Int          @default(0)
+  descuentoARS  Int          @default(0)
+  orden         Int          @default(0)
+  active        Boolean      @default(true)
+  updatedBy     String?
+  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now())
+
+  @@index([category])
+  @@index([modelo])
+}
+
+model PriceTradeIn {
+  id        String @id @default(cuid())
+  modelo    String
+  impecable Int    @default(0)
+  bateria   Int    @default(0)
+  pantalla  Int    @default(0)
+  camara    Int    @default(0)
+  microfono Int    @default(0)
+  parlante  Int    @default(0)
+  tapa      Int    @default(0)
+  marco     Int    @default(0)
+  pin       Int    @default(0)
+  orden     Int    @default(0)
+  active    Boolean @default(true)
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([modelo])
+}
+
+model CuotasConfig {
+  id          String @id @default(cuid())
+  cuotas      Int    @unique
+  coeficiente Float
+  activo      Boolean @default(true)
+  mostrar     Boolean @default(true)
+  observacion String?
+  orden       Int    @default(0)
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+enum PriceCategory {
+  CELULAR
+  MACIPAD
+}
+
+// ============================================================
+//  ERP — TALLER: CONFIGURACIÓN DE REPARACIONES
+//  Multiplicador y horas estimadas por categoría de trabajo
+//  (equivalentes a CONFIG_REPARACIONES del ERP). Editable sin
+//  tocar código desde el panel admin.
+// ============================================================
+
+model RepairConfig {
+  id           String @id @default(cuid())
+  key          String // bateria, pantalla, camara, microfono, parlante, tapa, marco, pin, flex, botones, chasis
+  multiplicador Float  @default(1)
+  horas        Int    @default(48)
+  activo       Boolean @default(true)
+  updatedBy    String?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([key])
+}
