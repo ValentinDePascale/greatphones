@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 
-// Días y pendientes del mes: reparaciones, preventas y pedidos online.
+// Calendario de pendientes: TODO lo que está sin resolver, agrupado por día.
+// Reparaciones, preventas (con productos), pedidos online, cotizaciones y
+// arrepentimientos.
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
@@ -21,28 +23,25 @@ export async function GET(request: Request) {
       return `${y}-${m}-${dd}`
     }
 
-    const resumen: Record<string, { reparaciones: any[]; preventas: any[]; pedidos: any[] }> = {}
-    const dia = (d: Date) => {
+    const resumen: Record<string, Record<string, any[]>> = {}
+    const push = (d: Date, tipo: string, item: any) => {
+      // Los arrepentimientos/cotizaciones sin fecha válida pueden quedar fuera
       const key = iso(d)
-      if (!resumen[key]) resumen[key] = { reparaciones: [], preventas: [], pedidos: [] }
-      return resumen[key]
+      if (!resumen[key]) resumen[key] = {}
+      if (!resumen[key][tipo]) resumen[key][tipo] = []
+      resumen[key][tipo].push(item)
     }
 
-    // Reparaciones activas (ingreso / diagnóstico / en curso)
+    // 1) Reparaciones activas
     const reparaciones = await prisma.repair.findMany({
       where: { deletedAt: null, status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] }, createdAt: { gte: inicio, lt: fin } },
       orderBy: { createdAt: 'asc' },
     })
-    for (const r of reparaciones) {
-      const d = dia(r.createdAt)
-      d.reparaciones.push({
-        id: r.id, codigo: r.code, titulo: r.device,
-        subtitulo: r.clientName || r.operator || r.fault1 || '—',
-        hora: r.createdAt.toISOString(),
-      })
-    }
+    for (const r of reparaciones) push(r.createdAt, 'Reparaciones', {
+      id: r.id, codigo: r.code, titulo: r.device, subtitulo: r.clientName || r.operator || r.fault1 || '—', hora: r.createdAt.toISOString(),
+    })
 
-    // Preventas pendientes (entrega estimada dentro del mes)
+    // 2) Preventas pendientes (productos reservados/por entregar)
     const preventas = await prisma.preOrder.findMany({
       where: {
         deletedAt: null,
@@ -56,41 +55,53 @@ export async function GET(request: Request) {
       orderBy: { expectedDeliveryStart: 'asc' },
     })
     for (const p of preventas) {
-      // Anclar al inicio estimado si existe; sino a la creación.
       const fecha = p.expectedDeliveryStart || p.createdAt
       if (fecha >= inicio && fecha < fin) {
-        const d = dia(fecha)
         const modelo = [p.productModelName, p.productStorage].filter(Boolean).join(' ')
-        d.preventas.push({
-          id: p.id, codigo: p.code, titulo: modelo || p.productModelName || p.customName || 'Preventa',
-          subtitulo: `${p.clientName || '—'} · entrega hasta ${p.expectedDeliveryEnd ? p.expectedDeliveryEnd.toLocaleDateString('es-AR') : 'sin fecha'}`,
+        push(fecha, 'Preventas', {
+          id: p.id, codigo: p.code, titulo: modelo || p.customName || 'Preventa',
+          subtitulo: `${p.clientName || '—'}${p.productColor ? ' · ' + p.productColor : ''} · entrega hasta ${p.expectedDeliveryEnd ? p.expectedDeliveryEnd.toLocaleDateString('es-AR') : 'sin fecha'}`,
           hora: fecha.toISOString(),
         })
       }
     }
 
-    // Pedidos online procesando / enviados (pendientes de entregar)
+    // 3) Pedidos online pendientes de entregar
     const pedidos = await prisma.order.findMany({
       where: {
         status: { in: ['PROCESSING', 'SHIPPED'] },
-        OR: [
-          { createdAt: { gte: inicio, lt: fin } },
-          { shippedAt: { gte: inicio, lt: fin } },
-        ],
+        OR: [{ createdAt: { gte: inicio, lt: fin } }, { shippedAt: { gte: inicio, lt: fin } }],
       },
       orderBy: { createdAt: 'asc' },
     })
     for (const o of pedidos) {
       const fecha = o.shippedAt || o.createdAt
-      if (fecha >= inicio && fecha < fin) {
-        const d = dia(fecha)
-        d.pedidos.push({
-          id: o.id, codigo: o.code, titulo: `Pedido ${o.code}`,
-          subtitulo: `${o.clientName || '—'} · ${o.status} · $${(o.total || 0).toLocaleString('es-AR')}`,
-          hora: fecha.toISOString(),
-        })
-      }
+      if (fecha >= inicio && fecha < fin) push(fecha, 'Pedidos', {
+        id: o.id, codigo: o.code, titulo: `Pedido ${o.code}`,
+        subtitulo: `${o.clientName || '—'} · ${o.status} · $${(o.total || 0).toLocaleString('es-AR')}`, hora: fecha.toISOString(),
+      })
     }
+
+    // 4) Cotizaciones pendientes de revisar / aprobar
+    const cotizaciones = await prisma.quote.findMany({
+      where: { deletedAt: null, status: { in: ['PENDING', 'REVIEWING'] }, createdAt: { gte: inicio, lt: fin } },
+      orderBy: { createdAt: 'asc' },
+    })
+    for (const q of cotizaciones) push(q.createdAt, 'Cotizaciones', {
+      id: q.id, codigo: q.code, titulo: q.device || 'Cotización',
+      subtitulo: `${q.clientName || '—'} · ${q.storage || ''} ${q.condition || ''} · ${q.status}`, hora: q.createdAt.toISOString(),
+    })
+
+    // 5) Arrepentimientos pendientes de procesar
+    const arrepentimientos = await prisma.arrepentimiento.findMany({
+      where: { estado: 'PENDIENTE', createdAt: { gte: inicio, lt: fin } },
+      include: { order: { select: { code: true } } },
+      orderBy: { createdAt: 'asc' },
+    })
+    for (const a of arrepentimientos) push(a.createdAt, 'Arrepentimientos', {
+      id: a.id, codigo: a.order?.code || a.id.slice(0, 8), titulo: 'Arrepentimiento',
+      subtitulo: `${a.email || '—'}${a.motivo ? ' · ' + a.motivo : ''}`, hora: a.createdAt.toISOString(),
+    })
 
     return NextResponse.json({ mes: iso(inicio).slice(0, 7), pendientes: resumen })
   } catch (error) {
