@@ -1089,6 +1089,8 @@ model PriceList {
   precioARS     Int          @default(0)
   preventaARS   Int          @default(0)
   descuentoARS  Int          @default(0)
+  imageUrl      String?
+  colors        String[]     @default([])
   orden         Int          @default(0)
   active        Boolean      @default(true)
   updatedBy     String?

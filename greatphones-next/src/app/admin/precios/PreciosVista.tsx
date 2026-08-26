@@ -105,8 +105,20 @@ export default function PreciosVista({ items, icono = '📱', dolarVenta = null,
           {filtrados.length === 0 && <div style={{ gridColumn: '1/-1', textAlign: 'center', color: '#889', padding: 20 }}>Sin resultados.</div>}
           {filtrados.map((p, i) => (
             <div key={p.id} style={{ background: '#fff', border: '1px solid #E6E7F0', borderRadius: 12, boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)', padding: 14, display: 'flex', flexDirection: 'column', gap: 5 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#4F46E5' }}>{icono} {p.modelo}</div>
+              {p.imageUrl ? (
+                <div style={{ height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', borderRadius: 10, overflow: 'hidden', marginBottom: 4 }}>
+                  <img src={p.imageUrl} alt={p.modelo} loading="lazy" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} />
+                </div>
+              ) : (
+                <div style={{ height: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30 }}>{icono}</div>
+              )}
+              <div style={{ fontWeight: 700, fontSize: 14, color: '#4F46E5' }}>{p.modelo}</div>
               <div style={{ fontSize: 12, color: '#778' }}>{p.almacenamiento || '—'}</div>
+              {p.colors && p.colors.length > 0 ? (
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', margin: '2px 0 2px' }}>
+                  {p.colors.map(c => <span key={c} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: '#EEF2FF', color: '#4F46E5' }}>{c}</span>)}
+                </div>
+              ) : null}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5 }}><span>Venta:</span><b>{fmtARS(p.precioARS)}</b></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#B7950B' }}><span>Preventa:</span><b>{fmtARS(p.preventaARS)}</b></div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, color: '#1E8449' }}><span>Descuento:</span><b>{fmtARS(p.descuentoARS)}</b></div>

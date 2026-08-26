@@ -10,6 +10,8 @@ export interface PrecioRow {
   precioARS: number
   preventaARS: number
   descuentoARS: number
+  imageUrl?: string | null
+  colors?: string[]
 }
 
 const inputStyle = { width: '100%', padding: 9, border: '1.5px solid #E6E7F0', borderRadius: 9, fontSize: 13, background: '#FBFBFD' }
@@ -27,7 +29,7 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
   const [edit, setEdit] = useState<PrecioRow | null>(null)
   const [nuevo, setNuevo] = useState(false)
   const [msg, setMsg] = useState<{ t: string; s: string } | null>(null)
-  const [form, setForm] = useState({ modelo: '', almacenamiento: '', precioARS: 0, preventaARS: 0, descuentoARS: 0 })
+  const [form, setForm] = useState({ modelo: '', almacenamiento: '', precioARS: 0, preventaARS: 0, descuentoARS: 0, imageUrl: '', colors: '' })
 
   const toast = (t: string, s: string) => { setMsg({ t, s }); setTimeout(() => setMsg(null), 4000) }
 
@@ -46,17 +48,27 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
 
   const startNuevo = () => {
     setNuevo(true); setEdit(null)
-    setForm({ modelo: '', almacenamiento: '', precioARS: 0, preventaARS: 0, descuentoARS: 0 })
+    setForm({ modelo: '', almacenamiento: '', precioARS: 0, preventaARS: 0, descuentoARS: 0, imageUrl: '', colors: '' })
   }
   const startEdit = (r: PrecioRow) => {
     setEdit(r); setNuevo(false)
-    setForm({ modelo: r.modelo, almacenamiento: r.almacenamiento, precioARS: r.precioARS, preventaARS: r.preventaARS, descuentoARS: r.descuentoARS })
+    setForm({
+      modelo: r.modelo, almacenamiento: r.almacenamiento, precioARS: r.precioARS,
+      preventaARS: r.preventaARS, descuentoARS: r.descuentoARS,
+      imageUrl: r.imageUrl || '', colors: (r.colors || []).join(', '),
+    })
   }
 
   const guardar = async () => {
     if (!form.modelo.trim()) return toast('error', 'El modelo es obligatorio')
-    const payload = { ...form, precioARS: Number(form.precioARS) || 0, preventaARS: Number(form.preventaARS) || 0, descuentoARS: Number(form.descuentoARS) || 0 }
-    const url = edit ? endpoint : endpoint
+    const payload = {
+      modelo: form.modelo.trim(), almacenamiento: form.almacenamiento,
+      precioARS: Number(form.precioARS) || 0, preventaARS: Number(form.preventaARS) || 0,
+      descuentoARS: Number(form.descuentoARS) || 0,
+      imageUrl: form.imageUrl.trim() || null,
+      colors: form.colors.split(',').map(c => c.trim()).filter(Boolean),
+    }
+    const url = endpoint
     const method = edit ? 'PATCH' : 'POST'
     const r = await fetch(url, { method, credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(edit ? { id: edit.id, ...payload } : payload) })
     const d = await r.json()
@@ -99,6 +111,21 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
             {field('preventaARS', 'Preventa ARS', 'number')}
             {field('descuentoARS', 'Descuento ARS', 'number')}
           </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10 }}>
+            <div>
+              <label style={{ ...labelStyle, marginTop: 0 }}>Imagen (URL) <span style={{ fontWeight: 400, color: '#94a3b8' }}>— fondo blanco, ej. GSMArena bigpic</span></label>
+              <input style={inputStyle} value={form.imageUrl} onChange={e => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-15-pro-max.jpg" />
+            </div>
+            <div>
+              <label style={{ ...labelStyle, marginTop: 0 }}>Colores (separados por coma)</label>
+              <input style={inputStyle} value={form.colors} onChange={e => setForm({ ...form, colors: e.target.value })} placeholder="Titanio Natural, Titanio Azul" />
+            </div>
+          </div>
+          {form.imageUrl && (
+            <div style={{ marginTop: 10 }}>
+              <img src={form.imageUrl} alt="preview" style={{ height: 90, border: '1px solid #E6E7F0', borderRadius: 8, padding: 4 }} />
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
             <button onClick={guardar} style={{ background: '#0F9D58', color: '#fff', padding: '9px 18px', border: 'none', borderRadius: 9, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>💾 Guardar</button>
             <button onClick={() => { setEdit(null); setNuevo(false) }} style={{ background: '#E5E7EB', color: '#374151', padding: '9px 16px', border: 'none', borderRadius: 9, fontSize: 13, cursor: 'pointer' }}>Cancelar</button>
@@ -110,6 +137,7 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#F4F6F9', textAlign: 'left' }}>
+              <th style={{ padding: '9px 10px' }}>Imagen</th>
               <th style={{ padding: '9px 10px' }}>Modelo</th>
               <th style={{ padding: '9px 10px' }}>Almac.</th>
               <th style={{ padding: '9px 10px' }}>Precio ARS</th>
@@ -119,9 +147,12 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
             </tr>
           </thead>
           <tbody>
-            {filtrados.length === 0 && <tr><td colSpan={6} style={{ padding: 18, textAlign: 'center', color: '#889' }}>{emptyText}</td></tr>}
+            {filtrados.length === 0 && <tr><td colSpan={7} style={{ padding: 18, textAlign: 'center', color: '#889' }}>{emptyText}</td></tr>}
             {filtrados.map(r => (
               <tr key={r.id} style={{ borderTop: '1px solid #E6E7F0' }}>
+                <td style={{ padding: '6px 10px' }}>
+                  {r.imageUrl ? <img src={r.imageUrl} alt="" loading="lazy" style={{ height: 44, borderRadius: 6, objectFit: 'contain' }} /> : <span style={{ color: '#cbd5e1' }}>—</span>}
+                </td>
                 <td style={{ padding: '8px 10px', fontWeight: 600 }}>{r.modelo}</td>
                 <td style={{ padding: '8px 10px', color: '#667' }}>{r.almacenamiento || '—'}</td>
                 <td style={{ padding: '8px 10px' }}>{fmtARS(r.precioARS)}</td>

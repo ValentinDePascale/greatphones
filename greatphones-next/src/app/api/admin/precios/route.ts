@@ -10,6 +10,8 @@ const PrecioSchema = z.object({
   precioARS: z.number().int().min(0).default(0),
   preventaARS: z.number().int().min(0).default(0),
   descuentoARS: z.number().int().min(0).default(0),
+  imageUrl: z.string().optional().nullable().default(null),
+  colors: z.array(z.string()).optional().default([]),
   orden: z.number().int().default(0),
   active: z.boolean().default(true),
 })
@@ -46,6 +48,8 @@ export async function POST(request: Request) {
         precioARS: d.precioARS,
         preventaARS: d.preventaARS,
         descuentoARS: d.descuentoARS,
+        imageUrl: d.imageUrl ?? null,
+        colors: d.colors ?? [],
         orden: d.orden || (last ? last.orden + 1 : 0),
         active: d.active,
         updatedBy: admin.id,

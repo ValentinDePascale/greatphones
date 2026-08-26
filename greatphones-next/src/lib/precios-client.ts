@@ -9,6 +9,8 @@ export interface PrecioItem {
   precioARS: number
   preventaARS: number
   descuentoARS: number
+  imageUrl?: string | null
+  colors?: string[]
 }
 
 /** Copia texto al portapapeles con feedback. */
