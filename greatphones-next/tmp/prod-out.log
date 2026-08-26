@@ -1,0 +1,3 @@
+> Ready on http://localhost:3000 (development)
+> LAN access: configure NEXTAUTH_URL=http://<your-ip>:3000 to test from other devices
+[Socket] Redis connected — shared presence/typing enabled
