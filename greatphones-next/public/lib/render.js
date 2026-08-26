@@ -3265,8 +3265,15 @@ function showImeiProductModal(existingProductId){
           '<div style="font-size:12px;font-weight:600;color:var(--gray);margin-bottom:10px">📸 Imagen del producto</div>'+
           '<div style="display:flex;gap:12px;align-items:start">'+
             '<div id="imeiImgPreview" style="width:100px;height:100px;border-radius:10px;background:var(--cream2);display:flex;align-items:center;justify-content:center;font-size:36px;border:2px dashed var(--border);flex-shrink:0;overflow:hidden">📷</div>'+
-            '<div><label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:8px;font-size:12px;cursor:pointer">Subir imagen<input type="file" accept="image/*" style="display:none" onchange="uploadImeiProductImage(this)"></label>'+
-            '<input type="hidden" id="imeiImgUrl"></div>'+
+            '<div style="flex:1;min-width:0">'+
+              '<div id="imeiImgCatalog" style="display:none">'+
+                '<div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px">Del catálogo (Lista de Precios)</div>'+
+                '<div id="imeiImgOptions" style="display:flex;gap:8px;flex-wrap:wrap"></div>'+
+                '<div style="font-size:10.5px;color:var(--gray);margin:4px 0 10px">Clic en una imagen del catálogo para seleccionarla. La tuya siempre podés subirla abajo.</div>'+
+              '</div>'+
+              '<label style="display:inline-block;padding:8px 16px;background:var(--orange);color:#fff;border-radius:8px;font-size:12px;cursor:pointer">Subir imagen personalizada<input type="file" accept="image/*" style="display:none" onchange="uploadImeiProductImage(this)"></label>'+
+              '<input type="hidden" id="imeiImgUrl">'+
+            '</div>'+
           '</div>'+
         '</div>'+
       '</div>'+
@@ -3336,6 +3343,7 @@ function showImeiProductModal(existingProductId){
   // Autocompleta el precio de venta desde la Lista de Precios cuando se carga
   // el producto a mano (sin IMEI) al elegir modelo/almacenamiento.
   window.autocompletarPrecioImeiManual=function(){
+    if(window.renderImeiCatalogImages)window.renderImeiCatalogImages();
     if(typeof window.cargarPreciosLista!=='function')return;
     var iphone=document.getElementById('if-iphoneModel');
     var custom=document.getElementById('if-modelName');
@@ -3350,6 +3358,58 @@ function showImeiProductModal(existingProductId){
         priceEl.value=match.precioARS;
       }
     });
+  };
+
+  // Muestra las imágenes de la Lista de Precios para el modelo elegido y
+  // preselecciona automáticamente la recomendada (mismo modelo+almacenamiento
+  // o la única disponible). El operador puede cambiar de opción con un clic
+  // o subir una imagen propia (que reemplaza la del catálogo).
+  window.renderImeiCatalogImages=function(){
+    var catEl=document.getElementById('imeiImgCatalog');
+    var optsEl=document.getElementById('imeiImgOptions');
+    if(!catEl||!optsEl)return;
+    var iphone=document.getElementById('if-iphoneModel');
+    var custom=document.getElementById('if-modelName');
+    var model=(iphone&&iphone.style.display!=='none')?iphone.value:(custom?custom.value:'');
+    if(!model){catEl.style.display='none';optsEl.innerHTML='';return;}
+    var storage=document.getElementById('if-storage');
+    var storageVal=storage?storage.value:'';
+    if(typeof window.cargarPreciosLista!=='function')return;
+    window.cargarPreciosLista().then(function(list){
+      var norm=function(s){return String(s||'').toLowerCase().replace(/\s+/g,' ').trim();};
+      var m=norm(model),a=norm(storageVal);
+      var rows=(list||[]).filter(function(p){return norm(p.modelo)===m;});
+      var urls=[],seen={};
+      rows.forEach(function(p){if(p.imageUrl&&!seen[p.imageUrl]){seen[p.imageUrl]=1;urls.push(p.imageUrl);}});
+      if(!urls.length){catEl.style.display='none';optsEl.innerHTML='';return;}
+      var rec=urls[0];
+      rows.forEach(function(p){if(norm(p.almacenamiento)===a&&p.imageUrl){rec=p.imageUrl;}});
+      urls=urls.filter(function(u){return u!==rec;});
+      urls.unshift(rec);
+      catEl.style.display='block';
+      var current=document.getElementById('imeiImgUrl').value||'';
+      optsEl.innerHTML=urls.map(function(u){
+        var sel=(u===current);
+        return '<div onclick="selectImeiCatalogImage(this)" data-url="'+esc(u)+'" role="button" tabindex="0" title="Imagen del catálogo" aria-label="Seleccionar imagen del catálogo" style="width:48px;height:48px;border-radius:10px;overflow:hidden;border:2px solid '+(sel?'var(--orange)':'var(--border)')+';cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.08);flex-shrink:0">'+
+          '<img loading="lazy" src="'+esc(u)+'" style="width:100%;height:100%;object-fit:cover;display:block" alt="Imagen del catálogo">'+
+        '</div>';
+      }).join('');
+      // Sin imagen previa elegida (ni subida ni del IMEI): auto-seleccionar la recomendada.
+      if(!current&&urls.length&&optsEl.firstElementChild)selectImeiCatalogImage(optsEl.firstElementChild);
+    });
+  };
+
+  window.selectImeiCatalogImage=function(el){
+    if(!el)return;
+    var url=el.getAttribute('data-url');
+    if(!url)return;
+    var hidden=document.getElementById('imeiImgUrl');
+    if(hidden)hidden.value=url;
+    var preview=document.getElementById('imeiImgPreview');
+    if(preview)preview.innerHTML='<img loading="lazy" src="'+esc(url)+'" style="width:100%;height:100%;object-fit:cover">';
+    var all=document.querySelectorAll('#imeiImgOptions > div');
+    for(var i=0;i<all.length;i++)all[i].style.borderColor='var(--border)';
+    el.style.borderColor='var(--orange)';
   };
 
   // If editing existing product, pre-fill and skip IMEI step
@@ -3460,6 +3520,7 @@ function showImeiProductModal(existingProductId){
       document.getElementById('if-type').value=data.deviceType||'celular';
       if(data.imageUrl){
         document.getElementById('imeiImgPreview').innerHTML='<img loading="lazy" src="'+data.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
+        document.getElementById('imeiImgUrl').value=data.imageUrl;
       }
       document.getElementById('imeiResult').style.display='block';
       document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:rgba(34,197,94,.1);border-radius:8px;font-size:13px;color:var(--green)">✅ Datos obtenidos del IMEI. Revisá y editá si es necesario.</div>';
@@ -3574,6 +3635,8 @@ function showImeiProductModal(existingProductId){
       if(data.url){
         document.getElementById('imeiImgUrl').value=data.url;
         preview.innerHTML='<img loading="lazy" src="'+data.url+'" style="width:100%;height:100%;object-fit:cover">';
+        var catOpts=document.querySelectorAll('#imeiImgOptions > div');
+        for(var ci=0;ci<catOpts.length;ci++)catOpts[ci].style.borderColor='var(--border)';
       }else{
         preview.innerHTML='📷';
         showErrorToast('Error','No se pudo subir la imagen');
