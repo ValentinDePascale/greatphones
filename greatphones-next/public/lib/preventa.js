@@ -729,6 +729,20 @@ function buildPrevMatrixRows() {
     })
   })
   _prevWizardData.rows = rows
+  // Autocompletar el precio de preventa de cada variante desde la Lista de
+  // Precios (preventaARS). Solo llena campos vacíos y verifica que el modelo
+  // no haya cambiado mientras llega la respuesta.
+  if (typeof window.cargarPreciosLista === 'function') {
+    window.cargarPreciosLista().then(function() {
+      if (_prevWizardData.modelName !== model) return
+      _prevWizardData.rows.forEach(function(r) {
+        if (r.price) return
+        var match = window.buscarPrecioLista(model, r.storage)
+        if (match && match.preventaARS) r.price = match.preventaARS
+      })
+      if (document.getElementById('pw-rows-wrap')) renderPrevWizardRows()
+    })
+  }
 }
 
 function addPrevWizardRow() {

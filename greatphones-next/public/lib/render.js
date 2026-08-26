@@ -3185,6 +3185,33 @@ function confirmAction(confirmed){
     fetch(API_URL+'/api/products/'+pendingDeleteId,{method:'DELETE'}).then(function(r){if(!r.ok)throw new Error('Error del servidor');loadProducts();showSuccessToast('Producto eliminado', pname);}).catch(function(e){showErrorToast('Error',e.message||'No se pudo eliminar el producto');});}
   closeConfirm();
 }
+// =========== AUTOSUGERIDO LISTA DE PRECIOS ===========
+// Autocompleta precios (Venta/Preventa) desde la tabla priceList al cargar
+// productos por IMEI o al armar variantes de preventa. Expone helpers en
+// window para que preventa.js y render.js los compartan.
+var _gpPreciosCache = null;
+window.cargarPreciosLista = function () {
+  if (_gpPreciosCache) return Promise.resolve(_gpPreciosCache);
+  return Promise.all([
+    fetch(API_URL + '/api/admin/precios', { credentials: 'include' }).then(function (r) { return r.json(); }).catch(function () { return []; }),
+    fetch(API_URL + '/api/admin/precios/macipad', { credentials: 'include' }).then(function (r) { return r.json(); }).catch(function () { return []; })
+  ]).then(function (arrs) {
+    _gpPreciosCache = (arrs[0] || []).concat(arrs[1] || []);
+    return _gpPreciosCache;
+  });
+};
+window.buscarPrecioLista = function (modelo, almacenamiento) {
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); };
+  var m = norm(modelo), a = norm(almacenamiento);
+  if (!m) return null;
+  var list = _gpPreciosCache || [];
+  if (a) {
+    var exact = list.find(function (p) { return norm(p.modelo) === m && norm(p.almacenamiento) === a; });
+    if (exact) return exact;
+  }
+  return list.find(function (p) { return norm(p.modelo) === m; }) || null;
+};
+
 function showAddProductByImeiModal(){
   showImeiProductModal(null);
 }
@@ -3222,10 +3249,10 @@ function showImeiProductModal(existingProductId){
       '<div id="imeiFormFields" style="display:grid;gap:14px;margin-top:16px">'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><select class="imei-fld" id="if-brand" onchange="toggleImeiBrandOther();onImeiBrandOrTypeChange()"><option value="">Seleccioná marca...</option>'+brandOptions+'<option value="__other__">Otra...</option></select><input class="imei-fld" id="if-brand-other" placeholder="Escribí la marca" style="display:none;margin-top:6px"></div>'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName" style="display:none"><select class="imei-fld" id="if-iphoneModel" onchange="onImeiPhoneModelChange()" style="display:none"><option value="">Seleccioná modelo iPhone...</option>'+iphoneModelOptions+'</select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName" onchange="autocompletarPrecioImeiManual()" style="display:none"><select class="imei-fld" id="if-iphoneModel" onchange="onImeiPhoneModelChange()" style="display:none"><option value="">Seleccioná modelo iPhone...</option>'+iphoneModelOptions+'</select></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage" onchange="autocompletarPrecioImeiManual()"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Color</label><input class="imei-fld" id="if-color" placeholder="Ej: Graphite" style="display:none"><div id="imeiColorContainer" style="display:none;min-height:36px"></div></div>'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">RAM</label><select class="imei-fld" id="if-ram"><option value="">—</option><option value="4 GB">4 GB</option><option value="6 GB">6 GB</option><option value="8 GB">8 GB</option><option value="12 GB">12 GB</option><option value="16 GB">16 GB</option></select></div>'+
         '</div>'+
@@ -3303,6 +3330,26 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiColorContainer').style.display='none';
       document.getElementById('if-color').style.display='';
     }
+    autocompletarPrecioImeiManual();
+  };
+
+  // Autocompleta el precio de venta desde la Lista de Precios cuando se carga
+  // el producto a mano (sin IMEI) al elegir modelo/almacenamiento.
+  window.autocompletarPrecioImeiManual=function(){
+    if(typeof window.cargarPreciosLista!=='function')return;
+    var iphone=document.getElementById('if-iphoneModel');
+    var custom=document.getElementById('if-modelName');
+    var model=(iphone&&iphone.style.display!=='none')?iphone.value:(custom?custom.value:'');
+    var storageEl=document.getElementById('if-storage');
+    var storage=storageEl?storageEl.value:'';
+    if(!model)return;
+    window.cargarPreciosLista().then(function(){
+      var match=window.buscarPrecioLista(model,storage);
+      var priceEl=document.getElementById('if-price');
+      if(match&&priceEl&&!priceEl.value&&match.precioARS){
+        priceEl.value=match.precioARS;
+      }
+    });
   };
 
   // If editing existing product, pre-fill and skip IMEI step
@@ -3445,6 +3492,23 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiForm').style.display='block';
       document.getElementById('imeiInput').disabled=true;
       btn.style.display='none';
+      // Autocompletar el precio de venta desde la Lista de Precios
+      // (solo si el campo sigue vacío, para no pisar un valor ya cargado).
+      if (typeof window.cargarPreciosLista === 'function') {
+        window.cargarPreciosLista().then(function () {
+          var match = window.buscarPrecioLista(data.modelName, data.storage);
+          var priceEl = document.getElementById('if-price');
+          if (match && priceEl && !priceEl.value && match.precioARS) {
+            priceEl.value = match.precioARS;
+            var res = document.getElementById('imeiResult');
+            if (res) {
+              res.innerHTML = res.innerHTML +
+                '<div style="padding:6px 14px;font-size:12px;color:var(--green);background:rgba(34,197,94,.08);border-radius:8px;margin-top:6px">' +
+                '💰 Precio de venta autocompletado desde la Lista de Precios: <strong>$' + match.precioARS.toLocaleString('es-AR') + '</strong></div>';
+            }
+          }
+        });
+      }
       var m=document.getElementById('imeiModalOverlay');if(m)m.querySelector('[style*="overflow-y:auto"]').scrollTop=0;
     }).catch(function(){
       btn.textContent='Buscar';

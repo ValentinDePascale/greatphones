@@ -1,5 +1,79 @@
 // =========== SELL / TASACION ===========
-var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
+var sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},fallas:{},finalPrice:0,accepted:false};
+
+// =========== PRECIOS DE TOMA (fuente de la tasacion) ===========
+// Los precios de /sell dependen de los "precios de toma" (priceTradeIn) del
+// panel de admin. Cada fila tiene el modelo con su almacenamiento embebido,
+// ej: "iPhone 14 128 GB" -> impecable + descuentos por falla.
+var FALLA_KEYS=['bateria','pantalla','camara','microfono','parlante','tapa','marco','pin'];
+var FALLA_LABELS={bateria:'Batería',pantalla:'Pantalla',camara:'Cámara',microfono:'Micrófono',parlante:'Parlante',tapa:'Tapa trasera',marco:'Marco',pin:'Bandeja SIM / PIN'};
+var _gpStorageTokens=['1 TB','512 GB','256 GB','128 GB','64 GB'];
+var _gpModels=null;
+
+function gpSplitModelo(modelo){
+  var s=String(modelo||'').trim();
+  for(var i=0;i<_gpStorageTokens.length;i++){
+    var tok=_gpStorageTokens[i];
+    var idx=s.lastIndexOf(' '+tok);
+    if(idx!==-1){
+      return {base:s.substring(0,idx).trim(),storage:s.substring(idx+1).trim()};
+    }
+  }
+  return {base:s,storage:''};
+}
+function gpStorageSort(s){
+  var txt=String(s||'');
+  var n=parseInt(txt)||0;
+  return txt.indexOf('T')!==-1?n*1024:n;
+}
+function gpBuildModels(){
+  if(_gpModels)return _gpModels;
+  var map={};
+  (window.PRECIOS_TOMA||[]).forEach(function(row){
+    var sp=gpSplitModelo(row.modelo);
+    if(!sp.base)return;
+    if(!map[sp.base])map[sp.base]={base:sp.base,storages:[]};
+    map[sp.base].storages.push({storage:sp.storage,row:row});
+  });
+  var out=Object.keys(map).map(function(base){
+    var st=map[base].storages;
+    st.sort(function(a,b){return gpStorageSort(a.storage)-gpStorageSort(b.storage);});
+    var minImpecable=st.reduce(function(m,s){return (m===null||s.row.impecable<m)?s.row.impecable:m;},null);
+    return {base:base,storages:st,minImpecable:minImpecable};
+  });
+  out.sort(function(a,b){return a.base.localeCompare(b.base);});
+  _gpModels=out;
+  return out;
+}
+function gpCurrentRow(){
+  if(!sv.model||!sv.storage)return null;
+  var key=sv.model+' '+sv.storage;
+  return (window.PRECIOS_TOMA_BY_MODELO&&window.PRECIOS_TOMA_BY_MODELO[key])||null;
+}
+function gpResetFallaUI(){
+  var map={bateria:'xFallaBateria',pantalla:'xFallaPantalla',camara:'xFallaCamara',microfono:'xFallaMicrofono',parlante:'xFallaParlante',tapa:'xFallaTapa',marco:'xFallaMarco',pin:'xFallaPin'};
+  FALLA_KEYS.forEach(function(k){
+    var el=document.getElementById(map[k]);
+    if(el)el.checked=false;
+    var lbl=document.getElementById('ff-'+k);
+    if(lbl)lbl.textContent='--';
+  });
+}
+function gpLoadPrecios(){
+  if(window._gpPreciosLoading)return;
+  window._gpPreciosLoading=true;
+  fetch(API_URL+'/api/precios/toma',{credentials:'include'})
+    .then(function(r){return r.json();})
+    .then(function(d){
+      window.PRECIOS_TOMA=Array.isArray(d)?d:[];
+      window.PRECIOS_TOMA_BY_MODELO={};
+      (window.PRECIOS_TOMA||[]).forEach(function(row){window.PRECIOS_TOMA_BY_MODELO[row.modelo]=row;});
+      _gpModels=null;
+      window._gpPreciosLoading=false;
+      if(document.getElementById('svModelGrid')){renderModelGrid();renderStorGrid();svShowPreview();}
+    })
+    .catch(function(){window._gpPreciosLoading=false;});
+}
 
 function svBtnSuccess(btn){
   if(!btn)return;
@@ -172,16 +246,19 @@ function filterModels(query){
 function renderModelGrid(){
   var grid=document.getElementById('svModelGrid');
   if(!grid)return;
-  var models=SELL_MODELS['iPhone']||[];
+  var models=gpBuildModels();
+  if(!models.length){
+    grid.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--gray);font-size:12px">Cargando precios de toma...</div>';
+    return;
+  }
   var html='';
   var appleLogo='<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M18.71 19.5C17.88 20.74 17 21.95 15.66 21.97C14.32 22 13.89 21.18 12.37 21.18C10.84 21.18 10.37 21.95 9.09997 22C7.78997 22.05 6.79997 20.68 5.95997 19.47C4.24997 17 2.93997 12.45 4.69997 9.39C5.56997 7.87 7.12997 6.91 8.81997 6.88C10.1 6.86 11.32 7.75 12.11 7.75C12.89 7.75 14.37 6.68 15.92 6.84C16.57 6.87 18.39 7.1 19.56 8.82C19.47 8.88 17.39 10.1 17.41 12.63C17.44 15.65 20.06 16.66 20.09 16.67C20.06 16.74 19.67 18.11 18.71 19.5ZM13 3.5C13.73 2.67 14.94 2.04 15.94 2C16.07 3.17 15.6 4.35 14.9 5.19C14.21 6.04 13.07 6.7 11.95 6.61C11.8 5.46 12.36 4.26 13 3.5Z"/></svg>';
   models.forEach(function(m){
-    var base=COTIZ_BASE[m]||0;
-    var isSelected=sv.model===m;
-    html+='<div class="model-card'+(isSelected?' act':'')+'" data-model="'+m+'" onclick="svSelectModel(\''+m+'\')">'+
+    var isSelected=sv.model===m.base;
+    html+='<div class="model-card'+(isSelected?' act':'')+'" data-model="'+m.base+'" onclick="svSelectModel(\''+m.base.replace(/'/g,"\\'")+'\')">'+
       '<div class="model-ico">'+appleLogo+'</div>'+
-      '<div class="model-name">'+m+'</div>'+
-      '<div class="model-price">'+(base?fmt(base):'Consultar')+'</div>'+
+      '<div class="model-name">'+m.base+'</div>'+
+      '<div class="model-price">'+(m.minImpecable?'Desde '+fmt(m.minImpecable):'Consultar')+'</div>'+
     '</div>';
   });
   grid.innerHTML=html;
@@ -189,6 +266,8 @@ function renderModelGrid(){
 
 function svSelectModel(model){
   sv.model=model;sv.storage='';
+  sv.fallas={};
+  gpResetFallaUI();
   document.querySelectorAll('.model-card').forEach(function(c){c.classList.remove('act');});
   document.querySelectorAll('.model-card').forEach(function(c){
     if(c.getAttribute('data-model')===model)c.classList.add('act');
@@ -200,16 +279,16 @@ function svSelectModel(model){
 function renderStorGrid(){
   var grid=document.getElementById('svStorGrid');
   if(!grid)return;
-  var storages=MODEL_STORAGES[sv.model]||['16 GB','32 GB','64 GB','128 GB','256 GB','512 GB','1 TB'];
+  var models=gpBuildModels();
+  var entry=null;
+  for(var i=0;i<models.length;i++){if(models[i].base===sv.model){entry=models[i];break;}}
+  if(!entry){grid.innerHTML='';return;}
   var html='';
-  storages.forEach(function(s){
-    var isSelected=sv.storage===s;
-    var mult=SMULT[s]||1;
-    var base=COTIZ_BASE[sv.model]||0;
-    var price=Math.round(base*mult);
-    html+='<div class="stor-card'+(isSelected?' act':'')+'" onclick="svSelectStorage(\''+s+'\')">'+
-      '<div class="stor-name">'+s+'</div>'+
-      '<div class="stor-price">'+(price?fmt(price):'--')+'</div>'+
+  entry.storages.forEach(function(s){
+    var isSelected=sv.storage===s.storage;
+    html+='<div class="stor-card'+(isSelected?' act':'')+'" onclick="svSelectStorage(\''+s.storage.replace(/'/g,"\\'")+'\')">'+
+      '<div class="stor-name">'+s.storage+'</div>'+
+      '<div class="stor-price">'+fmt(s.row.impecable)+'</div>'+
     '</div>';
   });
   grid.innerHTML=html;
@@ -217,6 +296,8 @@ function renderStorGrid(){
 
 function svSelectStorage(stor){
   sv.storage=stor;
+  sv.fallas={};
+  gpResetFallaUI();
   document.querySelectorAll('.stor-card').forEach(function(c){c.classList.remove('act');});
   document.querySelectorAll('.stor-card').forEach(function(c){
     if(c.querySelector('.stor-name').textContent===stor)c.classList.add('act');
@@ -227,18 +308,24 @@ function svSelectStorage(stor){
 function svShowPreview(){
   var el=document.getElementById('svPreview');
   if(!el)return;
-  var base=COTIZ_BASE[sv.model]||0;
-  var mult=SMULT[sv.storage]||1;
-  var price=base?fmt(Math.round(base*mult)):'Selecciona modelo';
+  var row=gpCurrentRow();
+  var price=row?fmt(row.impecable):'Selecciona modelo y almacenamiento';
   el.textContent=sv.model&&sv.storage?price:'Selecciona modelo y almacenamiento';
   var btn=document.getElementById('svN0');
   if(btn)btn.disabled=!(sv.model&&sv.storage);
 }
 
-function svCond(cond,mult,el){
-  sv.cond=cond;sv.condMult=mult;
-  document.querySelectorAll('.cond-card').forEach(function(c){c.classList.remove('act');});
-  if(el)el.classList.add('act');svRecalc();
+function svUpdFalla(){
+  var row=gpCurrentRow();
+  var map={bateria:'xFallaBateria',pantalla:'xFallaPantalla',camara:'xFallaCamara',microfono:'xFallaMicrofono',parlante:'xFallaParlante',tapa:'xFallaTapa',marco:'xFallaMarco',pin:'xFallaPin'};
+  FALLA_KEYS.forEach(function(k){
+    var el=document.getElementById(map[k]);
+    if(!el)return;
+    sv.fallas[k]=el.checked;
+    var lbl=document.getElementById('ff-'+k);
+    if(lbl)lbl.textContent=el.checked&&row?('-'+fmt(row[k]||0)):'--';
+  });
+  svRecalc();
 }
 
 function svUpdExt(){
@@ -252,11 +339,14 @@ function svUpdExt(){
 }
 
 function svRecalc(){
-  var base=COTIZ_BASE[sv.model]||0;
-  var mult=SMULT[sv.storage]||1;
+  var row=gpCurrentRow();
+  if(!row){sv.finalPrice=0;return;}
+  var base=row.impecable||0;
+  var fallaDiscount=0;
+  FALLA_KEYS.forEach(function(k){if(sv.fallas&&sv.fallas[k])fallaDiscount+=(row[k]||0);});
   var extBonus=0;
   Object.keys(COTIZ_EXT).forEach(function(k){if(sv.extras&&sv.extras[k])extBonus+=COTIZ_EXT[k];});
-  sv.finalPrice=Math.round(base*mult*sv.condMult*(1+extBonus));
+  sv.finalPrice=Math.round(Math.max(0,base-fallaDiscount)*(1+extBonus));
 }
 
 function svRenderPrice(){
@@ -334,7 +424,7 @@ function svBuildSum(){
   var rows=[
     {k:'Equipo',v:'iPhone '+sv.model},
     {k:'Almacenamiento',v:sv.storage},
-    {k:'Estado',v:sv.cond},
+    {k:'Estado',v:FALLA_KEYS.some(function(f){return sv.fallas[f];}) ? FALLA_KEYS.filter(function(f){return sv.fallas[f];}).map(function(f){return FALLA_LABELS[f];}).join(', ') : 'Impecable'},
     {k:'Precio estimado',v:fmt(sv.finalPrice||0)},
     {k:'Envio',v:envioNames[sv.envio]||sv.envio},
     {k:'Cobro',v:cobroNames[sv.cobro]||sv.cobro}
@@ -374,12 +464,13 @@ function svSubmit(){
 
   var extrasSelected=Object.keys(sv.extras).filter(function(k){return sv.extras[k];});
 
+  var row=gpCurrentRow();
   var quoteData={
     userId:currentUser.id,
     device:'iPhone '+sv.model,
     storage:sv.storage,
     condition:sv.cond,
-    basePrice:Math.round((COTIZ_BASE[sv.model]||0)*(SMULT[sv.storage]||1)),
+    basePrice:row?(row.impecable||0):0,
     finalPrice:sv.finalPrice,
     bonus:sv.cobro==='saldo'?Math.round(sv.finalPrice*0.05):0,
     envio:sv.envio,
@@ -435,10 +526,12 @@ function svRenderConfirm(quote){
 }
 
 function svReset(){
-  sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},finalPrice:0,accepted:false};
+  sv={cat:'iPhone',model:'',storage:'',cond:'Impecable',condMult:1.0,envio:'',cobro:'',extras:{},fallas:{},finalPrice:0,accepted:false};
   svStep(0);
   ['xPant','xBat','xIcloud','xCaja','xAcc'].forEach(function(id){var el=document.getElementById(id);if(el)el.checked=false;});
+  FALLA_KEYS.forEach(function(k){var el=document.getElementById('xFalla'+k.charAt(0).toUpperCase()+k.slice(1));if(el)el.checked=false;});
   svUpdExt();
+  svUpdFalla();
   svPhotos={frente:null,dorso:null,bordes:null,bateria:null};
   svDniFrente=null;svDniDorso=null;
   for(var pk in svPhotos){renderSvPhotoSlot(pk);}
@@ -452,3 +545,6 @@ function svReset(){
   document.querySelectorAll('.eopt,.vopt').forEach(function(e){e.classList.remove('act');});
   var chk=document.getElementById('svAccept');if(chk)chk.checked=false;
 }
+
+// Cargar precios de toma apenas se inicia el flujo de /sell.
+gpLoadPrecios();

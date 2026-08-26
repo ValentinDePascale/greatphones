@@ -20,7 +20,11 @@ function loadAllPages(): string {
   if (_allPages) return _allPages
   if (!existsSync(pagesDir)) return ''
   let html = _homePage || ''
-  const files = readdirSync(pagesDir).filter((f: string) => f.endsWith('.html') && f !== 'home.html')
+  // admin-login.html es el panel admin legacy MUERTO (adminLogin()=notAvailable,
+  // sin ruta ni nav que lo alcancen). Se excluye porque comparte ids de chat
+  // (adminConvList, adminChatName, etc.) con el chat admin nuevo y, al quedar
+  // en el DOM, rompía los getElementById del chat (/admin/chat).
+  const files = readdirSync(pagesDir).filter((f: string) => f.endsWith('.html') && f !== 'home.html' && f !== 'admin-login.html')
   for (const f of files) {
     html += readFileSync(join(pagesDir, f), 'utf-8')
   }

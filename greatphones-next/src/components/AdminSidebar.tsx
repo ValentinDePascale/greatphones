@@ -31,6 +31,7 @@ const operaciones: SubGroup = {
   items: [
     { href: '/admin/ops/compras', label: 'Registrar Compra', icon: 'shopping_cart' },
     { href: '/admin/ops/ventas', label: 'Registrar Venta', icon: 'payments' },
+    { href: '/admin/instore', label: 'Venta en Tienda', icon: 'storefront', legacy: 'instore' },
     { href: '/admin/ops/preventas', label: 'Registrar Preventa', icon: 'event' },
     { href: '/admin/ops/entregar-preventa', label: 'Entregar Preventa', icon: 'package_2' },
   ],
@@ -81,6 +82,8 @@ const gestion: SubGroup[] = [
       { href: '/admin/gestion/mis-operaciones', label: 'Mis Operaciones', icon: 'folder_managed', exact: true },
       { href: '/admin/gestion/comisiones', label: 'Comisiones', icon: 'payments', exact: true },
       { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
+      { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance_wallet' },
+      { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },
     ],
   },
   {
@@ -97,14 +100,13 @@ const gestion: SubGroup[] = [
     title: 'Cotizaciones',
     items: [
       { href: '/admin/cotizaciones', label: 'Cotizaciones', icon: 'request_quote', legacy: 'quotes' },
-      { href: '/admin/comprados', label: 'Cotizaciones Dashboard', icon: 'space_dashboard' },
+      { href: '/admin/comprados', label: 'Dispositivos Comprados', icon: 'space_dashboard' },
     ],
   },
   {
     title: 'Comunicación y plataforma',
     items: [
       { href: '/admin/chat', label: 'Chat', icon: 'chat', legacy: 'chat' },
-      { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },
       { href: '/admin/usuarios', label: 'Usuarios', icon: 'group', legacy: 'users' },
     ],
   },
@@ -113,7 +115,7 @@ const gestion: SubGroup[] = [
 const GROUPS: NavGroup[] = [
   { title: 'Operaciones', color: '#b45309', groups: [operaciones] },
   { title: 'Precios', color: '#0d9488', groups: [precios] },
-  { title: 'Taller y Gastos', color: '#b91c1c', groups: [taller] },
+  { title: 'Taller y Reparaciones', color: '#b91c1c', groups: [taller] },
   { title: 'Análisis', color: '#7c3aed', groups: [analisis] },
   { title: 'Inventario Online', color: '#0f766e', groups: [inventario] },
   { title: 'Gestión', color: '#94a3b8', groups: gestion },
