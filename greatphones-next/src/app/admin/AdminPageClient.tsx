@@ -43,11 +43,35 @@ export default function AdminPageClient({ html, tab }: Props) {
       navBtn.classList.add('act')
     }
 
-    setTimeout(() => {
+    // Renderizar el contenido del tab de forma robusta. El shell legacy carga
+    // sus scripts con `defer` (render.js/admin.js son pesados y con cache-busting
+    // ?v=), por lo que pueden no estar listos cuando este useEffect corre. En vez
+    // de un setTimeout fijo de 300ms sin reintento (que dejaba el contenido en
+    // blanco intermitentemente), esperamos a que renderAdminContent exista y
+    // verificamos que el contenido se pobló, reintentando hasta un timeout total.
+    let attempts = 0
+    const MAX_ATTEMPTS = 60 // ~9s
+    const iv = window.setInterval(() => {
       const w = window as any
-      const fn = w.renderAdminContent
-      if (typeof fn === 'function') fn(tab)
-    }, 300)
+      if (typeof w.renderAdminContent !== 'function') {
+        attempts++
+        if (attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
+        return
+      }
+      try {
+        w.renderAdminContent(tab)
+      } catch (e) {
+        attempts++
+        if (attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
+        return
+      }
+      const el = document.getElementById('adminContent')
+      const populated = el && el.innerHTML.trim() !== ''
+      if (populated || attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
+      attempts++
+    }, 150)
+
+    return () => window.clearInterval(iv)
   }, [tab])
 
   return (

@@ -3722,7 +3722,16 @@ var ADMIN_TITLES={
 function renderAdminContent(tab){
   window.currentAdminTab=tab;
   var el=document.getElementById('adminContent');
-  if(!el)return;
+  if(!el){
+    // No dejar el panel en blanco sin pista. Normalmente #adminContent existe;
+    // si no, mostramos un mensaje en el contenedor admin visible.
+    console.warn('[admin] adminContent no encontrado para tab:',tab);
+    var fallback=document.querySelector('.admin-main')||document.querySelector('#p-admin');
+    if(fallback){
+      fallback.innerHTML='<div style="padding:2rem;text-align:center;color:var(--gray)">Cargando sección...</div>';
+    }
+    return;
+  }
   if(tab!=='chats'){window.adminActiveConvId=null;}
   if(tab!=='dashboard'&&window._dashRefreshInterval){
     clearInterval(window._dashRefreshInterval);
