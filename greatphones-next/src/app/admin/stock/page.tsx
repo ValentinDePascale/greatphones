@@ -1,7 +1,8 @@
-import { serveAdminSpa } from '@/lib/spa-pages'
-import AdminPageClient from '../AdminPageClient'
+﻿import AdminTabActivator from '@/components/AdminTabActivator'
+
 export const dynamic = 'force-dynamic'
+
 export default function Page() {
-  const html = serveAdminSpa('stock')
-  return <AdminPageClient html={html} tab="stock" />
+  return <AdminTabActivator tab="stock" />
 }
+

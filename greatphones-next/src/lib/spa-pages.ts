@@ -2,9 +2,11 @@ import { readFileSync, existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 
 const shellPath = join(process.cwd(), 'public', 'index.html')
+const adminShellPath = join(process.cwd(), 'public', 'admin-shell.html')
 const pagesDir = join(process.cwd(), 'public', 'pages')
 
 let _shell = ''
+let _adminShell = ''
 let _homePage = ''
 
 function loadShell() {
@@ -12,6 +14,13 @@ function loadShell() {
   if (existsSync(shellPath)) _shell = readFileSync(shellPath, 'utf-8')
   const homePath = join(pagesDir, 'home.html')
   if (existsSync(homePath)) _homePage = readFileSync(homePath, 'utf-8')
+}
+
+/** Shell del panel admin: HTML mínimo SIN topbar/footer/carrito/chat/buscador
+ *  de la tienda pública — solo el panel + modales/toasts + scripts admin. */
+function loadAdminShell() {
+  if (_adminShell) return
+  if (existsSync(adminShellPath)) _adminShell = readFileSync(adminShellPath, 'utf-8')
 }
 
 let _allPages = ''
@@ -133,22 +142,22 @@ export function serveSpa(targetPage?: string): string {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function serveAdminSpa(activeTab?: string): string {
-  loadShell()
-  if (!_shell) return '<h1>Loading...</h1>'
+export function serveAdminSpa(activeTab?: string, html?: string): string {
+  // Prioridad: si nos pasan un shell admin listo (cache del layout), lo usamos.
+  if (html) return html
+  loadAdminShell()
+  if (!_adminShell) return '<h1>Loading...</h1>'
   // Sólo las páginas admin (admin.html + admin-product + admin-acc + admin-login),
   // NO las ~30 de la tienda pública: el panel no navega a home/shop/checkout/etc.
   const allPages = loadAdminPages()
-  let html
-  if (_shell.includes('<!--GP_PAGES-->')) {
-    html = _shell.replace('<!--GP_PAGES-->', allPages)
+  let out
+  if (_adminShell.includes('<!--GP_ADMIN_PAGES-->')) {
+    out = _adminShell.replace('<!--GP_ADMIN_PAGES-->', allPages)
   } else {
-    html = _shell.replace('</body>', allPages + '</body>')
+    out = _adminShell.replace('</body>', allPages + '</body>')
   }
-  html = html.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
-  html = html.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
-  html = html.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
-  html = removeStoreScripts(html)
-  html = wrapMain(html)
-  return html
+  out = out.replace('id="splash" style="position:fixed;inset:0;background:#FDF8F3;display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:16px;transition:opacity .3s"', 'id="splash" style="display:none"');
+  out = out.replace('class="page" id="p-admin"', 'class="page act" id="p-admin"')
+  out = out.replace('class="page act" id="p-home"', 'class="page" id="p-home"')
+  return wrapMain(out)
 }
