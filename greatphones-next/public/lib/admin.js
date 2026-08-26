@@ -117,6 +117,7 @@ function _renderAdminLegacy(tab){
         if(manual>0){window.dolarRate=manual;renderAdminAccFiltered('');}
         else loadDolarRate();
       }
+      if(typeof loadAccSuppliers==='function')loadAccSuppliers();
     });
   }else if(tab==='orders'){
     content.innerHTML='<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap;align-items:center">'+
@@ -1206,6 +1207,8 @@ function saveAccessory(){
   var baseData={
     name:name,
     price:price,
+    cost:parseInt((document.getElementById('accCost')?document.getElementById('accCost').value:0))||0,
+    supplierId:(document.getElementById('accSupplier')?document.getElementById('accSupplier').value:null)||null,
     category:document.getElementById('accCategory').value,
     brand:document.getElementById('accBrand').value,
     description:document.getElementById('accDescription').value,
@@ -1288,10 +1291,35 @@ function editAccessory(id){
     }
   });
 }
+function loadAccSuppliers(){
+  var sel=document.getElementById('accSupplier');
+  if(!sel)return;
+  fetch(API_URL+'/api/suppliers',{headers:{}})
+    .then(function(r){return r.json();})
+    .then(function(list){
+      var arr=Array.isArray(list)?list:(list&&Array.isArray(list.data)?list.data:[]);
+      sel.innerHTML='<option value="">Sin proveedor</option>'+arr.map(function(s){
+        return '<option value="'+s.id+'">'+s.name+'</option>';
+      }).join('');
+    })
+    .catch(function(){});
+}
 function fillAccForm(a){
   document.getElementById('accId').value=a.id;
   document.getElementById('accName').value=a.name||'';
   document.getElementById('accPrice').value=a.price||'';
+  var cEl=document.getElementById('accCost'); if(cEl)cEl.value=a.cost||'';
+  (function setSup(){
+    var sEl=document.getElementById('accSupplier');
+    if(sEl){
+      var loaded=sEl.options.length>1;
+      sEl.value=a.supplierId||'';
+      if(!loaded&&typeof loadAccSuppliers==='function'){
+        loadAccSuppliers();
+        setTimeout(function(){var s2=document.getElementById('accSupplier');if(s2){s2.value=a.supplierId||'';}},600);
+      }
+    }
+  })();
   document.getElementById('accStock').value=a.stock||0;
   document.getElementById('accCategory').value=a.category||'Cargadores';
   document.getElementById('accBrand').value=a.brand||'';

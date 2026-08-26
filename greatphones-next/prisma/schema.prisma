@@ -82,6 +82,9 @@ model Product {
   modelGroup     String?
   isPreorder     Boolean         @default(false)
   availableFrom  DateTime?
+  deletedAt      DateTime?
+  deletedBy      String?
+  deleteReason   String?
   cartItems      CartItem[]
   favorites      Favorite[]
   inventoryItems InventoryItem[]
@@ -224,6 +227,9 @@ model Order {
   carrierService      String?
   enviopackId         String?
   trackingUrl         String?
+  deletedAt           DateTime?
+  deletedBy           String?
+  deleteReason        String?
   arrepentimientos    Arrepentimiento[]
   invoice             Invoice?
   admin               User?                @relation("AdminSales", fields: [adminId], references: [id])
@@ -284,6 +290,9 @@ model PreOrder {
   orderId               String?
   mpPaymentId           String?
   mpPreferenceId        String?
+  deletedAt             DateTime?
+  deletedBy             String?
+  deleteReason          String?
   product               Product?  @relation(fields: [productId], references: [id])
   user                  User?     @relation(fields: [userId], references: [id])
   order                 Order?    @relation(fields: [orderId], references: [id])
@@ -316,6 +325,9 @@ model Quote {
   clientProvince  String?
   dniPhotos       String[]
   batteryHealth   Int?
+  deletedAt       DateTime?
+  deletedBy       String?
+  deleteReason    String?
   invoice         Invoice?
   purchasedDevice PurchasedDevice?
   user            User            @relation(fields: [userId], references: [id])
@@ -358,24 +370,49 @@ model Sale {
   condition String?
   imei      String?
   price     Int
+  cost      Int        @default(0)
+  profitReal Int       @default(0)
+  originType String?   // propio / consignacion
   payment   String
   status    SaleStatus @default(PENDING)
+  operator  String?
   createdAt DateTime   @default(now())
   user      User       @relation(fields: [userId], references: [id])
 }
 
 model Repair {
-  id        String         @id @default(cuid())
-  code      String         @unique
-  userId    String
-  device    String
-  issue     String
-  serviceId String?
-  price     Int?
-  status    RepairStatus   @default(PENDING)
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  service   RepairService? @relation(fields: [serviceId], references: [id])
+  id          String        @id @default(cuid())
+  code        String        @unique
+  userId      String
+  device      String
+  issue       String
+  serviceId   String?
+  price       Int?
+  status      RepairStatus  @default(PENDING)
+  // === Fase 5 ERP: ciclo completo de reparación ===
+  type        String?       // particular / garantia / preventa / interno
+  clientName  String?
+  clientPhone String?
+  clientDni   String?
+  imei        String?
+  pin         String?
+  fault1      String?
+  fault2      String?
+  jobs        String[]      // trabajos: Batería, Pantalla, Cámara, ...
+  diagnosis   String?
+  diagnosisStatus String?   // PENDIENTE / ACEPTADO / RECHAZADO
+  pricePaid   Int?          // precio cobrado (puede ser 0)
+  priceCalc   Int?          // precio calculado por tarifario
+  estimatedHours Int?
+  isDiagnosis Boolean       @default(false)
+  deliveredAt DateTime?
+  operator    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  deletedBy   String?
+  deleteReason String?
+  service     RepairService? @relation(fields: [serviceId], references: [id])
   user      User           @relation(fields: [userId], references: [id])
 }
 
@@ -413,6 +450,7 @@ model Supplier {
   createdAt      DateTime        @default(now())
   inventoryItems InventoryItem[]
   products       Product[]
+  accessories    Accessory[]
 }
 
 model Conversation {
@@ -582,7 +620,10 @@ model Accessory {
   description      String?
   category         String
   price            Int
+  cost             Int         @default(0)
   stock            Int         @default(0)
+  reserved         Int         @default(0)
+  sold             Int         @default(0)
   createdAt        DateTime    @default(now())
   brand            String?
   color            String?
@@ -596,10 +637,17 @@ model Accessory {
   offerEnd         DateTime?
   offerStart       DateTime?
   modelGroup       String?
-  reserved         Int         @default(0)
-  sold             Int         @default(0)
+  supplierId       String?
+  supplier         Supplier?   @relation(fields: [supplierId], references: [id])
+  deletedAt        DateTime?
+  deletedBy        String?
+  deleteReason     String?
   cartItems        CartItem[]
   orderItems       OrderItem[]
+
+  @@index([category])
+  @@index([brand])
+  @@index([stock])
 }
 
 model Account {
@@ -876,4 +924,236 @@ enum WarrantyExtendStatus {
   EXPIRED
   CANCELLED
   PENDING_PAYMENT
+}
+
+// ============================================================
+//  ERP — NÚCLEO CONTABLE (Fase 1)
+//  Adaptación del libro diario + caja por medio del ERP (Sheets)
+// ============================================================
+
+// Operadores del local (sin login) — lista fija del ERP.
+model Operator {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+// Asiento contable: todo movimiento de valor del negocio.
+enum AccountingType {
+  INGRESO
+  EGRESO
+  NEUTRO
+}
+
+enum PaymentMeans {
+  EFECTIVO
+  TRANSFERENCIA
+  CUOTAS
+  USD
+  PAGO_ONLINE
+}
+
+model AccountingEntry {
+  id          String         @id @default(cuid())
+  source      String         // módulo: SALE, PREORDER, PURCHASE, GASTO, CAMBIO, AJUSTE, ONLINE, ...
+  operationId String?        // número de operación vinculada (VTA-xxx, CMP-xxx, PRE-xxx, GST-xxx...)
+  description String
+  category    String?
+  type        AccountingType @default(INGRESO)
+  means       PaymentMeans   @default(EFECTIVO)
+  amount      Int            // en pesos (USD se guarda como dólares reales en amountUsd)
+  amountUsd   Float?
+  createdAt   DateTime       @default(now())
+  opDate      DateTime       @default(now())
+  operator    String?
+  createdById String?
+  metadata    Json?
+
+  @@index([means])
+  @@index([type])
+  @@index([source])
+  @@index([opDate])
+}
+
+// Saldo de caja por medio de pago (pesos y dólares separados, "nunca se mezclan").
+model CashRegister {
+  id         String      @id @default(cuid())
+  means      PaymentMeans @unique
+  balance    Int         @default(0)  // saldo en pesos
+  balanceUsd Float?      @default(0)  // saldo en dólares (solo medio USD)
+  updatedAt  DateTime    @updatedAt
+}
+
+// ============================================================
+//  ERP — INTEGRIDAD Y GOBIERNO (Fase 3)
+//  Auditoría genérica: sirve de auditoría + snapshot + registro
+//  de anulaciones en una sola tabla. "Nunca se borra información".
+// ============================================================
+
+enum AuditAction {
+  ANULACION
+  RESTAURACION
+  CORRECCION
+  CREACION
+  UPDATE
+}
+
+// Una entidad anulada se marca con `deletedAt` (nunca se borra físicamente).
+// AuditLog conserva el snapshot completo previo al cambio + responsable + motivo.
+model AuditLog {
+  id          String      @id @default(cuid())
+  entityType  String      // Product, Order, Repair, Quote, Accessory, PreOrder, ...
+  entityId    String
+  action      AuditAction @default(ANULACION)
+  reason      String?
+  operator    String?     // operador del ERP que ejecutó
+  createdById String?
+  snapshot    Json?       // foto del registro completo previo a la acción
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+
+  @@index([entityType])
+  @@index([entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// ============================================================
+//  ERP — TESORERÍA / INVERSORES (Fase 4)
+//  Cuenta corriente de financistas externos: capital invertido,
+//  retiros (con tope), pago de rendimiento mensual (20%).
+// ============================================================
+
+model Investor {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  capital     Int                @default(0)  // capital invertido actual
+  paidTotal   Int                @default(0)  // acumulado de rendimiento pagado
+  pending     Int                @default(0)  // rendimiento pendiente de pago
+  yieldRate   Int                @default(20) // % mensual
+  active      Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  movements   InvestorMovement[]
+}
+
+enum InvestorMovementType {
+  INGRESO_CAPITAL
+  RETIRO_CAPITAL
+  PAGO_RENDIMIENTO
+  AJUSTE
+}
+
+model InvestorMovement {
+  id          String               @id @default(cuid())
+  investorId  String
+  type        InvestorMovementType
+  amount      Int                  // en pesos
+  detail      String?
+  capitalAfter Int                 @default(0)
+  operator    String?
+  createdById String?
+  createdAt   DateTime             @default(now())
+  investor    Investor             @relation(fields: [investorId], references: [id], onDelete: Cascade)
+
+  @@index([investorId])
+  @@index([createdAt])
+}
+
+// ============================================================
+//  ERP — CONFIGURACIONES (Fase 5: regalos / reutilizable en Fase 7)
+//  Clave-valor genérico para parámetros de negocio editables.
+//  value es JSON.
+// ============================================================
+
+model AppConfig {
+  key       String   @id
+  value     Json
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
+// ============================================================
+//  ERP — PRECIOS (Lista de Precios / Mac-iPad / Toma / Cuotas)
+//  Portados desde el ERP (Google Sheets) a Prisma, editables sin
+//  tocar código desde el panel admin. Los valores en USD se calculan
+//  en vivo con dolarapi, no se guardan acá.
+// ============================================================
+
+model PriceList {
+  id            String       @id @default(cuid())
+  category      PriceCategory // 'CELULAR' | 'MACIPAD'
+  modelo        String
+  almacenamiento String
+  precioARS     Int          @default(0)
+  preventaARS   Int          @default(0)
+  descuentoARS  Int          @default(0)
+  orden         Int          @default(0)
+  active        Boolean      @default(true)
+  updatedBy     String?
+  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime     @default(now())
+
+  @@index([category])
+  @@index([modelo])
+}
+
+model PriceTradeIn {
+  id        String @id @default(cuid())
+  modelo    String
+  impecable Int    @default(0)
+  bateria   Int    @default(0)
+  pantalla  Int    @default(0)
+  camara    Int    @default(0)
+  microfono Int    @default(0)
+  parlante  Int    @default(0)
+  tapa      Int    @default(0)
+  marco     Int    @default(0)
+  pin       Int    @default(0)
+  orden     Int    @default(0)
+  active    Boolean @default(true)
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@index([modelo])
+}
+
+model CuotasConfig {
+  id          String @id @default(cuid())
+  cuotas      Int    @unique
+  coeficiente Float
+  activo      Boolean @default(true)
+  mostrar     Boolean @default(true)
+  observacion String?
+  orden       Int    @default(0)
+  updatedBy   String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+enum PriceCategory {
+  CELULAR
+  MACIPAD
+}
+
+// ============================================================
+//  ERP — TALLER: CONFIGURACIÓN DE REPARACIONES
+//  Multiplicador y horas estimadas por categoría de trabajo
+//  (equivalentes a CONFIG_REPARACIONES del ERP). Editable sin
+//  tocar código desde el panel admin.
+// ============================================================
+
+model RepairConfig {
+  id           String @id @default(cuid())
+  key          String // bateria, pantalla, camara, microfono, parlante, tapa, marco, pin, flex, botones, chasis
+  multiplicador Float  @default(1)
+  horas        Int    @default(48)
+  activo       Boolean @default(true)
+  updatedBy    String?
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([key])
 }

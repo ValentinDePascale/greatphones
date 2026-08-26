@@ -8,12 +8,10 @@ function renderPreventaTab(subtab) {
     '<div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap" class="instore-tabs">' +
       '<button class="ord-btn' + (subtab === 'catalogo' || !subtab ? ' ord-btn-act' : '') + '" id="prevTabCatalogo" onclick="renderPreventaTab(\'catalogo\')">Catalogo Preventa</button>' +
       '<button class="ord-btn' + (subtab === 'online' ? ' ord-btn-act' : '') + '" id="prevTabOnline" onclick="renderPreventaTab(\'online\')">Preventas Online</button>' +
-      '<button class="ord-btn' + (subtab === 'local' ? ' ord-btn-act' : '') + '" id="prevTabLocal" onclick="renderPreventaTab(\'local\')">Preventa Local</button>' +
       '<button class="ord-btn' + (subtab === 'history' ? ' ord-btn-act' : '') + '" id="prevTabHistory" onclick="renderPreventaTab(\'history\')">Historial</button>' +
     '</div>' +
     '<div id="preventa-subview"></div>'
-  if (subtab === 'local') renderPreventaLocal()
-  else if (subtab === 'history') renderPreventaHistory()
+  if (subtab === 'history') renderPreventaHistory()
   else if (subtab === 'online') renderPreventaOnlineLive()
   else renderPreventaCatalogo()
 }
@@ -425,7 +423,7 @@ function executePreventaAction(id, status) {
 function refreshPreventaView() {
   var activeTab = document.querySelector('#preventa-view .ord-btn-act')
   if (activeTab) {
-    var sub = activeTab.id === 'prevTabLocal' ? 'local' : activeTab.id === 'prevTabHistory' ? 'history' : 'online'
+    var sub = activeTab.id === 'prevTabHistory' ? 'history' : activeTab.id === 'prevTabOnline' ? 'online' : 'catalogo'
     renderPreventaTab(sub)
   }
 }

@@ -115,8 +115,10 @@ export async function POST(request: Request) {
         description: body.description || null,
         category: body.category,
         price: Number(body.price) || 0,
+        cost: Number(body.cost) || 0,
         compareAtPrice: body.compareAtPrice ? Number(body.compareAtPrice) : null,
         stock: Number(body.stock) || 0,
+        supplierId: body.supplierId || null,
         imageUrl: body.imageUrl || null,
         images: body.images || [],
         brand: body.brand || null,
@@ -165,6 +167,8 @@ export async function PUT(request: Request) {
     if (body.description !== undefined) data.description = body.description || null
     if (body.category) data.category = body.category
     if (body.price !== undefined) data.price = Number(body.price)
+    if (body.cost !== undefined) data.cost = Number(body.cost)
+    if (body.supplierId !== undefined) data.supplierId = body.supplierId || null
     if (body.compareAtPrice !== undefined) data.compareAtPrice = body.compareAtPrice ? Number(body.compareAtPrice) : null
     if (body.stock !== undefined) data.stock = Number(body.stock)
     if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl || null

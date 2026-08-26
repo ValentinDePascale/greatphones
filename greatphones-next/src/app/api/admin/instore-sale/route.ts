@@ -4,6 +4,7 @@ import { MercadoPagoConfig, Payment } from 'mercadopago'
 import { productCache } from '@/lib/cache'
 import { requireAdmin } from '@/lib/auth-guard'
 import { reserveStock, releaseStock } from '@/lib/stock'
+import { registerEntry } from '@/lib/accounting'
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -31,6 +32,7 @@ export async function POST(request: Request) {
       paymentMethod,
       cashReceived,
       adminId,
+      operator,
       currency,
       installments,
       usdRate,
@@ -369,6 +371,23 @@ export async function POST(request: Request) {
 
     // Clear product cache so stock updates reflect immediately
     productCache.clear()
+
+    // Núcleo contable: registrar el ingreso de la venta en el libro diario
+    try {
+      await registerEntry({
+        source: 'SALE',
+        operationId: order.code,
+        description: `Venta en tienda — ${clientName || 'Cliente'}`,
+        category: 'Ventas',
+        type: 'INGRESO',
+        means: paymentMethod === 'cash' ? 'EFECTIVO' : 'TRANSFERENCIA',
+        amount: total,
+        operator: operator || null,
+        createdById: adminId || null,
+      })
+    } catch (entryErr) {
+      console.error('[InStore] Error registrando asiento:', entryErr)
+    }
 
     // If transfer, generate QR
     if (paymentMethod === 'transfer') {

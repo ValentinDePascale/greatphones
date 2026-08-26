@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+const STATIC_CACHE = process.env.NODE_ENV === 'production'
+  ? 'public, max-age=31536000, immutable'
+  : 'public, max-age=5, stale-while-revalidate=300';
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   compress: true,
@@ -20,18 +24,22 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || [],
   async headers() {
     return [
-      // Static assets: short cache in dev, immutable in prod
+      // Static assets with ?v= versioning: immutable in prod (new ?v busts the cache)
       {
         source: '/lib/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=3600' }],
+        headers: [{ key: 'Cache-Control', value: STATIC_CACHE }],
+      },
+      {
+        source: '/vendor/:path*',
+        headers: [{ key: 'Cache-Control', value: STATIC_CACHE }],
       },
       {
         source: '/styles/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=60, stale-while-revalidate=3600' }],
+        headers: [{ key: 'Cache-Control', value: STATIC_CACHE }],
       },
       {
         source: '/icons/:path*',
-        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+        headers: [{ key: 'Cache-Control', value: STATIC_CACHE }],
       },
       {
         source: '/(account|orders|wallet|admin|api/auth|api/instore|api/warranty)/:path*',
