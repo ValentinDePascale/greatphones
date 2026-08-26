@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import AdminTopbar from '@/components/AdminTopbar'
 
 const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 5
@@ -52,6 +53,8 @@ export default function PreventasClient() {
   const [fechaDesde, setFechaDesde] = useState(() => enDias(7))
   const [fechaHasta, setFechaHasta] = useState(() => enDias(10))
   const [obs, setObs] = useState('')
+  const [modelosIphone, setModelosIphone] = useState<string[]>([])
+  const [modeloEsOtro, setModeloEsOtro] = useState(false)
 
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
@@ -60,6 +63,32 @@ export default function PreventasClient() {
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState<{ numero: string } | null>(null)
   const errRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    let activo = true
+    fetch('/api/products?search=iPhone&limit=100', { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => {
+        if (!activo) return
+        const data: { name: string; storage?: string | null }[] = Array.isArray(
+          (d as { data?: unknown }).data,
+        )
+          ? (d as { data: typeof data }).data
+          : Array.isArray(d)
+            ? (d as typeof data)
+            : []
+        const uniq = [
+          ...new Set(data.map(p => (p.name + (p.storage ? ' ' + p.storage : '')).trim())),
+        ]
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b))
+        setModelosIphone(uniq)
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
+  }, [])
 
   const tot =
     (parseInt(efec) || 0) +
@@ -105,7 +134,10 @@ export default function PreventasClient() {
       const e = validarPaso(step)
       setErrors(e)
       if (Object.keys(e).length > 0) {
-        requestAnimationFrame(() => errRef.current?.focus())
+        requestAnimationFrame(() => {
+          errRef.current?.focus({ preventScroll: true })
+          errRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        })
         return
       }
     }
@@ -117,6 +149,7 @@ export default function PreventasClient() {
 
   const resetear = () => {
     setModelo('')
+    setModeloEsOtro(false)
     setCliente('')
     setCuil('')
     setTel('')
@@ -148,7 +181,10 @@ export default function PreventasClient() {
             ? 4
             : 1
       setStep(pasoDelError)
-      requestAnimationFrame(() => errRef.current?.focus())
+      requestAnimationFrame(() => {
+        errRef.current?.focus({ preventScroll: true })
+        errRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
       return
     }
     setSending(true)
@@ -280,8 +316,10 @@ export default function PreventasClient() {
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
-      <style>{`
+    <>
+      <AdminTopbar titulo="Registrar Preventa" />
+      <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+        <style>{`
         .cw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .cw-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
         @media (max-width: 640px) {
@@ -302,703 +340,774 @@ export default function PreventasClient() {
         }
       `}</style>
 
-      <header style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: 26, color: '#FF6B2C' }}
-          aria-hidden="true"
-        >
-          event_available
-        </span>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181B2E', margin: 0 }}>
-          Registrar Preventa
-        </h1>
-      </header>
-      <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
-        Reserva sin stock: cobro anticipado y entrega futura
-      </p>
+        <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
+          Reserva sin stock: cobro anticipado y entrega futura
+        </p>
 
-      <nav aria-label="Progreso del formulario">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
-          <p
-            style={{ fontSize: 12.5, fontWeight: 700, color: '#181B2E', margin: 0 }}
+        <nav aria-label="Progreso del formulario">
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginBottom: 8,
+            }}
+          >
+            <p
+              style={{ fontSize: 12.5, fontWeight: 700, color: '#181B2E', margin: 0 }}
+              aria-hidden="true"
+            >
+              Paso {step} de {TOTAL} · {STEPS[step - 1]}
+            </p>
+            <p style={{ fontSize: 11.5, color: '#94A3B8', margin: 0 }} aria-hidden="true">
+              {Math.round((step / TOTAL) * 100)}%
+            </p>
+          </div>
+          <div
+            style={{ height: 5, background: '#EDF0F6', borderRadius: 99, overflow: 'hidden' }}
             aria-hidden="true"
           >
-            Paso {step} de {TOTAL} · {STEPS[step - 1]}
-          </p>
-          <p style={{ fontSize: 11.5, color: '#94A3B8', margin: 0 }} aria-hidden="true">
-            {Math.round((step / TOTAL) * 100)}%
-          </p>
-        </div>
-        <div
-          style={{ height: 5, background: '#EDF0F6', borderRadius: 99, overflow: 'hidden' }}
-          aria-hidden="true"
-        >
-          <div
-            className="cw-bar"
+            <div
+              className="cw-bar"
+              style={{
+                height: '100%',
+                width: `${(step / TOTAL) * 100}%`,
+                background: 'linear-gradient(90deg,#FF6B2C,#FF8A50)',
+                borderRadius: 99,
+                transition: 'width .25s ease',
+              }}
+            />
+          </div>
+          <ol
             style={{
-              height: '100%',
-              width: `${(step / TOTAL) * 100}%`,
-              background: 'linear-gradient(90deg,#FF6B2C,#FF8A50)',
-              borderRadius: 99,
-              transition: 'width .25s ease',
+              display: 'flex',
+              alignItems: 'center',
+              listStyle: 'none',
+              margin: '14px 0 0',
+              padding: 0,
             }}
-          />
-        </div>
-        <ol
+          >
+            {STEPS.map((label, i) => {
+              const n = i + 1
+              const completo = n < step
+              const activo = n === step
+              const alcanzable = n <= maxStep
+              return (
+                <li
+                  key={label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flex: n < TOTAL ? 1 : '0 0 auto',
+                    minWidth: 0,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="cw-dot-btn"
+                    onClick={() => alcanzable && irAPaso(n)}
+                    disabled={!alcanzable}
+                    aria-label={`Paso ${n}: ${label}${activo ? ' (actual)' : completo ? ' (completado)' : ''}`}
+                    aria-current={activo ? 'step' : undefined}
+                    title={label}
+                    style={{
+                      flexShrink: 0,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      border: activo
+                        ? '2.5px solid #FF6B2C'
+                        : '2px solid ' + (completo ? '#FFD3BC' : '#E6E7F0'),
+                      background: activo ? '#FF6B2C' : completo ? '#FFF1E8' : '#FBFBFD',
+                      color: activo ? '#fff' : completo ? '#FF6B2C' : '#B6BCCB',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: alcanzable ? 'pointer' : 'default',
+                      transition: 'background .15s, border-color .15s',
+                    }}
+                  >
+                    {completo ? (
+                      <span
+                        className="material-symbols-outlined"
+                        style={{ fontSize: 16 }}
+                        aria-hidden="true"
+                      >
+                        check
+                      </span>
+                    ) : (
+                      n
+                    )}
+                  </button>
+                  {n < TOTAL && (
+                    <>
+                      <span
+                        className="cw-steplabel"
+                        style={{
+                          fontSize: 11,
+                          fontWeight: activo ? 700 : 500,
+                          color: activo ? '#FF6B2C' : completo ? '#F08A4B' : '#B6BCCB',
+                          marginLeft: 6,
+                          marginRight: 8,
+                          whiteSpace: 'nowrap',
+                        }}
+                        aria-hidden="true"
+                      >
+                        {label}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          flex: 1,
+                          minWidth: 8,
+                          height: 2,
+                          background: completo ? '#FFD3BC' : '#EDF0F6',
+                          borderRadius: 2,
+                          marginRight: 6,
+                        }}
+                      />
+                    </>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+          <p
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+            role="status"
+          >
+            {`Paso ${step} de ${TOTAL}: ${STEPS[step - 1]}`}
+          </p>
+        </nav>
+
+        <form
+          onSubmit={ev => {
+            ev.preventDefault()
+            if (step < TOTAL) irAPaso(step + 1)
+            else enviar()
+          }}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            listStyle: 'none',
-            margin: '14px 0 0',
-            padding: 0,
+            background: '#fff',
+            border: '1px solid #E6E7F0',
+            borderRadius: 14,
+            padding: 24,
+            marginTop: 16,
+            boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
           }}
         >
-          {STEPS.map((label, i) => {
-            const n = i + 1
-            const completo = n < step
-            const activo = n === step
-            const alcanzable = n <= maxStep
-            return (
-              <li
-                key={label}
+          {Object.keys(errors).length > 0 && (
+            <div
+              ref={errRef}
+              tabIndex={-1}
+              role="alert"
+              aria-labelledby="cw-error-title"
+              style={{
+                background: '#FEF2F2',
+                borderLeft: '4px solid #DC2626',
+                borderRadius: 8,
+                padding: '12px 14px',
+                marginBottom: 16,
+                outline: 'none',
+              }}
+            >
+              <p
+                id="cw-error-title"
+                style={{ fontSize: 13, fontWeight: 700, color: '#B91C1C', margin: '0 0 6px' }}
+              >
+                Revisá estos datos para continuar:
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {Object.entries(errors).map(([id, txt]) => (
+                  <li key={id}>
+                    <a href={`#${id}`} style={{ fontSize: 12.5, color: '#DC2626' }}>
+                      {txt}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {serverMsg && (
+            <div
+              role="alert"
+              style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: 8,
+                padding: '11px 14px',
+                marginBottom: 16,
+                color: '#B91C1C',
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              {serverMsg}
+            </div>
+          )}
+
+          {step === 1 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                ¿Quién toma el pedido?
+              </legend>
+              <div className="cw-grid" style={{ marginTop: 12 }}>
+                <div>
+                  <label htmlFor="operador" style={{ ...labelStyle, marginTop: 0 }}>
+                    Operador *
+                  </label>
+                  <select
+                    {...fieldProps('operador')}
+                    className="cw-input"
+                    value={operador}
+                    onChange={e => {
+                      setOperador(e.target.value)
+                      limpiarError('operador')
+                    }}
+                    onBlur={() => validarEnBlur('operador')}
+                  >
+                    <option value="" disabled>
+                      Seleccionar...
+                    </option>
+                    {OPERADORES.map(o => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.operador && (
+                    <p
+                      id="operador-error"
+                      style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                    >
+                      {errors.operador}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="vendedor" style={{ ...labelStyle, marginTop: 0 }}>
+                    Vendedor *
+                  </label>
+                  <input
+                    {...fieldProps('vendedor')}
+                    className="cw-input"
+                    value={vendedor}
+                    onChange={e => {
+                      setVendedor(e.target.value)
+                      limpiarError('vendedor')
+                    }}
+                    onBlur={() => validarEnBlur('vendedor')}
+                    autoComplete="off"
+                  />
+                  {errors.vendedor && (
+                    <p
+                      id="vendedor-error"
+                      style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                    >
+                      {errors.vendedor}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <label htmlFor="fecha" style={labelStyle}>
+                Fecha preventa
+              </label>
+              <input
+                type="date"
+                {...fieldProps('fecha')}
+                className="cw-input"
+                value={fecha}
+                onChange={e => setFecha(e.target.value)}
+              />
+            </fieldset>
+          )}
+
+          {step === 2 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                ¿Qué pidió el cliente?
+              </legend>
+              {modeloEsOtro ? (
+                <>
+                  <label htmlFor="modelo" style={{ ...labelStyle, marginTop: 12 }}>
+                    Modelo solicitado *
+                  </label>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <input
+                      {...fieldProps('modelo')}
+                      className="cw-input"
+                      value={modelo}
+                      onChange={e => {
+                        setModelo(e.target.value)
+                        limpiarError('modelo')
+                      }}
+                      onBlur={() => validarEnBlur('modelo')}
+                      placeholder="Ej: Samsung Galaxy S24, Motorola Edge..."
+                      autoComplete="off"
+                      style={{ ...inputStyle, ...(errors.modelo ? inputErrorStyle : {}), flex: 1 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModeloEsOtro(false)
+                        setModelo('')
+                        limpiarError('modelo')
+                      }}
+                      className="cw-btn"
+                      style={{
+                        flexShrink: 0,
+                        padding: '10px 12px',
+                        border: '1.5px solid #E6E7F0',
+                        borderRadius: 9,
+                        background: '#fff',
+                        color: '#64748B',
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Ver iPhones
+                    </button>
+                  </div>
+                  {errors.modelo && (
+                    <p
+                      id="modelo-error"
+                      style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                    >
+                      {errors.modelo}
+                    </p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <label htmlFor="modelo" style={{ ...labelStyle, marginTop: 12 }}>
+                    Modelo solicitado *
+                  </label>
+                  <select
+                    {...fieldProps('modelo')}
+                    className="cw-input"
+                    value={modelo}
+                    onChange={e => {
+                      if (e.target.value === '__otro__') {
+                        setModeloEsOtro(true)
+                        setModelo('')
+                        limpiarError('modelo')
+                      } else {
+                        setModelo(e.target.value)
+                        limpiarError('modelo')
+                      }
+                    }}
+                    onBlur={() => validarEnBlur('modelo')}
+                  >
+                    <option value="" disabled>
+                      Seleccionar iPhone...
+                    </option>
+                    {modelosIphone.map(m => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                    <option value="__otro__">Otro / Escribir manualmente…</option>
+                  </select>
+                  {errors.modelo && (
+                    <p
+                      id="modelo-error"
+                      style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                    >
+                      {errors.modelo}
+                    </p>
+                  )}
+                  {modelosIphone.length === 0 && (
+                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 0' }}>
+                      Cargando modelos...
+                    </p>
+                  )}
+                </>
+              )}
+
+              <label htmlFor="cliente" style={labelStyle}>
+                Cliente *
+              </label>
+              <input
+                {...fieldProps('cliente')}
+                className="cw-input"
+                value={cliente}
+                onChange={e => {
+                  setCliente(e.target.value)
+                  limpiarError('cliente')
+                }}
+                onBlur={() => validarEnBlur('cliente')}
+                placeholder="Nombre y apellido"
+                autoComplete="off"
+              />
+              {errors.cliente && (
+                <p id="cliente-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                  {errors.cliente}
+                </p>
+              )}
+
+              <div className="cw-grid" style={{ marginTop: 10 }}>
+                <div>
+                  <label htmlFor="cuil" style={{ ...labelStyle, marginTop: 0 }}>
+                    CUIL
+                  </label>
+                  <input
+                    id="cuil"
+                    className="cw-input"
+                    style={inputStyle}
+                    value={cuil}
+                    onChange={e => setCuil(e.target.value)}
+                    placeholder="20-12345678-9"
+                    inputMode="numeric"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="tel" style={{ ...labelStyle, marginTop: 0 }}>
+                    Teléfono
+                  </label>
+                  <input
+                    id="tel"
+                    className="cw-input"
+                    style={inputStyle}
+                    value={tel}
+                    onChange={e => setTel(e.target.value)}
+                    placeholder="11 2345 6789"
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+            </fieldset>
+          )}
+
+          {step === 3 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Plazo de entrega
+              </legend>
+              <p
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  flex: n < TOTAL ? 1 : '0 0 auto',
-                  minWidth: 0,
+                  gap: 6,
+                  fontSize: 12.5,
+                  color: '#1D4ED8',
+                  background: '#EEF3FE',
+                  border: '1px solid #DBEAFE',
+                  borderRadius: 8,
+                  padding: '9px 12px',
+                  marginTop: 12,
                 }}
               >
-                <button
-                  type="button"
-                  className="cw-dot-btn"
-                  onClick={() => alcanzable && irAPaso(n)}
-                  disabled={!alcanzable}
-                  aria-label={`Paso ${n}: ${label}${activo ? ' (actual)' : completo ? ' (completado)' : ''}`}
-                  aria-current={activo ? 'step' : undefined}
-                  title={label}
-                  style={{
-                    flexShrink: 0,
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
-                    border: activo
-                      ? '2.5px solid #FF6B2C'
-                      : '2px solid ' + (completo ? '#FFD3BC' : '#E6E7F0'),
-                    background: activo ? '#FF6B2C' : completo ? '#FFF1E8' : '#FBFBFD',
-                    color: activo ? '#fff' : completo ? '#FF6B2C' : '#B6BCCB',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    cursor: alcanzable ? 'pointer' : 'default',
-                    transition: 'background .15s, border-color .15s',
-                  }}
-                >
-                  {completo ? (
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 16 }}
-                      aria-hidden="true"
-                    >
-                      check
-                    </span>
-                  ) : (
-                    n
-                  )}
-                </button>
-                {n < TOTAL && (
-                  <>
-                    <span
-                      className="cw-steplabel"
-                      style={{
-                        fontSize: 11,
-                        fontWeight: activo ? 700 : 500,
-                        color: activo ? '#FF6B2C' : completo ? '#F08A4B' : '#B6BCCB',
-                        marginLeft: 6,
-                        marginRight: 8,
-                        whiteSpace: 'nowrap',
-                      }}
-                      aria-hidden="true"
-                    >
-                      {label}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        flex: 1,
-                        minWidth: 8,
-                        height: 2,
-                        background: completo ? '#FFD3BC' : '#EDF0F6',
-                        borderRadius: 2,
-                        marginRight: 6,
-                      }}
-                    />
-                  </>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-        <p
-          style={{
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            clip: 'rect(0 0 0 0)',
-            whiteSpace: 'nowrap',
-          }}
-          role="status"
-        >
-          {`Paso ${step} de ${TOTAL}: ${STEPS[step - 1]}`}
-        </p>
-      </nav>
-
-      <form
-        onSubmit={ev => {
-          ev.preventDefault()
-          if (step < TOTAL) irAPaso(step + 1)
-          else enviar()
-        }}
-        style={{
-          background: '#fff',
-          border: '1px solid #E6E7F0',
-          borderRadius: 14,
-          padding: 24,
-          marginTop: 16,
-          boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
-        }}
-      >
-        {Object.keys(errors).length > 0 && (
-          <div
-            ref={errRef}
-            tabIndex={-1}
-            role="alert"
-            aria-labelledby="cw-error-title"
-            style={{
-              background: '#FEF2F2',
-              borderLeft: '4px solid #DC2626',
-              borderRadius: 8,
-              padding: '12px 14px',
-              marginBottom: 16,
-              outline: 'none',
-            }}
-          >
-            <p
-              id="cw-error-title"
-              style={{ fontSize: 13, fontWeight: 700, color: '#B91C1C', margin: '0 0 6px' }}
-            >
-              Revisá estos datos para continuar:
-            </p>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {Object.entries(errors).map(([id, txt]) => (
-                <li key={id}>
-                  <a href={`#${id}`} style={{ fontSize: 12.5, color: '#DC2626' }}>
-                    {txt}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {serverMsg && (
-          <div
-            role="alert"
-            style={{
-              background: '#FEF2F2',
-              border: '1px solid #FECACA',
-              borderRadius: 8,
-              padding: '11px 14px',
-              marginBottom: 16,
-              color: '#B91C1C',
-              fontWeight: 600,
-              fontSize: 13,
-            }}
-          >
-            {serverMsg}
-          </div>
-        )}
-
-        {step === 1 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              ¿Quién toma el pedido?
-            </legend>
-            <div className="cw-grid" style={{ marginTop: 12 }}>
-              <div>
-                <label htmlFor="operador" style={{ ...labelStyle, marginTop: 0 }}>
-                  Operador *
-                </label>
-                <select
-                  {...fieldProps('operador')}
-                  className="cw-input"
-                  value={operador}
-                  onChange={e => {
-                    setOperador(e.target.value)
-                    limpiarError('operador')
-                  }}
-                  onBlur={() => validarEnBlur('operador')}
-                >
-                  <option value="" disabled>
-                    Seleccionar...
-                  </option>
-                  {OPERADORES.map(o => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
-                {errors.operador && (
-                  <p
-                    id="operador-error"
-                    style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
-                  >
-                    {errors.operador}
-                  </p>
-                )}
-              </div>
-              <div>
-                <label htmlFor="vendedor" style={{ ...labelStyle, marginTop: 0 }}>
-                  Vendedor *
-                </label>
-                <input
-                  {...fieldProps('vendedor')}
-                  className="cw-input"
-                  value={vendedor}
-                  onChange={e => {
-                    setVendedor(e.target.value)
-                    limpiarError('vendedor')
-                  }}
-                  onBlur={() => validarEnBlur('vendedor')}
-                  autoComplete="off"
-                />
-                {errors.vendedor && (
-                  <p
-                    id="vendedor-error"
-                    style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
-                  >
-                    {errors.vendedor}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <label htmlFor="fecha" style={labelStyle}>
-              Fecha preventa
-            </label>
-            <input
-              type="date"
-              {...fieldProps('fecha')}
-              className="cw-input"
-              value={fecha}
-              onChange={e => setFecha(e.target.value)}
-            />
-          </fieldset>
-        )}
-
-        {step === 2 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              ¿Qué pidió el cliente?
-            </legend>
-            <label htmlFor="modelo" style={{ ...labelStyle, marginTop: 12 }}>
-              Modelo solicitado *
-            </label>
-            <input
-              {...fieldProps('modelo')}
-              className="cw-input"
-              value={modelo}
-              onChange={e => {
-                setModelo(e.target.value)
-                limpiarError('modelo')
-              }}
-              onBlur={() => validarEnBlur('modelo')}
-              placeholder="Buscar modelo..."
-              autoComplete="off"
-            />
-            {errors.modelo && (
-              <p id="modelo-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
-                {errors.modelo}
-              </p>
-            )}
-
-            <label htmlFor="cliente" style={labelStyle}>
-              Cliente *
-            </label>
-            <input
-              {...fieldProps('cliente')}
-              className="cw-input"
-              value={cliente}
-              onChange={e => {
-                setCliente(e.target.value)
-                limpiarError('cliente')
-              }}
-              onBlur={() => validarEnBlur('cliente')}
-              placeholder="Nombre y apellido"
-              autoComplete="off"
-            />
-            {errors.cliente && (
-              <p id="cliente-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
-                {errors.cliente}
-              </p>
-            )}
-
-            <div className="cw-grid" style={{ marginTop: 10 }}>
-              <div>
-                <label htmlFor="cuil" style={{ ...labelStyle, marginTop: 0 }}>
-                  CUIL
-                </label>
-                <input
-                  id="cuil"
-                  className="cw-input"
-                  style={inputStyle}
-                  value={cuil}
-                  onChange={e => setCuil(e.target.value)}
-                  placeholder="20-12345678-9"
-                  inputMode="numeric"
-                />
-              </div>
-              <div>
-                <label htmlFor="tel" style={{ ...labelStyle, marginTop: 0 }}>
-                  Teléfono
-                </label>
-                <input
-                  id="tel"
-                  className="cw-input"
-                  style={inputStyle}
-                  value={tel}
-                  onChange={e => setTel(e.target.value)}
-                  placeholder="11 2345 6789"
-                  inputMode="tel"
-                  autoComplete="tel"
-                />
-              </div>
-            </div>
-          </fieldset>
-        )}
-
-        {step === 3 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              Plazo de entrega
-            </legend>
-            <p
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 12.5,
-                color: '#1D4ED8',
-                background: '#EEF3FE',
-                border: '1px solid #DBEAFE',
-                borderRadius: 8,
-                padding: '9px 12px',
-                marginTop: 12,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 16 }}
-                aria-hidden="true"
-              >
-                schedule
-              </span>
-              Por defecto 7 a 10 días desde hoy. Ajustalo si el cliente pide otra fecha.
-            </p>
-            <div className="cw-grid" style={{ marginTop: 4 }}>
-              <div>
-                <label htmlFor="fechaDesde" style={{ ...labelStyle, marginTop: 0 }}>
-                  Prometida desde
-                </label>
-                <input
-                  type="date"
-                  {...fieldProps('fechaDesde')}
-                  className="cw-input"
-                  value={fechaDesde}
-                  onChange={e => setFechaDesde(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="fechaHasta" style={{ ...labelStyle, marginTop: 0 }}>
-                  Prometida hasta
-                </label>
-                <input
-                  type="date"
-                  {...fieldProps('fechaHasta')}
-                  className="cw-input"
-                  value={fechaHasta}
-                  onChange={e => setFechaHasta(e.target.value)}
-                />
-              </div>
-            </div>
-          </fieldset>
-        )}
-
-        {step === 4 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              Precio y cobro anticipado
-            </legend>
-            <label htmlFor="precioVenta" style={{ ...labelStyle, marginTop: 12 }}>
-              Precio de venta pactado ($) *
-            </label>
-            <input
-              type="number"
-              min={0}
-              {...fieldProps('precioVenta')}
-              className="cw-input"
-              value={precioVenta}
-              onChange={e => {
-                setPrecioVenta(e.target.value)
-                limpiarError('precioVenta')
-              }}
-              onBlur={() => validarEnBlur('precioVenta')}
-              placeholder="0"
-            />
-            {errors.precioVenta && (
-              <p
-                id="precioVenta-error"
-                style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
-              >
-                {errors.precioVenta}
-              </p>
-            )}
-
-            <label style={{ ...labelStyle, marginBottom: 2 }} id="lbl-cobros">
-              Cobrado en ($)
-            </label>
-            <div className="cw-grid-4" id="cobros" role="group" aria-labelledby="lbl-cobros">
-              {(
-                [
-                  ['Efectivo', efec, setEfec],
-                  ['Transferencia', transf, setTransf],
-                  ['Cuotas', cuotas, setCuotas],
-                  ['USD', usd, setUsd],
-                ] as [string, string, (v: string) => void][]
-              ).map(([lab, val, set]) => (
-                <div key={lab}>
-                  <label
-                    htmlFor={`cobro-${lab.toLowerCase()}`}
-                    style={{
-                      display: 'block',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: '#3D4356',
-                      marginBottom: 4,
-                    }}
-                  >
-                    {lab}
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    id={`cobro-${lab.toLowerCase()}`}
-                    className="cw-input"
-                    style={{ ...inputStyle, padding: 8 }}
-                    value={val}
-                    onChange={e => {
-                      set(e.target.value)
-                      limpiarError('cobros')
-                    }}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
-              Los USD se convierten a pesos al cotizar 1 USD = $1.000.
-            </p>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: tot > 0 ? '#D5F5E3' : '#FDEBD0',
-                border: `1px solid ${tot > 0 ? '#ABEBC6' : '#FAD7A0'}`,
-                padding: '12px 14px',
-                borderRadius: 10,
-                marginTop: 10,
-              }}
-            >
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#186A3B' }}>Total cobrado</span>
-              <span style={{ fontSize: 15, fontWeight: 800, color: '#186A3B' }}>
-                {fmt(tot)}
-                {parseInt(usd) ? (
-                  <span style={{ fontSize: 11, fontWeight: 600 }}> (incluye {usd} USD)</span>
-                ) : null}
-              </span>
-            </div>
-            {errors.cobros && (
-              <p
-                id="cobros-error"
-                style={{ fontSize: 12, color: '#DC2626', margin: '8px 0 0', fontWeight: 600 }}
-              >
-                {errors.cobros}
-              </p>
-            )}
-          </fieldset>
-        )}
-
-        {step === 5 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              Observaciones y confirmación
-            </legend>
-            <label htmlFor="obs" style={{ ...labelStyle, marginTop: 12 }}>
-              Observaciones
-            </label>
-            <textarea
-              {...fieldProps('obs')}
-              className="cw-input"
-              style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
-              value={obs}
-              onChange={e => setObs(e.target.value)}
-              placeholder="Detalles del acuerdo con el cliente"
-            />
-
-            <dl
-              style={{
-                margin: '18px 0 0',
-                background: '#FAFBFD',
-                border: '1px solid #EDF0F6',
-                borderRadius: 10,
-                padding: '6px 16px',
-              }}
-            >
-              {resumen.map(([k, v]) => (
-                <div
-                  key={k}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: 16,
-                    padding: '7px 0',
-                    borderBottom: '1px solid #EFF1F6',
-                  }}
-                >
-                  <dt style={{ fontSize: 12, color: '#6B7280', margin: 0, flexShrink: 0 }}>{k}</dt>
-                  <dd
-                    style={{
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: '#181B2E',
-                      margin: 0,
-                      textAlign: 'right',
-                      overflowWrap: 'anywhere',
-                    }}
-                  >
-                    {v}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </fieldset>
-        )}
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-          {step > 1 && (
-            <button
-              type="button"
-              className="cw-btn cw-back"
-              onClick={() => irAPaso(step - 1)}
-              disabled={sending}
-              style={{
-                padding: '12px 20px',
-                border: '1.5px solid #E6E7F0',
-                borderRadius: 10,
-                background: '#fff',
-                color: '#3D4356',
-                fontSize: 13.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 17 }}
-                aria-hidden="true"
-              >
-                arrow_back
-              </span>
-              Volver
-            </button>
-          )}
-          <button
-            type="submit"
-            className="cw-btn cw-primary"
-            disabled={sending}
-            style={{
-              flex: 1,
-              background: sending ? '#FFB48C' : 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
-              color: '#fff',
-              padding: 12,
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: sending ? 'wait' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              transition: 'filter .15s, background .15s',
-            }}
-          >
-            {sending ? (
-              <>
                 <span
-                  className="material-symbols-outlined cw-spin"
-                  style={{ fontSize: 18 }}
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 16 }}
                   aria-hidden="true"
                 >
-                  progress_activity
+                  schedule
                 </span>
-                Registrando…
-              </>
-            ) : step < TOTAL ? (
-              <>
-                Continuar
+                Por defecto 7 a 10 días desde hoy. Ajustalo si el cliente pide otra fecha.
+              </p>
+              <div className="cw-grid" style={{ marginTop: 4 }}>
+                <div>
+                  <label htmlFor="fechaDesde" style={{ ...labelStyle, marginTop: 0 }}>
+                    Prometida desde
+                  </label>
+                  <input
+                    type="date"
+                    {...fieldProps('fechaDesde')}
+                    className="cw-input"
+                    value={fechaDesde}
+                    onChange={e => setFechaDesde(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="fechaHasta" style={{ ...labelStyle, marginTop: 0 }}>
+                    Prometida hasta
+                  </label>
+                  <input
+                    type="date"
+                    {...fieldProps('fechaHasta')}
+                    className="cw-input"
+                    value={fechaHasta}
+                    onChange={e => setFechaHasta(e.target.value)}
+                  />
+                </div>
+              </div>
+            </fieldset>
+          )}
+
+          {step === 4 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Precio y cobro anticipado
+              </legend>
+              <label htmlFor="precioVenta" style={{ ...labelStyle, marginTop: 12 }}>
+                Precio de venta pactado ($) *
+              </label>
+              <input
+                type="number"
+                min={0}
+                {...fieldProps('precioVenta')}
+                className="cw-input"
+                value={precioVenta}
+                onChange={e => {
+                  setPrecioVenta(e.target.value)
+                  limpiarError('precioVenta')
+                }}
+                onBlur={() => validarEnBlur('precioVenta')}
+                placeholder="0"
+              />
+              {errors.precioVenta && (
+                <p
+                  id="precioVenta-error"
+                  style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                >
+                  {errors.precioVenta}
+                </p>
+              )}
+
+              <label style={{ ...labelStyle, marginBottom: 2 }} id="lbl-cobros">
+                Cobrado en ($)
+              </label>
+              <div className="cw-grid-4" id="cobros" role="group" aria-labelledby="lbl-cobros">
+                {(
+                  [
+                    ['Efectivo', efec, setEfec],
+                    ['Transferencia', transf, setTransf],
+                    ['Cuotas', cuotas, setCuotas],
+                    ['USD', usd, setUsd],
+                  ] as [string, string, (v: string) => void][]
+                ).map(([lab, val, set]) => (
+                  <div key={lab}>
+                    <label
+                      htmlFor={`cobro-${lab.toLowerCase()}`}
+                      style={{
+                        display: 'block',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: '#3D4356',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {lab}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      id={`cobro-${lab.toLowerCase()}`}
+                      className="cw-input"
+                      style={{ ...inputStyle, padding: 8 }}
+                      value={val}
+                      onChange={e => {
+                        set(e.target.value)
+                        limpiarError('cobros')
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
+                Los USD se convierten a pesos al cotizar 1 USD = $1.000.
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: tot > 0 ? '#D5F5E3' : '#FDEBD0',
+                  border: `1px solid ${tot > 0 ? '#ABEBC6' : '#FAD7A0'}`,
+                  padding: '12px 14px',
+                  borderRadius: 10,
+                  marginTop: 10,
+                }}
+              >
+                <span style={{ fontSize: 12, fontWeight: 700, color: '#186A3B' }}>
+                  Total cobrado
+                </span>
+                <span style={{ fontSize: 15, fontWeight: 800, color: '#186A3B' }}>
+                  {fmt(tot)}
+                  {parseInt(usd) ? (
+                    <span style={{ fontSize: 11, fontWeight: 600 }}> (incluye {usd} USD)</span>
+                  ) : null}
+                </span>
+              </div>
+              {errors.cobros && (
+                <p
+                  id="cobros-error"
+                  style={{ fontSize: 12, color: '#DC2626', margin: '8px 0 0', fontWeight: 600 }}
+                >
+                  {errors.cobros}
+                </p>
+              )}
+            </fieldset>
+          )}
+
+          {step === 5 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Observaciones y confirmación
+              </legend>
+              <label htmlFor="obs" style={{ ...labelStyle, marginTop: 12 }}>
+                Observaciones
+              </label>
+              <textarea
+                {...fieldProps('obs')}
+                className="cw-input"
+                style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+                value={obs}
+                onChange={e => setObs(e.target.value)}
+                placeholder="Detalles del acuerdo con el cliente"
+              />
+
+              <dl
+                style={{
+                  margin: '18px 0 0',
+                  background: '#FAFBFD',
+                  border: '1px solid #EDF0F6',
+                  borderRadius: 10,
+                  padding: '6px 16px',
+                }}
+              >
+                {resumen.map(([k, v]) => (
+                  <div
+                    key={k}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: 16,
+                      padding: '7px 0',
+                      borderBottom: '1px solid #EFF1F6',
+                    }}
+                  >
+                    <dt style={{ fontSize: 12, color: '#6B7280', margin: 0, flexShrink: 0 }}>
+                      {k}
+                    </dt>
+                    <dd
+                      style={{
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: '#181B2E',
+                        margin: 0,
+                        textAlign: 'right',
+                        overflowWrap: 'anywhere',
+                      }}
+                    >
+                      {v}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </fieldset>
+          )}
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+            {step > 1 && (
+              <button
+                type="button"
+                className="cw-btn cw-back"
+                onClick={() => irAPaso(step - 1)}
+                disabled={sending}
+                style={{
+                  padding: '12px 20px',
+                  border: '1.5px solid #E6E7F0',
+                  borderRadius: 10,
+                  background: '#fff',
+                  color: '#3D4356',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
                 <span
                   className="material-symbols-outlined"
                   style={{ fontSize: 17 }}
                   aria-hidden="true"
                 >
-                  arrow_forward
+                  arrow_back
                 </span>
-              </>
-            ) : (
-              <>
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 18 }}
-                  aria-hidden="true"
-                >
-                  check_circle
-                </span>
-                Registrar preventa
-              </>
+                Volver
+              </button>
             )}
-          </button>
-        </div>
-        <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', margin: '12px 0 0' }}>
-          Podés volver a los pasos anteriores con el menú superior para corregir cualquier dato.
-        </p>
-      </form>
-    </div>
+            <button
+              type="submit"
+              className="cw-btn cw-primary"
+              disabled={sending}
+              style={{
+                flex: 1,
+                background: sending ? '#FFB48C' : 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
+                color: '#fff',
+                padding: 12,
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: sending ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'filter .15s, background .15s',
+              }}
+            >
+              {sending ? (
+                <>
+                  <span
+                    className="material-symbols-outlined cw-spin"
+                    style={{ fontSize: 18 }}
+                    aria-hidden="true"
+                  >
+                    progress_activity
+                  </span>
+                  Registrando…
+                </>
+              ) : step < TOTAL ? (
+                <>
+                  Continuar
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 17 }}
+                    aria-hidden="true"
+                  >
+                    arrow_forward
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 18 }}
+                    aria-hidden="true"
+                  >
+                    check_circle
+                  </span>
+                  Registrar preventa
+                </>
+              )}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', margin: '12px 0 0' }}>
+            Podés volver a los pasos anteriores con el menú superior para corregir cualquier dato.
+          </p>
+        </form>
+      </div>
+    </>
   )
 }

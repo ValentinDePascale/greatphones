@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fmtARS } from '@/lib/precios'
 
 export interface PrecioRow {
@@ -10,6 +10,14 @@ export interface PrecioRow {
   precioARS: number
   preventaARS: number
   descuentoARS: number
+}
+
+const FILA_VACIA: Omit<PrecioRow, 'id'> = {
+  modelo: '',
+  almacenamiento: '',
+  precioARS: 0,
+  preventaARS: 0,
+  descuentoARS: 0,
 }
 
 const inputStyle: React.CSSProperties = {
@@ -41,24 +49,21 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
   const [rows, setRows] = useState<PrecioRow[]>([])
   const [cargando, setCargando] = useState(true)
   const [buscar, setBuscar] = useState('')
-  const [edit, setEdit] = useState<PrecioRow | null>(null)
-  const [nuevo, setNuevo] = useState(false)
   const [guardando, setGuardando] = useState(false)
   const [errorModelo, setErrorModelo] = useState('')
   const [msg, setMsg] = useState<{ t: string; s: string } | null>(null)
-  const [form, setForm] = useState({
-    modelo: '',
-    almacenamiento: '',
-    precioARS: 0,
-    preventaARS: 0,
-    descuentoARS: 0,
-  })
+  const [modal, setModal] = useState<{
+    modo: 'nuevo' | 'editar'
+    valores: Omit<PrecioRow, 'id'> & { id?: string }
+  } | null>(null)
   const modeloRef = useRef<HTMLInputElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+  const disparadorRef = useRef<HTMLElement | null>(null)
 
-  const toast = (t: string, s: string) => {
+  const toast = useCallback((t: string, s: string) => {
     setMsg({ t, s })
     setTimeout(() => setMsg(null), 4000)
-  }
+  }, [])
 
   useEffect(() => {
     let activo = true
@@ -79,41 +84,74 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
     return () => {
       activo = false
     }
-  }, [endpoint])
+  }, [endpoint, toast])
 
   const filtrados = rows.filter(
     r =>
       !buscar || (r.modelo + ' ' + r.almacenamiento).toLowerCase().includes(buscar.toLowerCase()),
   )
 
-  const startNuevo = () => {
-    setNuevo(true)
-    setEdit(null)
+  const abrirNuevo = () => {
+    disparadorRef.current = document.activeElement as HTMLElement
     setErrorModelo('')
-    setForm({ modelo: '', almacenamiento: '', precioARS: 0, preventaARS: 0, descuentoARS: 0 })
-    requestAnimationFrame(() => modeloRef.current?.focus())
-  }
-  const startEdit = (r: PrecioRow) => {
-    setEdit(r)
-    setNuevo(false)
-    setErrorModelo('')
-    setForm({
-      modelo: r.modelo,
-      almacenamiento: r.almacenamiento,
-      precioARS: r.precioARS,
-      preventaARS: r.preventaARS,
-      descuentoARS: r.descuentoARS,
-    })
-    requestAnimationFrame(() => modeloRef.current?.focus())
-  }
-  const cerrarForm = () => {
-    setEdit(null)
-    setNuevo(false)
-    setErrorModelo('')
+    setModal({ modo: 'nuevo', valores: { ...FILA_VACIA } })
   }
 
+  const abrirEditar = (r: PrecioRow) => {
+    disparadorRef.current = document.activeElement as HTMLElement
+    setErrorModelo('')
+    setModal({ modo: 'editar', valores: { ...r } })
+  }
+
+  const cerrarModal = useCallback(() => {
+    setModal(null)
+    setErrorModelo('')
+    requestAnimationFrame(() => disparadorRef.current?.focus())
+  }, [])
+
+  const modalAbierto = !!modal
+
+  useEffect(() => {
+    if (!modalAbierto) return
+    document.body.style.overflow = 'hidden'
+    const t = requestAnimationFrame(() => modeloRef.current?.focus())
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') {
+        ev.preventDefault()
+        cerrarModal()
+        return
+      }
+      if (ev.key === 'Tab' && modalRef.current) {
+        const focuseables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button:not(:disabled), input:not(:disabled), select, textarea, [tabindex]:not([tabindex="-1"])',
+        )
+        if (focuseables.length === 0) return
+        const primero = focuseables[0]
+        const ultimo = focuseables[focuseables.length - 1]
+        if (!ev.shiftKey && document.activeElement === ultimo) {
+          ev.preventDefault()
+          primero.focus()
+        } else if (
+          ev.shiftKey &&
+          (document.activeElement === primero || document.activeElement === modalRef.current)
+        ) {
+          ev.preventDefault()
+          ultimo.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.body.style.overflow = ''
+      cancelAnimationFrame(t)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [modalAbierto, cerrarModal])
+
   const guardar = async () => {
-    if (!form.modelo.trim()) {
+    if (!modal) return
+    const esNuevo = modal.modo === 'nuevo'
+    if (!modal.valores.modelo.trim()) {
       setErrorModelo('El modelo es obligatorio')
       modeloRef.current?.focus()
       return
@@ -121,29 +159,32 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
     setGuardando(true)
     try {
       const payload = {
-        ...form,
-        precioARS: Number(form.precioARS) || 0,
-        preventaARS: Number(form.preventaARS) || 0,
-        descuentoARS: Number(form.descuentoARS) || 0,
+        modelo: modal.valores.modelo,
+        almacenamiento: modal.valores.almacenamiento,
+        precioARS: Number(modal.valores.precioARS) || 0,
+        preventaARS: Number(modal.valores.preventaARS) || 0,
+        descuentoARS: Number(modal.valores.descuentoARS) || 0,
       }
-      const method = edit ? 'PATCH' : 'POST'
+      const method = esNuevo ? 'POST' : 'PATCH'
+      const body = esNuevo ? payload : { id: modal.valores.id, ...payload }
       const r = await fetch(endpoint, {
         method,
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(edit ? { id: edit.id, ...payload } : payload),
+        body: JSON.stringify(body),
       })
       const d = await r.json()
       if (!r.ok) {
         toast('error', d.error || 'Error')
         return
       }
-      toast('success', edit ? 'Precio actualizado' : 'Precio creado')
-      cerrarForm()
-      setRows(prev => {
-        if (edit) return prev.map(x => (x.id === edit.id ? { ...x, ...payload } : x))
-        return [...prev, d]
-      })
+      toast('success', esNuevo ? 'Precio creado' : 'Precio actualizado')
+      setRows(prev =>
+        esNuevo
+          ? [...prev, d]
+          : prev.map(x => (x.id === modal.valores.id ? { ...x, ...payload } : x)),
+      )
+      setModal(null)
     } catch {
       toast('error', 'Error de conexión')
     } finally {
@@ -162,30 +203,53 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
     setRows(prev => prev.filter(x => x.id !== id))
   }
 
-  const field = (key: keyof typeof form, label: string, type = 'text', requerido = false) => {
+  const campoModal = (
+    key: 'modelo' | 'almacenamiento' | 'precioARS' | 'preventaARS' | 'descuentoARS',
+    label: string,
+    type = 'text',
+    requerido = false,
+    autoFocus = false,
+  ) => {
+    if (!modal) return null
     const err = key === 'modelo' ? errorModelo : ''
     return (
       <div>
-        <label htmlFor={`f-${key}`} style={labelStyle}>
+        <label htmlFor={`m-${key}`} style={labelStyle}>
           {label}
           {requerido ? ' *' : ''}
         </label>
         <input
-          ref={key === 'modelo' ? modeloRef : undefined}
-          id={`f-${key}`}
+          ref={autoFocus ? modeloRef : undefined}
+          id={`m-${key}`}
           type={type}
           min={type === 'number' ? 0 : undefined}
+          className="pe-input"
           style={{ ...inputStyle, ...(err ? inputErrorStyle : {}) }}
-          value={String(form[key])}
+          value={String(modal.valores[key])}
           aria-invalid={err ? true : undefined}
-          aria-describedby={err ? `f-${key}-error` : undefined}
-          onChange={e =>
-            setForm({ ...form, [key]: type === 'number' ? Number(e.target.value) : e.target.value })
-          }
+          aria-describedby={err ? `m-${key}-error` : undefined}
+          onChange={e => {
+            if (!modal) return
+            const valor = type === 'number' ? Number(e.target.value) : e.target.value
+            if (key === 'descuentoARS') {
+              const descuento = Number(valor) || 0
+              setModal({
+                ...modal,
+                valores: {
+                  ...modal.valores,
+                  descuentoARS: descuento,
+                  preventaARS: Math.max((Number(modal.valores.precioARS) || 0) - descuento, 0),
+                },
+              })
+              return
+            }
+            setModal({ ...modal, valores: { ...modal.valores, [key]: valor } })
+          }}
+          onFocus={type === 'number' ? ev => ev.currentTarget.select() : undefined}
           onBlur={
             key === 'modelo'
               ? () => {
-                  if (!form.modelo.trim()) setErrorModelo('El modelo es obligatorio')
+                  if (!modal.valores.modelo.trim()) setErrorModelo('El modelo es obligatorio')
                   else setErrorModelo('')
                 }
               : undefined
@@ -193,33 +257,40 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
         />
         {err && (
           <p
-            id={`f-${key}-error`}
+            id={`m-${key}-error`}
             role="alert"
             style={{ fontSize: 11.5, color: '#DC2626', margin: '4px 0 0' }}
           >
             {err}
           </p>
         )}
+        {key === 'descuentoARS' && !err && (
+          <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 0' }}>
+            Preventa = Precio − Descuento (se calcula solo)
+          </p>
+        )}
       </div>
     )
   }
 
-  const formAbierto = nuevo || edit
-
   return (
     <div style={{ padding: 8 }}>
       <style>{`
-        .pe-grid { display: grid; grid-template-columns: minmax(180px,2fr) repeat(4,1fr); gap: 10px; }
-        @media (max-width: 760px) { .pe-grid { grid-template-columns: 1fr 1fr; } }
-        @media (max-width: 480px) { .pe-grid { grid-template-columns: 1fr; } }
+        .pm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .pm-grid .pm-full { grid-column: 1 / -1; }
+        @media (max-width: 520px) { .pm-grid { grid-template-columns: 1fr; } }
         .pe-input:focus { border-color: #FF6B2C !important; outline: none; }
         .pe-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
         .pe-add:not(:disabled):hover { filter: brightness(.94); }
-        .pe-iconbtn:hover { filter: brightness(.94); }
+        .pe-iconbtn:hover:not(:disabled) { filter: brightness(.94); }
+        .pe-cancel:hover:not(:disabled) { background: #E4E7EF !important; }
+        .pm-card { animation: pmin .16s ease-out; }
+        @keyframes pmin { from { opacity: 0; transform: translateY(8px) scale(.985); } to { opacity: 1; transform: none; } }
         .pe-spin { animation: pes 1s linear infinite; }
         @keyframes pes { to { transform: rotate(360deg); } }
         @media (prefers-reduced-motion: reduce) {
           .pe-spin { animation: none !important; }
+          .pm-card { animation: none !important; }
           .pe-add, .pe-iconbtn { transition: none !important; }
         }
       `}</style>
@@ -264,118 +335,30 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
           onChange={e => setBuscar(e.target.value)}
           aria-label="Buscar en la lista de precios"
         />
-        {!formAbierto && (
-          <button
-            onClick={startNuevo}
-            className="pe-btn pe-add"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 7,
-              background: 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
-              color: '#fff',
-              padding: '10px 18px',
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 13,
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'filter .15s',
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 17 }} aria-hidden="true">
-              add
-            </span>
-            Agregar {title}
-          </button>
-        )}
-      </div>
-
-      {formAbierto && (
-        <div
+        <button
+          onClick={abrirNuevo}
+          className="pe-btn pe-add"
           style={{
-            background: '#fff',
-            border: '1px solid #E6E7F0',
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 16,
-            boxShadow: '0 1px 2px rgba(23,23,45,.04)',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 7,
+            background: 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
+            color: '#fff',
+            padding: '10px 18px',
+            border: 'none',
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'filter .15s',
           }}
-          role="form"
-          aria-label={edit ? 'Editar precio' : 'Nuevo precio'}
         >
-          <div style={{ fontWeight: 700, fontSize: 13.5, marginBottom: 12, color: '#181B2E' }}>
-            {edit ? 'Editar' : 'Nuevo'} {title}
-          </div>
-          <div className="pe-grid">
-            {field('modelo', 'Modelo', 'text', true)}
-            {field('almacenamiento', 'Almacenamiento')}
-            {field('precioARS', 'Precio ARS', 'number')}
-            {field('preventaARS', 'Preventa ARS', 'number')}
-            {field('descuentoARS', 'Descuento ARS', 'number')}
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-            <button
-              onClick={guardar}
-              disabled={guardando}
-              className="pe-btn"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 7,
-                background: guardando ? '#7FD3A8' : '#0F9D58',
-                color: '#fff',
-                padding: '9px 18px',
-                border: 'none',
-                borderRadius: 9,
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: guardando ? 'wait' : 'pointer',
-              }}
-            >
-              {guardando ? (
-                <>
-                  <span
-                    className="material-symbols-outlined pe-spin"
-                    style={{ fontSize: 15 }}
-                    aria-hidden="true"
-                  >
-                    progress_activity
-                  </span>
-                  Guardando…
-                </>
-              ) : (
-                <>
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: 15 }}
-                    aria-hidden="true"
-                  >
-                    save
-                  </span>
-                  Guardar
-                </>
-              )}
-            </button>
-            <button
-              onClick={cerrarForm}
-              disabled={guardando}
-              className="pe-btn"
-              style={{
-                background: '#EEF0F6',
-                color: '#374151',
-                padding: '9px 16px',
-                border: 'none',
-                borderRadius: 9,
-                fontSize: 13,
-                cursor: 'pointer',
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
+          <span className="material-symbols-outlined" style={{ fontSize: 17 }} aria-hidden="true">
+            add
+          </span>
+          Agregar {title}
+        </button>
+      </div>
 
       <div style={{ overflow: 'auto', border: '1px solid #E6E7F0', borderRadius: 10 }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -425,7 +408,7 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
                 <td style={{ padding: '8px 10px', color: '#1E8449' }}>{fmtARS(r.descuentoARS)}</td>
                 <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
                   <button
-                    onClick={() => startEdit(r)}
+                    onClick={() => abrirEditar(r)}
                     className="pe-btn pe-iconbtn"
                     aria-label={`Editar ${r.modelo} ${r.almacenamiento}`}
                     title="Editar"
@@ -477,6 +460,179 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
           </tbody>
         </table>
       </div>
+
+      {modal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 120,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            onClick={cerrarModal}
+            aria-hidden="true"
+            style={{ position: 'absolute', inset: 0, background: 'rgba(15,23,42,.45)' }}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pm-titulo"
+            ref={modalRef}
+            tabIndex={-1}
+            className="pm-card"
+            style={{
+              position: 'relative',
+              zIndex: 1,
+              width: 'min(92vw, 560px)',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              background: '#fff',
+              border: '1px solid #E6E7F0',
+              borderRadius: 14,
+              padding: 22,
+              boxShadow: '0 12px 48px rgba(23,23,45,.22)',
+              outline: 'none',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: 12,
+                marginBottom: 4,
+              }}
+            >
+              <h2
+                id="pm-titulo"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 16,
+                  fontWeight: 800,
+                  color: '#181B2E',
+                  margin: 0,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 19, color: '#FF6B2C' }}
+                  aria-hidden="true"
+                >
+                  {modal.modo === 'nuevo' ? 'add_circle' : 'edit'}
+                </span>
+                {modal.modo === 'nuevo' ? `Nuevo ${title}` : `Editar ${title}`}
+              </h2>
+              <button
+                onClick={cerrarModal}
+                disabled={guardando}
+                className="pe-btn pe-iconbtn"
+                aria-label="Cerrar"
+                title="Cerrar (Esc)"
+                style={{
+                  background: '#EEF0F6',
+                  color: '#64748B',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: 6,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 17 }}
+                  aria-hidden="true"
+                >
+                  close
+                </span>
+              </button>
+            </div>
+            {modal.modo === 'editar' && (
+              <p style={{ fontSize: 12, color: '#6B7280', margin: '0 0 14px' }}>
+                {modal.valores.modelo} {modal.valores.almacenamiento} · Venta actual:{' '}
+                {fmtARS(Number(modal.valores.precioARS) || 0)}
+              </p>
+            )}
+
+            <div className="pm-grid" style={{ marginTop: 10 }}>
+              <div className="pm-full">{campoModal('modelo', 'Modelo', 'text', true, true)}</div>
+              {campoModal('almacenamiento', 'Almacenamiento')}
+              {campoModal('precioARS', 'Precio ARS', 'number')}
+              {campoModal('preventaARS', 'Preventa ARS', 'number')}
+              {campoModal('descuentoARS', 'Descuento ARS', 'number')}
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
+              <button
+                onClick={cerrarModal}
+                disabled={guardando}
+                className="pe-btn pe-cancel"
+                style={{
+                  background: '#EEF0F6',
+                  color: '#374151',
+                  padding: '9px 18px',
+                  border: 'none',
+                  borderRadius: 9,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={guardar}
+                disabled={guardando}
+                className="pe-btn"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 7,
+                  background: guardando ? '#7FD3A8' : '#0F9D58',
+                  color: '#fff',
+                  padding: '9px 20px',
+                  border: 'none',
+                  borderRadius: 9,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: guardando ? 'wait' : 'pointer',
+                }}
+              >
+                {guardando ? (
+                  <>
+                    <span
+                      className="material-symbols-outlined pe-spin"
+                      style={{ fontSize: 15 }}
+                      aria-hidden="true"
+                    >
+                      progress_activity
+                    </span>
+                    Guardando…
+                  </>
+                ) : (
+                  <>
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 15 }}
+                      aria-hidden="true"
+                    >
+                      save
+                    </span>
+                    Guardar
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

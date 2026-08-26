@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import AdminTopbar from '@/components/AdminTopbar'
 
 interface PreEntrega {
   id: string
@@ -124,7 +125,10 @@ export default function EntregaClient() {
       const e = validarPaso(step)
       setErrors(e)
       if (Object.keys(e).length > 0) {
-        requestAnimationFrame(() => errRef.current?.focus())
+        requestAnimationFrame(() => {
+          errRef.current?.focus({ preventScroll: true })
+          errRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        })
         return
       }
     }
@@ -162,7 +166,10 @@ export default function EntregaClient() {
       setErrors(todos)
       const primero = Object.keys(todos)[0]
       setStep(primero === 'cobros' ? 2 : 1)
-      requestAnimationFrame(() => errRef.current?.focus())
+      requestAnimationFrame(() => {
+        errRef.current?.focus({ preventScroll: true })
+        errRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      })
       return
     }
     setSending(true)
@@ -279,8 +286,10 @@ export default function EntregaClient() {
   ]
 
   return (
-    <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
-      <style>{`
+    <>
+      <AdminTopbar titulo="Entregar Preventa" />
+      <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
+        <style>{`
         .cw-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
         @media (max-width: 640px) {
           .cw-grid-4 { grid-template-columns: repeat(2,1fr); }
@@ -300,353 +309,567 @@ export default function EntregaClient() {
         }
       `}</style>
 
-      <header style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: 26, color: '#FF6B2C' }}
-          aria-hidden="true"
-        >
-          local_shipping
-        </span>
-        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181B2E', margin: 0 }}>
-          Entregar Preventa
-        </h1>
-      </header>
-      <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
-        Cobro del saldo pendiente y entrega del equipo
-      </p>
-
-      <nav aria-label="Progreso del formulario">
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: 8,
-            marginBottom: 8,
-          }}
-        >
-          <p
-            style={{ fontSize: 12.5, fontWeight: 700, color: '#181B2E', margin: 0 }}
-            aria-hidden="true"
-          >
-            Paso {step} de {TOTAL} · {STEPS[step - 1]}
-          </p>
-          <p style={{ fontSize: 11.5, color: '#94A3B8', margin: 0 }} aria-hidden="true">
-            {Math.round((step / TOTAL) * 100)}%
-          </p>
-        </div>
-        <div
-          style={{ height: 5, background: '#EDF0F6', borderRadius: 99, overflow: 'hidden' }}
-          aria-hidden="true"
-        >
-          <div
-            className="cw-bar"
-            style={{
-              height: '100%',
-              width: `${(step / TOTAL) * 100}%`,
-              background: 'linear-gradient(90deg,#FF6B2C,#FF8A50)',
-              borderRadius: 99,
-              transition: 'width .25s ease',
-            }}
-          />
-        </div>
-        <ol
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            listStyle: 'none',
-            margin: '14px 0 0',
-            padding: 0,
-          }}
-        >
-          {STEPS.map((label, i) => {
-            const n = i + 1
-            const completo = n < step
-            const activo = n === step
-            const alcanzable = n <= maxStep
-            return (
-              <li
-                key={label}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flex: n < TOTAL ? 1 : '0 0 auto',
-                  minWidth: 0,
-                }}
-              >
-                <button
-                  type="button"
-                  className="cw-dot-btn"
-                  onClick={() => alcanzable && irAPaso(n)}
-                  disabled={!alcanzable}
-                  aria-label={`Paso ${n}: ${label}${activo ? ' (actual)' : completo ? ' (completado)' : ''}`}
-                  aria-current={activo ? 'step' : undefined}
-                  title={label}
-                  style={{
-                    flexShrink: 0,
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
-                    border: activo
-                      ? '2.5px solid #FF6B2C'
-                      : '2px solid ' + (completo ? '#FFD3BC' : '#E6E7F0'),
-                    background: activo ? '#FF6B2C' : completo ? '#FFF1E8' : '#FBFBFD',
-                    color: activo ? '#fff' : completo ? '#FF6B2C' : '#B6BCCB',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    cursor: alcanzable ? 'pointer' : 'default',
-                    transition: 'background .15s, border-color .15s',
-                  }}
-                >
-                  {completo ? (
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 16 }}
-                      aria-hidden="true"
-                    >
-                      check
-                    </span>
-                  ) : (
-                    n
-                  )}
-                </button>
-                {n < TOTAL && (
-                  <>
-                    <span
-                      className="cw-steplabel"
-                      style={{
-                        fontSize: 11,
-                        fontWeight: activo ? 700 : 500,
-                        color: activo ? '#FF6B2C' : completo ? '#F08A4B' : '#B6BCCB',
-                        marginLeft: 6,
-                        marginRight: 8,
-                        whiteSpace: 'nowrap',
-                      }}
-                      aria-hidden="true"
-                    >
-                      {label}
-                    </span>
-                    <span
-                      aria-hidden="true"
-                      style={{
-                        flex: 1,
-                        minWidth: 8,
-                        height: 2,
-                        background: completo ? '#FFD3BC' : '#EDF0F6',
-                        borderRadius: 2,
-                        marginRight: 6,
-                      }}
-                    />
-                  </>
-                )}
-              </li>
-            )
-          })}
-        </ol>
-        <p
-          style={{
-            position: 'absolute',
-            width: 1,
-            height: 1,
-            overflow: 'hidden',
-            clip: 'rect(0 0 0 0)',
-            whiteSpace: 'nowrap',
-          }}
-          role="status"
-        >
-          {`Paso ${step} de ${TOTAL}: ${STEPS[step - 1]}`}
+        <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
+          Cobro del saldo pendiente y entrega del equipo
         </p>
-      </nav>
 
-      <form
-        onSubmit={ev => {
-          ev.preventDefault()
-          if (step < TOTAL) irAPaso(step + 1)
-          else enviar()
-        }}
-        style={{
-          background: '#fff',
-          border: '1px solid #E6E7F0',
-          borderRadius: 14,
-          padding: 24,
-          marginTop: 16,
-          boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
-        }}
-      >
-        {Object.keys(errors).length > 0 && (
+        <nav aria-label="Progreso del formulario">
           <div
-            ref={errRef}
-            tabIndex={-1}
-            role="alert"
-            aria-labelledby="cw-error-title"
             style={{
-              background: '#FEF2F2',
-              borderLeft: '4px solid #DC2626',
-              borderRadius: 8,
-              padding: '12px 14px',
-              marginBottom: 16,
-              outline: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginBottom: 8,
             }}
           >
             <p
-              id="cw-error-title"
-              style={{ fontSize: 13, fontWeight: 700, color: '#B91C1C', margin: '0 0 6px' }}
+              style={{ fontSize: 12.5, fontWeight: 700, color: '#181B2E', margin: 0 }}
+              aria-hidden="true"
             >
-              Revisá estos datos para continuar:
+              Paso {step} de {TOTAL} · {STEPS[step - 1]}
             </p>
-            <ul style={{ margin: 0, paddingLeft: 18 }}>
-              {Object.entries(errors).map(([id, txt]) => (
-                <li key={id}>
-                  <a href={`#${id}`} style={{ fontSize: 12.5, color: '#DC2626' }}>
-                    {txt}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            <p style={{ fontSize: 11.5, color: '#94A3B8', margin: 0 }} aria-hidden="true">
+              {Math.round((step / TOTAL) * 100)}%
+            </p>
           </div>
-        )}
-
-        {serverMsg && (
           <div
-            role="alert"
+            style={{ height: 5, background: '#EDF0F6', borderRadius: 99, overflow: 'hidden' }}
+            aria-hidden="true"
+          >
+            <div
+              className="cw-bar"
+              style={{
+                height: '100%',
+                width: `${(step / TOTAL) * 100}%`,
+                background: 'linear-gradient(90deg,#FF6B2C,#FF8A50)',
+                borderRadius: 99,
+                transition: 'width .25s ease',
+              }}
+            />
+          </div>
+          <ol
             style={{
-              background: '#FEF2F2',
-              border: '1px solid #FECACA',
-              borderRadius: 8,
-              padding: '11px 14px',
-              marginBottom: 16,
-              color: '#B91C1C',
-              fontWeight: 600,
-              fontSize: 13,
+              display: 'flex',
+              alignItems: 'center',
+              listStyle: 'none',
+              margin: '14px 0 0',
+              padding: 0,
             }}
           >
-            {serverMsg}
-          </div>
-        )}
+            {STEPS.map((label, i) => {
+              const n = i + 1
+              const completo = n < step
+              const activo = n === step
+              const alcanzable = n <= maxStep
+              return (
+                <li
+                  key={label}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flex: n < TOTAL ? 1 : '0 0 auto',
+                    minWidth: 0,
+                  }}
+                >
+                  <button
+                    type="button"
+                    className="cw-dot-btn"
+                    onClick={() => alcanzable && irAPaso(n)}
+                    disabled={!alcanzable}
+                    aria-label={`Paso ${n}: ${label}${activo ? ' (actual)' : completo ? ' (completado)' : ''}`}
+                    aria-current={activo ? 'step' : undefined}
+                    title={label}
+                    style={{
+                      flexShrink: 0,
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      border: activo
+                        ? '2.5px solid #FF6B2C'
+                        : '2px solid ' + (completo ? '#FFD3BC' : '#E6E7F0'),
+                      background: activo ? '#FF6B2C' : completo ? '#FFF1E8' : '#FBFBFD',
+                      color: activo ? '#fff' : completo ? '#FF6B2C' : '#B6BCCB',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: 12.5,
+                      fontWeight: 700,
+                      cursor: alcanzable ? 'pointer' : 'default',
+                      transition: 'background .15s, border-color .15s',
+                    }}
+                  >
+                    {completo ? (
+                      <span
+                        className="material-symbols-outlined"
+                        style={{ fontSize: 16 }}
+                        aria-hidden="true"
+                      >
+                        check
+                      </span>
+                    ) : (
+                      n
+                    )}
+                  </button>
+                  {n < TOTAL && (
+                    <>
+                      <span
+                        className="cw-steplabel"
+                        style={{
+                          fontSize: 11,
+                          fontWeight: activo ? 700 : 500,
+                          color: activo ? '#FF6B2C' : completo ? '#F08A4B' : '#B6BCCB',
+                          marginLeft: 6,
+                          marginRight: 8,
+                          whiteSpace: 'nowrap',
+                        }}
+                        aria-hidden="true"
+                      >
+                        {label}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        style={{
+                          flex: 1,
+                          minWidth: 8,
+                          height: 2,
+                          background: completo ? '#FFD3BC' : '#EDF0F6',
+                          borderRadius: 2,
+                          marginRight: 6,
+                        }}
+                      />
+                    </>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+          <p
+            style={{
+              position: 'absolute',
+              width: 1,
+              height: 1,
+              overflow: 'hidden',
+              clip: 'rect(0 0 0 0)',
+              whiteSpace: 'nowrap',
+            }}
+            role="status"
+          >
+            {`Paso ${step} de ${TOTAL}: ${STEPS[step - 1]}`}
+          </p>
+        </nav>
 
-        {step === 1 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              ¿Quién entrega y qué preventa?
-            </legend>
-            <label htmlFor="operador" style={{ ...labelStyle, marginTop: 12 }}>
-              Operador *
-            </label>
-            <select
-              {...fieldProps('operador')}
-              className="cw-input"
-              value={operador}
-              onChange={e => {
-                setOperador(e.target.value)
-                limpiarError('operador')
+        <form
+          onSubmit={ev => {
+            ev.preventDefault()
+            if (step < TOTAL) irAPaso(step + 1)
+            else enviar()
+          }}
+          style={{
+            background: '#fff',
+            border: '1px solid #E6E7F0',
+            borderRadius: 14,
+            padding: 24,
+            marginTop: 16,
+            boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
+          }}
+        >
+          {Object.keys(errors).length > 0 && (
+            <div
+              ref={errRef}
+              tabIndex={-1}
+              role="alert"
+              aria-labelledby="cw-error-title"
+              style={{
+                background: '#FEF2F2',
+                borderLeft: '4px solid #DC2626',
+                borderRadius: 8,
+                padding: '12px 14px',
+                marginBottom: 16,
+                outline: 'none',
               }}
-              onBlur={() => validarEnBlur('operador')}
             >
-              <option value="" disabled>
-                Seleccionar...
-              </option>
-              {OPERADORES.map(o => (
-                <option key={o} value={o}>
-                  {o}
-                </option>
-              ))}
-            </select>
-            {errors.operador && (
-              <p id="operador-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
-                {errors.operador}
-              </p>
-            )}
-
-            <label htmlFor="nPre" style={labelStyle}>
-              Preventa a entregar *
-            </label>
-            <select
-              {...fieldProps('nPre')}
-              className="cw-input"
-              value={nPre}
-              onChange={e => {
-                setNPre(e.target.value)
-                limpiarError('nPre')
-              }}
-              onBlur={() => validarEnBlur('nPre')}
-            >
-              <option value="">Seleccionar preventa...</option>
-              {preorders.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.code} — {p.productModelName || ''} → {p.clientName} [{p.status}]
-                </option>
-              ))}
-            </select>
-            {errors.nPre && (
-              <p id="nPre-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
-                {errors.nPre}
-              </p>
-            )}
-            {preorders.length === 0 && (
               <p
+                id="cw-error-title"
+                style={{ fontSize: 13, fontWeight: 700, color: '#B91C1C', margin: '0 0 6px' }}
+              >
+                Revisá estos datos para continuar:
+              </p>
+              <ul style={{ margin: 0, paddingLeft: 18 }}>
+                {Object.entries(errors).map(([id, txt]) => (
+                  <li key={id}>
+                    <a href={`#${id}`} style={{ fontSize: 12.5, color: '#DC2626' }}>
+                      {txt}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {serverMsg && (
+            <div
+              role="alert"
+              style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: 8,
+                padding: '11px 14px',
+                marginBottom: 16,
+                color: '#B91C1C',
+                fontWeight: 600,
+                fontSize: 13,
+              }}
+            >
+              {serverMsg}
+            </div>
+          )}
+
+          {step === 1 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                ¿Quién entrega y qué preventa?
+              </legend>
+              <label htmlFor="operador" style={{ ...labelStyle, marginTop: 12 }}>
+                Operador *
+              </label>
+              <select
+                {...fieldProps('operador')}
+                className="cw-input"
+                value={operador}
+                onChange={e => {
+                  setOperador(e.target.value)
+                  limpiarError('operador')
+                }}
+                onBlur={() => validarEnBlur('operador')}
+              >
+                <option value="" disabled>
+                  Seleccionar...
+                </option>
+                {OPERADORES.map(o => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+              {errors.operador && (
+                <p
+                  id="operador-error"
+                  style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}
+                >
+                  {errors.operador}
+                </p>
+              )}
+
+              <label htmlFor="nPre" style={labelStyle}>
+                Preventa a entregar *
+              </label>
+              <select
+                {...fieldProps('nPre')}
+                className="cw-input"
+                value={nPre}
+                onChange={e => {
+                  setNPre(e.target.value)
+                  limpiarError('nPre')
+                }}
+                onBlur={() => validarEnBlur('nPre')}
+              >
+                <option value="">Seleccionar preventa...</option>
+                {preorders.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} — {p.productModelName || ''} → {p.clientName} [{p.status}]
+                  </option>
+                ))}
+              </select>
+              {errors.nPre && (
+                <p id="nPre-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                  {errors.nPre}
+                </p>
+              )}
+              {preorders.length === 0 && (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    color: '#64748B',
+                    background: '#F8FAFC',
+                    border: '1px solid #EDF0F6',
+                    borderRadius: 8,
+                    padding: '9px 12px',
+                    marginTop: 10,
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 16 }}
+                    aria-hidden="true"
+                  >
+                    info
+                  </span>
+                  No hay preventas pendientes. Todo al día.
+                </p>
+              )}
+
+              {sel && (
+                <dl
+                  style={{
+                    background: '#EEF3FE',
+                    borderLeft: '4px solid #2563EB',
+                    borderRadius: 8,
+                    padding: '12px 14px',
+                    marginTop: 12,
+                    margin: '12px 0 0',
+                    fontSize: 13,
+                  }}
+                >
+                  {[
+                    ['Cliente', sel.clientName],
+                    ['Modelo', sel.productModelName || '—'],
+                    ['Precio pactado', fmt(sel.price)],
+                    ['Saldo pendiente', fmt(saldo)],
+                  ].map(([k, v], i) => (
+                    <div
+                      key={k}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 16,
+                        padding: i === 0 ? '0 0 6px' : '6px 0',
+                        borderBottom: i < 3 ? '1px solid #DBEAFE' : 'none',
+                      }}
+                    >
+                      <dt style={{ color: '#64748B', margin: 0 }}>{k}</dt>
+                      <dd
+                        style={{
+                          fontWeight: k === 'Saldo pendiente' ? 800 : 600,
+                          color: k === 'Saldo pendiente' ? '#1D4ED8' : '#181B2E',
+                          margin: 0,
+                          textAlign: 'right',
+                        }}
+                      >
+                        {v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </fieldset>
+          )}
+
+          {step === 2 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Cobro del saldo
+              </legend>
+
+              <div
                 style={{
                   display: 'flex',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  gap: 6,
-                  fontSize: 12,
-                  color: '#64748B',
-                  background: '#F8FAFC',
-                  border: '1px solid #EDF0F6',
+                  background: '#FEF6E7',
+                  borderLeft: '4px solid #D97706',
                   borderRadius: 8,
-                  padding: '9px 12px',
+                  padding: '12px 14px',
+                  marginTop: 12,
+                }}
+              >
+                <div>
+                  <p style={{ fontSize: 11.5, color: '#9C6500', margin: 0 }}>Saldo pendiente</p>
+                  <p style={{ fontSize: 19, fontWeight: 800, color: '#7D6608', margin: 0 }}>
+                    {sel ? fmt(saldo) : '—'}
+                  </p>
+                </div>
+                {sel && saldo > 0 && (
+                  <button
+                    type="button"
+                    className="cw-btn cw-chip-btn"
+                    onClick={completarSaldoConEfectivo}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      background: '#fff',
+                      border: '1.5px solid #F5E6B8',
+                      borderRadius: 99,
+                      padding: '7px 14px',
+                      fontSize: 12,
+                      fontWeight: 700,
+                      color: '#9C6500',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 15 }}
+                      aria-hidden="true"
+                    >
+                      bolt
+                    </span>
+                    Completar con efectivo
+                  </button>
+                )}
+              </div>
+
+              <label style={{ ...labelStyle, marginBottom: 2 }} id="lbl-cobros">
+                Cobrar ahora en ($)
+              </label>
+              <div className="cw-grid-4" id="cobros" role="group" aria-labelledby="lbl-cobros">
+                {(
+                  [
+                    ['Efectivo', efec, setEfec],
+                    ['Transferencia', transf, setTransf],
+                    ['Cuotas', cuotas, setCuotas],
+                    ['USD', usd, setUsd],
+                  ] as [string, string, (v: string) => void][]
+                ).map(([lab, val, set]) => (
+                  <div key={lab}>
+                    <label
+                      htmlFor={`cobro-${lab.toLowerCase()}`}
+                      style={{
+                        display: 'block',
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: '#3D4356',
+                        marginBottom: 4,
+                      }}
+                    >
+                      {lab}
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      id={`cobro-${lab.toLowerCase()}`}
+                      className="cw-input"
+                      style={{ ...inputStyle, padding: 8 }}
+                      value={val}
+                      onChange={e => {
+                        set(e.target.value)
+                        limpiarError('cobros')
+                      }}
+                      placeholder="0"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
+                Los USD se convierten a pesos al cotizar 1 USD = $1.000.
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: totalIngresado > saldo + 1 ? '#FDEDEC' : '#D5F5E3',
+                  border: `1px solid ${totalIngresado > saldo + 1 ? '#F5B7B1' : '#ABEBC6'}`,
+                  padding: '12px 14px',
+                  borderRadius: 10,
                   marginTop: 10,
                 }}
               >
                 <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 16 }}
-                  aria-hidden="true"
+                  style={{
+                    fontSize: 12,
+                    fontWeight: 700,
+                    color: totalIngresado > saldo + 1 ? '#943126' : '#186A3B',
+                  }}
                 >
-                  info
+                  Total a ingresar
                 </span>
-                No hay preventas pendientes. Todo al día.
-              </p>
-            )}
+                <span
+                  style={{
+                    fontSize: 15,
+                    fontWeight: 800,
+                    color: totalIngresado > saldo + 1 ? '#943126' : '#186A3B',
+                  }}
+                >
+                  {fmt(totalIngresado)}
+                  {parseInt(usd) ? (
+                    <span style={{ fontSize: 11, fontWeight: 600 }}> (incluye {usd} USD)</span>
+                  ) : null}
+                </span>
+              </div>
+              {totalIngresado > saldo + 1 ? (
+                errors.cobros && (
+                  <p
+                    id="cobros-error"
+                    style={{ fontSize: 12, color: '#DC2626', margin: '8px 0 0', fontWeight: 600 }}
+                  >
+                    {errors.cobros}
+                  </p>
+                )
+              ) : (
+                <p style={{ fontSize: 12, color: '#186A3B', margin: '8px 0 0' }}>
+                  {restante > 1
+                    ? `Queda un saldo de ${fmt(restante)} para cobrar más adelante.`
+                    : 'El saldo queda cubierto por completo con este cobro.'}
+                </p>
+              )}
+            </fieldset>
+          )}
 
-            {sel && (
+          {step === 3 && (
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Fecha y confirmación
+              </legend>
+              <label htmlFor="fecha" style={{ ...labelStyle, marginTop: 12 }}>
+                Fecha de entrega
+              </label>
+              <input
+                type="date"
+                {...fieldProps('fecha')}
+                className="cw-input"
+                value={fecha}
+                onChange={e => setFecha(e.target.value)}
+              />
+
+              <label htmlFor="obs" style={labelStyle}>
+                Observaciones
+              </label>
+              <textarea
+                {...fieldProps('obs')}
+                className="cw-input"
+                style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }}
+                value={obs}
+                onChange={e => setObs(e.target.value)}
+                placeholder="Ej: entregado en local"
+              />
+
               <dl
                 style={{
-                  background: '#EEF3FE',
-                  borderLeft: '4px solid #2563EB',
-                  borderRadius: 8,
-                  padding: '12px 14px',
-                  marginTop: 12,
-                  margin: '12px 0 0',
-                  fontSize: 13,
+                  margin: '18px 0 0',
+                  background: '#FAFBFD',
+                  border: '1px solid #EDF0F6',
+                  borderRadius: 10,
+                  padding: '6px 16px',
                 }}
               >
-                {[
-                  ['Cliente', sel.clientName],
-                  ['Modelo', sel.productModelName || '—'],
-                  ['Precio pactado', fmt(sel.price)],
-                  ['Saldo pendiente', fmt(saldo)],
-                ].map(([k, v], i) => (
+                {resumen.map(([k, v]) => (
                   <div
                     key={k}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',
                       gap: 16,
-                      padding: i === 0 ? '0 0 6px' : '6px 0',
-                      borderBottom: i < 3 ? '1px solid #DBEAFE' : 'none',
+                      padding: '7px 0',
+                      borderBottom: '1px solid #EFF1F6',
                     }}
                   >
-                    <dt style={{ color: '#64748B', margin: 0 }}>{k}</dt>
+                    <dt style={{ fontSize: 12, color: '#6B7280', margin: 0, flexShrink: 0 }}>
+                      {k}
+                    </dt>
                     <dd
                       style={{
-                        fontWeight: k === 'Saldo pendiente' ? 800 : 600,
-                        color: k === 'Saldo pendiente' ? '#1D4ED8' : '#181B2E',
+                        fontSize: 12.5,
+                        fontWeight: 600,
+                        color: '#181B2E',
                         margin: 0,
                         textAlign: 'right',
+                        overflowWrap: 'anywhere',
                       }}
                     >
                       {v}
@@ -654,322 +877,102 @@ export default function EntregaClient() {
                   </div>
                 ))}
               </dl>
-            )}
-          </fieldset>
-        )}
-
-        {step === 2 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              Cobro del saldo
-            </legend>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: '#FEF6E7',
-                borderLeft: '4px solid #D97706',
-                borderRadius: 8,
-                padding: '12px 14px',
-                marginTop: 12,
-              }}
-            >
-              <div>
-                <p style={{ fontSize: 11.5, color: '#9C6500', margin: 0 }}>Saldo pendiente</p>
-                <p style={{ fontSize: 19, fontWeight: 800, color: '#7D6608', margin: 0 }}>
-                  {sel ? fmt(saldo) : '—'}
-                </p>
-              </div>
-              {sel && saldo > 0 && (
-                <button
-                  type="button"
-                  className="cw-btn cw-chip-btn"
-                  onClick={completarSaldoConEfectivo}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    background: '#fff',
-                    border: '1.5px solid #F5E6B8',
-                    borderRadius: 99,
-                    padding: '7px 14px',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: '#9C6500',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <span
-                    className="material-symbols-outlined"
-                    style={{ fontSize: 15 }}
-                    aria-hidden="true"
-                  >
-                    bolt
-                  </span>
-                  Completar con efectivo
-                </button>
-              )}
-            </div>
-
-            <label style={{ ...labelStyle, marginBottom: 2 }} id="lbl-cobros">
-              Cobrar ahora en ($)
-            </label>
-            <div className="cw-grid-4" id="cobros" role="group" aria-labelledby="lbl-cobros">
-              {(
-                [
-                  ['Efectivo', efec, setEfec],
-                  ['Transferencia', transf, setTransf],
-                  ['Cuotas', cuotas, setCuotas],
-                  ['USD', usd, setUsd],
-                ] as [string, string, (v: string) => void][]
-              ).map(([lab, val, set]) => (
-                <div key={lab}>
-                  <label
-                    htmlFor={`cobro-${lab.toLowerCase()}`}
-                    style={{
-                      display: 'block',
-                      fontSize: 11,
-                      fontWeight: 600,
-                      color: '#3D4356',
-                      marginBottom: 4,
-                    }}
-                  >
-                    {lab}
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    id={`cobro-${lab.toLowerCase()}`}
-                    className="cw-input"
-                    style={{ ...inputStyle, padding: 8 }}
-                    value={val}
-                    onChange={e => {
-                      set(e.target.value)
-                      limpiarError('cobros')
-                    }}
-                    placeholder="0"
-                  />
-                </div>
-              ))}
-            </div>
-            <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
-              Los USD se convierten a pesos al cotizar 1 USD = $1.000.
-            </p>
-
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                background: totalIngresado > saldo + 1 ? '#FDEDEC' : '#D5F5E3',
-                border: `1px solid ${totalIngresado > saldo + 1 ? '#F5B7B1' : '#ABEBC6'}`,
-                padding: '12px 14px',
-                borderRadius: 10,
-                marginTop: 10,
-              }}
-            >
-              <span
-                style={{
-                  fontSize: 12,
-                  fontWeight: 700,
-                  color: totalIngresado > saldo + 1 ? '#943126' : '#186A3B',
-                }}
-              >
-                Total a ingresar
-              </span>
-              <span
-                style={{
-                  fontSize: 15,
-                  fontWeight: 800,
-                  color: totalIngresado > saldo + 1 ? '#943126' : '#186A3B',
-                }}
-              >
-                {fmt(totalIngresado)}
-                {parseInt(usd) ? (
-                  <span style={{ fontSize: 11, fontWeight: 600 }}> (incluye {usd} USD)</span>
-                ) : null}
-              </span>
-            </div>
-            {totalIngresado > saldo + 1 ? (
-              errors.cobros && (
-                <p
-                  id="cobros-error"
-                  style={{ fontSize: 12, color: '#DC2626', margin: '8px 0 0', fontWeight: 600 }}
-                >
-                  {errors.cobros}
-                </p>
-              )
-            ) : (
-              <p style={{ fontSize: 12, color: '#186A3B', margin: '8px 0 0' }}>
-                {restante > 1
-                  ? `Queda un saldo de ${fmt(restante)} para cobrar más adelante.`
-                  : 'El saldo queda cubierto por completo con este cobro.'}
-              </p>
-            )}
-          </fieldset>
-        )}
-
-        {step === 3 && (
-          <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
-            <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
-              Fecha y confirmación
-            </legend>
-            <label htmlFor="fecha" style={{ ...labelStyle, marginTop: 12 }}>
-              Fecha de entrega
-            </label>
-            <input
-              type="date"
-              {...fieldProps('fecha')}
-              className="cw-input"
-              value={fecha}
-              onChange={e => setFecha(e.target.value)}
-            />
-
-            <label htmlFor="obs" style={labelStyle}>
-              Observaciones
-            </label>
-            <textarea
-              {...fieldProps('obs')}
-              className="cw-input"
-              style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }}
-              value={obs}
-              onChange={e => setObs(e.target.value)}
-              placeholder="Ej: entregado en local"
-            />
-
-            <dl
-              style={{
-                margin: '18px 0 0',
-                background: '#FAFBFD',
-                border: '1px solid #EDF0F6',
-                borderRadius: 10,
-                padding: '6px 16px',
-              }}
-            >
-              {resumen.map(([k, v]) => (
-                <div
-                  key={k}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: 16,
-                    padding: '7px 0',
-                    borderBottom: '1px solid #EFF1F6',
-                  }}
-                >
-                  <dt style={{ fontSize: 12, color: '#6B7280', margin: 0, flexShrink: 0 }}>{k}</dt>
-                  <dd
-                    style={{
-                      fontSize: 12.5,
-                      fontWeight: 600,
-                      color: '#181B2E',
-                      margin: 0,
-                      textAlign: 'right',
-                      overflowWrap: 'anywhere',
-                    }}
-                  >
-                    {v}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </fieldset>
-        )}
-
-        <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-          {step > 1 && (
-            <button
-              type="button"
-              className="cw-btn cw-back"
-              onClick={() => irAPaso(step - 1)}
-              disabled={sending}
-              style={{
-                padding: '12px 20px',
-                border: '1.5px solid #E6E7F0',
-                borderRadius: 10,
-                background: '#fff',
-                color: '#3D4356',
-                fontSize: 13.5,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 17 }}
-                aria-hidden="true"
-              >
-                arrow_back
-              </span>
-              Volver
-            </button>
+            </fieldset>
           )}
-          <button
-            type="submit"
-            className="cw-btn cw-primary"
-            disabled={sending}
-            style={{
-              flex: 1,
-              background: sending ? '#FFB48C' : 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
-              color: '#fff',
-              padding: 12,
-              border: 'none',
-              borderRadius: 10,
-              fontSize: 14,
-              fontWeight: 700,
-              cursor: sending ? 'wait' : 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              transition: 'filter .15s, background .15s',
-            }}
-          >
-            {sending ? (
-              <>
-                <span
-                  className="material-symbols-outlined cw-spin"
-                  style={{ fontSize: 18 }}
-                  aria-hidden="true"
-                >
-                  progress_activity
-                </span>
-                Registrando…
-              </>
-            ) : step < TOTAL ? (
-              <>
-                Continuar
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
+            {step > 1 && (
+              <button
+                type="button"
+                className="cw-btn cw-back"
+                onClick={() => irAPaso(step - 1)}
+                disabled={sending}
+                style={{
+                  padding: '12px 20px',
+                  border: '1.5px solid #E6E7F0',
+                  borderRadius: 10,
+                  background: '#fff',
+                  color: '#3D4356',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
                 <span
                   className="material-symbols-outlined"
                   style={{ fontSize: 17 }}
                   aria-hidden="true"
                 >
-                  arrow_forward
+                  arrow_back
                 </span>
-              </>
-            ) : (
-              <>
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 18 }}
-                  aria-hidden="true"
-                >
-                  check_circle
-                </span>
-                Confirmar entrega
-              </>
+                Volver
+              </button>
             )}
-          </button>
-        </div>
-        <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', margin: '12px 0 0' }}>
-          Podés volver a los pasos anteriores con el menú superior para corregir cualquier dato.
-        </p>
-      </form>
-    </div>
+            <button
+              type="submit"
+              className="cw-btn cw-primary"
+              disabled={sending}
+              style={{
+                flex: 1,
+                background: sending ? '#FFB48C' : 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
+                color: '#fff',
+                padding: 12,
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: sending ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                transition: 'filter .15s, background .15s',
+              }}
+            >
+              {sending ? (
+                <>
+                  <span
+                    className="material-symbols-outlined cw-spin"
+                    style={{ fontSize: 18 }}
+                    aria-hidden="true"
+                  >
+                    progress_activity
+                  </span>
+                  Registrando…
+                </>
+              ) : step < TOTAL ? (
+                <>
+                  Continuar
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 17 }}
+                    aria-hidden="true"
+                  >
+                    arrow_forward
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 18 }}
+                    aria-hidden="true"
+                  >
+                    check_circle
+                  </span>
+                  Confirmar entrega
+                </>
+              )}
+            </button>
+          </div>
+          <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', margin: '12px 0 0' }}>
+            Podés volver a los pasos anteriores con el menú superior para corregir cualquier dato.
+          </p>
+        </form>
+      </div>
+    </>
   )
 }

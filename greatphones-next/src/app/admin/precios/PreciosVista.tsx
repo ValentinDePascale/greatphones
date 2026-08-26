@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { fmtARS } from '@/lib/precios'
 import {
   copiarTexto,
@@ -24,6 +24,117 @@ const FILTROS = [
   'iPhone 17',
 ]
 
+const COLORES_POR_VARIANTE: Record<string, string[]> = {
+  'iphone 8|64 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone 8 plus|64 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone x|64 gb': ['Space Gray', 'Silver'],
+  'iphone x|256 gb': ['Space Gray', 'Silver'],
+  'iphone xr|64 gb': ['Black', 'White', 'Blue', 'Coral', 'Yellow', 'Red'],
+  'iphone xr|128 gb': ['Black', 'White', 'Blue', 'Coral', 'Yellow', 'Red'],
+  'iphone xs|64 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone xs|256 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone xs max|64 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone xs max|256 gb': ['Gold', 'Silver', 'Space Gray'],
+  'iphone 11|64 gb': ['Black', 'White', 'Red', 'Yellow', 'Purple', 'Green'],
+  'iphone 11|128 gb': ['Black', 'White', 'Red', 'Yellow', 'Purple', 'Green'],
+  'iphone 11 pro|64 gb': ['Space Gray', 'Silver', 'Midnight Green', 'Gold'],
+  'iphone 11 pro|256 gb': ['Space Gray', 'Silver', 'Midnight Green', 'Gold'],
+  'iphone 11 pro max|64 gb': ['Space Gray', 'Silver', 'Midnight Green', 'Gold'],
+  'iphone 11 pro max|256 gb': ['Space Gray', 'Silver', 'Midnight Green', 'Gold'],
+  'iphone 12|64 gb': ['Black', 'White', 'Red', 'Green', 'Blue'],
+  'iphone 12|128 gb': ['Black', 'White', 'Red', 'Green', 'Blue'],
+  'iphone 12 mini|64 gb': ['Black', 'White', 'Red', 'Green', 'Blue'],
+  'iphone 12 pro|128 gb': ['Silver', 'Graphite', 'Gold', 'Pacific Blue'],
+  'iphone 12 pro max|128 gb': ['Silver', 'Graphite', 'Gold', 'Pacific Blue'],
+  'iphone 13|128 gb': ['Starlight', 'Midnight', 'Blue', 'Pink', 'Red', 'Green'],
+  'iphone 13|256 gb': ['Starlight', 'Midnight', 'Blue', 'Pink', 'Red', 'Green'],
+  'iphone 13 mini|128 gb': ['Starlight', 'Midnight', 'Blue', 'Pink', 'Red', 'Green'],
+  'iphone 13 pro|128 gb': ['Graphite', 'Gold', 'Silver', 'Sierra Blue', 'Alpine Green'],
+  'iphone 13 pro|256 gb': ['Graphite', 'Gold', 'Silver', 'Sierra Blue', 'Alpine Green'],
+  'iphone 13 pro max|128 gb': ['Graphite', 'Gold', 'Silver', 'Sierra Blue', 'Alpine Green'],
+  'iphone 13 pro max|256 gb': ['Graphite', 'Gold', 'Silver', 'Sierra Blue', 'Alpine Green'],
+  'iphone 14|128 gb': ['Midnight', 'Starlight', 'Blue', 'Purple', 'Red', 'Yellow'],
+  'iphone 14|256 gb': ['Midnight', 'Starlight', 'Blue', 'Purple', 'Red', 'Yellow'],
+  'iphone 14 plus|128 gb': ['Midnight', 'Starlight', 'Blue', 'Purple', 'Red', 'Yellow'],
+  'iphone 14 pro|128 gb': ['Space Black', 'Silver', 'Gold', 'Deep Purple'],
+  'iphone 14 pro|256 gb': ['Space Black', 'Silver', 'Gold', 'Deep Purple'],
+  'iphone 14 pro max|128 gb': ['Space Black', 'Silver', 'Gold', 'Deep Purple'],
+  'iphone 14 pro max|256 gb': ['Space Black', 'Silver', 'Gold', 'Deep Purple'],
+  'iphone 15|128 gb': ['Black', 'Blue', 'Green', 'Yellow', 'Pink'],
+  'iphone 15|256 gb': ['Black', 'Blue', 'Green', 'Yellow', 'Pink'],
+  'iphone 15 plus|128 gb': ['Black', 'Blue', 'Green', 'Yellow', 'Pink'],
+  'iphone 15 pro|128 gb': ['Natural Titanium', 'Blue Titanium', 'White Titanium', 'Black Titanium'],
+  'iphone 15 pro|256 gb': ['Natural Titanium', 'Blue Titanium', 'White Titanium', 'Black Titanium'],
+  'iphone 15 pro max|256 gb': [
+    'Natural Titanium',
+    'Blue Titanium',
+    'White Titanium',
+    'Black Titanium',
+  ],
+  'iphone 15 pro max|512 gb': [
+    'Natural Titanium',
+    'Blue Titanium',
+    'White Titanium',
+    'Black Titanium',
+  ],
+  'iphone 16|128 gb': ['Black', 'White', 'Pink', 'Teal', 'Ultramarine'],
+  'iphone 16|256 gb': ['Black', 'White', 'Pink', 'Teal', 'Ultramarine'],
+  'iphone 16 plus|128 gb': ['Black', 'White', 'Pink', 'Teal', 'Ultramarine'],
+  'iphone 16 pro|128 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Natural Titanium',
+    'Desert Titanium',
+  ],
+  'iphone 16 pro|256 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Natural Titanium',
+    'Desert Titanium',
+  ],
+  'iphone 16 pro max|256 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Natural Titanium',
+    'Desert Titanium',
+  ],
+  'iphone 16 pro max|512 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Natural Titanium',
+    'Desert Titanium',
+  ],
+  'iphone 17|256 gb': ['Black', 'White', 'Red', 'Teal', 'Purple'],
+  'iphone 17 pro|256 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Desert Titanium',
+    'Indigo Titanium',
+  ],
+  'iphone 17 pro max|256 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Desert Titanium',
+    'Indigo Titanium',
+  ],
+  'iphone 17 pro max|512 gb': [
+    'Black Titanium',
+    'White Titanium',
+    'Desert Titanium',
+    'Indigo Titanium',
+  ],
+}
+const DEFAULT_COLORES_MACIPAD = ['Gris Espacial', 'Plata', 'Medianoche', 'Blanco Estelar']
+function defaultColores(modelo: string): string[] {
+  const m = (modelo || '').toLowerCase()
+  if (m.includes('mac') || m.includes('ipad')) return DEFAULT_COLORES_MACIPAD
+  const key = m.trim()
+  for (const [k, v] of Object.entries(COLORES_POR_VARIANTE)) {
+    if (k.startsWith(key + '|') || k === key) return v
+  }
+  return ['Negro', 'Blanco', 'Azul', 'Rojo']
+}
+
 interface Props {
   items: PrecioItem[]
   icono?: string
@@ -43,8 +154,59 @@ export default function PreciosVista({
   const [ordenCampo, setOrdenCampo] = useState<keyof PrecioItem | null>(null)
   const [ordenDir, setOrdenDir] = useState<1 | -1>(1)
   const [toast, setToast] = useState<string | null>(null)
+  const [colorMap, setColorMap] = useState<Record<string, string[]>>({})
 
   const filtros = familiaFiltros || FILTROS
+
+  useEffect(() => {
+    let activo = true
+    fetch('/api/products?limit=500', { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => {
+        if (!activo) return
+        const prods: {
+          name?: string
+          storage?: string | null
+          color?: string | null
+          stock?: number
+        }[] = Array.isArray((d as { data?: unknown }).data)
+          ? (d as { data: typeof prods }).data
+          : Array.isArray(d)
+            ? (d as typeof prods)
+            : []
+        const map: Record<string, string[]> = {}
+        for (const p of prods) {
+          if (!p.name || !p.color) continue
+          const key = `${p.name.trim().toLowerCase()}|${(p.storage || '').trim().toLowerCase()}`
+          const list = map[key] || []
+          const col = p.color.trim()
+          if (col && !list.includes(col)) list.push(col)
+          map[key] = list
+        }
+        setColorMap(map)
+      })
+      .catch(() => {})
+    return () => {
+      activo = false
+    }
+  }, [])
+
+  const getColores = (p: PrecioItem) => {
+    const exact =
+      colorMap[
+        `${(p.modelo || '').trim().toLowerCase()}|${(p.almacenamiento || '').trim().toLowerCase()}`
+      ]
+    if (exact && exact.length) return exact
+    const prefix = `${(p.modelo || '').trim().toLowerCase()}|`
+    const all: string[] = []
+    for (const [k, v] of Object.entries(colorMap)) {
+      if (k.startsWith(prefix)) {
+        for (const c of v) if (!all.includes(c)) all.push(c)
+      }
+    }
+    if (all.length) return all
+    return defaultColores(p.modelo)
+  }
 
   const avisar = (msg: string) => {
     setToast(msg)
@@ -91,11 +253,19 @@ export default function PreciosVista({
   }
 
   const accionCopiar = async (idx: number) => {
-    await copiarTexto(textoPlanoPrecio(filtrados[idx]))
+    const p = filtrados[idx]
+    const cols = getColores(p)
+    const base = textoPlanoPrecio(p)
+    const texto = cols.length ? `${base}\nColores: ${cols.join(', ')}` : base
+    await copiarTexto(texto)
     avisar('Precio copiado al portapapeles')
   }
   const accionWhatsapp = async (idx: number) => {
-    await copiarTexto(textoWhatsAppPrecio(filtrados[idx]))
+    const p = filtrados[idx]
+    const cols = getColores(p)
+    const base = textoWhatsAppPrecio(p)
+    const texto = cols.length ? `${base}\n\n🎨 Colores disponibles: ${cols.join(', ')}` : base
+    await copiarTexto(texto)
     avisar('Mensaje de WhatsApp copiado')
   }
 
@@ -403,6 +573,33 @@ export default function PreciosVista({
                 {p.modelo}
               </div>
               <div style={{ fontSize: 12, color: '#778799' }}>{p.almacenamiento || '—'}</div>
+              {(() => {
+                const cols = getColores(p)
+                return cols.length ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+                    {cols.map(c => (
+                      <span
+                        key={c}
+                        style={{
+                          fontSize: 10,
+                          fontWeight: 600,
+                          padding: '2px 7px',
+                          borderRadius: 99,
+                          background: '#FFF1E8',
+                          border: '1px solid #FFD3BC',
+                          color: '#7D3A0B',
+                        }}
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>
+                    Sin variantes de color registradas
+                  </div>
+                )
+              })()}
               <div
                 style={{
                   display: 'flex',
@@ -502,17 +699,34 @@ export default function PreciosVista({
             }}
           >
             <colgroup>
-              <col style={{ width: '26%' }} />
-              <col style={{ width: '10%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '16%' }} />
+              <col style={{ width: '22%' }} />
+              <col style={{ width: '9%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '14%' }} />
+              <col style={{ width: '13%' }} />
+              {dolarVenta ? <col style={{ width: '14%' }} /> : null}
             </colgroup>
             <thead>
               <tr style={{ textAlign: 'left' }}>
                 {cabeza('Modelo', 'modelo')}
                 {cabeza(vista === 'tabla' ? 'Almac.' : 'GB', 'almacenamiento')}
+                <th
+                  scope="col"
+                  style={{
+                    position: 'sticky',
+                    top: 0,
+                    background: '#F4F6F9',
+                    padding: '8px',
+                    zIndex: 1,
+                    boxShadow: '0 1px 0 #E6E7F0',
+                    whiteSpace: 'nowrap',
+                    fontSize: 11,
+                    color: '#334155',
+                  }}
+                >
+                  Colores
+                </th>
                 {cabeza('Venta', 'precioARS')}
                 {cabeza('Prev', 'preventaARS')}
                 {cabeza('Desc', 'descuentoARS')}
@@ -535,7 +749,7 @@ export default function PreciosVista({
             <tbody>
               {filtrados.length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ textAlign: 'center', padding: 28, color: '#8892A6' }}>
+                  <td colSpan={9} style={{ textAlign: 'center', padding: 28, color: '#8892A6' }}>
                     Sin resultados para tu búsqueda.
                   </td>
                 </tr>
@@ -568,6 +782,34 @@ export default function PreciosVista({
                   </td>
                   <td style={{ padding: '6px 8px', textAlign: 'center', color: '#778799' }}>
                     {p.almacenamiento || '—'}
+                  </td>
+                  <td style={{ padding: '6px 8px' }}>
+                    {(() => {
+                      const cols = getColores(p)
+                      return cols.length ? (
+                        <span style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                          {cols.map(c => (
+                            <span
+                              key={c}
+                              style={{
+                                fontSize: 10,
+                                fontWeight: 600,
+                                padding: '1px 6px',
+                                borderRadius: 99,
+                                background: '#FFF1E8',
+                                border: '1px solid #FFD3BC',
+                                color: '#7D3A0B',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {c}
+                            </span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 10, color: '#94A3B8' }}>—</span>
+                      )
+                    })()}
                   </td>
                   <td style={{ padding: '6px 8px' }}>{fmtARS(p.precioARS)}</td>
                   <td style={{ padding: '6px 8px', color: '#B7950B' }}>{fmtARS(p.preventaARS)}</td>

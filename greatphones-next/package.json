@@ -5,6 +5,7 @@
   "packageManager": "pnpm@11.22.0",
   "scripts": {
     "dev": "node server.js",
+    "postinstall": "prisma generate",
     "dev:next": "next dev",
     "build": "prisma generate && next build",
     "start": "NODE_OPTIONS=\"--max-old-space-size=2048\" NODE_ENV=production node server.js",
