@@ -2,9 +2,55 @@
 
 import { useEffect } from 'react'
 
+// El contenido admin legacy (render.js, admin.js, etc.) viaja como <script src>
+// dentro del HTML del shell que inyectamos con dangerouslySetInnerHTML. El
+// browser NO ejecuta scripts insertados por innerHTML, asi que en una
+// navegacion client-side esos scripts nunca corrian y el tab quedaba en blanco
+// hasta recargar la pagina (donde el documento SSR si los ejecuta). Cargamos
+// esos scripts una sola vez por sesion (dedup contra los que ya estan en el
+// documento, por ej. en una carga completa) recreando el entorno del load.
 interface Props {
   html: string
   tab: string
+}
+
+const SCRIPT_SRC_RE = /<script[^>]*\bsrc=["']([^"']+)["']/g
+
+function loadLegacyScripts(html: string): void {
+  const w = window as any
+  const loaded: Set<string> = (w.__gpLoadedScripts = w.__gpLoadedScripts || new Set<string>())
+  // Si el runtime legacy YA se ejecutó en este documento (p.ej. entramos por
+  // una carga completa a /admin/<tab>, o ya lo cargamos antes en la sesión),
+  // renderAdminContent está definido y no hay que volver a ejecutar nada.
+  // OJO: no podemos detectar scripts "ya ejecutados" por su presencia en el DOM:
+  // los <script> que quedan del innerHTML del shell están en el DOM pero nunca
+  // se ejecutaron (innerHTML no corre scripts).
+  const alreadyExecuted = typeof w.renderAdminContent === 'function'
+  const toLoad: string[] = []
+  const re = new RegExp(SCRIPT_SRC_RE.source, 'g')
+  let m: RegExpExecArray | null
+  while ((m = re.exec(html)) !== null) {
+    const src = m[1]
+    if (!src || loaded.has(src)) continue
+    if (alreadyExecuted) {
+      loaded.add(src)
+      continue
+    }
+    toLoad.push(src)
+  }
+  if (toLoad.length === 0) return
+  // Marcamos como cargados AL ENCOLARLOS (antes de que terminen) para no
+  // duplicar la ejecución si el efecto corre dos veces (React StrictMode en
+  // dev) o el componente se monta de nuevo antes de que terminen de cargar.
+  toLoad.forEach(src => loaded.add(src))
+  // async=false conserva el orden del documento (como el defer del shell).
+  toLoad.forEach(src => {
+    const el = document.createElement('script')
+    el.src = src
+    el.async = false
+    el.setAttribute('data-gp', '1')
+    document.head.appendChild(el)
+  })
 }
 
 export default function AdminPageClient({ html, tab }: Props) {
@@ -49,6 +95,9 @@ export default function AdminPageClient({ html, tab }: Props) {
     // de un setTimeout fijo de 300ms sin reintento (que dejaba el contenido en
     // blanco intermitentemente), esperamos a que renderAdminContent exista y
     // verificamos que el contenido se pobló, reintentando hasta un timeout total.
+    // Ademas, en navegacion client-side esos scripts nunca se ejecutan (innerHTML
+    // no corre scripts): los cargamos explicitamente con loadLegacyScripts.
+    loadLegacyScripts(html)
     let attempts = 0
     const MAX_ATTEMPTS = 60 // ~9s
     const iv = window.setInterval(() => {
