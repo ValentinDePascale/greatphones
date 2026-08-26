@@ -225,6 +225,14 @@ function loadProducts(){
   return cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
     PRODUCTS=res.data||res;
     window._productsLoaded=true;
+    // Re-render la grilla admin apenas hay datos (incluso en uso de caché, que
+    // antes cortaba antes de llegar acá). Se detecta por presencia del grid,
+    // no por currentAdminTab: en navegación client-side el orden de carga de
+    // render.js/admin.js y el intervalo de AdminPageClient pueden hacer que
+    // currentAdminTab aún no esté seteado cuando llegan los datos.
+    if(document.getElementById('admin-prods-grid')&&typeof renderAdminProductsFiltered==='function'){
+      renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
+    }
     if(useCache)return; // Skip re-renders for background cache refresh
     hideLoadingBar();
     if(window.checkPendingDetail)window.checkPendingDetail();
@@ -235,7 +243,6 @@ function loadProducts(){
     renderFeaturedGrid();
     if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
-    if(window.currentAdminTab==='prods'&&typeof renderAdminProductsFiltered==='function')renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
   }).catch(function(e){hideLoadingBar();console.error('Error loading products:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los productos');});
 }
 
@@ -257,13 +264,18 @@ function loadAccessories(){
   cachedFetch(API_URL+'/api/accessories',null,60000).then(function(res){
     window.ACCS=res.data||res;
     window._accLoaded=true;
+    // Grilla admin de accesorios: re-render apenas llegan los datos, incluso en
+    // uso de caché (mismo caso que PRODUCTS en navegación client-side). Se
+    // detecta por presencia del grid, no por currentAdminTab.
+    if(document.getElementById('admin-acc-grid')&&typeof renderAdminAccFiltered==='function'){
+      renderAdminAccFiltered(document.getElementById('adminAccSearch')?document.getElementById('adminAccSearch').value:'');
+    }
     if(useCache)return;
     if(document.getElementById('accGrid'))renderAccGrid();
     if(document.getElementById('p-detail')&&document.getElementById('p-detail').classList.contains('act')){renderRelatedAccs();}
     if(currentAcc&&typeof renderAccVariants==='function')renderAccVariants();
     if(document.getElementById('p-favoritos')&&document.getElementById('p-favoritos').classList.contains('act')){renderFavGrid();}
     if(document.getElementById('p-checkout')&&document.getElementById('p-checkout').classList.contains('act')){renderCheckoutSummary();}
-    if(window.currentAdminTab==='acc'&&typeof renderAdminAccFiltered==='function')renderAdminAccFiltered(document.getElementById('adminAccSearch')?document.getElementById('adminAccSearch').value:'');
   }).catch(function(e){console.error('Error loading accessories:',e);if(typeof showErrorToast==='function')showErrorToast('Error','No se pudieron cargar los accesorios');});
 }
 
@@ -2431,8 +2443,25 @@ function openClientQuoteDetail(id){
 }
 
 // =========== INIT ===========
+// La inicializacion de datos (loadProducts llena PRODUCTS/ACCS para Prods,
+// Accesorios, Stock, etc.) corre al DOMContentLoaded. En el panel admin legacy
+// este script puede cargarse por React de forma dinámica en navegación
+// client-side (AdminPageClient), momento en el que DOMContentLoaded ya pasó y
+// el listener nunca se dispararía. Con la guarda, si el documento ya está
+// listo se ejecuta al instante (equivalente a un refresh, donde sí corre).
+var _gpDclListeners=[];
+function _gpDcl(fn){
+  if(document.readyState==='loading'){_gpDclListeners.push(fn);return;}
+  fn();
+}
 document.addEventListener('DOMContentLoaded',function(){
+  var fns=_gpDclListeners;
+  _gpDclListeners=[];
+  for(var i=0;i<fns.length;i++){try{fns[i]();}catch(e){}}
+});
+_gpDcl(function(){
   loadProducts();
+  loadAccessories();
   renderRepairGrid();
   renderAccGrid();
   initSlider();
