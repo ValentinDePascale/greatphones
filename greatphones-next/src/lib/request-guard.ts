@@ -46,7 +46,14 @@ export function isAllowedRequestOrigin(
   if (pathname && isCsrfExempt(pathname)) return true
 
   const origin = request.headers.get('origin')
-  if (origin) return isOriginAllowed(origin)
+  if (origin) {
+    // Same-origin: si el origen coincide con el host con el que se sirve la app
+    // (https://<host>), se acepta directo. Esto cubre cualquier dominio de
+    // deploy (Render, Vercel, etc.) sin depender de la lista de config.
+    const host = request.headers.get('host')
+    if (host && origin === 'https://' + host) return true
+    return isOriginAllowed(origin)
+  }
 
   // Para mutaciones sin Origin exigimos Referer como respaldo.
   // Lecturas (GET/HEAD) sin Origin se permiten (cURL, link previews, etc).

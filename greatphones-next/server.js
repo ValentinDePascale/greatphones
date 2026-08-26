@@ -15,13 +15,29 @@ app.prepare().then(() => {
   });
 
   const appUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+  const extraOrigins = (process.env.ALLOWED_ORIGINS_EXTRA || '').split(',')
+    .map(s => s.trim()).filter(Boolean)
+  const socketOrigins = [
+    'http://localhost:3000',
+    appUrl,
+    'https://greatphones.com.ar',
+    'https://www.greatphones.com.ar',
+    'https://greatphones.onrender.com',
+    ...extraOrigins,
+  ]
   const io = new Server(server, {
     cors: {
-      origin: [
-        'http://localhost:3000',
-        appUrl,
-        'https://greatphones.com.ar',
-      ],
+      origin: (origin, cb) => {
+        // Sin Origin dejarlo pasar y si está en la lista permitido. También
+        // cualquier subdominio *.onrender.com (deploy Render) para no depender
+        // del código al cambiar de dominio de preview.
+        if (!origin || socketOrigins.indexOf(origin) !== -1) return cb(null, true)
+        try {
+          const hostname = new URL(origin).hostname
+          if (hostname.endsWith('.onrender.com')) return cb(null, true)
+        } catch (e) {}
+        return cb(null, false)
+      },
       methods: ['GET', 'POST'],
       credentials: true,
     },

@@ -9,11 +9,19 @@ export const APP_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000'
 // ---- Allowed Origins (single source of truth) ----
 // En desarrollo (sin NODE_ENV=production) aceptamos orígenes de túneles
 // efímeros (trycloudflare.com, localtunnel, ngrok, serveo) y LAN para
-// poder probar la app desde el celular. En producción, la lista es estricta.
+// poder probar la app desde el celular. En producción, la lista es estricta:
+// NEXTAUTH_URL + dominios conocidos + EXTRA vía env (ej: deploys de Render).
+export const ALLOWED_ORIGINS_EXTRA = (process.env.ALLOWED_ORIGINS_EXTRA || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean)
+
 export const ALLOWED_ORIGINS = [
   APP_URL,
   'https://greatphones.com.ar',
   'https://www.greatphones.com.ar',
+  'https://greatphones.onrender.com',
+  ...ALLOWED_ORIGINS_EXTRA,
 ]
 
 // Patrones regex adicionales para dev (túneles HTTPS efímeros + LAN).
