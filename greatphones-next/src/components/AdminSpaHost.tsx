@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { onTabLegacy } from '@/lib/admin-activate'
 
 // Rutas de las secciones React (nuevas). Todo lo que NO empiece con estos
@@ -21,11 +21,33 @@ interface Props {
   legacy: boolean
 }
 
-/** Host del shell admin legacy (SPA): se monta UNA vez y persiste en el DOM,
- *  oculto cuando la ruta actual es una sección React. Las páginas legacy
- *  llaman activarTabLegacy(tab) y acá se ejecuta renderAdminContent(tab). */
+const MAX_RETRIES = 120
+
+/** Host del shell admin legacy (SPA): inyecta el HTML UNA sola vez de forma
+ *  manual (no dangerouslySetInnerHTML), inmune a re-renders de React que
+ *  podían vaciar el DOM del shell. Persiste oculto en secciones React. */
 export default function AdminSpaHost({ html, legacy }: Props) {
+  const hostRef = useRef<HTMLDivElement>(null)
+  const injectedRef = useRef(false)
+  const timersRef = useRef<number[]>([])
+
   useEffect(() => {
+    const host = hostRef.current as HTMLDivElement | null
+
+    // Inyección manual del shell (solo una vez). Los <script> incluidos se
+    // re-ejecutan manualmente para que renderAdminContent quede disponible.
+    if (host && !injectedRef.current) {
+      injectedRef.current = true
+      host.innerHTML = html
+      // Re-ejecutar <script src> del shell (innerHTML no los ejecuta).
+      host.querySelectorAll<HTMLScriptElement>('script[src]').forEach(old => {
+        const s = document.createElement('script')
+        s.src = old.src
+        s.async = true
+        old.replaceWith(s)
+      })
+    }
+
     const activate = () => {
       const pAdmin = document.getElementById('p-admin')
       if (pAdmin) {
@@ -36,24 +58,52 @@ export default function AdminSpaHost({ html, legacy }: Props) {
       }
     }
 
-    const render = (tab: string) => {
+    const renderNow = (tab: string) => {
       activate()
       const w = window as any
       if (typeof w.renderAdminContent === 'function') {
         w.renderAdminContent(tab)
+        return true
       }
+      return false
     }
 
-    // Suscribirse al puente que usan las páginas legacy. Puede ser que los
-    // scripts aún estén cargando; el puente reintentará.
+    const render = (tab: string) => {
+      if (renderNow(tab)) return
+      let tries = 0
+      const iv = window.setInterval(() => {
+        tries++
+        if (renderNow(tab)) {
+          window.clearInterval(iv)
+        } else if (tries > MAX_RETRIES) {
+          window.clearInterval(iv)
+        }
+      }, 100)
+      timersRef.current.push(iv)
+    }
+
+    const onDirectNav = (e: Event) => {
+      const tab = (e as CustomEvent).detail
+      if (typeof tab === 'string') render(tab)
+    }
+
     const off = onTabLegacy(render)
-    return () => { off() }
-  }, [])
+    window.addEventListener('admin:nav', onDirectNav as EventListener)
+
+    // Renderear el tab inicial una vez que React haya montado (deep-link).
+    // El activador de la página lo pedirá; acá nos aseguramos por si no.
+    return () => {
+      off()
+      window.removeEventListener('admin:nav', onDirectNav as EventListener)
+      timersRef.current.forEach(id => window.clearInterval(id))
+      timersRef.current = []
+    }
+  }, [html])
 
   return (
     <div
+      ref={hostRef}
       id="admin-spa-host"
-      dangerouslySetInnerHTML={{ __html: html }}
       suppressHydrationWarning
       style={{ display: legacy ? 'block' : 'none' }}
     />

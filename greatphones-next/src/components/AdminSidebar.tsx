@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 interface Tab {
@@ -58,6 +58,7 @@ const taller: SubGroup = {
 const analisis: SubGroup = {
   title: '',
   items: [
+    { href: '/admin', label: 'Dashboard', icon: 'dashboard', exact: true, legacy: 'dashboard' },
     { href: '/admin/analisis/reportes', label: 'Reportes', icon: 'monitoring' },
   ],
 }
@@ -84,8 +85,8 @@ const gestion: SubGroup[] = [
   {
     title: 'Comercio online',
     items: [
-      { href: '/admin/ventas', label: 'Ventas (gestión)', icon: 'receipt_long', legacy: 'sales' },
-      { href: '/admin/preventa', label: 'Preventas (gestión)', icon: 'calendar_month', legacy: 'preventa' },
+      { href: '/admin/ventas', label: 'Historial de Ventas', icon: 'receipt_long', legacy: 'sales' },
+      { href: '/admin/preventa', label: 'Preventa Online', icon: 'calendar_month', legacy: 'preventa' },
       { href: '/admin/pedidos', label: 'Pedidos', icon: 'shopping_bag', legacy: 'orders' },
       { href: '/admin/cupones', label: 'Cupones', icon: 'confirmation_number', legacy: 'cupones' },
       { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: 'undo', legacy: 'arrep' },
@@ -122,7 +123,8 @@ interface Props {
   onToggle: () => void
 }
 
-function SidebarLink({ t, active, onToggle }: { t: Tab; active: boolean; onToggle: () => void }) {
+function SidebarLink({ t, active, pathname, onToggle }: { t: Tab; active: boolean; pathname: string; onToggle: () => void }) {
+  const router = useRouter()
   const style: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
     borderRadius: 10, marginBottom: 2, textDecoration: 'none',
@@ -133,8 +135,35 @@ function SidebarLink({ t, active, onToggle }: { t: Tab; active: boolean; onToggl
     width: '100%', textAlign: 'left', border: 'none',
   }
   const icon = <span className="material-symbols-outlined" style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true">{t.icon}</span>
-  // Todas las secciones son rutas reales; las legacy activan el tab en el
-  // shell persistente al montar (AdminTabActivator). Prefetch para instantáneo.
+
+  // Sección legacy: renderiza el tab en el shell persistente llamando directo
+  // a window.renderAdminContent (sin eventos intermedios, inmune a HMR/remount).
+  // Solo navega si no está ya en esa ruta (router.push a misma URL causaba
+  // race que dejaba el tab vacío).
+  if (t.legacy) {
+    const already = pathname === t.href
+    return (
+      <button
+        aria-label={t.label}
+        style={style}
+        onClick={() => {
+          const w = window as any
+          if (typeof w.renderAdminContent === 'function') {
+            w.renderAdminContent(t.legacy)
+          } else {
+            w.dispatchEvent?.(new CustomEvent('admin:nav', { detail: t.legacy }))
+          }
+          if (!already) router.push(t.href)
+          onToggle()
+        }}
+        aria-current={active ? 'page' : undefined}
+      >
+        {icon}{t.label}
+      </button>
+    )
+  }
+
+  // Sección React: Link con prefetch.
   return (
     <Link href={t.href} onClick={onToggle} style={style} prefetch>
       {icon}{t.label}
@@ -210,7 +239,7 @@ export default function AdminSidebar({ open, onToggle }: Props) {
                         {sg.title}
                       </div>
                     )}
-                    {sg.items.map(t => <SidebarLink key={t.href} t={t} active={activeFor(t)} onToggle={onToggle} />)}
+                    {sg.items.map(t => <SidebarLink key={t.href} t={t} active={activeFor(t)} pathname={pathname} onToggle={onToggle} />)}
                   </div>
                 ))}
               </div>
