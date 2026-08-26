@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
 interface Tab {
@@ -24,7 +24,8 @@ interface NavGroup {
 }
 
 // Items con `legacy` apuntan a rutas reales cuyo tab se activa en el shell
-// SPA persistente (AdminTabActivator). El resto son secciones React nuevas.
+// admin legacy (AdminPageClient) al montar la página. El resto son secciones
+// React nuevas con ruta propia.
 const operaciones: SubGroup = {
   title: '',
   items: [
@@ -123,8 +124,7 @@ interface Props {
   onToggle: () => void
 }
 
-function SidebarLink({ t, active, pathname, onToggle }: { t: Tab; active: boolean; pathname: string; onToggle: () => void }) {
-  const router = useRouter()
+function SidebarLink({ t, active, onToggle }: { t: Tab; active: boolean; onToggle: () => void }) {
   const style: React.CSSProperties = {
     display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
     borderRadius: 10, marginBottom: 2, textDecoration: 'none',
@@ -135,35 +135,8 @@ function SidebarLink({ t, active, pathname, onToggle }: { t: Tab; active: boolea
     width: '100%', textAlign: 'left', border: 'none',
   }
   const icon = <span className="material-symbols-outlined" style={{ fontSize: 18, lineHeight: 1 }} aria-hidden="true">{t.icon}</span>
-
-  // Sección legacy: renderiza el tab en el shell persistente llamando directo
-  // a window.renderAdminContent (sin eventos intermedios, inmune a HMR/remount).
-  // Solo navega si no está ya en esa ruta (router.push a misma URL causaba
-  // race que dejaba el tab vacío).
-  if (t.legacy) {
-    const already = pathname === t.href
-    return (
-      <button
-        aria-label={t.label}
-        style={style}
-        onClick={() => {
-          const w = window as any
-          if (typeof w.renderAdminContent === 'function') {
-            w.renderAdminContent(t.legacy)
-          } else {
-            w.dispatchEvent?.(new CustomEvent('admin:nav', { detail: t.legacy }))
-          }
-          if (!already) router.push(t.href)
-          onToggle()
-        }}
-        aria-current={active ? 'page' : undefined}
-      >
-        {icon}{t.label}
-      </button>
-    )
-  }
-
-  // Sección React: Link con prefetch.
+  // Rutas reales en todas las secciones (legacy y React). Cada /admin/<tab>
+  // es una página que sirve el shell con su tab activo via AdminPageClient.
   return (
     <Link href={t.href} onClick={onToggle} style={style} prefetch>
       {icon}{t.label}
@@ -239,7 +212,7 @@ export default function AdminSidebar({ open, onToggle }: Props) {
                         {sg.title}
                       </div>
                     )}
-                    {sg.items.map(t => <SidebarLink key={t.href} t={t} active={activeFor(t)} pathname={pathname} onToggle={onToggle} />)}
+                    {sg.items.map(t => <SidebarLink key={t.href} t={t} active={activeFor(t)} onToggle={onToggle} />)}
                   </div>
                 ))}
               </div>
