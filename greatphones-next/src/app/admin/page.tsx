@@ -1,8 +1,9 @@
-import { serveAdminSpa } from '@/lib/spa-pages'
-import AdminPageClient from './AdminPageClient'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
+
+// La pantalla inicial del panel es el Calendario de pendientes.
+// El Dashboard legacy vive en /admin/dashboard.
 export default function Page() {
-  const html = serveAdminSpa('dashboard')
-  return <AdminPageClient html={html} tab="dashboard" />
+  redirect('/admin/analisis/calendario')
 }

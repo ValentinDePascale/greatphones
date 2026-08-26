@@ -60,7 +60,8 @@ const taller: SubGroup = {
 const analisis: SubGroup = {
   title: '',
   items: [
-    { href: '/admin', label: 'Dashboard', icon: 'dashboard', exact: true, legacy: 'dashboard' },
+    { href: '/admin/analisis/calendario', label: 'Calendario', icon: 'calendar_month', exact: true },
+    { href: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard', exact: true, legacy: 'dashboard' },
     { href: '/admin/analisis/reportes', label: 'Reportes', icon: 'monitoring' },
   ],
 }
@@ -89,7 +90,6 @@ const gestion: SubGroup[] = [
   {
     title: 'Comercio online',
     items: [
-      { href: '/admin/gestion/calendario', label: 'Calendario', icon: 'calendar_month' },
       { href: '/admin/ventas', label: 'Historial de Ventas', icon: 'receipt_long', legacy: 'sales' },
       { href: '/admin/preventa', label: 'Preventa Online', icon: 'event', legacy: 'preventa' },
       { href: '/admin/pedidos', label: 'Pedidos', icon: 'shopping_bag', legacy: 'orders' },
