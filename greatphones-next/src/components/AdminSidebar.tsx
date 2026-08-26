@@ -89,8 +89,9 @@ const gestion: SubGroup[] = [
   {
     title: 'Comercio online',
     items: [
+      { href: '/admin/gestion/calendario', label: 'Calendario', icon: 'calendar_month' },
       { href: '/admin/ventas', label: 'Historial de Ventas', icon: 'receipt_long', legacy: 'sales' },
-      { href: '/admin/preventa', label: 'Preventa Online', icon: 'calendar_month', legacy: 'preventa' },
+      { href: '/admin/preventa', label: 'Preventa Online', icon: 'event', legacy: 'preventa' },
       { href: '/admin/pedidos', label: 'Pedidos', icon: 'shopping_bag', legacy: 'orders' },
       { href: '/admin/cupones', label: 'Cupones', icon: 'confirmation_number', legacy: 'cupones' },
       { href: '/admin/arrepentimientos', label: 'Arrepentimientos', icon: 'undo', legacy: 'arrep' },
