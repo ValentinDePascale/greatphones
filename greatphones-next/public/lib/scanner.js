@@ -83,11 +83,32 @@
       if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
         const cams = await window.Html5Qrcode.getCameras()
         if (cams && cams.length) {
-          const back = cams.find(c => /back|rear|environment/i.test(c.label)) || cams[cams.length - 1]
-          return back.id
+          if (cams.length === 1) return cams[0].id
+          const labeled = cams.filter(c => c.label)
+          if (labeled.length) {
+            const back = labeled.find(c => /back|rear|environment/i.test(c.label))
+            if (back) return back.id
+            const front = labeled.find(c => /front|user|selfie/i.test(c.label))
+            if (front && labeled.length > 1) {
+              const notFront = labeled.find(c => c.id !== front.id)
+              if (notFront) return notFront.id
+            }
+          }
+          return cams[cams.length - 1].id
         }
       }
     } catch (e) { console.warn('[gp-scanner] getCameras failed', e) }
+    return null
+  }
+
+  async function pickBackCameraIdWithFallback() {
+    const id = await pickBackCameraId()
+    if (id) return id
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      stream.getTracks().forEach(t => t.stop())
+      return await pickBackCameraId()
+    } catch (e) {}
     return null
   }
 
@@ -176,7 +197,7 @@
 
     try {
       try {
-        await tryStart({ facingMode: 'environment' }, {
+        await tryStart({ facingMode: { exact: 'environment' } }, {
           fps: 12,
           qrbox: baseQrbox,
           aspectRatio: 1.777,
@@ -185,19 +206,53 @@
         })
       } catch (e) {
         lastErr = e
-        console.warn('[gp-scanner] facingMode failed', e)
-        const camId = await pickBackCameraId()
-        if (camId) {
-          if (statusEl) statusEl.textContent = 'Probando cámara trasera…'
+        console.warn('[gp-scanner] exact environment failed, trying ideal', e)
+        try {
           try { await scanner.stop().catch(()=>{}) } catch {}
           try { await scanner.clear().catch(()=>{}) } catch {}
-          await tryStart(camId, {
+          await tryStart({ facingMode: 'environment' }, {
             fps: 12,
             qrbox: baseQrbox,
             aspectRatio: 1.777,
             disableFlip: false,
+            videoConstraints: { width: { min: 640, ideal: 1280, max: 1920 }, height: { min: 480, ideal: 720, max: 1080 } },
           })
-        } else throw e
+        } catch (e2) {
+          lastErr = e2
+          console.warn('[gp-scanner] ideal environment failed, trying deviceId', e2)
+          const camId = await pickBackCameraIdWithFallback()
+          if (camId) {
+            if (statusEl) statusEl.textContent = 'Probando cámara trasera…'
+            try { await scanner.stop().catch(()=>{}) } catch {}
+            try { await scanner.clear().catch(()=>{}) } catch {}
+            await tryStart(camId, {
+              fps: 12,
+              qrbox: baseQrbox,
+              aspectRatio: 1.777,
+              disableFlip: false,
+            })
+          } else throw e2
+        }
+      }
+      const vFinal = overlay.querySelector('video')
+      if (vFinal) {
+        const isFront = vFinal.srcObject && (() => {
+          try {
+            const track = vFinal.srcObject.getVideoTracks()[0]
+            const settings = track && track.getSettings && track.getSettings()
+            return settings && settings.facingMode === 'user'
+          } catch { return false }
+        })()
+        if (isFront) {
+          console.warn('[gp-scanner] se abrió frontal, reintentando trasera')
+          const camId2 = await pickBackCameraIdWithFallback()
+          if (camId2) {
+            try { await scanner.stop().catch(()=>{}) } catch {}
+            try { await scanner.clear().catch(()=>{}) } catch {}
+            if (statusEl) statusEl.textContent = 'Cambiando a cámara trasera…'
+            await tryStart(camId2, { fps: 12, qrbox: baseQrbox, aspectRatio: 1.777, disableFlip: false })
+          }
+        }
       }
       if (!started) throw lastErr || new Error('No se pudo iniciar cámara')
       return { stop }
