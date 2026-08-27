@@ -125,6 +125,15 @@
 
     cancelBtn.onclick = stop;
 
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      const isHttpLan = /^192\.168\.\d+\.\d+$/.test(location.hostname) || /^10\.\d+\.\d+\.\d+$/.test(location.hostname)
+      if (isHttpLan || location.protocol === 'http:') {
+        throw new Error('La cámara requiere HTTPS. Abrí la app por el túnel https (ngrok / trycloudflare) o por https://greatphones.onrender.com — http en LAN no permite cámara en el celu.')
+      }
+    }
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error('Tu navegador no soporta cámara (mediaDevices no disponible). Usa Chrome actualizado por https.')
+    }
     try {
       await scanner.start(
         // html5-qrcode exige que cameraIdOrConfig, si es objeto, tenga EXACTA

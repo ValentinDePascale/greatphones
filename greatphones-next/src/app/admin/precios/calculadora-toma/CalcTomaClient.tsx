@@ -96,7 +96,7 @@ export default function CalcTomaClient() {
     <>
       <AdminTopbar titulo="Calculadora de Toma" />
 
-      <div style={{ padding: 24, maxWidth: 640, margin: '0 auto' }}>
+      <div style={{ padding: 'clamp(16px,4vw,24px)', maxWidth: 640, margin: '0 auto' }}>
         <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 16px' }}>
           Calcula el valor de toma según las fallas marcadas y lo que debe agregar el cliente en un
           canje.
@@ -321,6 +321,7 @@ export default function CalcTomaClient() {
           <div
             role="radiogroup"
             aria-label="Tipo de venta"
+            className="ct-tipo-grid"
             style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}
           >
             {(
@@ -410,10 +411,11 @@ export default function CalcTomaClient() {
       </div>
 
       <style>{`
-        .pe-input:focus { border-color: #FF6B2C !important; outline: none; }
-        .ct-chip:hover:not(.activa) { background: #E4E7EF !important; }
-        @media (prefers-reduced-motion: reduce) { .ct-chip { transition: none !important; } }
-      `}</style>
+         .pe-input:focus { border-color: #FF6B2C !important; outline: none; }
+         .ct-chip:hover:not(.activa) { background: #E4E7EF !important; }
+         @media (max-width: 380px){ .ct-tipo-grid{ grid-template-columns: 1fr !important; } }
+         @media (prefers-reduced-motion: reduce) { .ct-chip { transition: none !important; } }
+       `}</style>
     </>
   )
 }

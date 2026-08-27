@@ -30,12 +30,15 @@ export function createSessionCookie(userId: string, role: string): string {
   const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const signature = sign(encoded)
   const token = `${encoded}.${signature}`
-
-  return `${COOKIE_NAME}=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}`
+  const isProd = process.env.NODE_ENV === 'production'
+  const secure = isProd ? '; Secure' : ''
+  return `${COOKIE_NAME}=${token}; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}`
 }
 
 export function clearSessionCookie(): string {
-  return `${COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`
+  const isProd = process.env.NODE_ENV === 'production'
+  const secure = isProd ? '; Secure' : ''
+  return `${COOKIE_NAME}=; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=0`
 }
 
 export function getSessionFromCookies(cookieHeader: string | null): SessionPayload | null {

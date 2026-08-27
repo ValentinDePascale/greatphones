@@ -21,7 +21,7 @@ const nextConfig: NextConfig = {
     return config;
   },
   turbopack: {},
-  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || [],
+  allowedDevOrigins: process.env.ALLOWED_DEV_ORIGINS?.split(',') || ['192.168.18.9:3000', '192.168.18.9', '192.168.0.0/16', '10.0.0.0/8'],
   async headers() {
     return [
       // Static assets with ?v= versioning: immutable in prod (new ?v busts the cache)

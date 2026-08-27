@@ -325,7 +325,7 @@ export default function TomaEditor() {
       >
         <input
           className="pe-input"
-          style={{ ...inputStyle, maxWidth: 320 }}
+          style={{ ...inputStyle, flex: '1 1 200px', maxWidth: 320, minWidth: 0 }}
           placeholder="Buscar..."
           value={buscar}
           onChange={e => setBuscar(e.target.value)}
@@ -356,10 +356,11 @@ export default function TomaEditor() {
         </button>
       </div>
 
-      <div style={{ overflowX: 'auto', border: '1px solid #E6E7F0', borderRadius: 10 }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #E6E7F0', borderRadius: 10 }}>
         <table
           style={{
             width: '100%',
+            minWidth: 720,
             borderCollapse: 'collapse',
             fontSize: 12.5,
             whiteSpace: 'nowrap',

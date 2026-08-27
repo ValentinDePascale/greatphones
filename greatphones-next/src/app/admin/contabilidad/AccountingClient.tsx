@@ -98,7 +98,7 @@ export default function AccountingClient() {
   }
 
   return (
-    <div style={{ padding: '24px 28px', maxWidth: 1280, margin: '0 auto' }}>
+    <div style={{ padding: 'clamp(16px,4vw,24px) clamp(14px,3vw,28px)', maxWidth: 1280, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
         <div>
           <h1 style={{ fontSize: 22, fontWeight: 800, color: '#181B2E', margin: 0, fontFamily: 'Manrope,Inter,sans-serif' }}>Caja / Contabilidad</h1>
@@ -180,8 +180,8 @@ export default function AccountingClient() {
       </div>
 
       {/* Tabla libro diario */}
-      <div style={{ background: '#fff', border: '1px solid #E6E7F0', borderRadius: 14, overflow: 'hidden', boxShadow: '0 1px 2px rgba(23,23,45,.04)' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div style={{ background: '#fff', border: '1px solid #E6E7F0', borderRadius: 14, overflowX: 'auto', overflowY: 'hidden', WebkitOverflowScrolling: 'touch', boxShadow: '0 1px 2px rgba(23,23,45,.04)' }}>
+        <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#1A5276', color: '#fff' }}>
               <th style={{ padding: '10px 14px', textAlign: 'left', fontWeight: 700 }}>Operación</th>
@@ -215,9 +215,9 @@ export default function AccountingClient() {
         </table>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 4px', fontSize: 13, color: '#6B7280' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, padding: '14px 4px', fontSize: 13, color: '#6B7280' }}>
         <span>{total} movimientos</span>
-        <span style={{ display: 'flex', gap: 8 }}>
+        <span style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           <button onClick={() => load(page - 1)} disabled={page <= 1} style={{ padding: '7px 14px', border: '1px solid #E6E7F0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: 13 }}>← Anterior</button>
           <span>Pág {page} de {totalPages}</span>
           <button onClick={() => load(page + 1)} disabled={page >= totalPages} style={{ padding: '7px 14px', border: '1px solid #E6E7F0', borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: 13 }}>Siguiente →</button>

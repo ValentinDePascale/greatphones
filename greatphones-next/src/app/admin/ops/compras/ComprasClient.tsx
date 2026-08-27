@@ -306,7 +306,9 @@ export default function ComprasClient() {
       <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
         <style>{`
         .cw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .cw-radio-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; }
         @media (max-width: 640px) { .cw-grid { grid-template-columns: 1fr; } .cw-steplabel { display: none; } }
+        @media (max-width: 380px){ .cw-radio-grid{ grid-template-columns:1fr; } }
         .cw-input:focus { border-color: #FF6B2C !important; outline: none; }
         .cw-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
         .cw-primary:not(:disabled):hover { filter: brightness(.94); }
@@ -795,7 +797,7 @@ export default function ComprasClient() {
                 ¿Necesita arreglo antes de venderlo?
               </legend>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}
+                className="cw-radio-grid"
                 role="radiogroup"
                 aria-label="¿Necesita reparación?"
               >
@@ -888,7 +890,7 @@ export default function ComprasClient() {
                 ¿Es para una preventa ya pactada?
               </legend>
               <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 12 }}
+                className="cw-radio-grid"
                 role="radiogroup"
                 aria-label="¿Es para una preventa?"
               >
