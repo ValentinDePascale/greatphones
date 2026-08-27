@@ -107,6 +107,18 @@
     return null
   }
 
+  async function pickOtherCameraId(avoidId) {
+    try {
+      const cams = await navigator.mediaDevices.enumerateDevices()
+      const video = cams.filter(d => d.kind === 'videoinput' && d.deviceId && d.deviceId !== avoidId)
+      if (!video.length) return null
+      const back = video.find(d => /back|rear|environment/i.test(d.label))
+      if (back) return back.deviceId
+      return video[0].deviceId
+    } catch (e) { console.warn('[gp-scanner] pickOther failed', e) }
+    return null
+  }
+
   async function openScanner(opts) {
     opts = opts || {};
     const onDetected = opts.onDetected;
@@ -154,6 +166,7 @@
     }
 
     const isBarcode = mode === 'barcode'
+    let swapped = false
     const qrboxFn = (vw, vh) => {
       if (isBarcode) {
         // Scanline ancha y no muy alta para códigos de barras 1D
@@ -188,6 +201,28 @@
         try { await v.play() } catch (e) {}
         await new Promise(r => setTimeout(r, 700))
         if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0)')
+      }
+      // Garantía trasera: si el track quedó en frontal, cambiar sin pedir otra vez
+      const startedTrackSettings = v && v.srcObject && (() => {
+        try {
+          const t = v.srcObject.getVideoTracks()[0]
+          return t && t.getSettings ? t.getSettings() : null
+        } catch { return null }
+      })()
+      if (!swapped && startedTrackSettings && startedTrackSettings.facingMode === 'user') {
+        swapped = true
+        console.warn('[gp-scanner] quedó frontal, pasando a trasera')
+        try { await scanner.stop().catch(()=>{}) } catch {}
+        try { await scanner.clear().catch(()=>{}) } catch {}
+        const other = await pickOtherCameraId(
+          (startedTrackSettings.deviceId) || (typeof camConfig === 'string' ? camConfig : '')
+        )
+        if (other) {
+          try { await tryStart(other, buildCfg(false)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
+        } else {
+          try { await tryStart({ facingMode: 'environment' }, buildCfg(true)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
+        }
+        return
       }
       if (statusEl) statusEl.textContent = hintFor(mode) + (isBarcode ? ' — acercá hasta que ocupe todo el ancho del rectángulo' : ' — enfocá el código')
     }
