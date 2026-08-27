@@ -129,6 +129,7 @@
     const scanner = new window.Html5Qrcode('gp-scanner-reader', {
       formatsToSupport: formats,
       verbose: false,
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
     });
 
     let stopped = false;
@@ -195,12 +196,11 @@
       fps: isBarcode ? 20 : 15,
       qrbox: qrboxFn,
       disableFlip: false,
-      ...(withFacing ? {
-        videoConstraints: {
-          width: { min: 640, ideal: 1280, max: 1920 },
-          height: { min: 480, ideal: 720, max: 1080 },
-        },
-      } : {}),
+      videoConstraints: {
+        ...(withFacing ? { facingMode: 'environment' } : {}),
+        width: { min: 640, ideal: 1920, max: 1920 },
+        height: { min: 480, ideal: 1080, max: 1080 },
+      },
     })
 
     try {
