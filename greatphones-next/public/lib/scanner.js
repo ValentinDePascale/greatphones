@@ -127,11 +127,11 @@
 
     try {
       await scanner.start(
-        {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
+        // html5-qrcode exige que cameraIdOrConfig, si es objeto, tenga EXACTA
+        // UNA clave (facingMode o deviceId). width/height NO van acá; se pasan
+        // en config.videoConstraints. Con 3 claves la librería abortaba y en
+        // el celu ni siquiera abría la cámara.
+        { facingMode: 'environment' },
         {
           fps: 20,
           qrbox: (vw, vh) => {
@@ -143,6 +143,11 @@
           },
           aspectRatio: 1.777,
           disableFlip: false,
+          videoConstraints: {
+            facingMode: 'environment',
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
         },
         (decodedText) => {
           if (stopped) return;
