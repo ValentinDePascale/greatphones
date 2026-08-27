@@ -78,37 +78,32 @@
     return overlay;
   }
 
-  async function pickBackCameraId() {
+  async function ensureBackCameraId() {
+    // Preflight: pedir permiso y dejar que el browser abra la trasera una vez.
+    // Se cierra al instante; sirve para que enumerateDevices devuelva labels
+    // y deviceIds sin mostrar la frontal al usuario.
     try {
-      if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
-        const cams = await window.Html5Qrcode.getCameras()
-        if (cams && cams.length) {
-          if (cams.length === 1) return cams[0].id
-          const labeled = cams.filter(c => c.label)
-          if (labeled.length) {
-            const back = labeled.find(c => /back|rear|environment/i.test(c.label))
-            if (back) return back.id
-            const front = labeled.find(c => /front|user|selfie/i.test(c.label))
-            if (front && labeled.length > 1) {
-              const notFront = labeled.find(c => c.id !== front.id)
-              if (notFront) return notFront.id
-            }
-          }
-          return cams[cams.length - 1].id
-        }
-      }
-    } catch (e) { console.warn('[gp-scanner] getCameras failed', e) }
-    return null
-  }
-
-  async function pickBackCameraIdWithFallback() {
-    const id = await pickBackCameraId()
-    if (id) return id
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+      })
       stream.getTracks().forEach(t => t.stop())
-      return await pickBackCameraId()
-    } catch (e) {}
+    } catch (e) { console.warn('[gp-scanner] preflight env failed', e) }
+    try {
+      const cams = await navigator.mediaDevices.enumerateDevices()
+      const video = cams.filter(d => d.kind === 'videoinput')
+      if (!video.length) return null
+      if (video.length === 1) return video[0].deviceId
+      const labeled = video.filter(d => d.label)
+      const back = labeled.find(d => /back|rear|environment/i.test(d.label))
+      if (back) return back.deviceId
+      const front = labeled.find(d => /front|user|selfie/i.test(d.label))
+      if (front) {
+        const other = video.find(d => d.deviceId !== front.deviceId)
+        if (other) return other.deviceId
+      }
+      // En Android el último suele ser la trasera
+      return video[video.length - 1].deviceId
+    } catch (e) { console.warn('[gp-scanner] enumerateDevices failed', e) }
     return null
   }
 
@@ -157,12 +152,14 @@
       throw new Error('Tu navegador no soporta cámara (mediaDevices no disponible). Usa Chrome actualizado por https.')
     }
 
-    let started = false
-    let lastErr = null
-    const baseQrbox = (vw, vh) => {
-      if (mode === 'barcode') return { width: Math.min(360, vw - 40), height: 180 }
+    const isBarcode = mode === 'barcode'
+    const qrboxFn = (vw, vh) => {
+      if (isBarcode) {
+        // Scanline ancha y no muy alta para códigos de barras 1D
+        return { width: Math.max(240, vw - 32), height: Math.min(190, Math.round(vh * 0.4)) }
+      }
       const min = Math.min(vw, vh)
-      return { width: min - 40, height: min - 40 }
+      return { width: Math.max(200, min - 32), height: Math.max(200, min - 32) }
     }
     const tryStart = async (camConfig, cfg) => {
       await scanner.start(camConfig, cfg,
@@ -179,7 +176,6 @@
         },
         () => {}
       )
-      started = true
       const v = overlay.querySelector('video')
       if (v) {
         v.style.objectFit = 'cover'
@@ -189,72 +185,38 @@
         v.setAttribute('autoplay', 'true')
         v.muted = true
         try { await v.play() } catch (e) {}
-        await new Promise(r => setTimeout(r, 900))
-        if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0) — reintentando con otra configuración')
+        await new Promise(r => setTimeout(r, 700))
+        if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0)')
       }
-      if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
+      if (statusEl) statusEl.textContent = hintFor(mode) + (isBarcode ? ' — acercá hasta que ocupe todo el ancho del rectángulo' : ' — enfocá el código')
     }
 
+    const buildCfg = (withFacing) => ({
+      fps: isBarcode ? 20 : 15,
+      qrbox: qrboxFn,
+      disableFlip: false,
+      ...(withFacing ? {
+        videoConstraints: {
+          width: { min: 640, ideal: 1280, max: 1920 },
+          height: { min: 480, ideal: 720, max: 1080 },
+        },
+      } : {}),
+    })
+
     try {
-      try {
-        await tryStart({ facingMode: { exact: 'environment' } }, {
-          fps: 12,
-          qrbox: baseQrbox,
-          aspectRatio: 1.777,
-          disableFlip: false,
-          videoConstraints: { width: { min: 640, ideal: 1280, max: 1920 }, height: { min: 480, ideal: 720, max: 1080 } },
-        })
-      } catch (e) {
-        lastErr = e
-        console.warn('[gp-scanner] exact environment failed, trying ideal', e)
+      const camId = await ensureBackCameraId()
+      if (camId) {
         try {
+          await tryStart(camId, buildCfg(false))
+        } catch (e) {
+          console.warn('[gp-scanner] deviceId start failed, facingMode env', e)
           try { await scanner.stop().catch(()=>{}) } catch {}
           try { await scanner.clear().catch(()=>{}) } catch {}
-          await tryStart({ facingMode: 'environment' }, {
-            fps: 12,
-            qrbox: baseQrbox,
-            aspectRatio: 1.777,
-            disableFlip: false,
-            videoConstraints: { width: { min: 640, ideal: 1280, max: 1920 }, height: { min: 480, ideal: 720, max: 1080 } },
-          })
-        } catch (e2) {
-          lastErr = e2
-          console.warn('[gp-scanner] ideal environment failed, trying deviceId', e2)
-          const camId = await pickBackCameraIdWithFallback()
-          if (camId) {
-            if (statusEl) statusEl.textContent = 'Probando cámara trasera…'
-            try { await scanner.stop().catch(()=>{}) } catch {}
-            try { await scanner.clear().catch(()=>{}) } catch {}
-            await tryStart(camId, {
-              fps: 12,
-              qrbox: baseQrbox,
-              aspectRatio: 1.777,
-              disableFlip: false,
-            })
-          } else throw e2
+          await tryStart({ facingMode: 'environment' }, buildCfg(true))
         }
+      } else {
+        await tryStart({ facingMode: 'environment' }, buildCfg(true))
       }
-      const vFinal = overlay.querySelector('video')
-      if (vFinal) {
-        const isFront = vFinal.srcObject && (() => {
-          try {
-            const track = vFinal.srcObject.getVideoTracks()[0]
-            const settings = track && track.getSettings && track.getSettings()
-            return settings && settings.facingMode === 'user'
-          } catch { return false }
-        })()
-        if (isFront) {
-          console.warn('[gp-scanner] se abrió frontal, reintentando trasera')
-          const camId2 = await pickBackCameraIdWithFallback()
-          if (camId2) {
-            try { await scanner.stop().catch(()=>{}) } catch {}
-            try { await scanner.clear().catch(()=>{}) } catch {}
-            if (statusEl) statusEl.textContent = 'Cambiando a cámara trasera…'
-            await tryStart(camId2, { fps: 12, qrbox: baseQrbox, aspectRatio: 1.777, disableFlip: false })
-          }
-        }
-      }
-      if (!started) throw lastErr || new Error('No se pudo iniciar cámara')
       return { stop }
     } catch (err) {
       const msg = (err && (err.message || err.name)) || String(err)
