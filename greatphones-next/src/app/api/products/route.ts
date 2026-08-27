@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import {
-  ProductCreateSchema,
-  ProductUpdateSchema,
-  formatZodError
-} from '@/lib/validations'
+import { ProductCreateSchema, ProductUpdateSchema, formatZodError } from '@/lib/validations'
 import { productCache } from '@/lib/cache'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin, handleRouteError, AuthError } from '@/lib/auth-guard'
@@ -17,7 +13,15 @@ export async function GET(request: NextRequest) {
   const ip = clientIpKey(request)
   const rl = await rateLimit(`products:${ip}`, 30, 60000)
   if (!rl.allowed) {
-    return NextResponse.json({ error: 'Demasiadas solicitudes. Reintenta en ' + Math.ceil((rl.resetAt - Date.now()) / 1000) + 's' }, { status: 429 })
+    return NextResponse.json(
+      {
+        error:
+          'Demasiadas solicitudes. Reintenta en ' +
+          Math.ceil((rl.resetAt - Date.now()) / 1000) +
+          's',
+      },
+      { status: 429 },
+    )
   }
   const { searchParams } = new URL(request.url)
   const brand = searchParams.get('brand')
@@ -29,13 +33,13 @@ export async function GET(request: NextRequest) {
 
   const isAdmin = request.headers.get('x-user-id') && request.headers.get('x-admin-request') === '1'
 
-  const cacheKey = `products:${brand||''}:${offer||''}:${search||''}:${preorder||''}:${page}:${limit}`
+  const cacheKey = `products:${brand || ''}:${offer || ''}:${search || ''}:${preorder || ''}:${page}:${limit}`
   const cached = productCache.get(cacheKey)
   if (cached) {
     return NextResponse.json(cached, { headers: corsHeaders })
   }
 
-   try {
+  try {
     await expireOffers()
     const where: any = {}
     where.deletedAt = null
@@ -78,7 +82,11 @@ export async function GET(request: NextRequest) {
     // el detalle para mostrar el mismo precio. Solo para productos no-preventa.
     let variantStats: Record<string, { minTargetPrice: number; variantCount: number }> = {}
     try {
-      if (products.length > 0 && prisma.inventoryItem && typeof prisma.inventoryItem.groupBy === 'function') {
+      if (
+        products.length > 0 &&
+        prisma.inventoryItem &&
+        typeof prisma.inventoryItem.groupBy === 'function'
+      ) {
         const agg = await prisma.inventoryItem.groupBy({
           by: ['productId'],
           _min: { targetPrice: true },
@@ -110,7 +118,7 @@ export async function GET(request: NextRequest) {
         pregroup.forEach((p: any) => {
           const g = groups.get(p.modelGroup) || { min: Infinity, count: 0 }
           g.min = Math.min(g.min, Number(p.price) || 0)
-          g.count++ 
+          g.count++
           groups.set(p.modelGroup, g)
         })
         products.forEach((p: any) => {
@@ -136,7 +144,9 @@ export async function GET(request: NextRequest) {
     productCache.set(cacheKey, response)
 
     return NextResponse.json(response, { headers: corsHeaders })
-  } catch (error) { return handleRouteError(error) }
+  } catch (error) {
+    return handleRouteError(error)
+  }
 }
 
 export async function POST(request: Request) {
@@ -145,21 +155,46 @@ export async function POST(request: Request) {
   try {
     await requireAdmin(request)
     const body = await request.json()
-    
+
     // Validar body
     const validation = ProductCreateSchema.safeParse(body)
     if (!validation.success) {
       console.error('Product validation failed:', JSON.stringify(validation.error.issues, null, 2))
-      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
+      return NextResponse.json(formatZodError(validation.error), {
+        status: 400,
+        headers: corsHeaders,
+      })
     }
-    
+
     console.log('Creating product with data:', body)
-    
+
+    let imageUrl = body.imageUrl || null
+    if (!imageUrl && body.name) {
+      try {
+        const priceEntry = await prisma.priceList.findFirst({
+          where: {
+            modelo: body.name,
+            almacenamiento: body.storage || '',
+          },
+          select: { imageUrl: true },
+        })
+        if (priceEntry?.imageUrl) imageUrl = priceEntry.imageUrl
+        else {
+          const fallback = await prisma.priceList.findFirst({
+            where: { modelo: body.name },
+            orderBy: { almacenamiento: 'desc' },
+            select: { imageUrl: true },
+          })
+          if (fallback?.imageUrl) imageUrl = fallback.imageUrl
+        }
+      } catch {}
+    }
+
     const newProduct = await prisma.product.create({
       data: {
         name: body.name,
         ico: body.ico || '📱',
-        imageUrl: body.imageUrl || null,
+        imageUrl: imageUrl,
         brand: body.brand,
         sub: body.sub,
         condition: body.condition || 'Nuevo',
@@ -221,18 +256,21 @@ export async function PUT(request: Request) {
     await requireAdmin(request)
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
-    
+
     if (!id) {
       return NextResponse.json({ error: 'ID requerido' }, { status: 400, headers: corsHeaders })
     }
-    
+
     const body = await request.json()
-    
+
     const validation = ProductUpdateSchema.safeParse(body)
     if (!validation.success) {
-      return NextResponse.json(formatZodError(validation.error), { status: 400, headers: corsHeaders })
+      return NextResponse.json(formatZodError(validation.error), {
+        status: 400,
+        headers: corsHeaders,
+      })
     }
-    
+
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
@@ -260,7 +298,9 @@ export async function PUT(request: Request) {
         ...(body.offerStart && { offerStart: new Date(body.offerStart) }),
         ...(body.offerEnd && { offerEnd: new Date(body.offerEnd) }),
         ...(body.isPreorder !== undefined && { isPreorder: Boolean(body.isPreorder) }),
-        ...(body.availableFrom !== undefined && { availableFrom: body.availableFrom ? new Date(body.availableFrom) : null }),
+        ...(body.availableFrom !== undefined && {
+          availableFrom: body.availableFrom ? new Date(body.availableFrom) : null,
+        }),
       },
     })
 
@@ -288,7 +328,10 @@ export async function PUT(request: Request) {
     return NextResponse.json({ ...updatedProduct, syncedImeis }, { headers: corsHeaders })
   } catch (error) {
     const status = error instanceof AuthError ? error.status : 500
-    return NextResponse.json({ error: 'Error al actualizar producto' }, { status, headers: corsHeaders })
+    return NextResponse.json(
+      { error: 'Error al actualizar producto' },
+      { status, headers: corsHeaders },
+    )
   }
 }
 
@@ -311,7 +354,7 @@ export async function DELETE(request: Request) {
       entityType: 'Product',
       entityId: id,
       reason,
-    }).catch((err) => console.error('[Product DELETE] audit:', err))
+    }).catch(err => console.error('[Product DELETE] audit:', err))
 
     await prisma.$transaction([
       prisma.product.update({
@@ -321,9 +364,15 @@ export async function DELETE(request: Request) {
     ])
 
     productCache.clear()
-    return NextResponse.json({ success: true, message: 'Producto anulado correctamente' }, { headers: corsHeaders })
+    return NextResponse.json(
+      { success: true, message: 'Producto anulado correctamente' },
+      { headers: corsHeaders },
+    )
   } catch (error) {
     console.error('Error al anular producto:', error)
-    return NextResponse.json({ error: 'Error al anular producto' }, { status: 500, headers: corsHeaders })
+    return NextResponse.json(
+      { error: 'Error al anular producto' },
+      { status: 500, headers: corsHeaders },
+    )
   }
 }
