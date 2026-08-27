@@ -37,19 +37,16 @@ export async function middleware(request: NextRequest) {
   if (!isDev) {
     response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')
   }
-  // En dev permitimos cámara y micrófono (scanner IMEI desde el celular)
   response.headers.set(
     'Permissions-Policy',
-    isDev
-      ? 'camera=(self), microphone=(self), geolocation=(self)'
-      : 'camera=(), microphone=(), geolocation=()'
+    'camera=(self), microphone=(self), geolocation=(self)'
   )
   response.headers.set(
     'Content-Security-Policy',
     isDev
       ? // Dev: permitir todo para que el túnel funcione
-        "default-src 'self' * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' * https://cdn.socket.io https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' * https://fonts.googleapis.com; font-src 'self' * https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' * ws: wss:; frame-ancestors 'self' *; media-src 'self' * blob:; worker-src 'self' * blob:;"
-      : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' http://localhost:3000; frame-ancestors 'none'"
+        "default-src 'self' * data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' * https://cdn.socket.io https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' * https://fonts.googleapis.com; font-src 'self' * https://fonts.gstatic.com data:; img-src 'self' data: blob: *; connect-src 'self' * ws: wss:; frame-ancestors 'self' *; media-src 'self' * blob:; worker-src 'self' * blob:;"
+      : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://greatphones.onrender.com https://greatphones.com.ar https://www.greatphones.com.ar; frame-ancestors 'none'; media-src 'self' blob:; worker-src 'self' blob:;"
   )
 
   if (request.method === 'OPTIONS') {
