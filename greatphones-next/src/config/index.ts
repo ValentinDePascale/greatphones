@@ -25,16 +25,19 @@ export const ALLOWED_ORIGINS = [
 ]
 
 // Patrones regex adicionales para dev (túneles HTTPS efímeros + LAN).
-const DEV_TUNNEL_PATTERNS = process.env.NODE_ENV === 'production'
-  ? []
-  : [
-      /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/,
-      /^https:\/\/[a-z0-9-]+\.loca\.lt$/,
-      /^https:\/\/[a-z0-9-]+\.ngrok(-free)?\.app$/,
-      /^https:\/\/[a-z0-9-]+\.serveo\.net$/,
-      /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
-      /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
-    ]
+const DEV_TUNNEL_PATTERNS =
+  process.env.NODE_ENV === 'production'
+    ? []
+    : [
+        /^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/,
+        /^https:\/\/[a-z0-9-]+\.loca\.lt$/,
+        /^https:\/\/[a-z0-9-]+\.ngrok(-free)?\.app$/,
+        /^https:\/\/[a-z0-9-]+\.serveo\.net$/,
+        /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/,
+        /^http:\/\/10\.\d+\.\d+\.\d+(:\d+)?$/,
+        /^http:\/\/localhost(:\d+)?$/,
+        /^http:\/\/127\.0\.0\.1(:\d+)?$/,
+      ]
 
 export function isOriginAllowed(origin: string | null | undefined): boolean {
   if (!origin) return false
@@ -92,11 +95,7 @@ export const CACHE_TTL_MS = 30_000
 
 // ---- Env Var Validation ----
 export function validateEnv(): { valid: boolean; missing: string[] } {
-  const required = [
-    'DATABASE_URL',
-    'NEXTAUTH_SECRET',
-    'MP_ACCESS_TOKEN',
-  ]
+  const required = ['DATABASE_URL', 'NEXTAUTH_SECRET', 'MP_ACCESS_TOKEN']
 
   const missing = required.filter(key => !process.env[key])
 
