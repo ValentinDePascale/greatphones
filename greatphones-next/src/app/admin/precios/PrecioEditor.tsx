@@ -335,7 +335,7 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
       >
         <input
           className="pe-input"
-          style={{ ...inputStyle, maxWidth: 320 }}
+          style={{ ...inputStyle, flex: '1 1 200px', maxWidth: 320, minWidth: 0 }}
           placeholder="Buscar..."
           value={buscar}
           onChange={e => setBuscar(e.target.value)}
@@ -366,8 +366,8 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
         </button>
       </div>
 
-      <div style={{ overflow: 'auto', border: '1px solid #E6E7F0', borderRadius: 10 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div style={{ overflow: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #E6E7F0', borderRadius: 10 }}>
+        <table style={{ width: '100%', minWidth: 520, borderCollapse: 'collapse', fontSize: 13 }}>
           <thead>
             <tr style={{ background: '#F4F6F9', textAlign: 'left' }}>
               <th scope="col" style={{ padding: '9px 10px' }}>

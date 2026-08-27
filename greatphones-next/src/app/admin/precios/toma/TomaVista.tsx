@@ -107,6 +107,7 @@ export default function TomaVista() {
         className="tv-search"
         style={{
           maxWidth: 340,
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -190,10 +191,11 @@ export default function TomaVista() {
         </div>
       )}
 
-      <div style={{ overflowX: 'auto', border: '1px solid #E6E7F0', borderRadius: 8 }}>
+      <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch', border: '1px solid #E6E7F0', borderRadius: 8 }}>
         <table
           style={{
             width: '100%',
+            minWidth: 720,
             borderCollapse: 'collapse',
             fontSize: 12.5,
             whiteSpace: 'nowrap',

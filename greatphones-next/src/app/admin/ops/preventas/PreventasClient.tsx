@@ -327,6 +327,7 @@ export default function PreventasClient() {
           .cw-grid-4 { grid-template-columns: repeat(2,1fr); }
           .cw-steplabel { display: none; }
         }
+        @media (max-width: 420px){ .cw-grid-4{ grid-template-columns: 1fr; } }
         .cw-input:focus { border-color: #FF6B2C !important; outline: none; }
         .cw-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
         .cw-primary:not(:disabled):hover { filter: brightness(.94); }

@@ -178,13 +178,15 @@ export default function ReportesClient() {
   return (
     <>
       <AdminTopbar titulo="Reportes" />
-      <div style={{ padding: 24, maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ padding: 'clamp(16px,4vw,24px)', maxWidth: 1100, margin: '0 auto' }}>
         <style>{`
-          .pe-input:focus{ border-color:#FF6B2C!important; outline:none}
-          .pe-btn:focus-visible{ outline:2px solid #FF6B2C; outline-offset:2px}
-          .r-chip{ transition: background .15s}
-          .r-chip:hover{ filter:brightness(.96)}
-        `}</style>
+           .pe-input:focus{ border-color:#FF6B2C!important; outline:none}
+           .pe-btn:focus-visible{ outline:2px solid #FF6B2C; outline-offset:2px}
+           .r-chip{ transition: background .15s}
+           .r-chip:hover{ filter:brightness(.96)}
+           .r-sum-grid{ grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
+           @media (max-width: 380px){ .r-sum-grid{ grid-template-columns: 1fr 1fr; } }
+         `}</style>
 
         <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 0' }}>
           Todos los ingresos del sistema — online y local
@@ -609,9 +611,10 @@ export default function ReportesClient() {
               </div>
 
               <div
+                className="r-sum-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(4, 1fr)',
+                  gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))',
                   gap: 10,
                   marginTop: 14,
                 }}

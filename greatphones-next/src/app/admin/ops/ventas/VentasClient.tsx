@@ -390,10 +390,17 @@ export default function VentasClient() {
         <style>{`
         .cw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .cw-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+        .cw-acc-grid { display: grid; grid-template-columns: 2fr 1fr auto; gap: 8px; align-items: start; }
         @media (max-width: 640px) {
           .cw-grid { grid-template-columns: 1fr; }
           .cw-grid-4 { grid-template-columns: repeat(2,1fr); }
           .cw-steplabel { display: none; }
+        }
+        @media (max-width: 420px) {
+          .cw-grid-4 { grid-template-columns: 1fr; }
+          .cw-acc-grid { grid-template-columns: 1fr; }
+          .cw-acc-grid button{ width: 100%; height: 41px; margin-top: 0 !important; }
+          .cw-cat-grid{ grid-template-columns: 1fr !important; }
         }
         .cw-input:focus { border-color: #FF6B2C !important; outline: none; }
         .cw-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
@@ -984,7 +991,7 @@ export default function VentasClient() {
                   <label htmlFor="acc-catalogo" style={{ ...labelStyle, marginTop: 0 }}>
                     Agregar del catálogo (con stock)
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                  <div className="cw-cat-grid" style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
                     <select
                       id="acc-catalogo"
                       className="cw-input"
@@ -1042,12 +1049,10 @@ export default function VentasClient() {
               {accesorios.map((a, i) => (
                 <div
                   key={i}
+                  className="cw-acc-grid"
                   style={{
-                    display: 'grid',
                     gridTemplateColumns: accesorios.length > 1 ? '2fr 1fr auto' : '2fr 1fr',
-                    gap: 8,
                     marginTop: i === 0 ? 12 : 8,
-                    alignItems: 'start',
                   }}
                 >
                   <div>

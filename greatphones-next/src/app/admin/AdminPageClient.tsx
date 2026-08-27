@@ -16,15 +16,9 @@ interface Props {
 
 const SCRIPT_SRC_RE = /<script[^>]*\bsrc=["']([^"']+)["']/g
 
-function loadLegacyScripts(html: string): void {
+function loadLegacyScriptsSequential(html: string): Promise<void> {
   const w = window as any
   const loaded: Set<string> = (w.__gpLoadedScripts = w.__gpLoadedScripts || new Set<string>())
-  // Si el runtime legacy YA se ejecutó en este documento (p.ej. entramos por
-  // una carga completa a /admin/<tab>, o ya lo cargamos antes en la sesión),
-  // renderAdminContent está definido y no hay que volver a ejecutar nada.
-  // OJO: no podemos detectar scripts "ya ejecutados" por su presencia en el DOM:
-  // los <script> que quedan del innerHTML del shell están en el DOM pero nunca
-  // se ejecutaron (innerHTML no corre scripts).
   const alreadyExecuted = typeof w.renderAdminContent === 'function'
   const toLoad: string[] = []
   const re = new RegExp(SCRIPT_SRC_RE.source, 'g')
@@ -38,19 +32,25 @@ function loadLegacyScripts(html: string): void {
     }
     toLoad.push(src)
   }
-  if (toLoad.length === 0) return
-  // Marcamos como cargados AL ENCOLARLOS (antes de que terminen) para no
-  // duplicar la ejecución si el efecto corre dos veces (React StrictMode en
-  // dev) o el componente se monta de nuevo antes de que terminen de cargar.
+  if (toLoad.length === 0) return Promise.resolve()
   toLoad.forEach(src => loaded.add(src))
-  // async=false conserva el orden del documento (como el defer del shell).
-  toLoad.forEach(src => {
-    const el = document.createElement('script')
-    el.src = src
-    el.async = false
-    el.setAttribute('data-gp', '1')
-    document.head.appendChild(el)
-  })
+  return toLoad.reduce((prev, src) => {
+    return prev.then(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          const el = document.createElement('script')
+          el.src = src
+          el.async = false
+          el.setAttribute('data-gp', '1')
+          el.onload = () => resolve()
+          el.onerror = () => {
+            loaded.delete(src)
+            reject(new Error(`legacy script failed: ${src}`))
+          }
+          document.head.appendChild(el)
+        }),
+    )
+  }, Promise.resolve())
 }
 
 export default function AdminPageClient({ html, tab }: Props) {
@@ -89,39 +89,48 @@ export default function AdminPageClient({ html, tab }: Props) {
       navBtn.classList.add('act')
     }
 
-    // Renderizar el contenido del tab de forma robusta. El shell legacy carga
-    // sus scripts con `defer` (render.js/admin.js son pesados y con cache-busting
-    // ?v=), por lo que pueden no estar listos cuando este useEffect corre. En vez
-    // de un setTimeout fijo de 300ms sin reintento (que dejaba el contenido en
-    // blanco intermitentemente), esperamos a que renderAdminContent exista y
-    // verificamos que el contenido se pobló, reintentando hasta un timeout total.
-    // Ademas, en navegacion client-side esos scripts nunca se ejecutan (innerHTML
-    // no corre scripts): los cargamos explicitamente con loadLegacyScripts.
-    loadLegacyScripts(html)
-    let attempts = 0
-    const MAX_ATTEMPTS = 60 // ~9s
-    const iv = window.setInterval(() => {
-      const w = window as any
-      if (typeof w.renderAdminContent !== 'function') {
-        attempts++
-        if (attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
-        return
-      }
+    let cancelled = false
+    let pollIv: number | undefined
+    const ensureLegacyReady = async () => {
       try {
-        w.renderAdminContent(tab)
-      } catch (e) {
+        await loadLegacyScriptsSequential(html)
+      } catch {}
+      if (cancelled) return
+      let attempts = 0
+      const MAX_ATTEMPTS = 80
+      pollIv = window.setInterval(() => {
+        const w2 = window as any
+        if (typeof w2.renderAdminContent !== 'function') {
+          attempts++
+          if (attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
+          return
+        }
+        try {
+          w2.renderAdminContent(tab)
+        } catch {
+          attempts++
+          if (attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
+          return
+        }
+        const el = document.getElementById('adminContent')
+        const populated = el && el.innerHTML.trim() !== ''
+        if (populated || attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
         attempts++
-        if (attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
-        return
+      }, 120) as unknown as number
+      const w0 = window as any
+      if (typeof w0.renderAdminContent === 'function') {
+        try {
+          w0.renderAdminContent(tab)
+        } catch {}
       }
-      const el = document.getElementById('adminContent')
-      const populated = el && el.innerHTML.trim() !== ''
-      if (populated || attempts >= MAX_ATTEMPTS) window.clearInterval(iv)
-      attempts++
-    }, 150)
+    }
+    ensureLegacyReady()
 
-    return () => window.clearInterval(iv)
-  }, [tab])
+    return () => {
+      cancelled = true
+      if (pollIv) window.clearInterval(pollIv)
+    }
+  }, [tab, html])
 
   return (
     <div
