@@ -1,15 +1,3 @@
-/**
- * Unified camera scanner for Great Phones.
- * Supports QR codes and 1D barcodes (CODE_128, CODE_39, CODE_93, ITF, CODABAR, EAN, UPC).
- * Single dependency: html5-qrcode.
- *
- * Public API:
- *   window.gpScanner.open({ mode, onDetected })   -> Promise<{ stop }>
- *   window.abrirScannerQR({ mode, onDetected })    -> wrapper for legacy callers
- *
- * mode: 'barcode' | 'qr' | 'both'  (default: 'both')
- * onDetected({ type, value, raw }) where type is 'imei' | 'code' | 'text'
- */
 (() => {
   'use strict';
 
@@ -79,15 +67,28 @@
   function createOverlay(mode) {
     const overlay = document.createElement('div');
     overlay.id = 'gp-scanner-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden';
     overlay.innerHTML =
-      '<div id="gp-scanner-reader" style="position:absolute;inset:0"></div>' +
-      '<div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:10px;backdrop-filter:blur(8px);font-family:system-ui;max-width:90vw;text-align:center">' +
+      '<div id="gp-scanner-reader" style="position:absolute;inset:0;width:100%;height:100%;background:#000"></div>' +
+      '<div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:10px;backdrop-filter:blur(8px);font-family:system-ui;max-width:90vw;text-align:center;z-index:2">' +
         '<div id="gp-scanner-status">' + hintFor(mode) + '</div>' +
       '</div>' +
-      '<button id="gp-scanner-cancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);font-family:system-ui">Cancelar</button>';
+      '<button id="gp-scanner-cancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);font-family:system-ui;z-index:2">Cancelar</button>';
     document.body.appendChild(overlay);
     return overlay;
+  }
+
+  async function pickBackCameraId() {
+    try {
+      if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
+        const cams = await window.Html5Qrcode.getCameras()
+        if (cams && cams.length) {
+          const back = cams.find(c => /back|rear|environment/i.test(c.label)) || cams[cams.length - 1]
+          return back.id
+        }
+      }
+    } catch (e) { console.warn('[gp-scanner] getCameras failed', e) }
+    return null
   }
 
   async function openScanner(opts) {
@@ -118,8 +119,8 @@
     const stop = async () => {
       if (stopped) return;
       stopped = true;
-      try { await scanner.stop(); } catch (e) { /* ignore */ }
-      try { await scanner.clear(); } catch (e) { /* ignore */ }
+      try { await scanner.stop(); } catch (e) { }
+      try { await scanner.clear(); } catch (e) { }
       if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     };
 
@@ -134,82 +135,79 @@
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       throw new Error('Tu navegador no soporta cámara (mediaDevices no disponible). Usa Chrome actualizado por https.')
     }
-    try {
-      await scanner.start(
-        // html5-qrcode exige que cameraIdOrConfig, si es objeto, tenga EXACTA
-        // UNA clave (facingMode o deviceId). width/height NO van acá; se pasan
-        // en config.videoConstraints. Con 3 claves la librería abortaba y en
-        // el celu ni siquiera abría la cámara.
-        { facingMode: 'environment' },
-        {
-          fps: 12,
-          qrbox: (vw, vh) => {
-            if (mode === 'barcode') {
-              return { width: Math.min(360, vw - 40), height: 180 };
-            }
-            const min = Math.min(vw, vh);
-            return { width: min - 40, height: min - 40 };
-          },
-          aspectRatio: 1.777,
-          disableFlip: false,
-          videoConstraints: {
-            width: { min: 640, ideal: 1280, max: 1920 },
-            height: { min: 480, ideal: 720, max: 1080 },
-          },
-        },
+
+    let started = false
+    let lastErr = null
+    const baseQrbox = (vw, vh) => {
+      if (mode === 'barcode') return { width: Math.min(360, vw - 40), height: 180 }
+      const min = Math.min(vw, vh)
+      return { width: min - 40, height: min - 40 }
+    }
+    const tryStart = async (camConfig, cfg) => {
+      await scanner.start(camConfig, cfg,
         (decodedText) => {
-          if (stopped) return;
-          const result = classify(decodedText);
-          if (statusEl) statusEl.textContent = '✓ Detectado — procesando…';
+          if (stopped) return
+          const result = classify(decodedText)
+          if (statusEl) statusEl.textContent = '✓ Detectado — procesando…'
           const finish = () => {
             if (typeof onDetected === 'function') {
-              try { onDetected({ type: result.type, value: result.value, raw: decodedText }); }
-              catch (e) { console.error('[gp-scanner] onDetected error:', e); }
+              try { onDetected({ type: result.type, value: result.value, raw: decodedText }) } catch (e) { console.error('[gp-scanner] onDetected error:', e) }
             }
-          };
-          stop().then(finish);
+          }
+          stop().then(finish)
         },
-        () => { /* ignorar errores por frame */ }
-      );
+        () => {}
+      )
+      started = true
       const v = overlay.querySelector('video')
-      if (v) { v.style.objectFit = 'cover'; v.setAttribute('playsinline', 'true'); }
-      if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
-    } catch (err) {
-      const msg = (err && (err.message || err.name)) || String(err)
-      const isOverconstrained = /Overconstrained|NotReadable|AbortError/i.test(msg)
-      if (isOverconstrained && !stopped) {
-        try {
-          if (statusEl) statusEl.textContent = 'Reintentando cámara…'
-          await scanner.start(
-            { facingMode: 'environment' },
-            { fps: 12, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0, disableFlip: false },
-            (decodedText) => {
-              if (stopped) return
-              const result = classify(decodedText)
-              if (statusEl) statusEl.textContent = '✓ Detectado — procesando…'
-              stop().then(() => { if (typeof onDetected === 'function') try { onDetected({ type: result.type, value: result.value, raw: decodedText }) } catch (e) { console.error(e) } })
-            },
-            () => {}
-          )
-          const v2 = overlay.querySelector('video')
-          if (v2) { v2.style.objectFit = 'cover'; v2.setAttribute('playsinline', 'true') }
-          if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
-          return { stop }
-        } catch (err2) {
-          const msg2 = (err2 && (err2.message || err2.name)) || String(err2)
-          if (statusEl) statusEl.textContent = '⚠️ ' + msg2 + ' — probá con otra cámara o luz'
-          console.error('[gp-scanner] retry error:', err2)
-          setTimeout(stop, 4000)
-          throw err2
-        }
+      if (v) {
+        v.style.objectFit = 'cover'
+        v.style.width = '100%'
+        v.style.height = '100%'
+        v.setAttribute('playsinline', 'true')
+        v.setAttribute('autoplay', 'true')
+        v.muted = true
+        try { await v.play() } catch (e) {}
+        await new Promise(r => setTimeout(r, 900))
+        if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0) — reintentando con otra configuración')
       }
-      if (statusEl) statusEl.textContent = '⚠️ ' + msg
-      console.error('[gp-scanner] start error:', err)
-      setTimeout(stop, 3000)
-      throw err
+      if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
     }
 
-    return { stop };
+    try {
+      try {
+        await tryStart({ facingMode: 'environment' }, {
+          fps: 12,
+          qrbox: baseQrbox,
+          aspectRatio: 1.777,
+          disableFlip: false,
+          videoConstraints: { width: { min: 640, ideal: 1280, max: 1920 }, height: { min: 480, ideal: 720, max: 1080 } },
+        })
+      } catch (e) {
+        lastErr = e
+        console.warn('[gp-scanner] facingMode failed', e)
+        const camId = await pickBackCameraId()
+        if (camId) {
+          if (statusEl) statusEl.textContent = 'Probando cámara trasera…'
+          try { await scanner.stop().catch(()=>{}) } catch {}
+          try { await scanner.clear().catch(()=>{}) } catch {}
+          await tryStart(camId, {
+            fps: 12,
+            qrbox: baseQrbox,
+            aspectRatio: 1.777,
+            disableFlip: false,
+          })
+        } else throw e
+      }
+      if (!started) throw lastErr || new Error('No se pudo iniciar cámara')
+      return { stop }
+    } catch (err) {
+      const msg = (err && (err.message || err.name)) || String(err)
+      if (statusEl) statusEl.textContent = '⚠️ ' + msg
+      console.error('[gp-scanner] start error:', err)
+      setTimeout(stop, 3500)
+      throw err
+    }
   }
 
   window.gpScanner = { open: openScanner };
