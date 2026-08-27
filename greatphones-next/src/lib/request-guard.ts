@@ -16,10 +16,7 @@ export function isMutatingRequest(method: string): boolean {
  * Rutas exentas de CSRF porque validan autenticidad por firma/secret en lugar de Origin
  * (ej: webhooks de MercadoPago, Arca).
  */
-const CSRF_EXEMPT_PATHS = [
-  '/api/webhooks/mercadopago',
-  '/api/webhooks/arca',
-]
+const CSRF_EXEMPT_PATHS = ['/api/webhooks/mercadopago', '/api/webhooks/arca']
 
 export function isCsrfExempt(pathname: string): boolean {
   return CSRF_EXEMPT_PATHS.some(p => pathname.startsWith(p))
@@ -36,9 +33,10 @@ function isCsrfBypassed(): boolean {
   return process.env.BYPASS_CSRF === 'true'
 }
 
-export function isAllowedRequestOrigin(
-  request: { headers: Headers; nextUrl?: { pathname?: string } }
-): boolean {
+export function isAllowedRequestOrigin(request: {
+  headers: Headers
+  nextUrl?: { pathname?: string }
+}): boolean {
   // Bypass explícito (solo con env var)
   if (isCsrfBypassed()) return true
 
@@ -48,10 +46,11 @@ export function isAllowedRequestOrigin(
   const origin = request.headers.get('origin')
   if (origin) {
     // Same-origin: si el origen coincide con el host con el que se sirve la app
-    // (https://<host>), se acepta directo. Esto cubre cualquier dominio de
-    // deploy (Render, Vercel, etc.) sin depender de la lista de config.
+    // (https://<host> o http://<host>), se acepta directo. Esto cubre cualquier dominio de
+    // deploy (Render, Vercel, etc.) sin depender de la lista de config y permite
+    // localhost y LAN http sin depender de NEXTAUTH_URL.
     const host = request.headers.get('host')
-    if (host && origin === 'https://' + host) return true
+    if (host && (origin === 'https://' + host || origin === 'http://' + host)) return true
     return isOriginAllowed(origin)
   }
 

@@ -30,14 +30,17 @@ export function createSessionCookie(userId: string, role: string): string {
   const encoded = Buffer.from(JSON.stringify(payload)).toString('base64url')
   const signature = sign(encoded)
   const token = `${encoded}.${signature}`
-  const isProd = process.env.NODE_ENV === 'production'
-  const secure = isProd ? '; Secure' : ''
+  const isSecure =
+    process.env.NODE_ENV === 'production' || process.env.NEXTAUTH_URL?.startsWith('https://')
+  const secure = isSecure ? '; Secure' : ''
+
   return `${COOKIE_NAME}=${token}; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}`
 }
 
 export function clearSessionCookie(): string {
-  const isProd = process.env.NODE_ENV === 'production'
-  const secure = isProd ? '; Secure' : ''
+  const isSecure =
+    process.env.NODE_ENV === 'production' || process.env.NEXTAUTH_URL?.startsWith('https://')
+  const secure = isSecure ? '; Secure' : ''
   return `${COOKIE_NAME}=; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=0`
 }
 
