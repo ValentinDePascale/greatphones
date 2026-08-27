@@ -5,7 +5,11 @@ import { registerEntry } from '@/lib/accounting'
 import { z } from 'zod'
 
 function genPreCode() {
-  return 'PRE-' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substring(2, 5).toUpperCase()
+  return (
+    'PRE-' +
+    Date.now().toString(36).toUpperCase() +
+    Math.random().toString(36).substring(2, 5).toUpperCase()
+  )
 }
 
 const PreventaSchema = z.object({
@@ -46,11 +50,16 @@ export async function POST(request: Request) {
     const admin = await requireAdmin(request)
     const body = await request.json()
     const parsed = PreventaSchema.safeParse(body)
-    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
+    if (!parsed.success)
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || 'Datos inválidos' },
+        { status: 400 },
+      )
     const d = parsed.data
 
     const cobradoPesos = d.efectivo + d.transferencia + d.cuotas + Math.round((d.usd || 0) * 1000)
-    if (cobradoPesos <= 0) return NextResponse.json({ error: 'Debe registrarse al menos un cobro' }, { status: 400 })
+    if (cobradoPesos <= 0)
+      return NextResponse.json({ error: 'Debe registrarse al menos un cobro' }, { status: 400 })
 
     const code = genPreCode()
     const pre = await prisma.preOrder.create({
@@ -69,14 +78,21 @@ export async function POST(request: Request) {
       },
     })
 
-    // Asiento del cobro (efectivo/transferencia mostrados, cuotas como CUOTAS)
-    const medios = [
+    // Asiento del cobro (incluye USD como amountUsd)
+    const medios: Array<{
+      m: string
+      v: number
+      pm: 'EFECTIVO' | 'TRANSFERENCIA' | 'CUOTAS' | 'USD'
+      esUSD?: boolean
+    }> = [
       { m: 'Efectivo', v: d.efectivo, pm: 'EFECTIVO' as const },
       { m: 'Transferencia', v: d.transferencia, pm: 'TRANSFERENCIA' as const },
       { m: 'Cuotas', v: d.cuotas, pm: 'CUOTAS' as const },
     ]
+    if (d.usd && d.usd > 0)
+      medios.push({ m: 'USD', v: Number(d.usd), pm: 'USD' as const, esUSD: true })
     for (const x of medios) {
-      if (x.v <= 0) continue
+      if (x.esUSD ? (x.v || 0) <= 0 : x.v <= 0) continue
       await registerEntry({
         source: 'PREVENTA',
         operationId: code,
@@ -84,7 +100,8 @@ export async function POST(request: Request) {
         category: 'PREVENTA',
         type: 'INGRESO',
         means: x.pm,
-        amount: x.v,
+        amount: x.esUSD ? 0 : x.v,
+        amountUsd: x.esUSD ? x.v : null,
         operator: d.operador || admin.id,
         createdById: admin.id,
       }).catch(e => console.error('[Ops Preventas] asiento:', e))
