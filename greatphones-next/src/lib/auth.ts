@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
 export const authOptions: NextAuthOptions = {
+  useSecureCookies:
+    process.env.NEXTAUTH_URL?.startsWith('https://') ?? process.env.NODE_ENV === 'production',
   adapter: authAdapter,
   providers: [
     GoogleProvider({
@@ -41,7 +43,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
-        (session.user as any).id = user.id
+        ;(session.user as any).id = user.id
       }
       return session
     },
