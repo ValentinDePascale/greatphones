@@ -25,7 +25,20 @@ export async function GET(request: Request) {
     if (brand) where.brand = brand
     if (condition) where.condition = condition
 
-    const [items, total] = await Promise.all([
+    // Compras locales registradas en "Registrar Compra" (InventoryItem con código CMP-)
+    const whereLocal: any = { code: { startsWith: 'CMP-' } }
+    if (search) {
+      whereLocal.OR = [
+        { code: { contains: search, mode: 'insensitive' } },
+        { modelName: { contains: search, mode: 'insensitive' } },
+        { brand: { contains: search, mode: 'insensitive' } },
+        { imei: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    if (brand) whereLocal.brand = brand
+    if (condition) whereLocal.cosmeticCondition = condition
+
+    const [items, total, locales, totalLocales] = await Promise.all([
       prisma.purchasedDevice.findMany({
         where,
         include: {
@@ -35,40 +48,111 @@ export async function GET(request: Request) {
           createdBy: { select: { id: true, name: true, email: true } },
         },
         orderBy: { receivedAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: 0,
+        take: 1000,
       }),
       prisma.purchasedDevice.count({ where }),
+      prisma.inventoryItem.findMany({
+        where: whereLocal,
+        orderBy: { createdAt: 'desc' },
+        skip: 0,
+        take: 1000,
+        select: {
+          id: true,
+          code: true,
+          imei: true,
+          brand: true,
+          modelName: true,
+          storage: true,
+          color: true,
+          cosmeticCondition: true,
+          purchasePrice: true,
+          purchasedFrom: true,
+          purchaseDate: true,
+          createdAt: true,
+          serialNumber: true,
+        },
+      }),
+      prisma.inventoryItem.count({ where: whereLocal }),
     ])
 
-    // Para métricas: total gastado, promedio, conteo por marca
-    const aggregates = await prisma.purchasedDevice.aggregate({
-      where,
-      _sum: { purchasePrice: true },
-      _avg: { purchasePrice: true },
-    })
+    // Combinar y ordenar por fecha desc (online → PurchasedDevice, local → InventoryItem)
+    const online = items.map(i => ({
+      id: i.id,
+      code: i.code,
+      source: 'online',
+      brand: i.brand,
+      device: i.device,
+      storage: i.storage,
+      condition: i.condition,
+      color: i.color,
+      batteryHealth: i.batteryHealth,
+      imei: i.imei,
+      serialNumber: i.serialNumber,
+      clientName: i.clientName,
+      clientDni: i.clientDni,
+      clientPhone: i.clientPhone,
+      clientCity: i.clientCity,
+      clientProvince: i.clientProvince,
+      purchasePrice: i.purchasePrice,
+      invoiceId: i.invoiceId,
+      receivedAt: i.receivedAt.toISOString(),
+      createdAt: i.createdAt.toISOString(),
+      invoice: i.invoice
+        ? { ...i.invoice, createdAt: i.invoice.createdAt.toISOString() }
+        : null,
+      createdBy: i.createdBy,
+    }))
+    const local = locales.map(l => ({
+      id: l.id,
+      code: l.code,
+      source: 'local',
+      brand: l.brand,
+      device: l.modelName,
+      storage: l.storage || '—',
+      condition: l.cosmeticCondition,
+      color: l.color,
+      batteryHealth: null,
+      imei: l.imei,
+      serialNumber: l.serialNumber,
+      clientName: l.purchasedFrom || 'Local',
+      clientDni: null,
+      clientPhone: null,
+      clientCity: null,
+      clientProvince: null,
+      purchasePrice: l.purchasePrice,
+      invoiceId: null,
+      receivedAt: l.purchaseDate ? l.purchaseDate.toISOString() : l.createdAt.toISOString(),
+      createdAt: l.createdAt.toISOString(),
+      invoice: null,
+      createdBy: null,
+    }))
+
+    const merged = [...online, ...local].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt))
+    const startIdx = (page - 1) * limit
+    const pageData = merged.slice(startIdx, startIdx + limit)
+    const combinedTotal = total + totalLocales
+    const totalPages = Math.ceil(combinedTotal / limit)
+
+    // Para métricas: total gastado, promedio (score: online + local)
+    const [aggrOnline, aggrLocal] = await Promise.all([
+      prisma.purchasedDevice.aggregate({ where, _sum: { purchasePrice: true }, _avg: { purchasePrice: true } }),
+      prisma.inventoryItem.aggregate({ where: whereLocal, _sum: { purchasePrice: true }, _avg: { purchasePrice: true } }),
+    ])
+    const totalSpent = (aggrOnline._sum.purchasePrice || 0) + (aggrLocal._sum.purchasePrice || 0)
+    const avgOnline = aggrOnline._avg.purchasePrice || 0
+    const avgLocal = aggrLocal._avg.purchasePrice || 0
+    const cntOnline = online.length
+    const cntLocal = local.length
+    const avgSpent = cntOnline + cntLocal > 0 ? Math.round(((avgOnline * cntOnline || 0) + (avgLocal * cntLocal || 0)) / (cntOnline + cntLocal)) : 0
 
     return NextResponse.json({
-      data: items.map(i => ({
-        ...i,
-        receivedAt: i.receivedAt.toISOString(),
-        createdAt: i.createdAt.toISOString(),
-        updatedAt: i.updatedAt.toISOString(),
-        invoice: i.invoice
-          ? {
-              ...i.invoice,
-              createdAt: i.invoice.createdAt.toISOString(),
-            }
-          : null,
-      })),
+      data: pageData,
       page,
       limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      metrics: {
-        totalSpent: aggregates._sum.purchasePrice || 0,
-        avgSpent: Math.round(aggregates._avg.purchasePrice || 0),
-      },
+      total: combinedTotal,
+      totalPages,
+      metrics: { totalSpent, avgSpent },
     })
   } catch (error) {
     console.error('[Purchased] Error:', error)

@@ -7,6 +7,58 @@ const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', '
 const CACHE_TTL_MS = 60_000
 let _cache: { data: unknown; ts: number } | null = null
 
+const MEANS_LABEL: Record<string, string> = {
+  EFECTIVO: 'Efectivo',
+  TRANSFERENCIA: 'Transferencia',
+  CUOTAS: 'Cuotas',
+  USD: 'USD',
+  PAGO_ONLINE: 'Online',
+}
+
+// Ventas locales registradas (Registrar Venta) + preventas entregadas, para que
+// el Dashboard no cuente las preventas dos veces (solo suma cuando se entregan).
+async function kpiVentasLocal(gte: Date, lt: Date) {
+  const [ventasRow, ventasCount, preDlv] = await Promise.all([
+    prisma.accountingEntry.aggregate({
+      where: { source: 'VENTA', type: 'INGRESO', opDate: { gte, lt } },
+      _sum: { amount: true, amountUsd: true },
+    }),
+    prisma.accountingEntry.groupBy({
+      by: ['operationId'],
+      where: { source: 'VENTA', type: 'INGRESO', opDate: { gte, lt } },
+      _count: { _all: true },
+    }),
+    prisma.preOrder.aggregate({
+      where: { status: 'DELIVERED', deliveredAt: { gte, lt } },
+      _sum: { price: true },
+      _count: true,
+    }),
+  ])
+  const usdRate = (global as unknown as { dolarVenta?: number }).dolarVenta || 1000
+  const revenue =
+    (ventasRow._sum.amount || 0) + Math.round((ventasRow._sum.amountUsd || 0) * usdRate) + (preDlv._sum.price || 0)
+  const orders = ventasCount.length + preDlv._count
+  return { revenue, orders }
+}
+
+async function ventasLocalesAnio(startOfYear: Date) {
+  const [ventas, preDlv] = await Promise.all([
+    prisma.accountingEntry.findMany({
+      where: { source: 'VENTA', type: 'INGRESO', opDate: { gte: startOfYear } },
+      select: { amount: true, amountUsd: true, means: true, opDate: true },
+    }),
+    prisma.preOrder.findMany({
+      where: { status: 'DELIVERED', deliveredAt: { gte: startOfYear } },
+      select: { price: true, deliveredAt: true },
+    }),
+  ])
+  const usdRate = (global as unknown as { dolarVenta?: number }).dolarVenta || 1000
+  const usdVentas = ventas
+    .filter(v => v.amountUsd)
+    .map(v => ({ ...v, pesos: Math.round((v.amountUsd || 0) * usdRate) }))
+  return { ventas: ventas.filter(v => !v.amountUsd), usdVentas, preDlv, usdRate }
+}
+
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
@@ -23,7 +75,7 @@ export async function GET(request: Request) {
     const startOfYear = new Date(currentYear, 0, 1)
 
     // KPIs - Current month (aggregate instead of findMany)
-    const [currentAgg, lastAgg] = await Promise.all([
+    const [currentAgg, lastAgg, currentLocal, lastLocal] = await Promise.all([
       prisma.order.aggregate({
         where: { createdAt: { gte: currentMonth, lt: nextMonth } },
         _sum: { total: true },
@@ -34,12 +86,14 @@ export async function GET(request: Request) {
         _sum: { total: true },
         _count: true,
       }),
+      kpiVentasLocal(currentMonth, nextMonth),
+      kpiVentasLocal(lastMonth, currentMonth),
     ])
 
-    const currentRevenue = currentAgg._sum.total || 0
-    const currentOrderCount = currentAgg._count
-    const lastRevenue = lastAgg._sum.total || 0
-    const lastOrderCount = lastAgg._count
+    const currentRevenue = (currentAgg._sum.total || 0) + currentLocal.revenue
+    const currentOrderCount = currentAgg._count + currentLocal.orders
+    const lastRevenue = (lastAgg._sum.total || 0) + lastLocal.revenue
+    const lastOrderCount = lastAgg._count + lastLocal.orders
 
     // Ticket average
     const avgTicket = currentOrderCount > 0 ? Math.round(currentRevenue / currentOrderCount) : 0
@@ -52,7 +106,7 @@ export async function GET(request: Request) {
     ])
 
     // Monthly stats - fetch orders (with items+cost) and users for the year in parallel
-    const [yearOrders, yearUsers] = await Promise.all([
+    const [yearOrders, yearUsers, localAnio] = await Promise.all([
       prisma.order.findMany({
         where: { createdAt: { gte: startOfYear } },
         select: {
@@ -74,6 +128,7 @@ export async function GET(request: Request) {
         where: { createdAt: { gte: startOfYear } },
         select: { createdAt: true },
       }),
+      ventasLocalesAnio(startOfYear),
     ])
 
     // Compute profit per order and index by month
@@ -104,6 +159,43 @@ export async function GET(request: Request) {
       pm.revenue += o.total || 0
       pm.profit += orderProfit
       paymentMap.set(method, pm)
+    })
+
+    // Sumar ventas locales (Registrar Venta) al año por mes
+    const lv = localAnio.ventas
+    lv.forEach(v => {
+      const monthIndex = new Date(v.opDate).getMonth()
+      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0, profit: 0 }
+      existing.revenue += v.amount || 0
+      existing.orders++
+      ordersByMonth.set(monthIndex, existing)
+      const pm = paymentMap.get(MEANS_LABEL[v.means] || v.means || 'Efectivo') || { count: 0, revenue: 0, profit: 0 }
+      pm.count++
+      pm.revenue += v.amount || 0
+      paymentMap.set(MEANS_LABEL[v.means] || v.means || 'Efectivo', pm)
+    })
+    localAnio.usdVentas.forEach(v => {
+      const monthIndex = new Date(v.opDate).getMonth()
+      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0, profit: 0 }
+      existing.revenue += v.pesos
+      existing.orders++
+      ordersByMonth.set(monthIndex, existing)
+      const pm = paymentMap.get('USD') || { count: 0, revenue: 0, profit: 0 }
+      pm.count++
+      pm.revenue += v.pesos
+      paymentMap.set('USD', pm)
+    })
+    // Preventas entregadas: se cuentan UNA vez (sin el anticipo de registro)
+    localAnio.preDlv.forEach(p => {
+      const monthIndex = new Date(p.deliveredAt as Date).getMonth()
+      const existing = ordersByMonth.get(monthIndex) || { revenue: 0, orders: 0, profit: 0 }
+      existing.revenue += p.price
+      existing.orders++
+      ordersByMonth.set(monthIndex, existing)
+      const pm = paymentMap.get('Preventa (entrega)') || { count: 0, revenue: 0, profit: 0 }
+      pm.count++
+      pm.revenue += p.price
+      paymentMap.set('Preventa (entrega)', pm)
     })
 
     // Index users by month using Map for O(1) lookups

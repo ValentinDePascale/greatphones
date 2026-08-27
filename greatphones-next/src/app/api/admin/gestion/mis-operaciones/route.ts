@@ -80,6 +80,26 @@ export async function POST(request: Request) {
     const entries = await prisma.accountingEntry.findMany({ where: { operationId: d.operationId } })
     if (entries.length === 0) return NextResponse.json({ error: 'No se encontró la operación' }, { status: 404 })
 
+    // Si se anula la entrega de una preventa, la preventa vuelve a PENDIENTE
+    const entriesEntrega = entries.filter(e => e.source === 'PREVENTA_ENTREGA')
+    if (entriesEntrega.length > 0) {
+      const pre = await prisma.preOrder.findFirst({
+        where: { OR: [{ code: d.operationId }, { notes: { contains: d.operationId } }] },
+      })
+      if (pre) {
+        await prisma.preOrder.update({
+          where: { id: pre.id },
+          data: { status: 'PENDING', deliveredAt: null },
+        })
+      }
+      // Borrar solo los asientos de entrega; quedan los de la preventa original
+      const ids = entriesEntrega.map(e => e.id)
+      await prisma.accountingEntry.deleteMany({ where: { id: { in: ids } } })
+    } else {
+      // Anular la operación: elimina sus asientos para que deje de aparecer
+      await prisma.accountingEntry.deleteMany({ where: { operationId: d.operationId } })
+    }
+
     await auditar({
       entityType: 'AccountingEntry',
       entityId: d.operationId,

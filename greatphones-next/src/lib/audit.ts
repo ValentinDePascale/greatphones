@@ -41,7 +41,7 @@ async function getEntitySnapshot(entityType: AuditableEntity, entityId: string) 
 export async function auditar(opts: {
   entityType: AuditableEntity
   entityId: string
-  action?: 'ANULACION' | 'RESTAURACION' | 'CORRECCION' | 'CREACION' | 'UPDATE'
+  action?: 'ANULACION' | 'RESTAURACION' | 'CORRECCION' | 'CREACION' | 'UPDATE' | 'VENTA'
   reason?: string | null
   operator?: string | null
   createdById?: string | null

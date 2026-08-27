@@ -25,6 +25,7 @@ const ACTION_LABEL: Record<string, string> = {
   CORRECCION: 'Corrección',
   CREACION: 'Creación',
   UPDATE: 'Actualización',
+  VENTA: 'Venta',
 }
 const ACTION_COLOR: Record<string, string> = {
   ANULACION: '#DC2626',
@@ -32,6 +33,7 @@ const ACTION_COLOR: Record<string, string> = {
   CORRECCION: '#D97706',
   CREACION: '#2563EB',
   UPDATE: '#6B7280',
+  VENTA: '#10B981',
 }
 
 const inputStyle: React.CSSProperties = {

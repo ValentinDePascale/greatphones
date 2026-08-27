@@ -142,6 +142,17 @@ export default function TarifarioClient() {
     } catch {}
   }
 
+  const LABEL_TO_KEY: Record<string, string> = Object.fromEntries(
+    Object.entries(LABELS).map(([k, v]) => [v, k]),
+  )
+
+  const editarCategoria = (nombre: string) => {
+    const key = LABEL_TO_KEY[nombre] || ''
+    const cfg = configs.find(c => c.key === key)
+    if (!cfg) return
+    abrirEditar(cfg)
+  }
+
   return (
     <>
       <AdminTopbar titulo="Tarifario de Reparaciones" />
@@ -416,15 +427,39 @@ export default function TarifarioClient() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             fontSize: 12.5,
+                            alignItems: 'center',
+                            gap: 6,
                           }}
                         >
                           <span style={{ color: '#6B7280' }}>{t.nombre}</span>
                           {t.precio != null ? (
-                            <b style={{ color: '#181B2E' }}>{fmtARS(t.precio)}</b>
-                          ) : (
-                            <span style={{ color: '#B7950B', fontWeight: 600 }}>
-                              sin configurar
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <b style={{ color: '#181B2E' }}>{fmtARS(t.precio)}</b>
+                              <button
+                                onClick={() => editarCategoria(t.nombre)}
+                                className="pe-btn"
+                                aria-label={`Editar precio de ${t.nombre}`}
+                                title={`Editar ${t.nombre}`}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#94A3B8',
+                                  cursor: 'pointer',
+                                  padding: 1,
+                                  display: 'inline-flex',
+                                }}
+                              >
+                                <span
+                                  className="material-symbols-outlined"
+                                  style={{ fontSize: 13 }}
+                                  aria-hidden="true"
+                                >
+                                  edit
+                                </span>
+                              </button>
                             </span>
+                          ) : (
+                            <span style={{ color: '#B7950B', fontWeight: 600 }}>sin configurar</span>
                           )}
                         </div>
                       ))}

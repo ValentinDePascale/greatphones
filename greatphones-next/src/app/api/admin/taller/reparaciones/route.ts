@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const repair = await prisma.repair.create({
       data: {
         code,
-        userId: 'admin',
+        userId: admin.id,
         device: d.equipo,
         issue: d.falla1,
         type: d.tipo || 'Particular',

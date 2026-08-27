@@ -66,7 +66,7 @@ export default function PreventasClient() {
 
   useEffect(() => {
     let activo = true
-    fetch('/api/products?search=iPhone&limit=100', { credentials: 'include' })
+    fetch('/api/products?search=iPhone&limit=500', { credentials: 'include' })
       .then(r => r.json())
       .then(d => {
         if (!activo) return

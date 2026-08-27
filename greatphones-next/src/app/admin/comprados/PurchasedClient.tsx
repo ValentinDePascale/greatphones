@@ -6,6 +6,7 @@ interface PurchasedDevice {
   id: string
   code: string
   quoteId: string
+  source?: string
   brand: string
   device: string
   storage: string
@@ -231,6 +232,7 @@ export default function PurchasedClient() {
             <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e5e7eb' }}>
               <Th>Código</Th>
               <Th>Dispositivo</Th>
+              <Th>Origen</Th>
               <Th>Cliente</Th>
               <Th>Condición</Th>
               <Th align="right">Precio</Th>
@@ -241,7 +243,7 @@ export default function PurchasedClient() {
           <tbody>
             {resp.data.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
+                <td colSpan={8} style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>
                   {loading ? 'Cargando…' : 'Sin dispositivos comprados aún'}
                 </td>
               </tr>
@@ -260,6 +262,22 @@ export default function PurchasedClient() {
                     <div style={{ fontSize: 11, color: '#94a3b8' }}>
                       {d.brand} · {d.storage} {d.color ? `· ${d.color}` : ''}
                     </div>
+                  </Td>
+                  <Td>
+                    <span
+                      style={{
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        padding: '2px 8px',
+                        borderRadius: 99,
+                        background: d.source === 'local' ? '#EEF3FE' : '#F0FDF4',
+                        color: d.source === 'local' ? '#1D4ED8' : '#166534',
+                        textTransform: 'uppercase',
+                        letterSpacing: 0.4,
+                      }}
+                    >
+                      {d.source === 'local' ? 'Local' : 'Online'}
+                    </span>
                   </Td>
                   <Td>
                     <div style={{ color: '#0f172a' }}>{d.clientName}</div>

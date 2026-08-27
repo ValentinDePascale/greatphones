@@ -138,9 +138,10 @@ export async function POST(request: Request) {
     await auditar({
       entityType: 'Product',
       entityId: producto.id,
-      action: 'CORRECCION',
+      action: 'VENTA',
       reason: 'Venta de equipo',
       operator: d.operador,
+      createdById: admin.id,
     }).catch(() => {})
 
     return NextResponse.json(

@@ -20,7 +20,7 @@ interface Producto {
 
 const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 5
-const STEPS = ['Vendedor y equipo', 'Cliente', 'Precio y cobro', 'Accesorios', 'Confirmar']
+const STEPS = ['Vendedor y equipo', 'Cliente', 'Accesorios', 'Precio y cobro', 'Confirmar']
 
 function fmt(n: number) {
   return '$' + (n || 0).toLocaleString('es-AR')
@@ -160,7 +160,7 @@ export default function VentasClient() {
           ? 'No hay equipos en stock disponibles'
           : 'Seleccioná el equipo a vender'
     if (p === 2 && !cliente.trim()) e.cliente = 'Ingresá el nombre del cliente'
-    if (p === 3) {
+    if (p === 4) {
       if (precio <= 0) e.precioVenta = 'El precio de venta debe ser mayor a 0'
       else if (Math.abs(diferencia) > 1)
         e.cobros =
@@ -233,12 +233,12 @@ export default function VentasClient() {
   }
 
   const enviar = async () => {
-    const todos = { ...validarPaso(1), ...validarPaso(2), ...validarPaso(3) }
+    const todos = { ...validarPaso(1), ...validarPaso(2), ...validarPaso(4) }
     if (Object.keys(todos).length > 0) {
       setErrors(todos)
       const primero = Object.keys(todos)[0]
       const pasoDelError =
-        primero === 'operador' || primero === 'opEquipo' ? 1 : primero === 'cliente' ? 2 : 3
+        primero === 'operador' || primero === 'opEquipo' ? 1 : primero === 'cliente' ? 2 : 4
       setStep(pasoDelError)
       requestAnimationFrame(() => {
         errRef.current?.focus({ preventScroll: true })
@@ -812,7 +812,7 @@ export default function VentasClient() {
             </fieldset>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
               <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
                 Precio y cobro
@@ -973,7 +973,7 @@ export default function VentasClient() {
             </fieldset>
           )}
 
-          {step === 4 && (
+          {step === 3 && (
             <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
               <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
                 Accesorios y regalo
