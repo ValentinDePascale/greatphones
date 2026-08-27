@@ -142,7 +142,7 @@
         // el celu ni siquiera abría la cámara.
         { facingMode: 'environment' },
         {
-          fps: 20,
+          fps: 12,
           qrbox: (vw, vh) => {
             if (mode === 'barcode') {
               return { width: Math.min(360, vw - 40), height: 180 };
@@ -153,9 +153,8 @@
           aspectRatio: 1.777,
           disableFlip: false,
           videoConstraints: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 },
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 },
           },
         },
         (decodedText) => {
@@ -172,12 +171,42 @@
         },
         () => { /* ignorar errores por frame */ }
       );
+      const v = overlay.querySelector('video')
+      if (v) { v.style.objectFit = 'cover'; v.setAttribute('playsinline', 'true'); }
+      if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
     } catch (err) {
-      const msg = (err && (err.message || err.name)) || String(err);
-      if (statusEl) statusEl.textContent = '⚠️ ' + msg;
-      console.error('[gp-scanner] start error:', err);
-      setTimeout(stop, 3000);
-      throw err;
+      const msg = (err && (err.message || err.name)) || String(err)
+      const isOverconstrained = /Overconstrained|NotReadable|AbortError/i.test(msg)
+      if (isOverconstrained && !stopped) {
+        try {
+          if (statusEl) statusEl.textContent = 'Reintentando cámara…'
+          await scanner.start(
+            { facingMode: 'environment' },
+            { fps: 12, qrbox: { width: 260, height: 260 }, aspectRatio: 1.0, disableFlip: false },
+            (decodedText) => {
+              if (stopped) return
+              const result = classify(decodedText)
+              if (statusEl) statusEl.textContent = '✓ Detectado — procesando…'
+              stop().then(() => { if (typeof onDetected === 'function') try { onDetected({ type: result.type, value: result.value, raw: decodedText }) } catch (e) { console.error(e) } })
+            },
+            () => {}
+          )
+          const v2 = overlay.querySelector('video')
+          if (v2) { v2.style.objectFit = 'cover'; v2.setAttribute('playsinline', 'true') }
+          if (statusEl) statusEl.textContent = hintFor(mode) + ' — enfocá el código'
+          return { stop }
+        } catch (err2) {
+          const msg2 = (err2 && (err2.message || err2.name)) || String(err2)
+          if (statusEl) statusEl.textContent = '⚠️ ' + msg2 + ' — probá con otra cámara o luz'
+          console.error('[gp-scanner] retry error:', err2)
+          setTimeout(stop, 4000)
+          throw err2
+        }
+      }
+      if (statusEl) statusEl.textContent = '⚠️ ' + msg
+      console.error('[gp-scanner] start error:', err)
+      setTimeout(stop, 3000)
+      throw err
     }
 
     return { stop };
