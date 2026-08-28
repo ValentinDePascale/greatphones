@@ -53,17 +53,17 @@ export async function GET(request: Request) {
       )
       const map = new Map<string, { balance: number; balanceUsd: number | null }>()
       for (const e of filtered) {
-        const cur = map.get(e.means) || { balance: 0, balanceUsd: 0 }
+        const cur = map.get(e.means as string) || { balance: 0, balanceUsd: 0 }
         const delta = e.type === 'INGRESO' ? e.amount : e.type === 'EGRESO' ? -e.amount : 0
         cur.balance += delta
         if (e.means === 'USD' && e.amountUsd != null) {
           const dUsd = e.type === 'INGRESO' ? e.amountUsd : e.type === 'EGRESO' ? -e.amountUsd : 0
           cur.balanceUsd = (cur.balanceUsd || 0) + dUsd
         }
-        map.set(e.means, cur)
+        map.set(e.means as string, cur)
       }
       balances = Array.from(map.entries()).map(([means, v]) => ({
-        means,
+        means: means as any,
         balance: v.balance,
         balanceUsd: v.balanceUsd,
       }))
