@@ -5,11 +5,7 @@ import Script from 'next/script'
 
 type Status = 'idle' | 'requesting' | 'scanning' | 'redirecting' | 'error'
 
-interface CameraDevice {
-  deviceId: string
-  label: string
-  kind: 'videoinput'
-}
+type CameraDevice = MediaDeviceInfo & { kind: 'videoinput' }
 
 declare global {
   interface Window {
@@ -36,12 +32,9 @@ export default function ScanClient() {
   async function detectarCamaras() {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices
-        .filter((device): device is CameraDevice => device.kind === 'videoinput')
-        .map((device, index) => ({
-          ...device,
-          kind: 'videoinput' as const,
-        }))
+      const videoDevices = devices.filter(
+        (device) => device.kind === 'videoinput'
+      ) as CameraDevice[]
 
       if (videoDevices.length > 0) {
         setCameras(videoDevices)
