@@ -79,15 +79,19 @@
   }
 
   async function ensureBackCameraId() {
-    // Preflight: pedir permiso y dejar que el browser abra la trasera una vez.
-    // Se cierra al instante; sirve para que enumerateDevices devuelva labels
-    // y deviceIds sin mostrar la frontal al usuario.
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
       })
       stream.getTracks().forEach(t => t.stop())
-    } catch (e) { console.warn('[gp-scanner] preflight env failed', e) }
+    } catch (e) {
+      try {
+        const s2 = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+        })
+        s2.getTracks().forEach(t => t.stop())
+      } catch (e2) { console.warn('[gp-scanner] preflight env failed', e2) }
+    }
     try {
       const cams = await navigator.mediaDevices.enumerateDevices()
       const video = cams.filter(d => d.kind === 'videoinput')
@@ -220,7 +224,7 @@
         if (other) {
           try { await tryStart(other, buildCfg(false)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
         } else {
-          try { await tryStart({ facingMode: 'environment' }, buildCfg(true)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
+          try { await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
         }
         return
       }
@@ -232,7 +236,7 @@
       qrbox: qrboxFn,
       disableFlip: false,
       videoConstraints: {
-        ...(withFacing ? { facingMode: 'environment' } : {}),
+        ...(withFacing ? { facingMode: { exact: 'environment' } } : {}),
         width: { min: 640, ideal: 1920, max: 1920 },
         height: { min: 480, ideal: 1080, max: 1080 },
       },
@@ -247,10 +251,10 @@
           console.warn('[gp-scanner] deviceId start failed, facingMode env', e)
           try { await scanner.stop().catch(()=>{}) } catch {}
           try { await scanner.clear().catch(()=>{}) } catch {}
-          await tryStart({ facingMode: 'environment' }, buildCfg(true))
+          await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true))
         }
       } else {
-        await tryStart({ facingMode: 'environment' }, buildCfg(true))
+        await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true))
       }
       return { stop }
     } catch (err) {
