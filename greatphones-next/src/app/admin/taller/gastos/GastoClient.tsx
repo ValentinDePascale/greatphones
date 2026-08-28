@@ -162,12 +162,14 @@ export default function GastoClient() {
     setSending(true)
     setServerMsg(null)
     try {
+      const now = new Date()
+      const fechaConHora = `${fecha}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`
       const r = await fetch('/api/admin/taller/gastos', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fecha,
+          fecha: fechaConHora,
           cat,
           desc: desc.trim(),
           efec: parseInt(efec) || 0,

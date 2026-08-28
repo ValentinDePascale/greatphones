@@ -77,7 +77,7 @@ export async function GET(request: Request) {
         titulo: r.device,
         subtitulo: r.clientName || r.operator || r.fault1 || '—',
         hora: r.createdAt.toISOString(),
-        href: '/admin/taller/reparaciones',
+        href: '/admin/taller/reparaciones/historial',
       })
 
     // 2) Preventas pendientes / por entregar

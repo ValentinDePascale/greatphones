@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         means: m.means,
         amount: m.amount,
         amountUsd: m.means === 'USD' ? (m.amountUsd ?? null) : null,
-        opDate: d.fecha ? new Date(d.fecha + 'T12:00:00') : undefined,
+        opDate: d.fecha ? new Date(d.fecha) : undefined,
         operator: d.operador,
         createdById: admin.id,
       }).catch(e => console.error('[Taller Gasto] asiento:', e))
