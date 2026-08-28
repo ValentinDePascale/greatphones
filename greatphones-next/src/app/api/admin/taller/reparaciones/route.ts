@@ -50,29 +50,57 @@ export async function GET(request: Request) {
   }
 }
 
+const VALID_STATUS = ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS', 'THIRD_PARTY', 'COMPLETED', 'DELIVERED']
+
+const PatchSchema = z.object({
+  id: z.string().min(1, 'Falta id'),
+  status: z.enum(VALID_STATUS as [string, ...string[]]).optional(),
+  thirdParty: z.boolean().optional(),
+  deliveredAt: z.string().optional(),
+})
+
 export async function PATCH(request: Request) {
   try {
-    const admin = await requireAdmin(request)
+    await requireAdmin(request)
     const body = await request.json()
-    const { id, status, thirdParty, deliveredAt } = body
-    if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 })
-    if (!status && thirdParty === undefined && !deliveredAt) return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
+    const parsed = PatchSchema.safeParse(body)
+    if (!parsed.success)
+      return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
+    const { id, status, thirdParty, deliveredAt } = parsed.data
+    if (!status && thirdParty === undefined && !deliveredAt)
+      return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
+
+    const existing = await prisma.repair.findUnique({ where: { id } })
+    if (!existing || existing.deletedAt)
+      return NextResponse.json({ error: 'Reparación no encontrada' }, { status: 404 })
+
     const data: any = {}
     if (status) data.status = status
-    if (thirdParty !== undefined) data.thirdParty = !!thirdParty
-    if (deliveredAt) data.deliveredAt = new Date(deliveredAt)
-    if (status === 'DELIVERED' && !deliveredAt) data.deliveredAt = new Date()
+    // Enviar a tercero: queda en reparación por fuera, no se marca como entregada.
+    if (status === 'THIRD_PARTY') {
+      data.thirdParty = true
+    } else {
+      if (thirdParty !== undefined) data.thirdParty = !!thirdParty
+      if (status === 'DELIVERED') data.deliveredAt = deliveredAt ? new Date(deliveredAt) : new Date()
+      else if (deliveredAt) data.deliveredAt = new Date(deliveredAt)
+    }
+
     const updated = await prisma.repair.update({ where: { id }, data })
     await auditar({
       entityType: 'Repair',
       entityId: id,
       action: 'CORRECCION',
-      reason: `Estado cambiado a ${status}${thirdParty ? ' (tercero)' : ''}`,
+      reason: `Estado cambiado a ${status}${data.thirdParty ? ' (tercero)' : ''}`,
     }).catch(() => {})
     return NextResponse.json(updated)
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Taller Reparaciones PATCH]', error)
-    return NextResponse.json({ error: 'Error al actualizar reparación' }, { status: 500 })
+    if (error?.name === 'AuthError')
+      return NextResponse.json({ error: error.message }, { status: error.status || 401 })
+    return NextResponse.json(
+      { error: error?.message || 'Error al actualizar reparación' },
+      { status: 500 },
+    )
   }
 }
 

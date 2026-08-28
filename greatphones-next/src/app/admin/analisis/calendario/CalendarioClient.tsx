@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-interface Pendiente { id: string; codigo: string; titulo: string; subtitulo: string; hora: string; href?: string }
+interface Pendiente { id: string; codigo: string; titulo: string; subtitulo: string; hora: string; href?: string; reprogramado?: boolean }
 type DiaData = Record<string, Pendiente[]>
 interface Contadores { reparaciones: number; preventasPendientes: number; preventasCompradas: number; cotizaciones: number; arrepentimientos: number; pedidos: number }
 
@@ -44,6 +44,9 @@ export default function CalendarioClient() {
   const [cargando, setCargando] = useState(true)
   const [selected, setSelected] = useState<string | null>(null)
   const [tab, setTab] = useState<string | null>(null)
+  const [reprogramando, setReprogramando] = useState<string | null>(null)
+  const [fechaNueva, setFechaNueva] = useState('')
+  const [guardandoReprog, setGuardandoReprog] = useState(false)
 
   const load = useCallback(async () => {
     setCargando(true)
@@ -63,6 +66,42 @@ export default function CalendarioClient() {
     let y = year, m = month + delta
     if (m < 0) { m = 11; y-- } else if (m > 11) { m = 0; y++ }
     setYear(y); setMonth(m); setSelected(null); setTab(null)
+  }
+
+  const abrirReprogramar = (it: Pendiente) => {
+    setReprogramando(it.id)
+    setFechaNueva(it.hora.split('T')[0])
+  }
+  const cerrarReprogramar = () => { setReprogramando(null); setFechaNueva('') }
+
+  const guardarReprogramacion = async (tipo: string, id: string) => {
+    if (!fechaNueva) return
+    setGuardandoReprog(true)
+    try {
+      await fetch('/api/admin/calendario/reprogramar', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ entityType: tipo, entityId: id, date: fechaNueva }),
+      })
+      cerrarReprogramar()
+      await load()
+    } finally {
+      setGuardandoReprog(false)
+    }
+  }
+
+  const quitarReprogramacion = async (tipo: string, id: string) => {
+    setGuardandoReprog(true)
+    try {
+      await fetch(`/api/admin/calendario/reprogramar?entityType=${encodeURIComponent(tipo)}&entityId=${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      await load()
+    } finally {
+      setGuardandoReprog(false)
+    }
   }
 
   const iso = (y: number, m: number, d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -254,30 +293,85 @@ export default function CalendarioClient() {
                   <tr style={{ background: '#F8FAFC' }}>
                     <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Referencia</th>
                     <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Detalle</th>
-                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Hora</th>
+                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Fecha</th>
+                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Reprogramar</th>
                   </tr>
                 </thead>
                 <tbody>
                   {(diaSel[tabSel] || []).map((it: Pendiente) => (
-                    <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9', cursor: it.href ? 'pointer' : 'default' }}
+                    <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9' }}>
+                      <td
+                        style={{ padding: '11px 16px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', cursor: it.href ? 'pointer' : 'default' }}
                         onClick={() => it.href && router.push(it.href)}
-                        onKeyDown={e => { if (it.href && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); router.push(it.href) } }}
-                        tabIndex={it.href ? 0 : -1}
-                        role={it.href ? 'button' : undefined}
-                        aria-label={it.href ? `Abrir ${it.codigo}` : undefined}
-                    >
-                      <td style={{ padding: '11px 16px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap' }}>
+                      >
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                           <span style={{ color: TIPOS.find(t => t.key === tabSel)!.color }}><Icono n={ICOS[tabSel] || 'wrench'} /></span>
                           {it.codigo}
                         </span>
                       </td>
-                      <td style={{ padding: '11px 16px' }}>
+                      <td style={{ padding: '11px 16px', cursor: it.href ? 'pointer' : 'default' }} onClick={() => it.href && router.push(it.href)}>
                         <div style={{ fontWeight: 600, color: '#0F172A' }}>{it.titulo}</div>
                         <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>{it.subtitulo}</div>
                       </td>
                       <td style={{ padding: '11px 16px', fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' }}>
-                        {new Date(it.hora).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(it.hora).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {it.reprogramado && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 6, fontSize: 9.5, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: 99 }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 11 }} aria-hidden="true">event_repeat</span>
+                            reprogramado
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ padding: '11px 16px', whiteSpace: 'nowrap' }}>
+                        {reprogramando === it.id ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <input
+                              type="date"
+                              value={fechaNueva}
+                              onChange={e => setFechaNueva(e.target.value)}
+                              style={{ padding: '5px 7px', border: '1px solid #E2E8F0', borderRadius: 7, fontSize: 12 }}
+                            />
+                            <button
+                              onClick={() => guardarReprogramacion(tabSel, it.id)}
+                              disabled={guardandoReprog}
+                              aria-label="Guardar nueva fecha"
+                              style={{ padding: '5px 8px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              onClick={cerrarReprogramar}
+                              disabled={guardandoReprog}
+                              aria-label="Cancelar"
+                              style={{ padding: '5px 8px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                            >
+                              Cancelar
+                            </button>
+                          </span>
+                        ) : (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                            <button
+                              onClick={() => abrirReprogramar(it)}
+                              aria-label={`Reprogramar ${it.codigo}`}
+                              title="Mover a otra fecha"
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', background: '#F8FAFC', color: '#334155', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}
+                            >
+                              <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">event</span>
+                              Mover
+                            </button>
+                            {it.reprogramado && (
+                              <button
+                                onClick={() => quitarReprogramacion(tabSel, it.id)}
+                                disabled={guardandoReprog}
+                                aria-label={`Restaurar fecha original de ${it.codigo}`}
+                                title="Restaurar fecha original"
+                                style={{ padding: '5px 7px', background: '#fff', color: '#94A3B8', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', display: 'inline-flex' }}
+                              >
+                                <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">restart_alt</span>
+                              </button>
+                            )}
+                          </span>
+                        )}
                       </td>
                     </tr>
                   ))}

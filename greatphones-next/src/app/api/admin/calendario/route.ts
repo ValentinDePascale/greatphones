@@ -7,6 +7,13 @@ import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 // Además: contadores globales como el dashboard del ERP (preventas
 // pendientes/compradas, reparaciones abiertas) y el href de destino de cada
 // pendiente para poder navegar con un clic.
+//
+// Reprogramación: cada pendiente puede tener una fecha "reprogramada"
+// (CalendarOverride) que reemplaza su fecha natural (createdAt, entrega
+// prometida, etc) solo para efectos de en qué día del calendario aparece.
+// Por eso las reparaciones/preventas/pedidos/cotizaciones/arrepentimientos
+// se traen SIN filtro de fecha en la consulta y se ubican en el día que
+// corresponda ya calculando la fecha efectiva en memoria.
 export async function GET(request: Request) {
   try {
     await requireAdmin(request)
@@ -33,13 +40,20 @@ export async function GET(request: Request) {
       resumen[key][tipo].push(item)
     }
 
+    // Overrides de reprogramación: mapa entityType -> Map(entityId -> fecha)
+    const overrides = await prisma.calendarOverride.findMany()
+    const overrideMap = new Map<string, Date>()
+    for (const o of overrides) overrideMap.set(`${o.entityType}:${o.entityId}`, o.date)
+    const efectiva = (tipo: string, id: string, fechaNatural: Date) =>
+      overrideMap.get(`${tipo}:${id}`) || fechaNatural
+
     // Contadores globales (mismo criterio que el dashboard del ERP)
     const [repAbiertas, prevPend, prevCompradas, cotizPend, arrPend, pedidosPend] =
       await Promise.all([
         prisma.repair.count({
           where: {
             deletedAt: null,
-            status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] },
+            status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS', 'THIRD_PARTY'] },
           },
         }),
         prisma.preOrder.count({ where: { deletedAt: null, status: { in: ['PENDING'] } } }),
@@ -61,40 +75,41 @@ export async function GET(request: Request) {
       pedidos: pedidosPend,
     }
 
-    // 1) Reparaciones activas
+    // 1) Reparaciones activas (sin filtro de fecha: se ubican por fecha efectiva)
     const reparaciones = await prisma.repair.findMany({
       where: {
         deletedAt: null,
-        status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] },
-        createdAt: { gte: inicio, lt: fin },
+        status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS', 'THIRD_PARTY'] },
       },
       orderBy: { createdAt: 'asc' },
+      take: 500,
     })
-    for (const r of reparaciones)
-      push(r.createdAt, 'Reparaciones', {
-        id: r.id,
-        codigo: r.code,
-        titulo: r.device,
-        subtitulo: r.clientName || r.operator || r.fault1 || '—',
-        hora: r.createdAt.toISOString(),
-        href: '/admin/taller/reparaciones/historial',
-      })
+    for (const r of reparaciones) {
+      const fecha = efectiva('Reparaciones', r.id, r.createdAt)
+      if (fecha >= inicio && fecha < fin)
+        push(fecha, 'Reparaciones', {
+          id: r.id,
+          codigo: r.code,
+          titulo: r.device,
+          subtitulo: r.clientName || r.operator || r.fault1 || '—',
+          hora: fecha.toISOString(),
+          href: '/admin/taller/reparaciones/historial',
+          reprogramado: overrideMap.has(`Reparaciones:${r.id}`),
+        })
+    }
 
     // 2) Preventas pendientes / por entregar
     const preventas = await prisma.preOrder.findMany({
       where: {
         deletedAt: null,
         status: { in: ['PENDING', 'PAID', 'CONFIRMED'] },
-        OR: [
-          { expectedDeliveryStart: { gte: inicio, lt: fin } },
-          { expectedDeliveryEnd: { gte: inicio, lt: fin } },
-          { createdAt: { gte: inicio, lt: fin } },
-        ],
       },
       orderBy: { expectedDeliveryStart: 'asc' },
+      take: 500,
     })
     for (const p of preventas) {
-      const fecha = p.expectedDeliveryStart || p.createdAt
+      const natural = p.expectedDeliveryStart || p.createdAt
+      const fecha = efectiva('Preventas', p.id, natural)
       if (fecha >= inicio && fecha < fin) {
         const modelo = [p.productModelName, p.productStorage].filter(Boolean).join(' ')
         push(fecha, 'Preventas', {
@@ -104,6 +119,7 @@ export async function GET(request: Request) {
           subtitulo: `${p.clientName || '—'}${p.productColor ? ' · ' + p.productColor : ''} · entrega hasta ${p.expectedDeliveryEnd ? p.expectedDeliveryEnd.toLocaleDateString('es-AR') : 'sin fecha'}`,
           hora: fecha.toISOString(),
           href: '/admin/ops/entregar-preventa',
+          reprogramado: overrideMap.has(`Preventas:${p.id}`),
         })
       }
     }
@@ -112,12 +128,13 @@ export async function GET(request: Request) {
     const pedidos = await prisma.order.findMany({
       where: {
         status: { in: ['PROCESSING', 'SHIPPED'] },
-        OR: [{ createdAt: { gte: inicio, lt: fin } }, { shippedAt: { gte: inicio, lt: fin } }],
       },
       orderBy: { createdAt: 'asc' },
+      take: 500,
     })
     for (const o of pedidos) {
-      const fecha = o.shippedAt || o.createdAt
+      const natural = o.shippedAt || o.createdAt
+      const fecha = efectiva('Pedidos', o.id, natural)
       if (fecha >= inicio && fecha < fin)
         push(fecha, 'Pedidos', {
           id: o.id,
@@ -126,6 +143,7 @@ export async function GET(request: Request) {
           subtitulo: `${o.clientName || '—'} · ${o.status} · $${(o.total || 0).toLocaleString('es-AR')}`,
           hora: fecha.toISOString(),
           href: '/admin/pedidos',
+          reprogramado: overrideMap.has(`Pedidos:${o.id}`),
         })
     }
 
@@ -134,35 +152,44 @@ export async function GET(request: Request) {
       where: {
         deletedAt: null,
         status: { in: ['PENDING', 'REVIEWING'] },
-        createdAt: { gte: inicio, lt: fin },
       },
       orderBy: { createdAt: 'asc' },
+      take: 500,
     })
-    for (const q of cotizaciones)
-      push(q.createdAt, 'Cotizaciones', {
-        id: q.id,
-        codigo: q.code,
-        titulo: q.device || 'Cotización',
-        subtitulo: `${q.clientName || '—'} · ${q.storage || ''} ${q.condition || ''} · ${q.status}`,
-        hora: q.createdAt.toISOString(),
-        href: '/admin/cotizaciones',
-      })
+    for (const q of cotizaciones) {
+      const fecha = efectiva('Cotizaciones', q.id, q.createdAt)
+      if (fecha >= inicio && fecha < fin)
+        push(fecha, 'Cotizaciones', {
+          id: q.id,
+          codigo: q.code,
+          titulo: q.device || 'Cotización',
+          subtitulo: `${q.clientName || '—'} · ${q.storage || ''} ${q.condition || ''} · ${q.status}`,
+          hora: fecha.toISOString(),
+          href: '/admin/cotizaciones',
+          reprogramado: overrideMap.has(`Cotizaciones:${q.id}`),
+        })
+    }
 
     // 5) Arrepentimientos pendientes
     const arrepentimientos = await prisma.arrepentimiento.findMany({
-      where: { estado: 'PENDIENTE', createdAt: { gte: inicio, lt: fin } },
+      where: { estado: 'PENDIENTE' },
       include: { order: { select: { code: true } } },
       orderBy: { createdAt: 'asc' },
+      take: 500,
     })
-    for (const a of arrepentimientos)
-      push(a.createdAt, 'Arrepentimientos', {
-        id: a.id,
-        codigo: a.order?.code || a.id.slice(0, 8),
-        titulo: 'Arrepentimiento',
-        subtitulo: `${a.email || '—'}${a.motivo ? ' · ' + a.motivo : ''}`,
-        hora: a.createdAt.toISOString(),
-        href: '/admin/arrepentimientos',
-      })
+    for (const a of arrepentimientos) {
+      const fecha = efectiva('Arrepentimientos', a.id, a.createdAt)
+      if (fecha >= inicio && fecha < fin)
+        push(fecha, 'Arrepentimientos', {
+          id: a.id,
+          codigo: a.order?.code || a.id.slice(0, 8),
+          titulo: 'Arrepentimiento',
+          subtitulo: `${a.email || '—'}${a.motivo ? ' · ' + a.motivo : ''}`,
+          hora: fecha.toISOString(),
+          href: '/admin/arrepentimientos',
+          reprogramado: overrideMap.has(`Arrepentimientos:${a.id}`),
+        })
+    }
 
     return NextResponse.json({ mes: iso(inicio).slice(0, 7), pendientes: resumen, contadores })
   } catch (error) {

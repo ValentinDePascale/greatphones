@@ -25,6 +25,7 @@ const STATUS_LABEL: Record<string, string> = {
   DIAGNOSIS: 'Diagnóstico',
   APPROVED: 'Aprobado',
   IN_PROGRESS: 'En reparación',
+  THIRD_PARTY: 'En reparación (Tercero)',
   DELIVERED: 'Entregado',
   CANCELLED: 'Cancelado',
 }
@@ -33,9 +34,12 @@ const STATUS_COLOR: Record<string, string> = {
   DIAGNOSIS: '#7C3AED',
   APPROVED: '#2563EB',
   IN_PROGRESS: '#0D9488',
+  THIRD_PARTY: '#B45309',
   DELIVERED: '#0F9D58',
   CANCELLED: '#DC2626',
 }
+// Estados desde los que se puede avanzar a "entregado" o "a tercero"
+const ESTADOS_ABIERTOS = ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS']
 
 function fmt(n: number | null | undefined) {
   return n != null ? '$' + Number(n).toLocaleString('es-AR') : '—'
@@ -60,19 +64,20 @@ export default function HistorialClient() {
     load()
   }, [filtro])
 
-  const marcar = async (r: Repair, thirdParty: boolean) => {
-    const ok = confirm(`¿Marcar ${r.code} como entregado${thirdParty ? ' a tercero' : ''}?`)
+  const marcar = async (r: Repair, destino: 'DELIVERED' | 'THIRD_PARTY') => {
+    const mensajeConfirm =
+      destino === 'THIRD_PARTY'
+        ? `¿Enviar ${r.code} a reparación con tercero?`
+        : `¿Marcar ${r.code} como entregado${r.status === 'THIRD_PARTY' ? ' (venía de tercero)' : ''}?`
+    const ok = confirm(mensajeConfirm)
     if (!ok) return
+    const body: Record<string, unknown> = { id: r.id, status: destino }
+    if (destino === 'DELIVERED') body.deliveredAt = new Date().toISOString()
     const res = await fetch('/api/admin/taller/reparaciones', {
       method: 'PATCH',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        id: r.id,
-        status: 'DELIVERED',
-        thirdParty,
-        deliveredAt: new Date().toISOString(),
-      }),
+      body: JSON.stringify(body),
     })
     if (!res.ok) {
       const d = await res.json()
@@ -80,7 +85,13 @@ export default function HistorialClient() {
       setTimeout(() => setMsg(null), 3000)
       return
     }
-    setMsg({ t: 'success', s: `Reparación ${r.code} marcada como entregada` })
+    setMsg({
+      t: 'success',
+      s:
+        destino === 'THIRD_PARTY'
+          ? `Reparación ${r.code} enviada a tercero`
+          : `Reparación ${r.code} marcada como entregada`,
+    })
     setTimeout(() => setMsg(null), 3000)
     load()
   }
@@ -226,10 +237,10 @@ export default function HistorialClient() {
                       {r.thirdParty ? 'Sí' : 'No'}
                     </td>
                     <td style={{ padding: '8px 10px', whiteSpace: 'nowrap' }}>
-                      {r.status !== 'DELIVERED' && r.status !== 'CANCELLED' ? (
+                      {ESTADOS_ABIERTOS.includes(r.status) ? (
                         <>
                           <button
-                            onClick={() => marcar(r, false)}
+                            onClick={() => marcar(r, 'DELIVERED')}
                             style={{
                               marginRight: 6,
                               padding: '5px 9px',
@@ -245,7 +256,7 @@ export default function HistorialClient() {
                             Entregado
                           </button>
                           <button
-                            onClick={() => marcar(r, true)}
+                            onClick={() => marcar(r, 'THIRD_PARTY')}
                             style={{
                               padding: '5px 9px',
                               background: '#D97706',
@@ -260,6 +271,22 @@ export default function HistorialClient() {
                             A tercero
                           </button>
                         </>
+                      ) : r.status === 'THIRD_PARTY' ? (
+                        <button
+                          onClick={() => marcar(r, 'DELIVERED')}
+                          style={{
+                            padding: '5px 9px',
+                            background: '#0F9D58',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 7,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Entregado
+                        </button>
                       ) : (
                         <span style={{ fontSize: 11, color: '#6B7280' }}>
                           {r.deliveredAt

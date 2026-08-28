@@ -851,6 +851,7 @@ enum RepairStatus {
   DIAGNOSIS
   APPROVED
   IN_PROGRESS
+  THIRD_PARTY
   COMPLETED
   DELIVERED
 }
@@ -1018,6 +1019,22 @@ model AuditLog {
   @@index([entityId])
   @@index([action])
   @@index([createdAt])
+}
+
+// Reprogramación de fecha en el Calendario de pendientes: permite mover un
+// pendiente (reparación, preventa, pedido, cotización o arrepentimiento) a
+// otro día sin tocar su fecha "real" de origen (createdAt, entrega, etc).
+model CalendarOverride {
+  id         String   @id @default(cuid())
+  entityType String   // Reparaciones | Preventas | Pedidos | Cotizaciones | Arrepentimientos
+  entityId   String
+  date       DateTime
+  operator   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([entityType, entityId])
+  @@index([date])
 }
 
 // ============================================================
