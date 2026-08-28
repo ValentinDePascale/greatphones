@@ -79,40 +79,38 @@
   }
 
   async function ensureBackCameraId() {
+    // Pedimos el stream trasero directamente: el browser resuelve facingMode y
+    // nos deja leer el deviceId REAL de la trasera, sin depender de labels.
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
       })
+      const track = stream.getVideoTracks()[0]
+      const settings = track && track.getSettings ? track.getSettings() : null
+      const backId = settings && settings.deviceId ? settings.deviceId : null
+      console.log('[gp-scanner] exact environment resolvió a deviceId', backId)
       stream.getTracks().forEach(t => t.stop())
+      return backId
     } catch (e) {
+      console.warn('[gp-scanner] exact env failed, probando ideal', e)
       try {
         const s2 = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
         })
+        const track2 = s2.getVideoTracks()[0]
+        const settings2 = track2 && track2.getSettings ? track2.getSettings() : null
+        const backId2 = settings2 && settings2.deviceId ? settings2.deviceId : null
+        console.log('[gp-scanner] ideal environment resolvió a deviceId', backId2)
         s2.getTracks().forEach(t => t.stop())
-      } catch (e2) { console.warn('[gp-scanner] preflight env failed', e2) }
-    }
-    try {
-      if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
-        const cams = await window.Html5Qrcode.getCameras()
-        console.log('[gp-scanner] Html5Qrcode.getCameras', cams)
-        if (cams && cams.length) {
-          if (cams.length === 1) return cams[0].id
-          const labeled = cams.filter(c => c.label)
-          const back = labeled.find(c => /back|rear|environment/i.test(c.label))
-          if (back) return back.id
-          const front = labeled.find(c => /front|user|selfie/i.test(c.label))
-          if (front) {
-            const other = cams.find(c => c.id !== front.id)
-            if (other) return other.id
-          }
-          return cams[cams.length - 1].id
-        }
+        return backId2
+      } catch (e2) {
+        console.warn('[gp-scanner] preflight env failed en ambos', e2)
       }
-    } catch (e) { console.warn('[gp-scanner] Html5Qrcode.getCameras failed', e) }
+    }
+    // Último recurso: heurísticas con labels. NUNCA usar front.
     try {
       const cams = await navigator.mediaDevices.enumerateDevices()
-      console.log('[gp-scanner] enumerateDevices', cams.filter(d=>d.kind==='videoinput').map(d=>d.label))
+      console.log('[gp-scanner] enumerateDevices', cams.filter(d=>d.kind==='videoinput').map(d=>({label:d.label,id:d.deviceId})))
       const video = cams.filter(d => d.kind === 'videoinput')
       if (!video.length) return null
       if (video.length === 1) return video[0].deviceId
