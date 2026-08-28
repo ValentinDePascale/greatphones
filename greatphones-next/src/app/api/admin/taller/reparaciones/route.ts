@@ -27,6 +27,7 @@ const CreateSchema = z.object({
   precioCob: z.number().default(0),
   efec: z.number().default(0),
   transf: z.number().default(0),
+  cost: z.number().default(0),
   obs: z.string().optional(),
   operador: z.string().min(1, 'Seleccioná el operador'),
 })
@@ -57,6 +58,8 @@ const PatchSchema = z.object({
   status: z.enum(VALID_STATUS as [string, ...string[]]).optional(),
   thirdParty: z.boolean().optional(),
   deliveredAt: z.string().optional(),
+  cost: z.number().optional(),
+  thirdPartyCost: z.number().optional(),
 })
 
 export async function PATCH(request: Request) {
@@ -66,8 +69,8 @@ export async function PATCH(request: Request) {
     const parsed = PatchSchema.safeParse(body)
     if (!parsed.success)
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
-    const { id, status, thirdParty, deliveredAt } = parsed.data
-    if (!status && thirdParty === undefined && !deliveredAt)
+    const { id, status, thirdParty, deliveredAt, cost, thirdPartyCost } = parsed.data
+    if (!status && thirdParty === undefined && !deliveredAt && cost === undefined && thirdPartyCost === undefined)
       return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
 
     const existing = await prisma.repair.findUnique({ where: { id } })
@@ -76,6 +79,21 @@ export async function PATCH(request: Request) {
 
     const data: any = {}
     if (status) data.status = status
+    if (cost !== undefined) data.cost = Math.max(0, cost)
+    if (thirdPartyCost !== undefined) data.thirdPartyCost = Math.max(0, thirdPartyCost)
+
+    // Calcular profitReal según estado y costos
+    const newStatus = status || existing.status
+    const newPricePaid = existing.pricePaid || 0
+    const newCost = cost !== undefined ? Math.max(0, cost) : existing.cost
+    const newThirdPartyCost = thirdPartyCost !== undefined ? Math.max(0, thirdPartyCost) : existing.thirdPartyCost
+
+    if (newStatus === 'THIRD_PARTY' && newThirdPartyCost) {
+      data.profitReal = newPricePaid - newThirdPartyCost
+    } else if (newStatus !== 'THIRD_PARTY') {
+      data.profitReal = newPricePaid - newCost
+    }
+
     // Enviar a tercero: queda en reparación por fuera, no se marca como entregada.
     if (status === 'THIRD_PARTY') {
       data.thirdParty = true
@@ -90,7 +108,7 @@ export async function PATCH(request: Request) {
       entityType: 'Repair',
       entityId: id,
       action: 'CORRECCION',
-      reason: `Estado cambiado a ${status}${data.thirdParty ? ' (tercero)' : ''}`,
+      reason: `Estado cambiado a ${status}${data.thirdParty ? ' (tercero)' : ''}${cost !== undefined ? ` · costo ${cost}` : ''}${thirdPartyCost !== undefined ? ` · costo tercero ${thirdPartyCost}` : ''}`,
     }).catch(() => {})
     return NextResponse.json(updated)
   } catch (error: any) {
@@ -118,6 +136,10 @@ export async function POST(request: Request) {
     const d = parsed.data
     const code = genCode()
 
+    const pricePaid = d.precioCob || 0
+    const cost = d.cost || 0
+    const profitReal = pricePaid - cost
+
     const repair = await prisma.repair.create({
       data: {
         code,
@@ -136,7 +158,9 @@ export async function POST(request: Request) {
         diagnosisStatus: d.esDiagnostico ? 'PENDIENTE' : null,
         priceCalc: d.precioCalculado || 0,
         estimatedHours: d.tiempoEstimadoHoras || null,
-        pricePaid: d.precioCob || 0,
+        pricePaid,
+        cost,
+        profitReal,
         operator: d.operador,
         status: d.esDiagnostico ? 'DIAGNOSIS' : 'PENDING',
       },

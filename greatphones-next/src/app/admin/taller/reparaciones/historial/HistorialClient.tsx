@@ -15,6 +15,9 @@ interface Repair {
   isDiagnosis: boolean
   priceCalc: number | null
   pricePaid: number | null
+  cost: number
+  thirdPartyCost: number | null
+  profitReal: number | null
   thirdParty: boolean
   deliveredAt: string | null
   createdAt: string
@@ -50,6 +53,9 @@ export default function HistorialClient() {
   const [filtro, setFiltro] = useState('TODOS')
   const [cargando, setCargando] = useState(true)
   const [msg, setMsg] = useState<{ t: string; s: string } | null>(null)
+  const [terceroRepairId, setTerceroRepairId] = useState<string | null>(null)
+  const [terceroCosto, setTerceroCosto] = useState('')
+  const [terceroEnviando, setTerceroEnviando] = useState(false)
 
   const load = async () => {
     setCargando(true)
@@ -65,10 +71,14 @@ export default function HistorialClient() {
   }, [filtro])
 
   const marcar = async (r: Repair, destino: 'DELIVERED' | 'THIRD_PARTY') => {
-    const mensajeConfirm =
-      destino === 'THIRD_PARTY'
-        ? `¿Enviar ${r.code} a reparación con tercero?`
-        : `¿Marcar ${r.code} como entregado${r.status === 'THIRD_PARTY' ? ' (venía de tercero)' : ''}?`
+    if (destino === 'THIRD_PARTY') {
+      // Mostrar diálogo para ingresar costo del tercero
+      setTerceroRepairId(r.id)
+      setTerceroCosto('')
+      return
+    }
+    // Para DELIVERED
+    const mensajeConfirm = `¿Marcar ${r.code} como entregado${r.status === 'THIRD_PARTY' ? ' (venía de tercero)' : ''}?`
     const ok = confirm(mensajeConfirm)
     if (!ok) return
     const body: Record<string, unknown> = { id: r.id, status: destino }
@@ -85,15 +95,39 @@ export default function HistorialClient() {
       setTimeout(() => setMsg(null), 3000)
       return
     }
-    setMsg({
-      t: 'success',
-      s:
-        destino === 'THIRD_PARTY'
-          ? `Reparación ${r.code} enviada a tercero`
-          : `Reparación ${r.code} marcada como entregada`,
-    })
+    setMsg({ t: 'success', s: `Reparación ${r.code} marcada como entregada` })
     setTimeout(() => setMsg(null), 3000)
     load()
+  }
+
+  const confirmarTercero = async () => {
+    if (!terceroRepairId) return
+    const repair = rows.find(x => x.id === terceroRepairId)
+    if (!repair) return
+    setTerceroEnviando(true)
+    try {
+      const body: Record<string, unknown> = { id: terceroRepairId, status: 'THIRD_PARTY' }
+      if (terceroCosto) body.thirdPartyCost = Math.round(parseFloat(terceroCosto) || 0)
+      const res = await fetch('/api/admin/taller/reparaciones', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setMsg({ t: 'error', s: d.error || 'Error' })
+        setTimeout(() => setMsg(null), 3000)
+        setTerceroRepairId(null)
+        return
+      }
+      setMsg({ t: 'success', s: `Reparación ${repair.code} enviada a tercero` })
+      setTimeout(() => setMsg(null), 3000)
+      setTerceroRepairId(null)
+      load()
+    } finally {
+      setTerceroEnviando(false)
+    }
   }
 
   return (
@@ -168,7 +202,7 @@ export default function HistorialClient() {
                 <th style={{ padding: '9px 10px' }}>Cliente</th>
                 <th style={{ padding: '9px 10px' }}>Falla</th>
                 <th style={{ padding: '9px 10px' }}>Estado</th>
-                <th style={{ padding: '9px 10px' }}>Precio</th>
+                <th style={{ padding: '9px 10px' }}>Ganancia</th>
                 <th style={{ padding: '9px 10px' }}>Tercero</th>
                 <th style={{ padding: '9px 10px' }}>Acciones</th>
               </tr>
@@ -232,7 +266,20 @@ export default function HistorialClient() {
                         {STATUS_LABEL[r.status] || r.status}
                       </span>
                     </td>
-                    <td style={{ padding: '8px 10px' }}>{fmt(r.priceCalc)}</td>
+                    <td
+                      style={{
+                        padding: '8px 10px',
+                        fontWeight: 700,
+                        color:
+                          r.profitReal === null || r.profitReal === undefined
+                            ? '#94A3B8'
+                            : r.profitReal > 0
+                              ? '#0F9D58'
+                              : '#DC2626',
+                      }}
+                    >
+                      {r.profitReal !== null && r.profitReal !== undefined ? fmt(r.profitReal) : '—'}
+                    </td>
                     <td style={{ padding: '8px 10px', textAlign: 'center' }}>
                       {r.thirdParty ? 'Sí' : 'No'}
                     </td>
@@ -301,6 +348,91 @@ export default function HistorialClient() {
             </tbody>
           </table>
         </div>
+
+        {terceroRepairId && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 999,
+            }}
+            onClick={() => !terceroEnviando && setTerceroRepairId(null)}
+          >
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 12,
+                padding: 24,
+                maxWidth: 400,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 style={{ margin: '0 0 16px', color: '#181B2E', fontSize: 16, fontWeight: 700 }}>
+                Enviar a reparación con tercero
+              </h3>
+              <p style={{ fontSize: 13.5, color: '#6B7280', marginBottom: 16 }}>
+                ¿Cuánto cuesta la reparación en el tercero?
+              </p>
+              <input
+                type="number"
+                value={terceroCosto}
+                onChange={e => setTerceroCosto(e.target.value)}
+                placeholder="Ej: 50000"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1.5px solid #E6E7F0',
+                  borderRadius: 9,
+                  fontSize: 13.5,
+                  marginBottom: 20,
+                  boxSizing: 'border-box',
+                }}
+                disabled={terceroEnviando}
+              />
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setTerceroRepairId(null)}
+                  disabled={terceroEnviando}
+                  style={{
+                    padding: '9px 16px',
+                    border: '1.5px solid #E6E7F0',
+                    background: '#fff',
+                    color: '#64748B',
+                    borderRadius: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: terceroEnviando ? 'not-allowed' : 'pointer',
+                    opacity: terceroEnviando ? 0.6 : 1,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarTercero}
+                  disabled={terceroEnviando}
+                  style={{
+                    padding: '9px 16px',
+                    border: 'none',
+                    background: '#D97706',
+                    color: '#fff',
+                    borderRadius: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: terceroEnviando ? 'not-allowed' : 'pointer',
+                    opacity: terceroEnviando ? 0.6 : 1,
+                  }}
+                >
+                  {terceroEnviando ? 'Enviando…' : 'Enviar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   )

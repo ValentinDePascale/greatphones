@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Repair" ADD COLUMN "cost" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN "thirdPartyCost" INTEGER,
+ADD COLUMN "profitReal" INTEGER;

@@ -403,6 +403,9 @@ model Repair {
   diagnosisStatus String?   // PENDIENTE / ACEPTADO / RECHAZADO
   pricePaid   Int?          // precio cobrado (puede ser 0)
   priceCalc   Int?          // precio calculado por tarifario
+  cost        Int           @default(0)      // costo interno de la reparación
+  thirdPartyCost Int?                        // costo que cobra el tercero si THIRD_PARTY
+  profitReal  Int?                           // ganancia: pricePaid - (thirdPartyCost o cost)
   estimatedHours Int?
   isDiagnosis Boolean       @default(false)
   deliveredAt DateTime?
