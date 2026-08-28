@@ -93,7 +93,26 @@
       } catch (e2) { console.warn('[gp-scanner] preflight env failed', e2) }
     }
     try {
+      if (window.Html5Qrcode && typeof window.Html5Qrcode.getCameras === 'function') {
+        const cams = await window.Html5Qrcode.getCameras()
+        console.log('[gp-scanner] Html5Qrcode.getCameras', cams)
+        if (cams && cams.length) {
+          if (cams.length === 1) return cams[0].id
+          const labeled = cams.filter(c => c.label)
+          const back = labeled.find(c => /back|rear|environment/i.test(c.label))
+          if (back) return back.id
+          const front = labeled.find(c => /front|user|selfie/i.test(c.label))
+          if (front) {
+            const other = cams.find(c => c.id !== front.id)
+            if (other) return other.id
+          }
+          return cams[cams.length - 1].id
+        }
+      }
+    } catch (e) { console.warn('[gp-scanner] Html5Qrcode.getCameras failed', e) }
+    try {
       const cams = await navigator.mediaDevices.enumerateDevices()
+      console.log('[gp-scanner] enumerateDevices', cams.filter(d=>d.kind==='videoinput').map(d=>d.label))
       const video = cams.filter(d => d.kind === 'videoinput')
       if (!video.length) return null
       if (video.length === 1) return video[0].deviceId
@@ -105,7 +124,6 @@
         const other = video.find(d => d.deviceId !== front.deviceId)
         if (other) return other.deviceId
       }
-      // En Android el último suele ser la trasera
       return video[video.length - 1].deviceId
     } catch (e) { console.warn('[gp-scanner] enumerateDevices failed', e) }
     return null
@@ -206,20 +224,25 @@
         await new Promise(r => setTimeout(r, 700))
         if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0)')
       }
-      // Garantía trasera: si el track quedó en frontal, cambiar sin pedir otra vez
-      const startedTrackSettings = v && v.srcObject && (() => {
-        try {
-          const t = v.srcObject.getVideoTracks()[0]
-          return t && t.getSettings ? t.getSettings() : null
-        } catch { return null }
+      const track = v && v.srcObject && (() => {
+        try { return v.srcObject.getVideoTracks()[0] } catch { return null }
       })()
-      if (!swapped && startedTrackSettings && startedTrackSettings.facingMode === 'user') {
+      const startedTrackSettings = track && track.getSettings ? track.getSettings() : null
+      const trackLabel = track && track.label ? track.label : ''
+      const isFront = startedTrackSettings && (
+        startedTrackSettings.facingMode === 'user' ||
+        /front|user|selfie/i.test(trackLabel) ||
+        /front|user|selfie/i.test(startedTrackSettings.facingMode || '')
+      )
+      console.log('[gp-scanner] track', { label: trackLabel, facingMode: startedTrackSettings && startedTrackSettings.facingMode, deviceId: startedTrackSettings && startedTrackSettings.deviceId })
+      if (!swapped && isFront) {
         swapped = true
-        console.warn('[gp-scanner] quedó frontal, pasando a trasera')
+        console.warn('[gp-scanner] quedó frontal ('+trackLabel+'), pasando a trasera')
+        if (statusEl) statusEl.textContent = 'Cambiando a cámara trasera…'
         try { await scanner.stop().catch(()=>{}) } catch {}
         try { await scanner.clear().catch(()=>{}) } catch {}
         const other = await pickOtherCameraId(
-          (startedTrackSettings.deviceId) || (typeof camConfig === 'string' ? camConfig : '')
+          (startedTrackSettings && startedTrackSettings.deviceId) || (typeof camConfig === 'string' ? camConfig : '')
         )
         if (other) {
           try { await tryStart(other, buildCfg(false)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
