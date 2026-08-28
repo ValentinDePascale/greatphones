@@ -10,9 +10,9 @@ interface SearchParams {
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const { tab } = await searchParams;
-  if (tab === 'dashboard') {
-    return <QuotesDashboardClient />;
+  if (tab === 'legacy') {
+    const html = serveAdminSpa('quotes');
+    return <AdminPageClient html={html} tab="quotes" />;
   }
-  const html = serveAdminSpa('quotes');
-  return <AdminPageClient html={html} tab="quotes" />;
+  return <QuotesDashboardClient />;
 }

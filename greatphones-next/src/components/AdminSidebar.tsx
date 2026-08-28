@@ -66,25 +66,42 @@ const taller: SubGroup = {
   ],
 }
 
-const analisis: SubGroup = {
-  title: '',
-  items: [
-    {
-      href: '/admin/analisis/calendario',
-      label: 'Calendario',
-      icon: 'calendar_month',
-      exact: true,
-    },
-    {
-      href: '/admin/dashboard',
-      label: 'Dashboard',
-      icon: 'dashboard',
-      exact: true,
-      legacy: 'dashboard',
-    },
-    { href: '/admin/analisis/reportes', label: 'Reportes', icon: 'monitoring' },
-  ],
-}
+const analisisFinanzas: SubGroup[] = [
+  {
+    title: 'Análisis',
+    items: [
+      {
+        href: '/admin/analisis/calendario',
+        label: 'Calendario',
+        icon: 'calendar_month',
+        exact: true,
+      },
+      {
+        href: '/admin/dashboard',
+        label: 'Dashboard',
+        icon: 'dashboard',
+        exact: true,
+        legacy: 'dashboard',
+      },
+      { href: '/admin/analisis/reportes', label: 'Reportes', icon: 'monitoring' },
+    ],
+  },
+  {
+    title: 'Finanzas',
+    items: [
+      {
+        href: '/admin/gestion/mis-operaciones',
+        label: 'Mis Operaciones',
+        icon: 'folder_managed',
+        exact: true,
+      },
+      { href: '/admin/gestion/comisiones', label: 'Comisiones', icon: 'payments', exact: true },
+      { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance_wallet' },
+      { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
+      { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },
+    ],
+  },
+]
 
 const inventario: SubGroup = {
   title: '',
@@ -98,22 +115,7 @@ const inventario: SubGroup = {
 
 const gestion: SubGroup[] = [
   {
-    title: 'ERP',
-    items: [
-      {
-        href: '/admin/gestion/mis-operaciones',
-        label: 'Mis Operaciones',
-        icon: 'folder_managed',
-        exact: true,
-      },
-      { href: '/admin/gestion/comisiones', label: 'Comisiones', icon: 'payments', exact: true },
-      { href: '/admin/auditoria', label: 'Auditoría', icon: 'fact_check' },
-      { href: '/admin/contabilidad', label: 'Caja / Contabilidad', icon: 'account_balance_wallet' },
-      { href: '/admin/inversores', label: 'Inversores', icon: 'savings' },
-    ],
-  },
-  {
-    title: 'Comercio online',
+    title: 'Ventas Online',
     items: [
       {
         href: '/admin/ventas',
@@ -134,13 +136,12 @@ const gestion: SubGroup[] = [
         href: '/admin/cotizaciones',
         label: 'Cotizaciones',
         icon: 'request_quote',
-        legacy: 'quotes',
       },
       { href: '/admin/comprados', label: 'Dispositivos Comprados', icon: 'space_dashboard' },
     ],
   },
   {
-    title: 'Comunicación y plataforma',
+    title: 'Plataforma',
     items: [
       { href: '/admin/chat', label: 'Chat', icon: 'chat', legacy: 'chat' },
       { href: '/admin/usuarios', label: 'Usuarios', icon: 'group', legacy: 'users' },
@@ -152,7 +153,7 @@ const GROUPS: NavGroup[] = [
   { title: 'Operaciones', color: '#b45309', groups: [operaciones] },
   { title: 'Precios', color: '#0d9488', groups: [precios] },
   { title: 'Taller y Reparaciones', color: '#b91c1c', groups: [taller] },
-  { title: 'Análisis', color: '#7c3aed', groups: [analisis] },
+  { title: 'Análisis y Finanzas', color: '#7c3aed', groups: analisisFinanzas },
   { title: 'Inventario Online', color: '#0f766e', groups: [inventario] },
   { title: 'Gestión', color: '#94a3b8', groups: gestion },
 ]

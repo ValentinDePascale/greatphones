@@ -75,6 +75,7 @@ export default function ReparacionClient() {
   const [modelos, setModelos] = useState<string[]>([])
   const [presu, setPresu] = useState<Presu | null>(null)
   const [precioCob, setPrecioCob] = useState('')
+  const [cost, setCost] = useState('')
   const [efec, setEfec] = useState('')
   const [transf, setTransf] = useState('')
   const [obs, setObs] = useState('')
@@ -224,6 +225,7 @@ export default function ReparacionClient() {
     setErrors({})
     setServerMsg(null)
     setDone(null)
+    setCost('')
   }
 
   const enviar = async () => {
@@ -271,6 +273,7 @@ export default function ReparacionClient() {
           : '',
         tiempoEstimadoHoras: presu ? presu.horasEstimadas : 0,
         precioCob: Number(precioCob) || 0,
+        cost: Number(cost) || 0,
         efec: Number(efec) || 0,
         transf: Number(transf) || 0,
         obs: obs.trim(),
@@ -1082,6 +1085,19 @@ export default function ReparacionClient() {
                 className="cw-input"
                 value={precioCob}
                 onChange={e => setPrecioCob(e.target.value)}
+                placeholder="0"
+              />
+              <label htmlFor="cost" style={{ ...labelStyle, marginTop: 12 }}>
+                Costo de reparación ($)
+              </label>
+              <input
+                type="number"
+                min={0}
+                id="cost"
+                className="cw-input"
+                style={inputStyle}
+                value={cost}
+                onChange={e => setCost(e.target.value)}
                 placeholder="0"
               />
               <div className="cw-grid" style={{ marginTop: 10 }}>
