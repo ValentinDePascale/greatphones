@@ -3612,38 +3612,57 @@ function showImeiProductModal(existingProductId){
   };
 
   window.startImeiScanner=function(){
-    // Remove any lingering confirmation overlay before opening scanner
     var prev=document.getElementById('imeiConfirmOverlay');
     if(prev)prev.remove();
-
+    var handled=false;
     window.abrirScannerQR({
       mode:'barcode',
       onDetected:function(res){
-        if(res.type==='imei'){
-          var imei=res.value;
-          var confirmDiv=document.createElement('div');
-          confirmDiv.id='imeiConfirmOverlay';
-          confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
-          confirmDiv.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2rem;text-align:center">'+
-            '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
-            '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
-            '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">El código escaneado es:</p>'+
-            '<div id="imeiConfirmNumber" style="font-size:28px;font-weight:800;letter-spacing:3px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace">'+esc(imei)+'</div>'+
-            '<div style="display:flex;gap:8px">'+
-              '<button id="imeiRetryBtn" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
-              '<button id="imeiConfirmBtn" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
-            '</div>'+
-          '</div>';
-          document.body.appendChild(confirmDiv);
-          document.getElementById('imeiRetryBtn').onclick=function(){
-            document.getElementById('imeiConfirmOverlay').remove();
-            window.startImeiScanner();
-          };
-          document.getElementById('imeiConfirmBtn').onclick=function(){
-            document.getElementById('imeiConfirmOverlay').remove();
-            window._confirmarImei(imei);
-          };
-        }
+        if(handled) return;
+        handled=true;
+        var raw=res && (res.raw || res.value) ? String(res.raw || res.value) : '';
+        var digits=raw.replace(/\D/g,'');
+        var imei=null;
+        if(res.type==='imei' && res.value) imei=res.value;
+        else if(digits.length===15) imei=digits;
+        else if(digits.length===14){
+          for(var cd=0;cd<=9;cd++){
+            var cand=digits+String(cd);
+            var s=0,alt=false;
+            for(var i=cand.length-1;i>=0;i--){
+              var v=parseInt(cand[i],10);
+              if(alt){v*=2; if(v>9) v-=9;}
+              s+=v; alt=!alt;
+            }
+            if(s%10===0){imei=cand;break;}
+          }
+          if(!imei) imei=digits;
+        } else if(raw) imei=digits || raw.trim();
+        if(!imei) return;
+        if(navigator.vibrate) try{navigator.vibrate(80);}catch(e){}
+        var confirmDiv=document.createElement('div');
+        confirmDiv.id='imeiConfirmOverlay';
+        confirmDiv.style.cssText='position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:1rem';
+        confirmDiv.innerHTML='<div style="background:#fff;border-radius:16px;max-width:360px;width:100%;padding:2rem;text-align:center">'+
+          '<div style="font-size:40px;margin-bottom:12px">📱</div>'+
+          '<h3 style="font-size:16px;font-weight:700;margin-bottom:8px">IMEI detectado</h3>'+
+          '<p style="font-size:13px;color:var(--gray);margin-bottom:16px">El código escaneado es:</p>'+
+          '<div id="imeiConfirmNumber" style="font-size:24px;font-weight:800;letter-spacing:2px;color:var(--dk);background:var(--cream2);padding:12px;border-radius:10px;margin-bottom:20px;font-family:monospace;word-break:break-all">'+esc(imei)+'</div>'+
+          '<div style="display:flex;gap:8px">'+
+            '<button id="imeiRetryBtn" style="flex:1;padding:12px;background:var(--cream2);border:1px solid var(--border);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;color:var(--gray)">Reintentar</button>'+
+            '<button id="imeiConfirmBtn" style="flex:1;padding:12px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">✓ Correcto</button>'+
+          '</div>'+
+        '</div>';
+        document.body.appendChild(confirmDiv);
+        document.getElementById('imeiRetryBtn').onclick=function(){
+          document.getElementById('imeiConfirmOverlay').remove();
+          handled=false;
+          window.startImeiScanner();
+        };
+        document.getElementById('imeiConfirmBtn').onclick=function(){
+          document.getElementById('imeiConfirmOverlay').remove();
+          window._confirmarImei(imei);
+        };
       }
     });
   };
