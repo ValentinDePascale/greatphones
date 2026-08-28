@@ -23,6 +23,8 @@ export async function GET(request: Request) {
       byCondition,
       monthlyBreakdown,
       recent,
+      purchasedItems,
+      approvedQuotes,
     ] = await Promise.all([
       prisma.quote.count(),
       prisma.quote.count({ where: { status: 'PENDING' } }),
@@ -76,6 +78,29 @@ export async function GET(request: Request) {
           createdAt: true,
         },
       }),
+      prisma.inventoryItem.findMany({
+        where: { status: 'IN_STOCK' },
+        orderBy: { purchaseDate: 'desc' },
+        take: 50,
+        select: {
+          code: true,
+          modelName: true,
+          purchasePrice: true,
+          targetPrice: true,
+          createdAt: true,
+        },
+      }),
+      prisma.quote.findMany({
+        where: { status: 'APPROVED' },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: {
+          code: true,
+          device: true,
+          finalPrice: true,
+          createdAt: true,
+        },
+      }),
     ]);
 
     const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
@@ -116,7 +141,7 @@ export async function GET(request: Request) {
         conversionRate: total > 0 ? Math.round((completed / total) * 100) : 0,
       },
       topDevices: topDevices.map(d => ({
-        device: d.device,
+        device: d.device || 'Sin especificar',
         count: d._count.device,
         avgPrice: Math.round(d._avg.finalPrice || 0),
       })),
@@ -131,6 +156,19 @@ export async function GET(request: Request) {
       })),
       mostQuotedDevice: mostQuoted.length > 0 ? mostQuoted[0].device : null,
       mostQuotedCount: mostQuoted.length > 0 ? mostQuoted[0]._count.device : 0,
+      purchasedItems: purchasedItems.map(p => ({
+        codigo: p.code,
+        modelo: p.modelName,
+        costo: p.purchasePrice,
+        precioVenta: p.targetPrice,
+        createdAt: p.createdAt.toISOString(),
+      })),
+      approvedQuotes: approvedQuotes.map(q => ({
+        codigo: q.code,
+        dispositivo: q.device,
+        precio: q.finalPrice,
+        createdAt: q.createdAt.toISOString(),
+      })),
     });
   } catch (error) {
     return handleRouteError(error);

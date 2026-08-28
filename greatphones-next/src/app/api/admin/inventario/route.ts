@@ -7,12 +7,19 @@ export async function GET(request: Request) {
     await requireAdmin(request)
 
     const [equipos, accesorios] = await Promise.all([
-      prisma.inventoryItem.findMany({
-        where: { status: { notIn: ['SOLD', 'RESERVED'] } },
-        orderBy: [{ modelName: 'asc' }, { purchaseDate: 'desc' }],
+      prisma.product.findMany({
+        where: { deletedAt: null, isPreorder: false, stock: { gt: 0 } },
+        orderBy: [{ name: 'asc' }],
         select: {
-          code: true, imei: true, modelName: true, storage: true, color: true,
-          purchasePrice: true, salePrice: true, status: true, deviceType: true,
+          id: true,
+          name: true,
+          brand: true,
+          storage: true,
+          color: true,
+          cost: true,
+          price: true,
+          stock: true,
+          condition: true,
         },
       }),
       prisma.accessory.findMany({
@@ -22,12 +29,14 @@ export async function GET(request: Request) {
     ])
 
     const equiposOut = equipos.map(e => ({
-      modelo: e.modelName + (e.storage ? ' ' + e.storage : ''),
-      imei: e.imei,
+      id: e.id,
+      modelo: e.name + (e.storage ? ' ' + e.storage : ''),
+      marca: e.brand || '—',
       color: e.color || '—',
-      costo: e.purchasePrice,
-      precioVenta: e.salePrice || 0,
-      estado: mapInventoryStatus(e.status),
+      stock: e.stock || 0,
+      costo: e.cost || 0,
+      precioVenta: e.price || 0,
+      condicion: e.condition || '—',
     }))
 
     const accesoriosOut = accesorios.map(a => {

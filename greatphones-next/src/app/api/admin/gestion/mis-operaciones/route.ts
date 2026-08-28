@@ -80,6 +80,26 @@ export async function POST(request: Request) {
     const entries = await prisma.accountingEntry.findMany({ where: { operationId: d.operationId } })
     if (entries.length === 0) return NextResponse.json({ error: 'No se encontró la operación' }, { status: 404 })
 
+    // Si se anula una VENTA, restaurar stock
+    const salesEntries = entries.filter(e => e.source === 'VENTA')
+    if (salesEntries.length > 0) {
+      const meta = salesEntries[0].metadata as any
+      if (meta?.productId) {
+        await prisma.product.update({
+          where: { id: meta.productId },
+          data: { stock: { increment: 1 }, sold: { decrement: 1 } },
+        }).catch(() => {})
+      }
+      if (meta?.accesorios && Array.isArray(meta.accesorios)) {
+        for (const accName of meta.accesorios) {
+          await prisma.accessory.updateMany({
+            where: { name: accName, isActive: true },
+            data: { stock: { increment: 1 } },
+          }).catch(() => {})
+        }
+      }
+    }
+
     // Si se anula la entrega de una preventa, la preventa vuelve a PENDIENTE
     const entriesEntrega = entries.filter(e => e.source === 'PREVENTA_ENTREGA')
     if (entriesEntrega.length > 0) {

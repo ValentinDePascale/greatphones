@@ -149,6 +149,7 @@ export async function POST(request: Request) {
         amountUsd: m.esUSD ? m.monto : null,
         operator: d.operador || d.vendedor || admin.id,
         createdById: admin.id,
+        metadata: { productId: producto.id, accesorios: accs.map(a => a.nombre) },
       }).catch(e => console.error('[Ops Ventas] asiento:', e))
     }
 
