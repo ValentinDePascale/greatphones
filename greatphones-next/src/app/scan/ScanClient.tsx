@@ -283,7 +283,7 @@ export default function ScanClient() {
             <p style={{ fontSize: 13, color: '#888', marginBottom: 24, lineHeight: 1.5 }}>
               Escaneá el código QR del dispositivo para abrir su ficha rápida
             </p>
-            <button className="btn-scanner" onClick={iniciarEscanner}>
+            <button className="btn-scanner" onClick={() => iniciarEscanner()}>
               📷 Iniciar escáner
             </button>
             <a href="/" onClick={(e) => { e.preventDefault(); window.history.back() }} style={{
@@ -326,7 +326,7 @@ export default function ScanClient() {
               {error}
             </p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
-              <button className="btn-scanner" onClick={iniciarEscanner}>
+              <button className="btn-scanner" onClick={() => iniciarEscanner()}>
                 Reintentar
               </button>
               <button onClick={() => { setStatus('idle'); setError('') }} style={{
