@@ -45,12 +45,22 @@ export async function registerEntry(opts: {
     },
   })
 
-  await updateCashBalance(opts.means, opts.type, amount, opts.means === 'USD' ? (opts.amountUsd ?? null) : null)
+  await updateCashBalance(
+    opts.means,
+    opts.type,
+    amount,
+    opts.means === 'USD' ? (opts.amountUsd ?? null) : null,
+  )
   return entry
 }
 
 /** Aplica un asiento sobre el saldo de caja del medio correspondiente. */
-async function updateCashBalance(means: PaymentMeans, type: AccountingType, amount: number, amountUsd: number | null) {
+async function updateCashBalance(
+  means: PaymentMeans,
+  type: AccountingType,
+  amount: number,
+  amountUsd: number | null,
+) {
   const reg = await prisma.cashRegister.upsert({
     where: { means },
     update: {},
@@ -58,7 +68,13 @@ async function updateCashBalance(means: PaymentMeans, type: AccountingType, amou
   })
   const delta = type === 'INGRESO' ? amount : type === 'EGRESO' ? -amount : 0
   const deltaUsd =
-    means === 'USD' && amountUsd != null ? (type === 'INGRESO' ? amountUsd : type === 'EGRESO' ? -amountUsd : 0) : null
+    means === 'USD' && amountUsd != null
+      ? type === 'INGRESO'
+        ? amountUsd
+        : type === 'EGRESO'
+          ? -amountUsd
+          : 0
+      : null
 
   await prisma.cashRegister.update({
     where: { id: reg.id },
@@ -69,17 +85,59 @@ async function updateCashBalance(means: PaymentMeans, type: AccountingType, amou
   })
 }
 
-/** Saldo de caja actual por medio de pago. */
-export async function getCashBalances() {
-  const regs = await prisma.cashRegister.findMany({ orderBy: { means: 'asc' } })
-  return regs.map((r) => ({
-    means: r.means,
-    balance: r.balance,
-    balanceUsd: r.balanceUsd,
-  }))
+async function getAnulledOps(): Promise<Set<string>> {
+  try {
+    const logs = await prisma.auditLog.findMany({
+      where: { action: 'ANULACION' },
+      select: { snapshot: true },
+    })
+    const set = new Set<string>()
+    for (const l of logs as any[]) {
+      const s = l.snapshot as any
+      if (s?.code) set.add(s.code)
+      if (s?.id) set.add(s.id)
+    }
+    return set
+  } catch {
+    return new Set()
+  }
 }
 
-/** Libro diario: últimas entradas con filtros. */
+/** Saldo de caja actual por medio de pago (excluye anuladas). */
+export async function getCashBalances() {
+  const anulled = await getAnulledOps()
+  if (anulled.size === 0) {
+    const regs = await prisma.cashRegister.findMany({ orderBy: { means: 'asc' } })
+    return regs.map(r => ({
+      means: r.means,
+      balance: r.balance,
+      balanceUsd: r.balanceUsd,
+    }))
+  }
+  const entries = await prisma.accountingEntry.findMany({
+    select: { means: true, amount: true, amountUsd: true, type: true, operationId: true },
+  })
+  const filtered = entries.filter(e => !e.operationId || !anulled.has(e.operationId))
+  const map = new Map<string, { balance: number; balanceUsd: number | null }>()
+  for (const e of filtered) {
+    const cur = map.get(e.means) || { balance: 0, balanceUsd: 0 }
+    const delta = e.type === 'INGRESO' ? e.amount : e.type === 'EGRESO' ? -e.amount : 0
+    cur.balance += delta
+    if (e.means === 'USD' && e.amountUsd != null) {
+      const dUsd = e.type === 'INGRESO' ? e.amountUsd : e.type === 'EGRESO' ? -e.amountUsd : 0
+      cur.balanceUsd = (cur.balanceUsd || 0) + dUsd
+    }
+    map.set(e.means, cur)
+  }
+  const regs = await prisma.cashRegister.findMany({ orderBy: { means: 'asc' } })
+  return regs.map(r => {
+    const v = map.get(r.means)
+    if (v) return { means: r.means, balance: v.balance, balanceUsd: v.balanceUsd }
+    return { means: r.means, balance: 0, balanceUsd: r.means === 'USD' ? 0 : null }
+  })
+}
+
+/** Libro diario: últimas entradas con filtros (excluye anuladas). */
 export async function listEntries(opts: {
   page?: number
   limit?: number
@@ -98,6 +156,10 @@ export async function listEntries(opts: {
       { operationId: { contains: opts.search, mode: 'insensitive' } },
       { source: { contains: opts.search, mode: 'insensitive' } },
     ]
+  }
+  const anulled = await getAnulledOps()
+  if (anulled.size > 0) {
+    where.NOT = { operationId: { in: Array.from(anulled) } }
   }
   const [data, total] = await Promise.all([
     prisma.accountingEntry.findMany({

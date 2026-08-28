@@ -406,6 +406,7 @@ model Repair {
   estimatedHours Int?
   isDiagnosis Boolean       @default(false)
   deliveredAt DateTime?
+  thirdParty  Boolean           @default(false)
   operator    String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt

@@ -31,12 +31,61 @@ const CreateSchema = z.object({
   operador: z.string().min(1, 'Seleccioná el operador'),
 })
 
+export async function GET(request: Request) {
+  try {
+    await requireAdmin(request)
+    const { searchParams } = new URL(request.url)
+    const status = searchParams.get('status')
+    const where: any = { deletedAt: null }
+    if (status && status !== 'TODOS') where.status = status
+    const repairs = await prisma.repair.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 200,
+    })
+    return NextResponse.json(repairs)
+  } catch (error) {
+    console.error('[Taller Reparaciones GET]', error)
+    return NextResponse.json({ error: 'Error al obtener reparaciones' }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const admin = await requireAdmin(request)
+    const body = await request.json()
+    const { id, status, thirdParty, deliveredAt } = body
+    if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 })
+    const data: any = {}
+    if (status) data.status = status
+    if (thirdParty !== undefined) data.thirdParty = !!thirdParty
+    if (deliveredAt) data.deliveredAt = new Date(deliveredAt)
+    if (status === 'DELIVERED' && !deliveredAt) data.deliveredAt = new Date()
+    data.operator = body.operator || admin.id
+    const updated = await prisma.repair.update({ where: { id }, data })
+    await auditar({
+      entityType: 'Repair',
+      entityId: id,
+      action: 'CORRECCION',
+      reason: `Estado cambiado a ${status}${thirdParty ? ' (tercero)' : ''}`,
+    }).catch(() => {})
+    return NextResponse.json(updated)
+  } catch (error) {
+    console.error('[Taller Reparaciones PATCH]', error)
+    return NextResponse.json({ error: 'Error al actualizar reparación' }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const admin = await requireAdmin(request)
     const body = await request.json()
     const parsed = CreateSchema.safeParse(body)
-    if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
+    if (!parsed.success)
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message || 'Datos inválidos' },
+        { status: 400 },
+      )
 
     const d = parsed.data
     const code = genCode()
@@ -65,7 +114,12 @@ export async function POST(request: Request) {
       },
     })
 
-    await auditar({ entityType: 'Repair', entityId: repair.id, action: 'CREACION', reason: 'Ingreso de reparación' }).catch(() => {})
+    await auditar({
+      entityType: 'Repair',
+      entityId: repair.id,
+      action: 'CREACION',
+      reason: 'Ingreso de reparación',
+    }).catch(() => {})
 
     // Cobro al ingresar: un asiento por medio (efectivo/transferencia)
     const efec = Math.round(d.efec)

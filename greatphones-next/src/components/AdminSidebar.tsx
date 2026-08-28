@@ -56,6 +56,11 @@ const taller: SubGroup = {
   title: '',
   items: [
     { href: '/admin/taller/reparaciones', label: 'Registrar Reparación', icon: 'handyman' },
+    {
+      href: '/admin/taller/reparaciones/historial',
+      label: 'Historial Reparaciones',
+      icon: 'history',
+    },
     { href: '/admin/taller/tarifario', label: 'Tarifario Reparaciones', icon: 'price_check' },
     { href: '/admin/taller/gastos', label: 'Registrar Gasto', icon: 'payments' },
   ],

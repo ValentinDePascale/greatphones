@@ -34,14 +34,24 @@ export async function GET(request: Request) {
     }
 
     // Contadores globales (mismo criterio que el dashboard del ERP)
-    const [repAbiertas, prevPend, prevCompradas, cotizPend, arrPend, pedidosPend] = await Promise.all([
-      prisma.repair.count({ where: { deletedAt: null, status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] } } }),
-      prisma.preOrder.count({ where: { deletedAt: null, status: { in: ['PENDING'] } } }),
-      prisma.preOrder.count({ where: { deletedAt: null, status: { in: ['PAID', 'CONFIRMED'] }, deliveredAt: null } }),
-      prisma.quote.count({ where: { deletedAt: null, status: { in: ['PENDING', 'REVIEWING'] } } }),
-      prisma.arrepentimiento.count({ where: { estado: 'PENDIENTE' } }),
-      prisma.order.count({ where: { status: { in: ['PROCESSING', 'SHIPPED'] } } }),
-    ])
+    const [repAbiertas, prevPend, prevCompradas, cotizPend, arrPend, pedidosPend] =
+      await Promise.all([
+        prisma.repair.count({
+          where: {
+            deletedAt: null,
+            status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] },
+          },
+        }),
+        prisma.preOrder.count({ where: { deletedAt: null, status: { in: ['PENDING'] } } }),
+        prisma.preOrder.count({
+          where: { deletedAt: null, status: { in: ['PAID', 'CONFIRMED'] }, deliveredAt: null },
+        }),
+        prisma.quote.count({
+          where: { deletedAt: null, status: { in: ['PENDING', 'REVIEWING'] } },
+        }),
+        prisma.arrepentimiento.count({ where: { estado: 'PENDIENTE' } }),
+        prisma.order.count({ where: { status: { in: ['PROCESSING', 'SHIPPED'] } } }),
+      ])
     const contadores = {
       reparaciones: repAbiertas,
       preventasPendientes: prevPend,
@@ -53,13 +63,22 @@ export async function GET(request: Request) {
 
     // 1) Reparaciones activas
     const reparaciones = await prisma.repair.findMany({
-      where: { deletedAt: null, status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] }, createdAt: { gte: inicio, lt: fin } },
+      where: {
+        deletedAt: null,
+        status: { in: ['PENDING', 'DIAGNOSIS', 'APPROVED', 'IN_PROGRESS'] },
+        createdAt: { gte: inicio, lt: fin },
+      },
       orderBy: { createdAt: 'asc' },
     })
-    for (const r of reparaciones) push(r.createdAt, 'Reparaciones', {
-      id: r.id, codigo: r.code, titulo: r.device, subtitulo: r.clientName || r.operator || r.fault1 || '—',
-      hora: r.createdAt.toISOString(), href: '/admin/reparaciones',
-    })
+    for (const r of reparaciones)
+      push(r.createdAt, 'Reparaciones', {
+        id: r.id,
+        codigo: r.code,
+        titulo: r.device,
+        subtitulo: r.clientName || r.operator || r.fault1 || '—',
+        hora: r.createdAt.toISOString(),
+        href: '/admin/taller/reparaciones',
+      })
 
     // 2) Preventas pendientes / por entregar
     const preventas = await prisma.preOrder.findMany({
@@ -79,10 +98,12 @@ export async function GET(request: Request) {
       if (fecha >= inicio && fecha < fin) {
         const modelo = [p.productModelName, p.productStorage].filter(Boolean).join(' ')
         push(fecha, 'Preventas', {
-          id: p.id, codigo: p.code, titulo: modelo || p.customName || 'Preventa',
+          id: p.id,
+          codigo: p.code,
+          titulo: modelo || p.customName || 'Preventa',
           subtitulo: `${p.clientName || '—'}${p.productColor ? ' · ' + p.productColor : ''} · entrega hasta ${p.expectedDeliveryEnd ? p.expectedDeliveryEnd.toLocaleDateString('es-AR') : 'sin fecha'}`,
           hora: fecha.toISOString(),
-          href: '/admin/preventa',
+          href: '/admin/ops/entregar-preventa',
         })
       }
     }
@@ -97,23 +118,35 @@ export async function GET(request: Request) {
     })
     for (const o of pedidos) {
       const fecha = o.shippedAt || o.createdAt
-      if (fecha >= inicio && fecha < fin) push(fecha, 'Pedidos', {
-        id: o.id, codigo: o.code, titulo: `Pedido ${o.code}`,
-        subtitulo: `${o.clientName || '—'} · ${o.status} · $${(o.total || 0).toLocaleString('es-AR')}`,
-        hora: fecha.toISOString(), href: '/admin/pedidos',
-      })
+      if (fecha >= inicio && fecha < fin)
+        push(fecha, 'Pedidos', {
+          id: o.id,
+          codigo: o.code,
+          titulo: `Pedido ${o.code}`,
+          subtitulo: `${o.clientName || '—'} · ${o.status} · $${(o.total || 0).toLocaleString('es-AR')}`,
+          hora: fecha.toISOString(),
+          href: '/admin/pedidos',
+        })
     }
 
     // 4) Cotizaciones pendientes
     const cotizaciones = await prisma.quote.findMany({
-      where: { deletedAt: null, status: { in: ['PENDING', 'REVIEWING'] }, createdAt: { gte: inicio, lt: fin } },
+      where: {
+        deletedAt: null,
+        status: { in: ['PENDING', 'REVIEWING'] },
+        createdAt: { gte: inicio, lt: fin },
+      },
       orderBy: { createdAt: 'asc' },
     })
-    for (const q of cotizaciones) push(q.createdAt, 'Cotizaciones', {
-      id: q.id, codigo: q.code, titulo: q.device || 'Cotización',
-      subtitulo: `${q.clientName || '—'} · ${q.storage || ''} ${q.condition || ''} · ${q.status}`,
-      hora: q.createdAt.toISOString(), href: '/admin/cotizaciones',
-    })
+    for (const q of cotizaciones)
+      push(q.createdAt, 'Cotizaciones', {
+        id: q.id,
+        codigo: q.code,
+        titulo: q.device || 'Cotización',
+        subtitulo: `${q.clientName || '—'} · ${q.storage || ''} ${q.condition || ''} · ${q.status}`,
+        hora: q.createdAt.toISOString(),
+        href: '/admin/cotizaciones',
+      })
 
     // 5) Arrepentimientos pendientes
     const arrepentimientos = await prisma.arrepentimiento.findMany({
@@ -121,11 +154,15 @@ export async function GET(request: Request) {
       include: { order: { select: { code: true } } },
       orderBy: { createdAt: 'asc' },
     })
-    for (const a of arrepentimientos) push(a.createdAt, 'Arrepentimientos', {
-      id: a.id, codigo: a.order?.code || a.id.slice(0, 8), titulo: 'Arrepentimiento',
-      subtitulo: `${a.email || '—'}${a.motivo ? ' · ' + a.motivo : ''}`,
-      hora: a.createdAt.toISOString(), href: '/admin/arrepentimientos',
-    })
+    for (const a of arrepentimientos)
+      push(a.createdAt, 'Arrepentimientos', {
+        id: a.id,
+        codigo: a.order?.code || a.id.slice(0, 8),
+        titulo: 'Arrepentimiento',
+        subtitulo: `${a.email || '—'}${a.motivo ? ' · ' + a.motivo : ''}`,
+        hora: a.createdAt.toISOString(),
+        href: '/admin/arrepentimientos',
+      })
 
     return NextResponse.json({ mes: iso(inicio).slice(0, 7), pendientes: resumen, contadores })
   } catch (error) {

@@ -101,10 +101,27 @@ export async function POST(request: Request) {
     const gananciaTeorica = d.precioVenta - costo
     const gananciaCobrada = efCel + trCel + cuCel + Math.round(usdCel * usdRate) - costo
 
-    await prisma.product.update({
-      where: { id: producto.id },
-      data: { stock: { decrement: 1 }, sold: { increment: 1 } },
-    })
+    for (const a of accs) {
+      const acc = await prisma.accessory.findFirst({ where: { name: a.nombre, isActive: true } })
+      if (acc) {
+        const dispAcc = (acc.stock || 0) - (acc.reserved || 0)
+        if (dispAcc < 1)
+          return NextResponse.json({ error: `Accesorio sin stock: ${a.nombre}` }, { status: 400 })
+      }
+    }
+
+    await prisma.$transaction([
+      prisma.product.update({
+        where: { id: producto.id },
+        data: { stock: { decrement: 1 }, sold: { increment: 1 } },
+      }),
+      ...accs.map(a =>
+        prisma.accessory.updateMany({
+          where: { name: a.nombre, isActive: true },
+          data: { stock: { decrement: 1 } },
+        }),
+      ),
+    ])
 
     const medios: Array<{ medio: string; monto: number; esUSD?: boolean }> = [
       { medio: 'Efectivo', monto: efCel },
