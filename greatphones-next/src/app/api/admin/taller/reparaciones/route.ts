@@ -56,12 +56,12 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const { id, status, thirdParty, deliveredAt } = body
     if (!id) return NextResponse.json({ error: 'Falta id' }, { status: 400 })
+    if (!status && thirdParty === undefined && !deliveredAt) return NextResponse.json({ error: 'Nada para actualizar' }, { status: 400 })
     const data: any = {}
     if (status) data.status = status
     if (thirdParty !== undefined) data.thirdParty = !!thirdParty
     if (deliveredAt) data.deliveredAt = new Date(deliveredAt)
     if (status === 'DELIVERED' && !deliveredAt) data.deliveredAt = new Date()
-    data.operator = body.operator || admin.id
     const updated = await prisma.repair.update({ where: { id }, data })
     await auditar({
       entityType: 'Repair',
