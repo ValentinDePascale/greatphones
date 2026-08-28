@@ -5,6 +5,12 @@ import Script from 'next/script'
 
 type Status = 'idle' | 'requesting' | 'scanning' | 'redirecting' | 'error'
 
+interface CameraDevice {
+  deviceId: string
+  label: string
+  kind: 'videoinput'
+}
+
 declare global {
   interface Window {
     Html5Qrcode?: any
@@ -15,14 +21,43 @@ declare global {
 export default function ScanClient() {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
+  const [cameras, setCameras] = useState<CameraDevice[]>([])
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
   const scannerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    detectarCamaras()
     return () => {
       stopScanner()
     }
   }, [])
+
+  async function detectarCamaras() {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices()
+      const videoDevices = devices
+        .filter((device): device is CameraDevice => device.kind === 'videoinput')
+        .map((device, index) => ({
+          ...device,
+          kind: 'videoinput' as const,
+        }))
+
+      if (videoDevices.length > 0) {
+        setCameras(videoDevices)
+        // Preferir cámara trasera (environment)
+        const backCameraIndex = videoDevices.findIndex(
+          (cam) => cam.label.toLowerCase().includes('back') ||
+                   cam.label.toLowerCase().includes('trasera') ||
+                   cam.label.toLowerCase().includes('rear') ||
+                   cam.label.toLowerCase().includes('environment')
+        )
+        setCurrentCameraIndex(backCameraIndex >= 0 ? backCameraIndex : 0)
+      }
+    } catch (err) {
+      console.error('Error detectando cámaras:', err)
+    }
+  }
 
   async function stopScanner() {
     const s = scannerRef.current
@@ -33,7 +68,7 @@ export default function ScanClient() {
     }
   }
 
-  async function iniciarEscanner() {
+  async function iniciarEscanner(cameraIndex = 0) {
     setStatus('requesting')
     setError('')
 
@@ -48,9 +83,14 @@ export default function ScanClient() {
     try {
       const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
       scannerRef.current = scanner
+
+      const cameraConfig = cameras[cameraIndex]
+        ? { deviceId: { exact: cameras[cameraIndex].deviceId } }
+        : { facingMode: 'environment' }
+
       await scanner.start(
         {
-          facingMode: 'environment',
+          ...cameraConfig,
           width: { ideal: 1920 },
           height: { ideal: 1080 },
         },
@@ -70,6 +110,7 @@ export default function ScanClient() {
         () => { /* ignore per-frame errors */ }
       )
       setStatus('scanning')
+      setCurrentCameraIndex(cameraIndex)
     } catch (err: any) {
       if (err?.name === 'NotAllowedError') {
         setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → activar.')
@@ -80,6 +121,12 @@ export default function ScanClient() {
       }
       setStatus('error')
     }
+  }
+
+  async function cambiarCamara() {
+    await stopScanner()
+    const nextIndex = (currentCameraIndex + 1) % cameras.length
+    await iniciarEscanner(nextIndex)
   }
 
   return (
@@ -184,6 +231,19 @@ export default function ScanClient() {
             }} onClick={() => { stopScanner(); setStatus('idle') }}>
               ←
             </div>
+            {cameras.length > 1 && (
+              <div style={{
+                position: 'absolute', top: 16, right: 16, zIndex: 10,
+                width: 44, height: 44, borderRadius: '50%',
+                background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
+                border: '1px solid rgba(255,255,255,.15)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', color: '#fff', fontSize: 18,
+                transition: 'background .2s',
+              }} onClick={cambiarCamara} title="Cambiar cámara">
+                🔄
+              </div>
+            )}
             <div style={{
               position: 'absolute', inset: 0, display: 'flex',
               flexDirection: 'column', alignItems: 'center',
@@ -200,9 +260,16 @@ export default function ScanClient() {
               <div style={{ color: '#fff', fontSize: 14, marginTop: 28, textAlign: 'center', opacity: .85 }}>
                 Apuntá al código QR del dispositivo
               </div>
-              <button className="btn-secundario" onClick={() => { stopScanner(); setStatus('idle') }} style={{ marginTop: 40, pointerEvents: 'auto' }}>
-                Cancelar
-              </button>
+              <div style={{ display: 'flex', gap: 10, marginTop: 40, pointerEvents: 'auto', flexDirection: 'column', alignItems: 'center' }}>
+                <button className="btn-secundario" onClick={() => { stopScanner(); setStatus('idle') }}>
+                  Cancelar
+                </button>
+                {cameras.length > 1 && (
+                  <button className="btn-secundario" onClick={cambiarCamara} style={{ fontSize: 13 }}>
+                    🔄 Cambiar a {(currentCameraIndex + 1) % cameras.length === 0 ? 'primera' : 'segunda'} cámara
+                  </button>
+                )}
+              </div>
             </div>
           </>
         )}
