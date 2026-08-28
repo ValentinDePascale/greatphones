@@ -61,7 +61,7 @@ export default function ScanClient() {
     }
   }
 
-  async function iniciarEscanner(cameraIndex = 0) {
+  async function iniciarEscanner(cameraIndexArg?: number) {
     setStatus('requesting')
     setError('')
 
@@ -77,8 +77,11 @@ export default function ScanClient() {
       const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
       scannerRef.current = scanner
 
-      const cameraConfig = cameras[cameraIndex]
-        ? { deviceId: { exact: cameras[cameraIndex].deviceId } }
+      // Usar el índice pasado, o el almacenado (preferencia por trasera)
+      const indexToUse = cameraIndexArg !== undefined ? cameraIndexArg : currentCameraIndex
+
+      const cameraConfig = cameras[indexToUse]
+        ? { deviceId: { exact: cameras[indexToUse].deviceId } }
         : { facingMode: 'environment' }
 
       await scanner.start(
@@ -103,7 +106,7 @@ export default function ScanClient() {
         () => { /* ignore per-frame errors */ }
       )
       setStatus('scanning')
-      setCurrentCameraIndex(cameraIndex)
+      setCurrentCameraIndex(indexToUse)
     } catch (err: any) {
       if (err?.name === 'NotAllowedError') {
         setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → activar.')
