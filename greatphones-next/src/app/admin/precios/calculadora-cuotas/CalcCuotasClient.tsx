@@ -67,8 +67,11 @@ export default function CalcCuotasClient() {
       <AdminTopbar titulo="Calculadora de Cuotas" />
 
       <div style={{ padding: 24, maxWidth: 520, margin: '0 auto' }}>
-        <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 16px' }}>
-          Coeficientes editables desde la sección de Precios
+        <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 4px' }}>
+          Simula opciones de pago en cuotas. Los coeficientes se editan en Precios.
+        </p>
+        <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px' }}>
+          Ingresá un precio y verás cuánto cuesta cada cuota con interés incluido.
         </p>
 
         <form
@@ -178,9 +181,14 @@ export default function CalcCuotasClient() {
                       {r.cuotas === 1 ? '1 pago' : `${r.cuotas} cuotas`}
                     </div>
                     {r.cuotas > 1 && (
-                      <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
-                        Total: {fmtARS(r.total)}
-                      </div>
+                      <>
+                        <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                          Total: {fmtARS(r.total)}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#D97706', marginTop: 2 }}>
+                          +{fmtARS(r.total - (Number(monto) || 0))} de interés
+                        </div>
+                      </>
                     )}
                   </div>
                   <div style={{ textAlign: 'right' }}>

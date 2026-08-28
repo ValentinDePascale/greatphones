@@ -459,7 +459,37 @@ export default function TarifarioClient() {
                               </button>
                             </span>
                           ) : (
-                            <span style={{ color: '#B7950B', fontWeight: 600 }}>sin configurar</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ color: '#B7950B', fontWeight: 600 }}>sin configurar</span>
+                              <button
+                                onClick={() => editarCategoria(t.nombre)}
+                                className="pe-btn"
+                                aria-label={`Configurar ${t.nombre}`}
+                                title={`Configurar ${t.nombre}`}
+                                style={{
+                                  background: '#FEF3C7',
+                                  border: '1px solid #FCD34D',
+                                  color: '#B7950B',
+                                  cursor: 'pointer',
+                                  padding: '4px 8px',
+                                  borderRadius: 5,
+                                  fontSize: 11,
+                                  fontWeight: 600,
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <span
+                                  className="material-symbols-outlined"
+                                  style={{ fontSize: 13 }}
+                                  aria-hidden="true"
+                                >
+                                  add_circle
+                                </span>
+                                Configurar
+                              </button>
+                            </span>
                           )}
                         </div>
                       ))}

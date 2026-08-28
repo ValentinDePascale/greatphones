@@ -8,7 +8,7 @@ interface Props {
 
 export default function AdminTopbar({ titulo }: Props) {
   return (
-    <header className="admin-topbar" style={{ background: 'var(--admin-surface, #ffffff)' }}>
+    <header className="admin-topbar" style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,.08)' }}>
       <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
         <h1 className="admin-topbar-title">{titulo}</h1>
       </div>
