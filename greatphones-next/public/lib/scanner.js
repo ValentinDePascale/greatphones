@@ -79,51 +79,20 @@
   }
 
   async function ensureBackCameraId() {
-    // Pedimos el stream trasero directamente: el browser resuelve facingMode y
-    // nos deja leer el deviceId REAL de la trasera, sin depender de labels.
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { exact: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      })
-      const track = stream.getVideoTracks()[0]
-      const settings = track && track.getSettings ? track.getSettings() : null
-      const backId = settings && settings.deviceId ? settings.deviceId : null
-      console.log('[gp-scanner] exact environment resolvió a deviceId', backId)
-      stream.getTracks().forEach(t => t.stop())
-      return backId
-    } catch (e) {
-      console.warn('[gp-scanner] exact env failed, probando ideal', e)
-      try {
-        const s2 = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
-        })
-        const track2 = s2.getVideoTracks()[0]
-        const settings2 = track2 && track2.getSettings ? track2.getSettings() : null
-        const backId2 = settings2 && settings2.deviceId ? settings2.deviceId : null
-        console.log('[gp-scanner] ideal environment resolvió a deviceId', backId2)
-        s2.getTracks().forEach(t => t.stop())
-        return backId2
-      } catch (e2) {
-        console.warn('[gp-scanner] preflight env failed en ambos', e2)
-      }
-    }
-    // Último recurso: heurísticas con labels. NUNCA usar front.
     try {
       const cams = await navigator.mediaDevices.enumerateDevices()
-      console.log('[gp-scanner] enumerateDevices', cams.filter(d=>d.kind==='videoinput').map(d=>({label:d.label,id:d.deviceId})))
       const video = cams.filter(d => d.kind === 'videoinput')
+      console.log('[gp-scanner] videoinputs:', video.map(v => ({ id: v.deviceId, label: v.label })))
       if (!video.length) return null
-      if (video.length === 1) return video[0].deviceId
-      const labeled = video.filter(d => d.label)
-      const back = labeled.find(d => /back|rear|environment/i.test(d.label))
+      // Buscar explícitamente una que NO sea front/user/selfie
+      const back = video.find(d => /back|rear|environment|trasera|principal|trás/i.test(d.label))
       if (back) return back.deviceId
-      const front = labeled.find(d => /front|user|selfie/i.test(d.label))
-      if (front) {
-        const other = video.find(d => d.deviceId !== front.deviceId)
-        if (other) return other.deviceId
-      }
+      const notFront = video.filter(d => !/front|user|selfie|frontal/i.test(d.label))
+      if (notFront.length) return notFront[notFront.length - 1].deviceId
       return video[video.length - 1].deviceId
-    } catch (e) { console.warn('[gp-scanner] enumerateDevices failed', e) }
+    } catch (e) {
+      console.warn('[gp-scanner] enumerateDevices failed', e)
+    }
     return null
   }
 
@@ -265,25 +234,21 @@
 
     try {
       const camId = await ensureBackCameraId()
-      if (camId) {
-        try {
-          await tryStart(camId, buildCfg(false))
-        } catch (e) {
-          console.warn('[gp-scanner] deviceId start failed, facingMode env', e)
-          try { await scanner.stop().catch(()=>{}) } catch {}
-          try { await scanner.clear().catch(()=>{}) } catch {}
-          await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true))
-        }
-      } else {
-        await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true))
-      }
+      const targetConfig = camId ? camId : { facingMode: { exact: 'environment' } }
+      await tryStart(targetConfig, buildCfg(!camId))
       return { stop }
-    } catch (err) {
-      const msg = (err && (err.message || err.name)) || String(err)
-      if (statusEl) statusEl.textContent = '⚠️ ' + msg
-      console.error('[gp-scanner] start error:', err)
-      setTimeout(stop, 3500)
-      throw err
+    } catch (err1) {
+      console.warn('[gp-scanner] primer intento falló, reintentando con facingMode environment plano', err1)
+      try {
+        await tryStart({ facingMode: 'environment' }, buildCfg(true))
+        return { stop }
+      } catch (err2) {
+        const msg = (err2 && (err2.message || err2.name)) || String(err2)
+        if (statusEl) statusEl.textContent = '⚠️ ' + msg
+        console.error('[gp-scanner] start error final:', err2)
+        setTimeout(stop, 3500)
+        throw err2
+      }
     }
   }
 
