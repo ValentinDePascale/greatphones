@@ -4,11 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Script from 'next/script'
 
 type Status = 'idle' | 'requesting' | 'scanning' | 'redirecting' | 'error'
-
-interface CameraInfo {
-  id: string
-  label: string
-}
+type Facing = 'environment' | 'user'
 
 declare global {
   interface Window {
@@ -17,33 +13,14 @@ declare global {
   }
 }
 
-function elegirIndiceTrasera(lista: CameraInfo[]) {
-  const idx = lista.findIndex(c => {
-    const l = c.label.toLowerCase()
-    return (
-      l.includes('back') ||
-      l.includes('trasera') ||
-      l.includes('rear') ||
-      l.includes('environment') ||
-      l.includes('trás')
-    )
-  })
-  // Si no hay match por label, en la mayoría de celulares la cámara trasera
-  // es la primera que devuelve el navegador.
-  return idx >= 0 ? idx : 0
-}
-
 export default function ScanClient() {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
-  const [cameras, setCameras] = useState<CameraInfo[]>([])
-  const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
+  const [facing, setFacing] = useState<Facing>('environment')
   const scannerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  // Refs espejo del estado para evitar closures obsoletos dentro de callbacks async
-  const camerasRef = useRef<CameraInfo[]>([])
-  const currentCameraIndexRef = useRef(0)
-  const inicializadaRef = useRef(false)
+  // Ref espejo del estado para evitar closures obsoletos dentro de callbacks async
+  const facingRef = useRef<Facing>('environment')
 
   useEffect(() => {
     return () => {
@@ -60,19 +37,34 @@ export default function ScanClient() {
     }
   }
 
-  // Obtiene la lista de cámaras (fuerza el permiso) y la cachea en ref+state.
-  // Usar Html5Qrcode.getCameras() en vez de navigator.mediaDevices.enumerateDevices()
-  // porque este último devuelve labels vacíos hasta que hay permiso otorgado,
-  // lo que rompía la detección de "cámara trasera".
-  async function obtenerCamaras(): Promise<CameraInfo[]> {
-    if (camerasRef.current.length > 0) return camerasRef.current
-    const lista: CameraInfo[] = await window.Html5Qrcode.getCameras()
-    camerasRef.current = lista
-    setCameras(lista)
-    return lista
+  // Arranca la cámara pidiendo explícitamente el facing deseado con "exact"
+  // (el navegador resuelve cuál cámara física corresponde a trasera/frontal
+  // según el hardware — no depende de enumerar dispositivos ni de sus labels,
+  // que es lo que fallaba antes). Si el dispositivo no tiene esa cámara exacta
+  // (p.ej. una notebook con una sola webcam), reintenta sin "exact".
+  async function intentarStart(constraint: MediaTrackConstraints) {
+    const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
+    scannerRef.current = scanner
+    await scanner.start(
+      constraint,
+      {
+        fps: 20,
+        qrbox: 260,
+        aspectRatio: 1.0,
+      },
+      (decodedText: string) => {
+        const match = decodedText.trim().match(/\/inv\/([A-Za-z0-9-]+)/)
+        if (match) {
+          stopScanner()
+          setStatus('redirecting')
+          window.location.href = '/inv/' + match[1]
+        }
+      },
+      () => { /* ignore per-frame errors */ }
+    )
   }
 
-  async function iniciarEscanner(cameraIndexArg?: number) {
+  async function iniciarEscanner(facingArg?: Facing) {
     setStatus('requesting')
     setError('')
 
@@ -84,47 +76,21 @@ export default function ScanClient() {
 
     if (!containerRef.current) return
 
+    const targetFacing = facingArg ?? facingRef.current
+
     try {
-      const listaCamaras = await obtenerCamaras()
-      if (listaCamaras.length === 0) {
-        setError('No se encontró ninguna cámara en este dispositivo.')
-        setStatus('error')
-        return
+      try {
+        await intentarStart({ facingMode: { exact: targetFacing } })
+      } catch {
+        // El dispositivo no tiene una cámara exacta con ese facing (p.ej. una
+        // sola webcam): reintentar sin "exact" para que el navegador use la
+        // que tenga disponible.
+        await stopScanner()
+        await intentarStart({ facingMode: targetFacing })
       }
-
-      let indexToUse: number
-      if (cameraIndexArg !== undefined) {
-        indexToUse = cameraIndexArg
-      } else if (inicializadaRef.current) {
-        indexToUse = currentCameraIndexRef.current
-      } else {
-        indexToUse = elegirIndiceTrasera(listaCamaras)
-      }
-      inicializadaRef.current = true
-
-      const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
-      scannerRef.current = scanner
-
-      await scanner.start(
-        listaCamaras[indexToUse].id,
-        {
-          fps: 20,
-          qrbox: 260,
-          aspectRatio: 1.0,
-        },
-        (decodedText: string) => {
-          const match = decodedText.trim().match(/\/inv\/([A-Za-z0-9-]+)/)
-          if (match) {
-            stopScanner()
-            setStatus('redirecting')
-            window.location.href = '/inv/' + match[1]
-          }
-        },
-        () => { /* ignore per-frame errors */ }
-      )
       setStatus('scanning')
-      currentCameraIndexRef.current = indexToUse
-      setCurrentCameraIndex(indexToUse)
+      facingRef.current = targetFacing
+      setFacing(targetFacing)
     } catch (err: any) {
       if (err?.name === 'NotAllowedError') {
         setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → activar.')
@@ -139,10 +105,8 @@ export default function ScanClient() {
 
   async function cambiarCamara() {
     await stopScanner()
-    const lista = camerasRef.current
-    if (lista.length < 2) return
-    const nextIndex = (currentCameraIndexRef.current + 1) % lista.length
-    await iniciarEscanner(nextIndex)
+    const next: Facing = facingRef.current === 'environment' ? 'user' : 'environment'
+    await iniciarEscanner(next)
   }
 
   return (
@@ -247,19 +211,17 @@ export default function ScanClient() {
             }} onClick={() => { stopScanner(); setStatus('idle') }}>
               ←
             </div>
-            {cameras.length > 1 && (
-              <div style={{
-                position: 'absolute', top: 16, right: 16, zIndex: 10,
-                width: 44, height: 44, borderRadius: '50%',
-                background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
-                border: '1px solid rgba(255,255,255,.15)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff', fontSize: 18,
-                transition: 'background .2s',
-              }} onClick={cambiarCamara} title="Cambiar cámara">
-                🔄
-              </div>
-            )}
+            <div style={{
+              position: 'absolute', top: 16, right: 16, zIndex: 10,
+              width: 44, height: 44, borderRadius: '50%',
+              background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#fff', fontSize: 18,
+              transition: 'background .2s',
+            }} onClick={cambiarCamara} title="Cambiar cámara">
+              🔄
+            </div>
             <div style={{
               position: 'absolute', inset: 0, display: 'flex',
               flexDirection: 'column', alignItems: 'center',
@@ -280,11 +242,9 @@ export default function ScanClient() {
                 <button className="btn-secundario" onClick={() => { stopScanner(); setStatus('idle') }}>
                   Cancelar
                 </button>
-                {cameras.length > 1 && (
-                  <button className="btn-secundario" onClick={cambiarCamara} style={{ fontSize: 13 }}>
-                    🔄 Cambiar a {(currentCameraIndex + 1) % cameras.length === 0 ? 'primera' : 'segunda'} cámara
-                  </button>
-                )}
+                <button className="btn-secundario" onClick={cambiarCamara} style={{ fontSize: 13 }}>
+                  🔄 Cambiar a cámara {facing === 'environment' ? 'frontal' : 'trasera'}
+                </button>
               </div>
             </div>
           </>
