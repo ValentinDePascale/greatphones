@@ -7,6 +7,26 @@ const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 5
 const STEPS = ['Operación', 'Pedido', 'Entrega', 'Precio y cobro', 'Confirmar']
 
+const MODELOS_IPHONE = [
+  'iPhone 8', 'iPhone 8 Plus',
+  'iPhone X', 'iPhone XR', 'iPhone XS', 'iPhone XS Max',
+  'iPhone 11', 'iPhone 11 Pro', 'iPhone 11 Pro Max',
+  'iPhone 12 mini', 'iPhone 12', 'iPhone 12 Pro', 'iPhone 12 Pro Max',
+  'iPhone 13 mini', 'iPhone 13', 'iPhone 13 Pro', 'iPhone 13 Pro Max',
+  'iPhone 14', 'iPhone 14 Plus', 'iPhone 14 Pro', 'iPhone 14 Pro Max',
+  'iPhone 15', 'iPhone 15 Plus', 'iPhone 15 Pro', 'iPhone 15 Pro Max',
+  'iPhone 16', 'iPhone 16 Plus', 'iPhone 16 Pro', 'iPhone 16 Pro Max',
+  'iPhone 17', 'iPhone 17 Pro', 'iPhone 17 Pro Max',
+]
+
+interface PrecioRow {
+  id: string
+  modelo: string
+  almacenamiento: string
+  preventaARS: number
+  active: boolean
+}
+
 function fmt(n: number) {
   return '$' + (n || 0).toLocaleString('es-AR')
 }
@@ -53,8 +73,10 @@ export default function PreventasClient() {
   const [fechaDesde, setFechaDesde] = useState(() => enDias(7))
   const [fechaHasta, setFechaHasta] = useState(() => enDias(10))
   const [obs, setObs] = useState('')
-  const [modelosIphone, setModelosIphone] = useState<string[]>([])
   const [modeloEsOtro, setModeloEsOtro] = useState(false)
+  const [storageSel, setStorageSel] = useState('')
+  const [precios, setPrecios] = useState<PrecioRow[]>([])
+  const [precioAuto, setPrecioAuto] = useState(false)
 
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
@@ -66,29 +88,49 @@ export default function PreventasClient() {
 
   useEffect(() => {
     let activo = true
-    fetch('/api/products?search=iPhone&limit=500', { credentials: 'include' })
+    fetch('/api/admin/precios', { credentials: 'include' })
       .then(r => r.json())
       .then(d => {
         if (!activo) return
-        const data: { name: string; storage?: string | null }[] = Array.isArray(
-          (d as { data?: unknown }).data,
-        )
-          ? (d as { data: typeof data }).data
-          : Array.isArray(d)
-            ? (d as typeof data)
-            : []
-        const uniq = [
-          ...new Set(data.map(p => (p.name + (p.storage ? ' ' + p.storage : '')).trim())),
-        ]
-          .filter(Boolean)
-          .sort((a, b) => a.localeCompare(b))
-        setModelosIphone(uniq)
+        setPrecios(Array.isArray(d) ? d.filter((p: PrecioRow) => p.active) : [])
       })
       .catch(() => {})
     return () => {
       activo = false
     }
   }, [])
+
+  // Variantes de almacenamiento con precio configurado para el modelo elegido
+  const variantesModelo = precios.filter(
+    p => p.modelo.trim().toLowerCase() === modelo.trim().toLowerCase(),
+  )
+
+  // Al elegir modelo del select: si hay una sola variante, autocompletar precio
+  // directo; si hay varias, esperar a que se elija el almacenamiento.
+  useEffect(() => {
+    if (modeloEsOtro || !modelo) return
+    setStorageSel('')
+    if (variantesModelo.length === 1) {
+      setPrecioVenta(String(variantesModelo[0].preventaARS || ''))
+      setPrecioAuto(true)
+    } else if (variantesModelo.length === 0) {
+      setPrecioAuto(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modelo, modeloEsOtro])
+
+  // Al elegir el almacenamiento (cuando hay varias variantes): tomar el precio de esa variante
+  useEffect(() => {
+    if (!storageSel) return
+    const v = variantesModelo.find(
+      p => p.almacenamiento.trim().toLowerCase() === storageSel.trim().toLowerCase(),
+    )
+    if (v) {
+      setPrecioVenta(String(v.preventaARS || ''))
+      setPrecioAuto(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageSel])
 
   const tot =
     (parseInt(efec) || 0) +
@@ -147,9 +189,13 @@ export default function PreventasClient() {
     setMaxStep(m => Math.max(m, dest))
   }
 
+  const modeloFinal = !modeloEsOtro && storageSel ? `${modelo} ${storageSel}` : modelo
+
   const resetear = () => {
     setModelo('')
     setModeloEsOtro(false)
+    setStorageSel('')
+    setPrecioAuto(false)
     setCliente('')
     setCuil('')
     setTel('')
@@ -196,7 +242,7 @@ export default function PreventasClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fecha,
-          modelo,
+          modelo: modeloFinal,
           cliente,
           cuil,
           tel,
@@ -294,7 +340,7 @@ export default function PreventasClient() {
     ['Operador', operador || '—'],
     ['Vendedor', vendedor || '—'],
     ['Fecha', fecha],
-    ['Modelo solicitado', modelo || '—'],
+    ['Modelo solicitado', modeloFinal || '—'],
     ['Cliente', cliente || '—'],
     ['Contacto', [tel, cuil].filter(Boolean).join(' · ') || '—'],
     [
@@ -663,6 +709,8 @@ export default function PreventasClient() {
                       onClick={() => {
                         setModeloEsOtro(false)
                         setModelo('')
+                        setStorageSel('')
+                        setPrecioAuto(false)
                         limpiarError('modelo')
                       }}
                       className="cw-btn"
@@ -704,6 +752,7 @@ export default function PreventasClient() {
                       if (e.target.value === '__otro__') {
                         setModeloEsOtro(true)
                         setModelo('')
+                        setStorageSel('')
                         limpiarError('modelo')
                       } else {
                         setModelo(e.target.value)
@@ -715,7 +764,7 @@ export default function PreventasClient() {
                     <option value="" disabled>
                       Seleccionar iPhone...
                     </option>
-                    {modelosIphone.map(m => (
+                    {MODELOS_IPHONE.map(m => (
                       <option key={m} value={m}>
                         {m}
                       </option>
@@ -730,9 +779,35 @@ export default function PreventasClient() {
                       {errors.modelo}
                     </p>
                   )}
-                  {modelosIphone.length === 0 && (
-                    <p style={{ fontSize: 11, color: '#94A3B8', margin: '4px 0 0' }}>
-                      Cargando modelos...
+
+                  {modelo && variantesModelo.length > 1 && (
+                    <>
+                      <label htmlFor="storageSel" style={{ ...labelStyle, marginTop: 10 }}>
+                        Almacenamiento
+                      </label>
+                      <select
+                        id="storageSel"
+                        className="cw-input"
+                        style={inputStyle}
+                        value={storageSel}
+                        onChange={e => setStorageSel(e.target.value)}
+                      >
+                        <option value="" disabled>
+                          Seleccionar almacenamiento...
+                        </option>
+                        {variantesModelo.map(v => (
+                          <option key={v.id} value={v.almacenamiento}>
+                            {v.almacenamiento}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  )}
+
+                  {modelo && variantesModelo.length === 0 && (
+                    <p style={{ fontSize: 11, color: '#B7950B', margin: '5px 0 0' }}>
+                      Sin precio configurado para este modelo en Lista de Precios. Ingresá el
+                      precio manualmente en el paso siguiente.
                     </p>
                   )}
                 </>
@@ -855,8 +930,31 @@ export default function PreventasClient() {
               <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
                 Precio y cobro anticipado
               </legend>
-              <label htmlFor="precioVenta" style={{ ...labelStyle, marginTop: 12 }}>
+              <label
+                htmlFor="precioVenta"
+                style={{
+                  ...labelStyle,
+                  marginTop: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 6,
+                }}
+              >
                 Precio de venta pactado ($) *
+                {precioAuto && (
+                  <span
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 700,
+                      padding: '2px 7px',
+                      borderRadius: 99,
+                      background: '#D5F5E3',
+                      color: '#186A3B',
+                    }}
+                  >
+                    desde Lista de Precios
+                  </span>
+                )}
               </label>
               <input
                 type="number"
@@ -866,6 +964,7 @@ export default function PreventasClient() {
                 value={precioVenta}
                 onChange={e => {
                   setPrecioVenta(e.target.value)
+                  setPrecioAuto(false)
                   limpiarError('precioVenta')
                 }}
                 onBlur={() => validarEnBlur('precioVenta')}
