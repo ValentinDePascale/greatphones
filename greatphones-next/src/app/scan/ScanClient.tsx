@@ -5,7 +5,10 @@ import Script from 'next/script'
 
 type Status = 'idle' | 'requesting' | 'scanning' | 'redirecting' | 'error'
 
-type CameraDevice = MediaDeviceInfo & { kind: 'videoinput' }
+interface CameraInfo {
+  id: string
+  label: string
+}
 
 declare global {
   interface Window {
@@ -14,43 +17,39 @@ declare global {
   }
 }
 
+function elegirIndiceTrasera(lista: CameraInfo[]) {
+  const idx = lista.findIndex(c => {
+    const l = c.label.toLowerCase()
+    return (
+      l.includes('back') ||
+      l.includes('trasera') ||
+      l.includes('rear') ||
+      l.includes('environment') ||
+      l.includes('trás')
+    )
+  })
+  // Si no hay match por label, en la mayoría de celulares la cámara trasera
+  // es la primera que devuelve el navegador.
+  return idx >= 0 ? idx : 0
+}
+
 export default function ScanClient() {
   const [status, setStatus] = useState<Status>('idle')
   const [error, setError] = useState('')
-  const [cameras, setCameras] = useState<CameraDevice[]>([])
+  const [cameras, setCameras] = useState<CameraInfo[]>([])
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0)
   const scannerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Refs espejo del estado para evitar closures obsoletos dentro de callbacks async
+  const camerasRef = useRef<CameraInfo[]>([])
+  const currentCameraIndexRef = useRef(0)
+  const inicializadaRef = useRef(false)
 
   useEffect(() => {
-    detectarCamaras()
     return () => {
       stopScanner()
     }
   }, [])
-
-  async function detectarCamaras() {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices()
-      const videoDevices = devices.filter(
-        (device) => device.kind === 'videoinput'
-      ) as CameraDevice[]
-
-      if (videoDevices.length > 0) {
-        setCameras(videoDevices)
-        // Preferir cámara trasera (environment)
-        const backCameraIndex = videoDevices.findIndex(
-          (cam) => cam.label.toLowerCase().includes('back') ||
-                   cam.label.toLowerCase().includes('trasera') ||
-                   cam.label.toLowerCase().includes('rear') ||
-                   cam.label.toLowerCase().includes('environment')
-        )
-        setCurrentCameraIndex(backCameraIndex >= 0 ? backCameraIndex : 0)
-      }
-    } catch (err) {
-      console.error('Error detectando cámaras:', err)
-    }
-  }
 
   async function stopScanner() {
     const s = scannerRef.current
@@ -59,6 +58,18 @@ export default function ScanClient() {
       try { await s.clear() } catch { /* ignore */ }
       scannerRef.current = null
     }
+  }
+
+  // Obtiene la lista de cámaras (fuerza el permiso) y la cachea en ref+state.
+  // Usar Html5Qrcode.getCameras() en vez de navigator.mediaDevices.enumerateDevices()
+  // porque este último devuelve labels vacíos hasta que hay permiso otorgado,
+  // lo que rompía la detección de "cámara trasera".
+  async function obtenerCamaras(): Promise<CameraInfo[]> {
+    if (camerasRef.current.length > 0) return camerasRef.current
+    const lista: CameraInfo[] = await window.Html5Qrcode.getCameras()
+    camerasRef.current = lista
+    setCameras(lista)
+    return lista
   }
 
   async function iniciarEscanner(cameraIndexArg?: number) {
@@ -74,22 +85,28 @@ export default function ScanClient() {
     if (!containerRef.current) return
 
     try {
+      const listaCamaras = await obtenerCamaras()
+      if (listaCamaras.length === 0) {
+        setError('No se encontró ninguna cámara en este dispositivo.')
+        setStatus('error')
+        return
+      }
+
+      let indexToUse: number
+      if (cameraIndexArg !== undefined) {
+        indexToUse = cameraIndexArg
+      } else if (inicializadaRef.current) {
+        indexToUse = currentCameraIndexRef.current
+      } else {
+        indexToUse = elegirIndiceTrasera(listaCamaras)
+      }
+      inicializadaRef.current = true
+
       const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
       scannerRef.current = scanner
 
-      // Usar el índice pasado, o el almacenado (preferencia por trasera)
-      const indexToUse = cameraIndexArg !== undefined ? cameraIndexArg : currentCameraIndex
-
-      const cameraConfig = cameras[indexToUse]
-        ? { deviceId: { exact: cameras[indexToUse].deviceId } }
-        : { facingMode: 'environment' }
-
       await scanner.start(
-        {
-          ...cameraConfig,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        },
+        listaCamaras[indexToUse].id,
         {
           fps: 20,
           qrbox: 260,
@@ -106,6 +123,7 @@ export default function ScanClient() {
         () => { /* ignore per-frame errors */ }
       )
       setStatus('scanning')
+      currentCameraIndexRef.current = indexToUse
       setCurrentCameraIndex(indexToUse)
     } catch (err: any) {
       if (err?.name === 'NotAllowedError') {
@@ -121,7 +139,9 @@ export default function ScanClient() {
 
   async function cambiarCamara() {
     await stopScanner()
-    const nextIndex = (currentCameraIndex + 1) % cameras.length
+    const lista = camerasRef.current
+    if (lista.length < 2) return
+    const nextIndex = (currentCameraIndexRef.current + 1) % lista.length
     await iniciarEscanner(nextIndex)
   }
 
