@@ -313,7 +313,7 @@ export default function PreventaOnlineClient() {
 
           {/* Lista de preventas */}
           {preventasAgregadas.length === 0 ? (
-            <div style={{ padding: 16, textAlign: 'center, flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ padding: 16, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
                 Agrega dispositivos desde la izquierda
               </p>
