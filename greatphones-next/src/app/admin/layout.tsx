@@ -1,10 +1,15 @@
 'use client'
 
 import AdminSidebar from '@/components/AdminSidebar'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    setOpen(false)
+  }, [])
+
   return (
     <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--cream)' }}>
       <AdminSidebar open={open} onToggle={() => setOpen(o => !o)} />
