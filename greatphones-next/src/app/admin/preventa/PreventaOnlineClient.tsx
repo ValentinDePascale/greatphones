@@ -19,6 +19,15 @@ interface ColorVariant {
   fecha: string
 }
 
+interface PreventaSeleccionada {
+  id: string
+  productId: string
+  modelo: string
+  color: string
+  precio: number
+  fecha: string
+}
+
 function fmt(n: number) {
   return '$' + (n || 0).toLocaleString('es-AR')
 }
@@ -128,12 +137,45 @@ export default function PreventaOnlineClient() {
     setEdiciones(newEdiciones)
   }
 
-  const preventasSeleccionadas = Array.from(ediciones.entries()).reduce((sum, [_, colores]) => {
-    return sum + colores.length
-  }, 0)
+  const obtenerPreventasSeleccionadas = (): PreventaSeleccionada[] => {
+    const preventas: PreventaSeleccionada[] = []
+    let id = 0
+    Array.from(ediciones.entries()).forEach(([productId, colores]) => {
+      const prod = productos.find(p => p.id === productId)
+      colores.forEach(({ color, precio, fecha }) => {
+        preventas.push({
+          id: `temp-${id++}`,
+          productId,
+          modelo: prod?.modelo || '',
+          color,
+          precio,
+          fecha,
+        })
+      })
+    })
+    return preventas
+  }
+
+  const preventasSeleccionadas = obtenerPreventasSeleccionadas()
+
+  const handleBorrarPreventa = (preventaId: string) => {
+    const [productId, colorName] = preventaId.split('::')
+    const newEdiciones = new Map(ediciones)
+    const colores = newEdiciones.get(productId) || []
+    const idx = colores.findIndex(c => c.color === colorName)
+    if (idx >= 0) {
+      colores.splice(idx, 1)
+      if (colores.length === 0) {
+        newEdiciones.delete(productId)
+      } else {
+        newEdiciones.set(productId, colores)
+      }
+      setEdiciones(newEdiciones)
+    }
+  }
 
   const handleCrearPreventas = async () => {
-    if (preventasSeleccionadas === 0) {
+    if (preventasSeleccionadas.length === 0) {
       setMensaje({ tipo: 'error', texto: 'Selecciona al menos un color de algún producto' })
       return
     }
@@ -141,14 +183,12 @@ export default function PreventaOnlineClient() {
     setEnviando(true)
     setMensaje(null)
 
-    const preventas = Array.from(ediciones.entries()).flatMap(([productId, colores]) => {
-      return colores.map(({ color, precio, fecha }) => ({
-        productId,
-        productColor: color,
-        customPrice: precio,
-        expectedDeliveryEnd: fecha,
-      }))
-    })
+    const preventas = preventasSeleccionadas.map(p => ({
+      productId: p.productId,
+      productColor: p.color,
+      customPrice: p.precio,
+      expectedDeliveryEnd: p.fecha,
+    }))
 
     try {
       const response = await fetch('/api/admin/preorders/bulk', {
@@ -254,213 +294,137 @@ export default function PreventaOnlineClient() {
   return (
     <>
       <AdminTopbar titulo="Preventa Online (Lotes)" />
-      <div style={{ padding: 24, maxWidth: 1200, margin: '0 auto' }}>
-        <style>{`
-          .prod-card { transition: all .15s; }
-          .prod-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-          .prod-card.expanded { border-color: #FF6B2C; }
-          .color-input { font-size: 12px; padding: 8px; }
-          .color-input:focus { border-color: #FF6B2C !important; outline: none; }
-          .btn-primary { background: linear-gradient(135deg,#FF6B2C,#FF8A50); color: #fff; }
-          .btn-primary:disabled { background: #FFB48C; cursor: wait; }
-          .btn-primary:hover:not(:disabled) { filter: brightness(.94); }
-        `}</style>
-
-        {mensaje && (
-          <div
-            style={{
-              background: mensaje.tipo === 'error' ? '#FEF2F2' : '#D5F5E3',
-              border: `1px solid ${mensaje.tipo === 'error' ? '#FECACA' : '#ABEBC6'}`,
-              color: mensaje.tipo === 'error' ? '#991B1B' : '#166534',
-              padding: '12px 14px',
-              borderRadius: 8,
-              marginBottom: 16,
-              fontSize: 13,
-              fontWeight: 600,
-            }}
-          >
-            {mensaje.texto}
-          </div>
-        )}
-
-        <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>
-          Selecciona dispositivos de Lista de Precios para crear preventas online. Configura fecha disponible y precio por color.
-        </p>
-
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
+        {/* Panel lateral */}
         <div
           style={{
-            background: '#fff',
-            border: '1px solid #E6E7F0',
-            borderRadius: 14,
-            padding: 16,
-            marginBottom: 20,
+            width: 300,
+            background: '#FAFBFD',
+            borderRight: '1px solid #E6E7F0',
             display: 'flex',
-            gap: 12,
-            alignItems: 'flex-end',
+            flexDirection: 'column',
+            overflowY: 'auto',
           }}
         >
-          <div>
-            <label
-              htmlFor="fecha-global"
-              style={{
-                display: 'block',
-                fontSize: 12,
-                fontWeight: 600,
-                color: '#3D4356',
-                marginBottom: 5,
-              }}
-            >
-              Fecha disponible global
-            </label>
-            <input
-              id="fecha-global"
-              type="date"
-              value={fechaGlobal}
-              onChange={e => handleFechaGlobalChange(e.target.value)}
-              style={{ ...inputStyle, width: 180 }}
-            />
-          </div>
-          <div style={{ flex: 1 }}>
-            <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
-              Por defecto: +30 días. Se aplica a todos los productos.
+          <div style={{ padding: 16, borderBottom: '1px solid #E6E7F0' }}>
+            <h3 style={{ fontSize: 13, fontWeight: 800, color: '#181B2E', margin: '0 0 8px' }}>
+              Preventas seleccionadas
+            </h3>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#FF6B2C', margin: 0 }}>
+              {preventasSeleccionadas.length}
             </p>
           </div>
-        </div>
 
-        {cargando ? (
-          <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>Cargando lista de precios…</p>
-        ) : productos.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>No hay productos en Lista de Precios</p>
-        ) : (
-          <>
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-                gap: 14,
-                marginBottom: 20,
-              }}
-            >
-              {productos.map(prod => {
-                const edicion = ediciones.get(prod.id)
-                const colores = coloresDisponibles(prod)
-                const isExpanded = expandido === prod.id
-
+          {preventasSeleccionadas.length === 0 ? (
+            <div style={{ padding: 16, textAlign: 'center' }}>
+              <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
+                Selecciona colores de productos para crear preventas
+              </p>
+            </div>
+          ) : (
+            <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
+              {preventasSeleccionadas.map(preventa => {
+                const prod = productos.find(p => p.id === preventa.productId)
+                const preventaKey = `${preventa.productId}::${preventa.color}`
                 return (
                   <div
-                    key={prod.id}
-                    className={`prod-card ${isExpanded ? 'expanded' : ''}`}
+                    key={preventaKey}
                     style={{
                       background: '#fff',
-                      border: `2px solid ${isExpanded ? '#FF6B2C' : '#E6E7F0'}`,
-                      borderRadius: 12,
-                      overflow: 'hidden',
-                      cursor: 'pointer',
+                      border: '1px solid #E6E7F0',
+                      borderRadius: 8,
+                      padding: 10,
+                      marginBottom: 8,
+                      fontSize: 11,
                     }}
                   >
+                    <div style={{ fontWeight: 700, color: '#181B2E', marginBottom: 4 }}>
+                      {preventa.modelo}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#6B7280', marginBottom: 2 }}>
+                      {preventa.color}
+                    </div>
                     <div
-                      onClick={() => handleToggleProducto(prod.id)}
                       style={{
-                        padding: 12,
-                        borderBottom: isExpanded ? '1px solid #E6E7F0' : 'none',
                         display: 'flex',
-                        gap: 12,
-                        alignItems: 'start',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 6,
                       }}
                     >
-                      {prod.imageUrl && (
-                        <img
-                          src={prod.imageUrl}
-                          alt={prod.modelo}
-                          style={{
-                            width: 60,
-                            height: 60,
-                            borderRadius: 8,
-                            background: '#FAFBFD',
-                            objectFit: 'cover',
-                          }}
-                        />
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#181B2E' }}>
-                          {prod.modelo}
-                        </div>
-                        <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
-                          {prod.almacenamiento}
-                        </div>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: '#FF6B2C', marginTop: 4 }}>
-                          {fmt(prod.preventaARS)}
-                        </div>
-                      </div>
-                      <span
-                        className="material-symbols-outlined"
-                        style={{
-                          fontSize: 20,
-                          color: '#94A3B8',
-                          transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
-                          transition: 'transform .15s',
-                        }}
-                        aria-hidden="true"
-                      >
-                        expand_more
+                      <span style={{ color: '#FF6B2C', fontWeight: 600 }}>
+                        {fmt(preventa.precio)}
+                      </span>
+                      <span style={{ color: '#6B7280', fontSize: 9 }}>
+                        {new Date(preventa.fecha).toLocaleDateString('es-AR')}
                       </span>
                     </div>
-
-                    {isExpanded && (
-                      <div style={{ padding: 12, background: '#FAFBFD' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', marginBottom: 8 }}>
-                          COLORES DISPONIBLES
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                          {colores.map(color => {
-                            const colorData = edicion?.find(c => c.color === color) || {
-                              color,
-                              precio: prod.preventaARS,
-                              fecha: fechaGlobal,
-                            }
-                            return (
-                              <div key={color} style={{ borderTop: '1px solid #E6E7F0', paddingTop: 10 }}>
-                                <div style={{ fontSize: 12, fontWeight: 600, color: '#181B2E', marginBottom: 6 }}>
-                                  {color}
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                  <div>
-                                    <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 3 }}>
-                                      Precio
-                                    </label>
-                                    <input
-                                      type="number"
-                                      className="color-input"
-                                      value={colorData.precio}
-                                      onChange={e =>
-                                        handlePrecioColor(prod.id, color, parseInt(e.target.value) || 0)
-                                      }
-                                      style={{ ...inputStyle, padding: 8, fontSize: 12 }}
-                                    />
-                                  </div>
-                                  <div>
-                                    <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 3 }}>
-                                      Fecha
-                                    </label>
-                                    <input
-                                      type="date"
-                                      className="color-input"
-                                      value={colorData.fecha}
-                                      onChange={e => handleFechaColor(prod.id, color, e.target.value)}
-                                      style={{ ...inputStyle, padding: 8, fontSize: 12 }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
+                    <button
+                      onClick={() => handleBorrarPreventa(preventaKey)}
+                      style={{
+                        width: '100%',
+                        padding: '5px 8px',
+                        background: '#FEF2F2',
+                        color: '#DC2626',
+                        border: '1px solid #FECACA',
+                        borderRadius: 6,
+                        fontSize: 10,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#DC2626'
+                        e.currentTarget.style.color = '#fff'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#FEF2F2'
+                        e.currentTarget.style.color = '#DC2626'
+                      }}
+                    >
+                      Borrar
+                    </button>
                   </div>
                 )
               })}
             </div>
+          )}
+        </div>
+
+        {/* Contenido principal */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <div style={{ padding: 24, maxWidth: 1000 }}>
+            <style>{`
+              .prod-card { transition: all .15s; cursor: pointer; }
+              .prod-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+              .prod-card.expanded { border-color: #FF6B2C; }
+              .color-input { font-size: 12px; padding: 8px; }
+              .color-input:focus { border-color: #FF6B2C !important; outline: none; }
+              .btn-primary { background: linear-gradient(135deg,#FF6B2C,#FF8A50); color: #fff; }
+              .btn-primary:disabled { background: #FFB48C; cursor: wait; }
+              .btn-primary:hover:not(:disabled) { filter: brightness(.94); }
+            `}</style>
+
+            {mensaje && (
+              <div
+                style={{
+                  background: mensaje.tipo === 'error' ? '#FEF2F2' : '#D5F5E3',
+                  border: `1px solid ${mensaje.tipo === 'error' ? '#FECACA' : '#ABEBC6'}`,
+                  color: mensaje.tipo === 'error' ? '#991B1B' : '#166534',
+                  padding: '12px 14px',
+                  borderRadius: 8,
+                  marginBottom: 16,
+                  fontSize: 13,
+                  fontWeight: 600,
+                }}
+              >
+                {mensaje.texto}
+              </div>
+            )}
+
+            <p style={{ fontSize: 13, color: '#6B7280', margin: '0 0 16px' }}>
+              Selecciona dispositivos de Lista de Precios para crear preventas online
+            </p>
 
             <div
               style={{
@@ -468,63 +432,234 @@ export default function PreventaOnlineClient() {
                 border: '1px solid #E6E7F0',
                 borderRadius: 14,
                 padding: 16,
+                marginBottom: 20,
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                position: 'sticky',
-                bottom: 0,
-                boxShadow: '0 -4px 12px rgba(0,0,0,.08)',
+                gap: 12,
+                alignItems: 'flex-end',
               }}
             >
               <div>
-                <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>Preventas a crear</p>
-                <p style={{ fontSize: 18, fontWeight: 800, color: '#181B2E', margin: '4px 0 0' }}>
-                  {preventasSeleccionadas}
+                <label
+                  htmlFor="fecha-global"
+                  style={{
+                    display: 'block',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    color: '#3D4356',
+                    marginBottom: 5,
+                  }}
+                >
+                  Fecha disponible global
+                </label>
+                <input
+                  id="fecha-global"
+                  type="date"
+                  value={fechaGlobal}
+                  onChange={e => handleFechaGlobalChange(e.target.value)}
+                  style={{ ...inputStyle, width: 180 }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
+                  Por defecto: +30 días. Se aplica a todos los productos.
                 </p>
               </div>
-              <button
-                className="btn-primary"
-                onClick={handleCrearPreventas}
-                disabled={enviando || preventasSeleccionadas === 0}
+            </div>
+
+            {cargando ? (
+              <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>
+                Cargando lista de precios…
+              </p>
+            ) : productos.length === 0 ? (
+              <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>
+                No hay productos en Lista de Precios
+              </p>
+            ) : (
+              <div
                 style={{
-                  padding: '12px 32px',
-                  border: 'none',
-                  borderRadius: 10,
-                  fontSize: 14,
-                  fontWeight: 700,
-                  cursor: enviando ? 'wait' : 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 8,
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: 14,
                 }}
               >
-                {enviando ? (
-                  <>
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 18, animation: 'spin 1s linear infinite' }}
-                      aria-hidden="true"
+                {productos.map(prod => {
+                  const edicion = ediciones.get(prod.id)
+                  const colores = coloresDisponibles(prod)
+                  const isExpanded = expandido === prod.id
+
+                  return (
+                    <div
+                      key={prod.id}
+                      className={`prod-card ${isExpanded ? 'expanded' : ''}`}
+                      style={{
+                        background: '#fff',
+                        border: `2px solid ${isExpanded ? '#FF6B2C' : '#E6E7F0'}`,
+                        borderRadius: 12,
+                        overflow: 'hidden',
+                      }}
                     >
-                      progress_activity
-                    </span>
-                    Creando…
-                  </>
-                ) : (
-                  <>
-                    <span
-                      className="material-symbols-outlined"
-                      style={{ fontSize: 18 }}
-                      aria-hidden="true"
-                    >
-                      check_circle
-                    </span>
-                    Crear {preventasSeleccionadas} preventa{preventasSeleccionadas === 1 ? '' : 's'}
-                  </>
-                )}
-              </button>
-            </div>
-          </>
-        )}
+                      <div
+                        onClick={() => handleToggleProducto(prod.id)}
+                        style={{
+                          padding: 12,
+                          borderBottom: isExpanded ? '1px solid #E6E7F0' : 'none',
+                          display: 'flex',
+                          gap: 12,
+                          alignItems: 'start',
+                        }}
+                      >
+                        {prod.imageUrl && (
+                          <img
+                            src={prod.imageUrl}
+                            alt={prod.modelo}
+                            style={{
+                              width: 60,
+                              height: 60,
+                              borderRadius: 8,
+                              background: '#FAFBFD',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: '#181B2E' }}>
+                            {prod.modelo}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                            {prod.almacenamiento}
+                          </div>
+                          <div style={{ fontSize: 15, fontWeight: 800, color: '#FF6B2C', marginTop: 4 }}>
+                            {fmt(prod.preventaARS)}
+                          </div>
+                        </div>
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontSize: 20,
+                            color: '#94A3B8',
+                            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)',
+                            transition: 'transform .15s',
+                            flexShrink: 0,
+                          }}
+                          aria-hidden="true"
+                        >
+                          expand_more
+                        </span>
+                      </div>
+
+                      {isExpanded && (
+                        <div style={{ padding: 12, background: '#FAFBFD' }}>
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280', marginBottom: 8 }}>
+                            COLORES
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {colores.map(color => {
+                              const colorData = edicion?.find(c => c.color === color) || {
+                                color,
+                                precio: prod.preventaARS,
+                                fecha: fechaGlobal,
+                              }
+                              return (
+                                <div key={color} style={{ borderTop: '1px solid #E6E7F0', paddingTop: 10 }}>
+                                  <div style={{ fontSize: 12, fontWeight: 600, color: '#181B2E', marginBottom: 6 }}>
+                                    {color}
+                                  </div>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                    <div>
+                                      <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 3 }}>
+                                        Precio
+                                      </label>
+                                      <input
+                                        type="number"
+                                        className="color-input"
+                                        value={colorData.precio}
+                                        onChange={e =>
+                                          handlePrecioColor(prod.id, color, parseInt(e.target.value) || 0)
+                                        }
+                                        style={{ ...inputStyle, padding: 8, fontSize: 12 }}
+                                      />
+                                    </div>
+                                    <div>
+                                      <label style={{ fontSize: 10, color: '#6B7280', display: 'block', marginBottom: 3 }}>
+                                        Fecha
+                                      </label>
+                                      <input
+                                        type="date"
+                                        className="color-input"
+                                        value={colorData.fecha}
+                                        onChange={e => handleFechaColor(prod.id, color, e.target.value)}
+                                        style={{ ...inputStyle, padding: 8, fontSize: 12 }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Footer con botón */}
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #E6E7F0',
+              borderTop: '1px solid #E6E7F0',
+              padding: 16,
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: 12,
+              marginTop: 'auto',
+            }}
+          >
+            <button
+              className="btn-primary"
+              onClick={handleCrearPreventas}
+              disabled={enviando || preventasSeleccionadas.length === 0}
+              style={{
+                padding: '12px 32px',
+                border: 'none',
+                borderRadius: 10,
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: enviando ? 'wait' : 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              {enviando ? (
+                <>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 18, animation: 'spin 1s linear infinite' }}
+                    aria-hidden="true"
+                  >
+                    progress_activity
+                  </span>
+                  Creando…
+                </>
+              ) : (
+                <>
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 18 }}
+                    aria-hidden="true"
+                  >
+                    check_circle
+                  </span>
+                  Crear {preventasSeleccionadas.length} preventa{preventasSeleccionadas.length === 1 ? '' : 's'}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
       </div>
     </>
   )
