@@ -11,17 +11,23 @@ interface PriceListItem {
   imageUrl?: string
   colors?: string[]
   active: boolean
+  brand?: string
+}
+
+interface PreventaVariante {
+  id: string
+  color: string
+  precio: number
+  fecha: string
 }
 
 interface PreventaAgregada {
   id: string
-  productId: string
   modelo: string
   almacenamiento: string
-  color: string
-  precio: number
-  fecha: string
   imageUrl?: string
+  brand?: string
+  variantes: PreventaVariante[]
 }
 
 function fmt(n: number) {
@@ -91,37 +97,80 @@ export default function PreventaOnlineClient() {
   const handleAgregarColor = () => {
     if (!modalProducto || modalColoresSeleccionados.size === 0) return
 
-    const nuevas: PreventaAgregada[] = []
-    modalColoresSeleccionados.forEach(color => {
-      const id = `${Date.now()}-${Math.random()}`
-      nuevas.push({
-        id,
-        productId: modalProducto.id,
-        modelo: modalProducto.modelo,
-        almacenamiento: modalProducto.almacenamiento,
+    const key = `${modalProducto.modelo}|${modalProducto.almacenamiento}`
+    const preventaExistente = preventasAgregadas.find(
+      p => `${p.modelo}|${p.almacenamiento}` === key
+    )
+
+    const nuevasVariantes: PreventaVariante[] = Array.from(modalColoresSeleccionados).map(
+      color => ({
+        id: `${Date.now()}-${Math.random()}`,
         color,
         precio: parseInt(modalPrecio) || 0,
         fecha: modalFecha,
-        imageUrl: modalProducto.imageUrl,
       })
-    })
+    )
 
-    setPreventasAgregadas([...preventasAgregadas, ...nuevas])
+    if (preventaExistente) {
+      // Agregar variantes a preventa existente
+      setPreventasAgregadas(
+        preventasAgregadas.map(p =>
+          `${p.modelo}|${p.almacenamiento}` === key
+            ? { ...p, variantes: [...p.variantes, ...nuevasVariantes] }
+            : p
+        )
+      )
+    } else {
+      // Crear nueva preventa
+      setPreventasAgregadas([
+        ...preventasAgregadas,
+        {
+          id: Date.now().toString(),
+          modelo: modalProducto.modelo,
+          almacenamiento: modalProducto.almacenamiento,
+          imageUrl: modalProducto.imageUrl,
+          brand: modalProducto.brand,
+          variantes: nuevasVariantes,
+        },
+      ])
+    }
+
     setModalProducto(null)
     setMensaje({
       tipo: 'success',
-      texto: `${nuevas.length} color${nuevas.length > 1 ? 'es' : ''} agregado${nuevas.length > 1 ? 's' : ''} a la lista`
+      texto: `${nuevasVariantes.length} color${nuevasVariantes.length > 1 ? 'es' : ''} agregado${nuevasVariantes.length > 1 ? 's' : ''}`,
     })
+  }
+
+  const handleEliminarVariante = (preventaId: string, varianteId: string) => {
+    setPreventasAgregadas(
+      preventasAgregadas
+        .map(p =>
+          p.id === preventaId
+            ? { ...p, variantes: p.variantes.filter(v => v.id !== varianteId) }
+            : p
+        )
+        .filter(p => p.variantes.length > 0)
+    )
+  }
+
+  const handleEditarVariante = (preventaId: string, varianteId: string, precio: number, fecha: string) => {
+    setPreventasAgregadas(
+      preventasAgregadas.map(p =>
+        p.id === preventaId
+          ? {
+              ...p,
+              variantes: p.variantes.map(v =>
+                v.id === varianteId ? { ...v, precio, fecha } : v
+              ),
+            }
+          : p
+      )
+    )
   }
 
   const handleEliminarPreventa = (id: string) => {
     setPreventasAgregadas(preventasAgregadas.filter(p => p.id !== id))
-  }
-
-  const handleEditarPreventa = (id: string, precio: number, fecha: string) => {
-    setPreventasAgregadas(
-      preventasAgregadas.map(p => (p.id === id ? { ...p, precio, fecha } : p)),
-    )
   }
 
   const handleCrearPreventas = async () => {
@@ -133,12 +182,18 @@ export default function PreventaOnlineClient() {
     setEnviando(true)
     setMensaje(null)
 
-    const preventas = preventasAgregadas.map(p => ({
-      productId: p.productId,
-      productColor: p.color,
-      customPrice: p.precio,
-      expectedDeliveryEnd: p.fecha,
-    }))
+    // Aplanar preventas con variantes
+    const preventas = preventasAgregadas.flatMap(p =>
+      p.variantes.map(v => ({
+        modelo: p.modelo,
+        almacenamiento: p.almacenamiento,
+        imageUrl: p.imageUrl,
+        brand: p.brand,
+        color: v.color,
+        precio: v.precio,
+        fecha: v.fecha,
+      }))
+    )
 
     try {
       const response = await fetch('/api/admin/preorders/bulk', {
@@ -317,7 +372,7 @@ export default function PreventaOnlineClient() {
             />
           </div>
 
-          {/* Lista de preventas */}
+          {/* Lista de preventas agregadas */}
           {preventasAgregadas.length === 0 ? (
             <div style={{ padding: 16, textAlign: 'center', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <p style={{ fontSize: 12, color: '#94A3B8', margin: 0 }}>
@@ -325,7 +380,7 @@ export default function PreventaOnlineClient() {
               </p>
             </div>
           ) : (
-            <div style={{ flex: 1, overflow: 'auto', padding: 8 }}>
+            <div style={{ flex: 1, overflow: 'auto' }}>
               {preventasAgregadas.map(preventa => (
                 <div
                   key={preventa.id}
@@ -333,68 +388,150 @@ export default function PreventaOnlineClient() {
                     background: '#fff',
                     border: '1px solid #E6E7F0',
                     borderRadius: 8,
-                    padding: 12,
-                    marginBottom: 8,
+                    marginBottom: 12,
+                    overflow: 'hidden',
                   }}
                 >
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#181B2E', marginBottom: 6 }}>
-                    {preventa.modelo} · {preventa.color}
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
-                    <div>
-                      <label style={{ fontSize: 9, color: '#6B7280', display: 'block', marginBottom: 2 }}>
-                        Precio
-                      </label>
-                      <input
-                        type="number"
-                        value={preventa.precio}
-                        onChange={e =>
-                          handleEditarPreventa(preventa.id, parseInt(e.target.value) || 0, preventa.fecha)
-                        }
-                        style={{ ...inputStyle, fontSize: 11, padding: 6 }}
+                  {/* Encabezado del dispositivo */}
+                  <div style={{ padding: 12, borderBottom: '1px solid #E6E7F0', background: '#F9FAFB' }}>
+                    {preventa.imageUrl && (
+                      <img
+                        src={preventa.imageUrl}
+                        alt={preventa.modelo}
+                        style={{
+                          width: '100%',
+                          height: 80,
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                          marginBottom: 8,
+                        }}
                       />
+                    )}
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#181B2E' }}>
+                      {preventa.modelo}
                     </div>
-                    <div>
-                      <label style={{ fontSize: 9, color: '#6B7280', display: 'block', marginBottom: 2 }}>
-                        Fecha
-                      </label>
-                      <input
-                        type="date"
-                        value={preventa.fecha}
-                        onChange={e =>
-                          handleEditarPreventa(preventa.id, preventa.precio, e.target.value)
-                        }
-                        style={{ ...inputStyle, fontSize: 11, padding: 6 }}
-                      />
+                    <div style={{ fontSize: 10, color: '#6B7280' }}>
+                      {preventa.almacenamiento}
+                    </div>
+                    <div style={{ fontSize: 10, color: '#8892A6', marginTop: 4 }}>
+                      {preventa.variantes.length} color{preventa.variantes.length !== 1 ? 'es' : ''}
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleEliminarPreventa(preventa.id)}
-                    style={{
-                      width: '100%',
-                      padding: '6px 8px',
-                      background: '#FEF2F2',
-                      color: '#DC2626',
-                      border: '1px solid #FECACA',
-                      borderRadius: 6,
-                      fontSize: 11,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      transition: 'all .15s',
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.background = '#DC2626'
-                      e.currentTarget.style.color = '#fff'
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.background = '#FEF2F2'
-                      e.currentTarget.style.color = '#DC2626'
-                    }}
-                  >
-                    Eliminar
-                  </button>
+                  {/* Variantes */}
+                  <div style={{ padding: 8 }}>
+                    {preventa.variantes.map(variante => (
+                      <div
+                        key={variante.id}
+                        style={{
+                          background: '#FBFBFD',
+                          border: '1px solid #E6E7F0',
+                          borderRadius: 6,
+                          padding: 8,
+                          marginBottom: 6,
+                          fontSize: 10,
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, color: '#181B2E', marginBottom: 4 }}>
+                          {variante.color}
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, marginBottom: 6 }}>
+                          <div>
+                            <label style={{ fontSize: 8, color: '#6B7280', display: 'block', marginBottom: 2 }}>
+                              Precio
+                            </label>
+                            <input
+                              type="number"
+                              value={variante.precio}
+                              onChange={e =>
+                                handleEditarVariante(
+                                  preventa.id,
+                                  variante.id,
+                                  parseInt(e.target.value) || 0,
+                                  variante.fecha
+                                )
+                              }
+                              style={{ ...inputStyle, fontSize: 10, padding: 4 }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: 8, color: '#6B7280', display: 'block', marginBottom: 2 }}>
+                              Fecha
+                            </label>
+                            <input
+                              type="date"
+                              value={variante.fecha}
+                              onChange={e =>
+                                handleEditarVariante(
+                                  preventa.id,
+                                  variante.id,
+                                  variante.precio,
+                                  e.target.value
+                                )
+                              }
+                              style={{ ...inputStyle, fontSize: 10, padding: 4 }}
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleEliminarVariante(preventa.id, variante.id)}
+                          style={{
+                            width: '100%',
+                            padding: '4px 6px',
+                            background: '#FEF2F2',
+                            color: '#DC2626',
+                            border: '1px solid #FECACA',
+                            borderRadius: 4,
+                            fontSize: 9,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all .15s',
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.background = '#DC2626'
+                            e.currentTarget.style.color = '#fff'
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.background = '#FEF2F2'
+                            e.currentTarget.style.color = '#DC2626'
+                          }}
+                        >
+                          Eliminar color
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Botón eliminar dispositivo completo */}
+                  <div style={{ padding: 8, borderTop: '1px solid #E6E7F0' }}>
+                    <button
+                      onClick={() => handleEliminarPreventa(preventa.id)}
+                      style={{
+                        width: '100%',
+                        padding: '6px 8px',
+                        background: '#FECACA',
+                        color: '#991B1B',
+                        border: 'none',
+                        borderRadius: 6,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all .15s',
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.background = '#DC2626'
+                        e.currentTarget.style.color = '#fff'
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.background = '#FECACA'
+                        e.currentTarget.style.color = '#991B1B'
+                      }}
+                    >
+                      Eliminar dispositivo
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
