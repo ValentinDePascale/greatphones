@@ -265,7 +265,7 @@ console.log('[BROWSER] Page loaded');
 <script defer src="/lib/chat.js?v=4"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  initFavorites();initCart();initCookieConsent();loadProducts();loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);
+  setTimeout(function(){initFavorites();initCart();initCookieConsent();if(typeof loadProducts==='function')loadProducts();if(typeof loadAccessories==='function')loadAccessories();var s=document.getElementById('splash');if(s)s.style.opacity='0',setTimeout(function(){if(s)s.style.display='none'},300);},100);
   (function(){
     var si=document.getElementById('searchInput');
     if(si)si.addEventListener('blur',function(){
