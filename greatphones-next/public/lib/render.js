@@ -1382,8 +1382,9 @@ function openDetail(id, variantId){
     var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=cleanPreorderName(currentProd);
     var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=cleanPreorderName(currentProd);
     // Contador regresivo (días, horas, minutos)
-    function updatePreorderCountdown(){
-      var avDateStr=currentProd.availableFrom;
+    window.updatePreorderCountdown=function(){
+      var avDateStr=currentProd.availableFrom;var selV=window._selectedVariant;
+      if(selV&&selV.availableFrom)avDateStr=selV.availableFrom;
       if(!avDateStr)return;
       var av=new Date(avDateStr);var now=new Date();var diff=Math.max(0,av-now);
       var days=Math.floor(diff/(1000*60*60*24));var hrs=Math.floor((diff%(1000*60*60*24))/(1000*60*60));var mins=Math.floor((diff%(1000*60*60))/60000);
@@ -1391,10 +1392,10 @@ function openDetail(id, variantId){
         var parts=[];if(days>0)parts.push(days+' día'+(days!==1?'s':''));if(hrs>0||days>0)parts.push(hrs+' h');if(mins>0||hrs>0||days>0)parts.push(mins+' min');
         timerEl.textContent='Disponible en: '+parts.join(' ');
       }
-    }
-    updatePreorderCountdown();
+    };
+    window.updatePreorderCountdown();
     var offerTimerEl=document.getElementById('detOfferTimer');if(offerTimerEl){offerTimerEl.style.display='block';}
-    if(currentProd.availableFrom){var timerInt=setInterval(updatePreorderCountdown,60000);if(!window._preorderTimers)window._preorderTimers=[];window._preorderTimers.push(timerInt);}
+    if(currentProd.availableFrom){var timerInt=setInterval(window.updatePreorderCountdown,60000);if(!window._preorderTimers)window._preorderTimers=[];window._preorderTimers.push(timerInt);}
     // Botones de Reservar
     var preAddEl=document.getElementById('detAddCart');
     if(preAddEl){preAddEl.style.display='';preAddEl.textContent='Reservar preventa';preAddEl.onclick=function(){
@@ -1717,15 +1718,10 @@ function selectDetailVariant(idx){
     ?('12x '+fmt(cuota12)+' cuotas fijas')
     :('12x '+fmt(cuota12)+' sin interes');
 
-  // Preventa: mostrar la disponibilidad estimada de la combinación elegida
-  if(window._isPreorderDetail){
-    var availFrom=v && (v.availableFrom||v._availableFrom) ? new Date(v.availableFrom||v._availableFrom) : (currentProd.availableFrom?new Date(currentProd.availableFrom):null);
-    var dateEl=document.getElementById('detPreorderInfo');
-    if(dateEl){
-      dateEl.style.display='block';
-      var cd=preorderCountdown({ availableFrom: availFrom ? availFrom.toISOString() : null });
-      dateEl.innerHTML='<div class="det-preorder-title"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> Preventa</div><p>'+(v.color?esc(v.color)+' · ':'')+(v.storage?esc(v.storage)+' · ':'')+cd.html.replace(/^<div[^>]*>|<\/div>$/g,'')+'</p>';
-    }
+  // Preventa: actualizar contador regresivo cuando cambias variante
+  if(window._isPreorderDetail&&window.updatePreorderCountdown){
+    window.updatePreorderCountdown();
+  }
   }
 
   // Update name to reflect variant details (solo breadcrumb)
