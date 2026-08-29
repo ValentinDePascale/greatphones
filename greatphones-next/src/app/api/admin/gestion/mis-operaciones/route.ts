@@ -100,25 +100,22 @@ export async function POST(request: Request) {
       }
     }
 
-    // Si se anula la entrega de una preventa, la preventa vuelve a PENDIENTE
+    // Si se anula una preventa, eliminarla completamente (no volver a PENDING)
+    const entriesPreOrderInicial = entries.filter(e => e.source === 'PREORDER')
     const entriesEntrega = entries.filter(e => e.source === 'PREVENTA_ENTREGA')
-    if (entriesEntrega.length > 0) {
+
+    if (entriesPreOrderInicial.length > 0 || entriesEntrega.length > 0) {
       const pre = await prisma.preOrder.findFirst({
         where: { OR: [{ code: d.operationId }, { notes: { contains: d.operationId } }] },
       })
       if (pre) {
-        await prisma.preOrder.update({
-          where: { id: pre.id },
-          data: { status: 'PENDING', deliveredAt: null },
-        })
+        // Eliminar la preventa completamente
+        await prisma.preOrder.delete({ where: { id: pre.id } })
       }
-      // Borrar solo los asientos de entrega; quedan los de la preventa original
-      const ids = entriesEntrega.map(e => e.id)
-      await prisma.accountingEntry.deleteMany({ where: { id: { in: ids } } })
-    } else {
-      // Anular la operación: elimina sus asientos para que deje de aparecer
-      await prisma.accountingEntry.deleteMany({ where: { operationId: d.operationId } })
     }
+
+    // Anular la operación: elimina sus asientos para que deje de aparecer
+    await prisma.accountingEntry.deleteMany({ where: { operationId: d.operationId } })
 
     await auditar({
       entityType: 'AccountingEntry',

@@ -117,12 +117,6 @@ const gestion: SubGroup[] = [
   {
     title: 'Ventas Online',
     items: [
-      {
-        href: '/admin/ventas',
-        label: 'Historial de Ventas',
-        icon: 'receipt_long',
-        legacy: 'sales',
-      },
       { href: '/admin/preventa', label: 'Preventa Online', icon: 'event', legacy: 'preventa' },
       { href: '/admin/pedidos', label: 'Pedidos', icon: 'shopping_bag', legacy: 'orders' },
       { href: '/admin/cupones', label: 'Cupones', icon: 'confirmation_number', legacy: 'cupones' },
