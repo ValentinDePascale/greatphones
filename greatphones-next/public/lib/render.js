@@ -1381,6 +1381,20 @@ function openDetail(id, variantId){
     var preBrandEl=document.getElementById('detBrand');if(preBrandEl)preBrandEl.textContent=(currentProd.brand==='iPhone'||currentProd.brand==='Apple')?'APPLE':(currentProd.brand||'Apple');
     var preTypeEl=document.getElementById('detType');if(preTypeEl)preTypeEl.textContent=cleanPreorderName(currentProd);
     var preName2El=document.getElementById('detName2');if(preName2El)preName2El.textContent=cleanPreorderName(currentProd);
+    // Contador regresivo (días, horas, minutos)
+    function updatePreorderCountdown(){
+      var avDateStr=currentProd.availableFrom;
+      if(!avDateStr)return;
+      var av=new Date(avDateStr);var now=new Date();var diff=Math.max(0,av-now);
+      var days=Math.floor(diff/(1000*60*60*24));var hrs=Math.floor((diff%(1000*60*60*24))/(1000*60*60));var mins=Math.floor((diff%(1000*60*60))/60000);
+      var timerEl=document.getElementById('detTimerText');if(timerEl){
+        var parts=[];if(days>0)parts.push(days+' día'+(days!==1?'s':''));if(hrs>0||days>0)parts.push(hrs+' h');if(mins>0||hrs>0||days>0)parts.push(mins+' min');
+        timerEl.textContent='Disponible en: '+parts.join(' ');
+      }
+    }
+    updatePreorderCountdown();
+    var offerTimerEl=document.getElementById('detOfferTimer');if(offerTimerEl){offerTimerEl.style.display='block';}
+    if(currentProd.availableFrom){var timerInt=setInterval(updatePreorderCountdown,60000);if(!window._preorderTimers)window._preorderTimers=[];window._preorderTimers.push(timerInt);}
     // Botones de Reservar
     var preAddEl=document.getElementById('detAddCart');
     if(preAddEl){preAddEl.style.display='';preAddEl.textContent='Reservar preventa';preAddEl.onclick=function(){
@@ -1830,8 +1844,24 @@ function renderDetailVariants(){
       colorMap[v.color].push(v);
     });
 
+    // Buscar color en COLOR_HEX: mapear inglés→español, case-insensitive, fallback
+    function findColorHex(colorName){
+      if(!window.COLOR_HEX)return'#9ca3af';
+      // Mapeo de nombres en inglés a español (preventas)
+      var colorMap={'Blue':'Azul','Midnight':'Medianoche','Purple':'Púrpura','Red':'Rojo','Starlight':'Luz Estelar','Yellow':'Amarillo','Black':'Negro','White':'Blanco','Green':'Verde','Pink':'Rosa','Orange':'Naranja Coral','Silver':'Plateado','Gold':'Dorado','Gray':'Gris Espacial','Space Gray':'Gris Espacial','Rose Gold':'Rosa','Deep Purple':'Púrpura Intenso','Graphite':'Grafito','Midnight Black':'Negro','Sierra Blue':'Azul Sierra','Alpine Green':'Verde Alpino','Space Black':'Negro Espacial','Titanium Natural':'Titanio Natural','Titanium Blue':'Titanio Azul','Titanium White':'Titanio Blanco','Titanium Black':'Titanio Negro','Desert Titanium':'Titanio Desierto','Aqua':'Verde Agua','Ultra Violet':'Azul Ultramar'};
+      var esp=colorMap[colorName]||colorName;
+      if(window.COLOR_HEX[esp])return window.COLOR_HEX[esp];
+      if(window.COLOR_HEX[colorName])return window.COLOR_HEX[colorName];
+      var lower=colorName.toLowerCase();var espLower=esp.toLowerCase();
+      var keys=Object.keys(window.COLOR_HEX);
+      for(var i=0;i<keys.length;i++){
+        if(keys[i].toLowerCase()===lower||keys[i].toLowerCase()===espLower)return window.COLOR_HEX[keys[i]];
+      }
+      return'#9ca3af';
+    }
+
     var circlesHtml=Object.keys(colorMap).map(function(c){
-      var hex=(window.COLOR_HEX&&window.COLOR_HEX[c])||'#ccc';
+      var hex=findColorHex(c);
       var isSelected=c===state.selectedColor;
       if(!state.selectedColor)state.selectedColor=c;
       return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
