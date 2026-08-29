@@ -1722,7 +1722,6 @@ function selectDetailVariant(idx){
   if(window._isPreorderDetail&&window.updatePreorderCountdown){
     window.updatePreorderCountdown();
   }
-  }
 
   // Update name to reflect variant details (solo breadcrumb)
   var suffixParts=[];
