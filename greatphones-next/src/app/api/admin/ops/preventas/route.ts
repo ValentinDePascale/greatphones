@@ -78,34 +78,8 @@ export async function POST(request: Request) {
       },
     })
 
-    // Asiento del cobro (incluye USD como amountUsd)
-    const medios: Array<{
-      m: string
-      v: number
-      pm: 'EFECTIVO' | 'TRANSFERENCIA' | 'CUOTAS' | 'USD'
-      esUSD?: boolean
-    }> = [
-      { m: 'Efectivo', v: d.efectivo, pm: 'EFECTIVO' as const },
-      { m: 'Transferencia', v: d.transferencia, pm: 'TRANSFERENCIA' as const },
-      { m: 'Cuotas', v: d.cuotas, pm: 'CUOTAS' as const },
-    ]
-    if (d.usd && d.usd > 0)
-      medios.push({ m: 'USD', v: Number(d.usd), pm: 'USD' as const, esUSD: true })
-    for (const x of medios) {
-      if (x.esUSD ? (x.v || 0) <= 0 : x.v <= 0) continue
-      await registerEntry({
-        source: 'PREVENTA',
-        operationId: code,
-        description: `Preventa ${code} — ${d.modelo} para ${d.cliente}`,
-        category: 'PREVENTA',
-        type: 'INGRESO',
-        means: x.pm,
-        amount: x.esUSD ? 0 : x.v,
-        amountUsd: x.esUSD ? x.v : null,
-        operator: d.operador || admin.id,
-        createdById: admin.id,
-      }).catch(e => console.error('[Ops Preventas] asiento:', e))
-    }
+    // No registrar asientos al crear preventa — se registran solo al entregar
+    // para evitar duplicar los montos en reportes
 
     return NextResponse.json({ numero: code, ...pre }, { status: 201 })
   } catch (error) {
