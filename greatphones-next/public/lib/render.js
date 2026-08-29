@@ -4240,6 +4240,7 @@ function renderStockList(){
   var items=[];
   if(filterType==='todos'||filterType==='productos'){
     PRODUCTS.forEach(function(p){
+      if(p.isPreorder)return;
       if(filterBrand&&p.brand!==filterBrand)return;
       items.push({id:p.id,name:p.name,sub:p.sub||'',stock:p.stock,type:'producto',ico:p.ico||'📱',brand:p.brand,imageUrl:p.imageUrl});
     });

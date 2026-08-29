@@ -3,18 +3,25 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 import { productCache } from '@/lib/cache'
 
-interface PreventaVariante {
+interface PreventaItem {
+  modelo: string
+  almacenamiento: string
+  imageUrl?: string
+  brand?: string
   color: string
   precio: number
   fecha: string
 }
 
-interface PreventaAgrupada {
-  modelo: string
-  almacenamiento: string
-  imageUrl?: string
-  brand?: string
-  variantes: PreventaVariante[]
+const DIACRITICS_RE = new RegExp('[\\u0300-\\u036f]', 'g')
+
+function slugify(s: string) {
+  return (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(DIACRITICS_RE, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
 }
 
 export async function POST(request: Request) {
@@ -30,60 +37,71 @@ export async function POST(request: Request) {
       )
     }
 
-    // Agrupar preventas por modelo + almacenamiento
-    const grouped = new Map<string, PreventaAgrupada>()
+    if (preventas.length > 100) {
+      return NextResponse.json(
+        { error: 'Máximo 100 preventas por solicitud' },
+        { status: 400 },
+      )
+    }
 
-    preventas.forEach((item: any) => {
-      const key = `${item.modelo}|${item.almacenamiento}`
-      if (!grouped.has(key)) {
-        grouped.set(key, {
-          modelo: item.modelo,
-          almacenamiento: item.almacenamiento,
-          imageUrl: item.imageUrl,
-          brand: item.brand,
-          variantes: [],
-        })
-      }
-      grouped.get(key)!.variantes.push({
-        color: item.color,
-        precio: item.precio,
-        fecha: item.fecha,
-      })
-    })
+    const productosCreados: string[] = []
 
-    const productosCreados: any[] = []
-
-    // Crear un producto por agrupación (modelo + almacenamiento)
-    for (const [_, preventa] of grouped) {
+    for (const item of preventas as PreventaItem[]) {
       try {
-        const productoPrevent = await prisma.product.create({
-          data: {
-            name: preventa.modelo,
-            ico: '📱',
-            imageUrl: preventa.imageUrl || null,
-            brand: preventa.brand || 'Genérico',
-            sub: preventa.almacenamiento,
-            condition: 'Nuevo',
-            price: preventa.variantes[0]?.precio || 0,
-            cost: 0,
-            stock: 0,
-            type: 'celular',
+        if (!item.modelo || !item.color || !item.precio || !item.fecha) {
+          console.warn('Preventa incompleta, se omite:', item)
+          continue
+        }
+
+        const modelGroup = `pre-${slugify(item.modelo)}-${slugify(item.almacenamiento || '')}`
+
+        // Si ya existe una variante de este color para este dispositivo,
+        // actualizarla en lugar de duplicarla.
+        const existente = await prisma.product.findFirst({
+          where: {
+            modelGroup,
+            color: item.color,
             isPreorder: true,
-            availableFrom: preventa.variantes[0]?.fecha
-              ? new Date(preventa.variantes[0].fecha)
-              : undefined,
-            // Guardar variantes como JSON para mostrar en catálogo
-            images: preventa.variantes.map((v: PreventaVariante) => ({
-              color: v.color,
-              precio: v.precio,
-              disponibleEn: v.fecha,
-            })),
+            deletedAt: null,
           },
         })
 
-        productosCreados.push(productoPrevent.id)
+        if (existente) {
+          const actualizado = await prisma.product.update({
+            where: { id: existente.id },
+            data: {
+              price: item.precio,
+              availableFrom: new Date(item.fecha),
+              imageUrl: item.imageUrl || existente.imageUrl,
+            },
+          })
+          productosCreados.push(actualizado.id)
+          continue
+        }
+
+        const producto = await prisma.product.create({
+          data: {
+            name: item.modelo,
+            ico: '📱',
+            imageUrl: item.imageUrl || null,
+            images: [],
+            brand: item.brand || 'Otro',
+            sub: item.almacenamiento || null,
+            condition: 'Nuevo',
+            price: item.precio,
+            cost: 0,
+            stock: 0,
+            type: 'celular',
+            color: item.color,
+            modelGroup,
+            isPreorder: true,
+            availableFrom: new Date(item.fecha),
+          },
+        })
+
+        productosCreados.push(producto.id)
       } catch (err) {
-        console.error(`Error creando preventa: ${preventa.modelo}`, err)
+        console.error(`Error creando preventa: ${item.modelo} - ${item.color}`, err)
       }
     }
 
@@ -93,7 +111,7 @@ export async function POST(request: Request) {
       success: true,
       productosCreados,
       total: productosCreados.length,
-      message: `${productosCreados.length} producto${productosCreados.length !== 1 ? 's' : ''} de preventa agregado${productosCreados.length !== 1 ? 's' : ''} al catálogo`,
+      message: `${productosCreados.length} color${productosCreados.length !== 1 ? 'es' : ''} de preventa publicado${productosCreados.length !== 1 ? 's' : ''} en el catálogo`,
     })
   } catch (error) {
     return handleRouteError(error)

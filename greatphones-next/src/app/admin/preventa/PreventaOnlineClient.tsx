@@ -30,6 +30,22 @@ interface PreventaAgregada {
   variantes: PreventaVariante[]
 }
 
+interface PreventaActivaVariante {
+  id: string
+  color: string
+  price: number
+  availableFrom: string | null
+}
+
+interface PreventaActivaDevice {
+  modelGroup: string
+  modelo: string
+  sub: string
+  imageUrl?: string
+  brand?: string
+  variantes: PreventaActivaVariante[]
+}
+
 function fmt(n: number) {
   return '$' + (n || 0).toLocaleString('es-AR')
 }
@@ -52,6 +68,7 @@ const inputStyle: React.CSSProperties = {
 }
 
 export default function PreventaOnlineClient() {
+  const [vista, setVista] = useState<'agregar' | 'activas'>('agregar')
   const [productos, setProductos] = useState<PriceListItem[]>([])
   const [cargando, setCargando] = useState(true)
   const [preventasAgregadas, setPreventasAgregadas] = useState<PreventaAgregada[]>([])
@@ -62,6 +79,12 @@ export default function PreventaOnlineClient() {
   const [modalColoresSeleccionados, setModalColoresSeleccionados] = useState<Set<string>>(new Set())
   const [modalPrecio, setModalPrecio] = useState('')
   const [modalFecha, setModalFecha] = useState('')
+
+  // Preventas ya publicadas en el catálogo
+  const [preventasActivas, setPreventasActivas] = useState<PreventaActivaDevice[]>([])
+  const [cargandoActivas, setCargandoActivas] = useState(false)
+  const [edicionesActivas, setEdicionesActivas] = useState<Record<string, { price: string; fecha: string }>>({})
+  const [guardandoVariante, setGuardandoVariante] = useState<string | null>(null)
 
   useEffect(() => {
     let activo = true
@@ -82,6 +105,129 @@ export default function PreventaOnlineClient() {
       activo = false
     }
   }, [])
+
+  const cargarPreventasActivas = async () => {
+    setCargandoActivas(true)
+    try {
+      const res = await fetch('/api/products?preorder=true&limit=100', { credentials: 'include' })
+      const data = await res.json()
+      const lista: any[] = Array.isArray(data) ? data : data.data || []
+
+      const grouped = new Map<string, PreventaActivaDevice>()
+      lista.forEach(p => {
+        const key = p.modelGroup || p.id
+        if (!grouped.has(key)) {
+          grouped.set(key, {
+            modelGroup: key,
+            modelo: p.name,
+            sub: p.sub || '',
+            imageUrl: p.imageUrl,
+            brand: p.brand,
+            variantes: [],
+          })
+        }
+        grouped.get(key)!.variantes.push({
+          id: p.id,
+          color: p.color || 'Estándar',
+          price: p.price,
+          availableFrom: p.availableFrom,
+        })
+      })
+
+      const dispositivos = Array.from(grouped.values())
+      setPreventasActivas(dispositivos)
+
+      const ediciones: Record<string, { price: string; fecha: string }> = {}
+      dispositivos.forEach(d =>
+        d.variantes.forEach(v => {
+          ediciones[v.id] = {
+            price: String(v.price),
+            fecha: v.availableFrom ? v.availableFrom.split('T')[0] : '',
+          }
+        }),
+      )
+      setEdicionesActivas(ediciones)
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al cargar preventas activas' })
+    } finally {
+      setCargandoActivas(false)
+    }
+  }
+
+  useEffect(() => {
+    if (vista === 'activas') cargarPreventasActivas()
+  }, [vista])
+
+  const handleGuardarVariante = async (varianteId: string) => {
+    const edicion = edicionesActivas[varianteId]
+    if (!edicion) return
+
+    setGuardandoVariante(varianteId)
+    try {
+      const res = await fetch(`/api/products/${varianteId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          price: parseInt(edicion.price) || 0,
+          availableFrom: edicion.fecha,
+        }),
+      })
+      if (!res.ok) throw new Error()
+
+      setPreventasActivas(prev =>
+        prev.map(d => ({
+          ...d,
+          variantes: d.variantes.map(v =>
+            v.id === varianteId
+              ? { ...v, price: parseInt(edicion.price) || 0, availableFrom: edicion.fecha }
+              : v,
+          ),
+        })),
+      )
+      setMensaje({ tipo: 'success', texto: 'Variante actualizada' })
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al guardar cambios' })
+    } finally {
+      setGuardandoVariante(null)
+    }
+  }
+
+  const handleEliminarVarianteActiva = async (varianteId: string) => {
+    try {
+      const res = await fetch(`/api/products/${varianteId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) throw new Error()
+
+      setPreventasActivas(prev =>
+        prev
+          .map(d => ({ ...d, variantes: d.variantes.filter(v => v.id !== varianteId) }))
+          .filter(d => d.variantes.length > 0),
+      )
+      setMensaje({ tipo: 'success', texto: 'Color eliminado del catálogo' })
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al eliminar' })
+    }
+  }
+
+  const handleEliminarDispositivoActivo = async (modelGroup: string) => {
+    const dispositivo = preventasActivas.find(d => d.modelGroup === modelGroup)
+    if (!dispositivo) return
+
+    try {
+      await Promise.all(
+        dispositivo.variantes.map(v =>
+          fetch(`/api/products/${v.id}`, { method: 'DELETE', credentials: 'include' }),
+        ),
+      )
+      setPreventasActivas(prev => prev.filter(d => d.modelGroup !== modelGroup))
+      setMensaje({ tipo: 'success', texto: 'Dispositivo eliminado del catálogo' })
+    } catch {
+      setMensaje({ tipo: 'error', texto: 'Error al eliminar dispositivo' })
+    }
+  }
 
   const coloresDisponibles = (producto: PriceListItem) => {
     return producto.colors?.length ? producto.colors : ['Estándar']
@@ -225,19 +371,241 @@ export default function PreventaOnlineClient() {
   return (
     <>
       <AdminTopbar titulo="Preventa Online" />
+
+      <style>{`
+        .prod-card { transition: all .15s; }
+        .prod-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+        .btn-primary { background: linear-gradient(135deg,#FF6B2C,#FF8A50); color: #fff; }
+        .btn-primary:disabled { background: #FFB48C; cursor: wait; }
+        .btn-primary:hover:not(:disabled) { filter: brightness(.94); }
+        .btn-secondary { background: #fff; border: 1.5px solid #E6E7F0; color: #181B2E; }
+        .btn-secondary:hover { border-color: #FF6B2C; color: #FF6B2C; }
+      `}</style>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, padding: '16px 24px 0' }}>
+        <button
+          onClick={() => setVista('agregar')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            borderBottom: vista === 'agregar' ? '2.5px solid #FF6B2C' : '2.5px solid transparent',
+            background: 'transparent',
+            color: vista === 'agregar' ? '#FF6B2C' : '#6B7280',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Agregar preventa
+        </button>
+        <button
+          onClick={() => setVista('activas')}
+          style={{
+            padding: '10px 18px',
+            border: 'none',
+            borderBottom: vista === 'activas' ? '2.5px solid #FF6B2C' : '2.5px solid transparent',
+            background: 'transparent',
+            color: vista === 'activas' ? '#FF6B2C' : '#6B7280',
+            fontWeight: 700,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
+        >
+          Preventas activas
+        </button>
+      </div>
+
+      {vista === 'activas' ? (
+        <div style={{ padding: 24 }}>
+          {mensaje && (
+            <div
+              style={{
+                background: mensaje.tipo === 'error' ? '#FEF2F2' : '#D5F5E3',
+                border: `1px solid ${mensaje.tipo === 'error' ? '#FECACA' : '#ABEBC6'}`,
+                color: mensaje.tipo === 'error' ? '#991B1B' : '#166534',
+                padding: '12px 14px',
+                borderRadius: 8,
+                marginBottom: 16,
+                fontSize: 13,
+                fontWeight: 600,
+              }}
+            >
+              {mensaje.texto}
+            </div>
+          )}
+
+          <div style={{ marginBottom: 20 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 800, color: '#181B2E', margin: '0 0 4px' }}>
+              Dispositivos publicados como preventa
+            </h2>
+            <p style={{ fontSize: 13, color: '#6B7280', margin: 0 }}>
+              Estos productos están en el catálogo público, no en /admin/productos ni /admin/stock
+            </p>
+          </div>
+
+          {cargandoActivas ? (
+            <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>Cargando…</p>
+          ) : preventasActivas.length === 0 ? (
+            <p style={{ textAlign: 'center', color: '#8892A6', padding: 32 }}>
+              No hay preventas publicadas todavía
+            </p>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: 16,
+              }}
+            >
+              {preventasActivas.map(dispositivo => (
+                <div
+                  key={dispositivo.modelGroup}
+                  style={{
+                    background: '#fff',
+                    border: '1px solid #E6E7F0',
+                    borderRadius: 12,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 12, padding: 14, borderBottom: '1px solid #E6E7F0' }}>
+                    {dispositivo.imageUrl && (
+                      <img
+                        src={dispositivo.imageUrl}
+                        alt={dispositivo.modelo}
+                        style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 800, color: '#181B2E' }}>
+                        {dispositivo.modelo}
+                      </div>
+                      <div style={{ fontSize: 11, color: '#6B7280' }}>{dispositivo.sub}</div>
+                      <div style={{ fontSize: 11, color: '#8892A6', marginTop: 4 }}>
+                        {dispositivo.variantes.length} color{dispositivo.variantes.length !== 1 ? 'es' : ''} en catálogo
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: 12 }}>
+                    {dispositivo.variantes.map(variante => {
+                      const edicion = edicionesActivas[variante.id] || { price: String(variante.price), fecha: '' }
+                      return (
+                        <div
+                          key={variante.id}
+                          style={{
+                            background: '#FBFBFD',
+                            border: '1px solid #E6E7F0',
+                            borderRadius: 8,
+                            padding: 10,
+                            marginBottom: 8,
+                          }}
+                        >
+                          <div style={{ fontSize: 12, fontWeight: 700, color: '#181B2E', marginBottom: 6 }}>
+                            {variante.color}
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+                            <div>
+                              <label style={{ fontSize: 9, color: '#6B7280', display: 'block', marginBottom: 2 }}>
+                                Precio
+                              </label>
+                              <input
+                                type="number"
+                                value={edicion.price}
+                                onChange={e =>
+                                  setEdicionesActivas(prev => ({
+                                    ...prev,
+                                    [variante.id]: { ...edicion, price: e.target.value },
+                                  }))
+                                }
+                                style={{ ...inputStyle, fontSize: 11, padding: 6 }}
+                              />
+                            </div>
+                            <div>
+                              <label style={{ fontSize: 9, color: '#6B7280', display: 'block', marginBottom: 2 }}>
+                                Fecha
+                              </label>
+                              <input
+                                type="date"
+                                value={edicion.fecha}
+                                onChange={e =>
+                                  setEdicionesActivas(prev => ({
+                                    ...prev,
+                                    [variante.id]: { ...edicion, fecha: e.target.value },
+                                  }))
+                                }
+                                style={{ ...inputStyle, fontSize: 11, padding: 6 }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => handleGuardarVariante(variante.id)}
+                              disabled={guardandoVariante === variante.id}
+                              className="btn-primary"
+                              style={{
+                                flex: 1,
+                                padding: '6px 8px',
+                                border: 'none',
+                                borderRadius: 6,
+                                fontSize: 10,
+                                fontWeight: 700,
+                                cursor: guardandoVariante === variante.id ? 'wait' : 'pointer',
+                              }}
+                            >
+                              {guardandoVariante === variante.id ? 'Guardando…' : 'Guardar'}
+                            </button>
+                            <button
+                              onClick={() => handleEliminarVarianteActiva(variante.id)}
+                              style={{
+                                flex: 1,
+                                padding: '6px 8px',
+                                background: '#FEF2F2',
+                                color: '#DC2626',
+                                border: '1px solid #FECACA',
+                                borderRadius: 6,
+                                fontSize: 10,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  <div style={{ padding: 12, borderTop: '1px solid #E6E7F0' }}>
+                    <button
+                      onClick={() => handleEliminarDispositivoActivo(dispositivo.modelGroup)}
+                      style={{
+                        width: '100%',
+                        padding: '8px 10px',
+                        background: '#FECACA',
+                        color: '#991B1B',
+                        border: 'none',
+                        borderRadius: 6,
+                        fontSize: 11,
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Eliminar dispositivo del catálogo
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 60px)' }}>
         {/* Contenido principal */}
         <div style={{ flex: 1, padding: 24, overflowY: 'auto', maxWidth: 1200 }}>
-          <style>{`
-            .prod-card { transition: all .15s; }
-            .prod-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.1); }
-            .btn-primary { background: linear-gradient(135deg,#FF6B2C,#FF8A50); color: #fff; }
-            .btn-primary:disabled { background: #FFB48C; cursor: wait; }
-            .btn-primary:hover:not(:disabled) { filter: brightness(.94); }
-            .btn-secondary { background: #fff; border: 1.5px solid #E6E7F0; color: #181B2E; }
-            .btn-secondary:hover { border-color: #FF6B2C; color: #FF6B2C; }
-          `}</style>
-
           {mensaje && (
             <div
               style={{
@@ -709,6 +1077,7 @@ export default function PreventaOnlineClient() {
           </div>
         )}
       </div>
+      )}
     </>
   )
 }

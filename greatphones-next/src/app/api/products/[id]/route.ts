@@ -1,6 +1,7 @@
 ﻿import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { productCache } from '@/lib/cache'
 
 
 
@@ -46,6 +47,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl || null
     if (body.images !== undefined) updateData.images = body.images || []
     if (body.ico !== undefined) updateData.ico = body.ico
+    if (body.availableFrom !== undefined) {
+      updateData.availableFrom = body.availableFrom ? new Date(body.availableFrom) : null
+    }
     if (body.offerStart !== undefined) {
       updateData.offerStart = body.offerStart ? new Date(body.offerStart) : null
     }
@@ -60,6 +64,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       data: updateData
     })
     console.log('Updated product:', updated)
+    productCache.clear()
     return NextResponse.json(updated, {
       headers: {  }
     })
@@ -78,6 +83,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await prisma.product.delete({
       where: { id }
     })
+    productCache.clear()
     return NextResponse.json({ message: 'Product deleted' }, {
       headers: {  }
     })
