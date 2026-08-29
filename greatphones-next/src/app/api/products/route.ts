@@ -64,11 +64,11 @@ export async function GET(request: NextRequest) {
       where.isPreorder = true
     } else if (preorder === 'false') {
       where.isPreorder = { not: true }
-    } else if (!isAdmin) {
-      // Catálogo público: incluye productos de preventa junto al resto.
-      // El admin puede pedir ?preorder=false para ver solo normales.
-      // Sin filtro: se muestran todos (normales + preventa).
+    } else if (isAdmin) {
+      // Admin: excluye preventas por defecto (stock real solamente)
+      where.isPreorder = { not: true }
     }
+    // Catálogo público sin filtro: muestra todos (normales + preventa)
 
     const total = await prisma.product.count({ where })
     const products = await prisma.product.findMany({
