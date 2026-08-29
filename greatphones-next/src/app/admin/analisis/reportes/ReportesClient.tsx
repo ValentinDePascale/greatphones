@@ -77,6 +77,14 @@ export default function ReportesClient() {
   const [filtroTipo, setFiltroTipo] = useState('')
   const [buscar, setBuscar] = useState('')
   const [cargando, setCargando] = useState(true)
+  const [monthlyStats, setMonthlyStats] = useState<Array<{
+    month: string
+    revenue: number
+    orders: number
+    profit: number
+    avgTicket: number
+  }>>([])
+  const [loadingDashboard, setLoadingDashboard] = useState(false)
 
   const load = async () => {
     setCargando(true)
@@ -85,9 +93,10 @@ export default function ReportesClient() {
     if (hasta) params.set('hasta', hasta)
     const q = params.toString()
     try {
-      const [r, rd] = await Promise.all([
+      const [r, rd, dashboardRes] = await Promise.all([
         fetch('/api/admin/analisis/reportes' + (q ? '?' + q : ''), { credentials: 'include' }),
         fetch('/api/admin/precios/dolar?tipo=blue', { credentials: 'include' }),
+        fetch('/api/admin/dashboard', { credentials: 'include' }),
       ])
       const d = await r.json()
       setBalances(d.balances || [])
@@ -97,6 +106,8 @@ export default function ReportesClient() {
       setPedidosOnline(d.pedidosOnline || { total: 0, cantidad: 0 })
       const dt = await rd.json()
       if (dt && dt.venta) setDolar(dt.venta)
+      const dashData = await dashboardRes.json()
+      if (dashData && dashData.monthlyStats) setMonthlyStats(dashData.monthlyStats)
     } catch {}
     setCargando(false)
   }
@@ -827,6 +838,224 @@ export default function ReportesClient() {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            <div
+              style={{
+                background: '#fff',
+                border: '1px solid #E6E7F0',
+                borderRadius: 14,
+                padding: 20,
+                marginTop: 20,
+                boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
+              }}
+            >
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  fontWeight: 800,
+                  color: '#181B2E',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginBottom: 20,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 18, color: '#FF6B2C' }}
+                  aria-hidden="true"
+                >
+                  trending_up
+                </span>
+                Ingresos Mensuales
+              </h3>
+
+              {monthlyStats.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#8892A6', padding: 32, fontSize: 13, margin: 0 }}>
+                  Cargando datos mensuales…
+                </p>
+              ) : (
+                <>
+                  <div style={{ overflowX: 'auto', marginBottom: 24 }}>
+                    <svg
+                      viewBox="0 0 1200 350"
+                      style={{ width: '100%', minWidth: 600, height: 'auto', minHeight: 300 }}
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      {(() => {
+                        const maxRevenue = Math.max(...monthlyStats.map(s => s.revenue), 1)
+                        const chartHeight = 250
+                        const chartWidth = 1100
+                        const barWidth = chartWidth / monthlyStats.length
+                        const padding = 50
+
+                        return (
+                          <g>
+                            {/* Grid lines */}
+                            {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
+                              const y = padding + (1 - ratio) * chartHeight
+                              const value = Math.round(maxRevenue * ratio)
+                              return (
+                                <g key={`grid-${ratio}`}>
+                                  <line
+                                    x1={padding}
+                                    y1={y}
+                                    x2={padding + chartWidth}
+                                    y2={y}
+                                    stroke="#E6E7F0"
+                                    strokeDasharray="4,4"
+                                    strokeWidth="1"
+                                  />
+                                  <text
+                                    x={padding - 10}
+                                    y={y + 4}
+                                    fontSize="12"
+                                    fill="#8892A6"
+                                    textAnchor="end"
+                                  >
+                                    {value > 0 ? `$${(value / 1000).toFixed(0)}k` : '0'}
+                                  </text>
+                                </g>
+                              )
+                            })}
+
+                            {/* Bars */}
+                            {monthlyStats.map((stat, idx) => {
+                              const barHeight = (stat.revenue / maxRevenue) * chartHeight
+                              const x = padding + idx * barWidth + barWidth * 0.15
+                              const y = padding + chartHeight - barHeight
+
+                              return (
+                                <g key={stat.month}>
+                                  {/* Bar */}
+                                  <rect
+                                    x={x}
+                                    y={y}
+                                    width={barWidth * 0.7}
+                                    height={barHeight}
+                                    fill="#FF6B2C"
+                                    rx="6"
+                                    ry="6"
+                                    style={{ transition: 'all 0.3s ease' }}
+                                  />
+                                  {/* Label */}
+                                  <text
+                                    x={x + barWidth * 0.35}
+                                    y={padding + chartHeight + 20}
+                                    fontSize="13"
+                                    fontWeight="600"
+                                    fill="#181B2E"
+                                    textAnchor="middle"
+                                  >
+                                    {stat.month}
+                                  </text>
+                                  {/* Value on top of bar */}
+                                  {barHeight > 30 && (
+                                    <text
+                                      x={x + barWidth * 0.35}
+                                      y={y - 8}
+                                      fontSize="11"
+                                      fontWeight="700"
+                                      fill="#181B2E"
+                                      textAnchor="middle"
+                                    >
+                                      {(stat.revenue / 1000).toFixed(0)}k
+                                    </text>
+                                  )}
+                                </g>
+                              )
+                            })}
+
+                            {/* Axes */}
+                            <line
+                              x1={padding}
+                              y1={padding + chartHeight}
+                              x2={padding + chartWidth}
+                              y2={padding + chartHeight}
+                              stroke="#181B2E"
+                              strokeWidth="2"
+                            />
+                            <line
+                              x1={padding}
+                              y1={padding}
+                              x2={padding}
+                              y2={padding + chartHeight}
+                              stroke="#181B2E"
+                              strokeWidth="2"
+                            />
+                          </g>
+                        )
+                      })()}
+                    </svg>
+                  </div>
+
+                  {/* Stats below chart */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                      gap: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: '#FAFBFD',
+                        border: '1px solid #E6E7F0',
+                        borderRadius: 10,
+                        padding: 12,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280' }}>
+                        Ingresos Totales
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#FF6B2C', marginTop: 4 }}>
+                        {fmtP(monthlyStats.reduce((sum, s) => sum + s.revenue, 0))}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        background: '#FAFBFD',
+                        border: '1px solid #E6E7F0',
+                        borderRadius: 10,
+                        padding: 12,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280' }}>
+                        Órdenes Totales
+                      </div>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#7C3AED', marginTop: 4 }}>
+                        {monthlyStats.reduce((sum, s) => sum + s.orders, 0)}
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        background: '#FAFBFD',
+                        border: '1px solid #E6E7F0',
+                        borderRadius: 10,
+                        padding: 12,
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#6B7280' }}>
+                        Ganancia Total
+                      </div>
+                      <div
+                        style={{
+                          fontSize: 18,
+                          fontWeight: 800,
+                          color: monthlyStats.reduce((sum, s) => sum + s.profit, 0) >= 0
+                            ? '#0F9D58'
+                            : '#DC2626',
+                          marginTop: 4,
+                        }}
+                      >
+                        {fmtP(monthlyStats.reduce((sum, s) => sum + s.profit, 0))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </>
         )}

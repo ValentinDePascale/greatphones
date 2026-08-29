@@ -75,7 +75,7 @@ export default function AdminPageClient({ html, tab }: Props) {
     // inmediata (antes de que renderAdminContent cargue) para evitar que
     // parpadee "Dashboard" al navegar directo a /admin/<tab>.
     const titles: Record<string, string> = {
-      dashboard: 'Dashboard', prods: 'Productos', inventory: 'Inventario',
+      prods: 'Productos', inventory: 'Inventario',
       acc: 'Accesorios', stock: 'Stock', promos: 'Promociones',
       orders: 'Pedidos', arrep: 'Arrepentimientos', chat: 'Chat',
       quotes: 'Cotizaciones', instore: 'Venta en Tienda', preventa: 'Preventas',

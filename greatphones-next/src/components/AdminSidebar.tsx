@@ -76,13 +76,6 @@ const analisisFinanzas: SubGroup[] = [
         icon: 'calendar_month',
         exact: true,
       },
-      {
-        href: '/admin/dashboard',
-        label: 'Dashboard',
-        icon: 'dashboard',
-        exact: true,
-        legacy: 'dashboard',
-      },
       { href: '/admin/analisis/reportes', label: 'Reportes', icon: 'monitoring' },
     ],
   },
