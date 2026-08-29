@@ -157,7 +157,7 @@ export default function PreventaOnlineClient() {
 
       setMensaje({
         tipo: 'success',
-        texto: `${data.codigos?.length || 0} preventas creadas exitosamente`,
+        texto: data.message || `${data.total || 0} producto${data.total !== 1 ? 's' : ''} de preventa agregado${data.total !== 1 ? 's' : ''}`,
       })
       setPreventasAgregadas([])
     } catch (error) {

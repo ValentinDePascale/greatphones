@@ -1,26 +1,13 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { productCache } from '@/lib/cache'
 
-interface PreOrderBulkItem {
-  productId?: string
-  productColor?: string
+interface PreventaOnlineItem {
+  productId: string
+  productColor: string
   customPrice: number
   expectedDeliveryEnd: string
-}
-
-async function generatePreOrderCode() {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  for (let i = 0; i < 5; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
-  }
-  // Verificar que sea único
-  const existing = await prisma.preOrder.findUnique({
-    where: { code: `PRE-${code}` },
-  })
-  if (existing) return generatePreOrderCode() // Recursión para reintentar
-  return `PRE-${code}`
 }
 
 export async function POST(request: Request) {
@@ -43,92 +30,55 @@ export async function POST(request: Request) {
       )
     }
 
-    const codigos: string[] = []
-    const creadas: any[] = []
+    const productosCreados: any[] = []
 
     for (const item of preventas) {
-      const code = await generatePreOrderCode()
-
       try {
-        // Usar transacción para asegurar consistencia
-        const { preorder } = await prisma.$transaction(async (tx) => {
-          // Obtener producto para copiar datos
-          const producto = item.productId ? await tx.product.findUnique({
-            where: { id: item.productId },
-          }) : null
-
-          // Crear producto de preventa si el producto original existe
-          let productoPreventId: string | undefined = undefined
-          if (producto) {
-            const productoPrevent = await tx.product.create({
-              data: {
-                name: `${producto.name} - ${item.productColor}`,
-                ico: producto.ico,
-                imageUrl: producto.imageUrl,
-                images: producto.images,
-                brand: producto.brand,
-                sub: producto.sub,
-                condition: producto.condition,
-                price: item.customPrice,
-                cost: 0,
-                stock: 0,
-                type: producto.type,
-                isPreorder: true,
-                availableFrom: item.expectedDeliveryEnd
-                  ? new Date(item.expectedDeliveryEnd)
-                  : undefined,
-              },
-            })
-            productoPreventId = productoPrevent.id
-          }
-
-          const preorder = await tx.preOrder.create({
-            data: {
-              code,
-              status: 'PENDING',
-              source: 'online',
-              clientName: 'Online',
-              productId: productoPreventId,
-              productColor: item.productColor || undefined,
-              customPrice: item.customPrice || 0,
-              expectedDeliveryEnd: item.expectedDeliveryEnd
-                ? new Date(item.expectedDeliveryEnd)
-                : undefined,
-            },
-          })
-
-          return { preorder }
+        // Obtener producto original para copiar datos
+        const producto = await prisma.product.findUnique({
+          where: { id: item.productId },
         })
 
-        codigos.push(code)
-        creadas.push(preorder)
-
-        // Registrar asiento contable para INGRESO
-        if (item.customPrice > 0) {
-          await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/accounting/entry`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              source: 'PREVENTA',
-              type: 'INGRESO',
-              means: 'PREVENTA',
-              amount: item.customPrice,
-              amountUsd: null,
-              operationId: code,
-              description: `Preventa ${item.productColor || 'estándar'}`,
-              category: 'SALES',
-            }),
-          }).catch(() => {})
+        if (!producto) {
+          console.warn(`Producto no encontrado: ${item.productId}`)
+          continue
         }
+
+        // Crear producto de preventa (sin crear PreOrder)
+        const productoPrevent = await prisma.product.create({
+          data: {
+            name: `${producto.name} - ${item.productColor}`,
+            ico: producto.ico,
+            imageUrl: producto.imageUrl,
+            images: producto.images,
+            brand: producto.brand,
+            sub: producto.sub,
+            condition: producto.condition,
+            price: item.customPrice,
+            cost: 0,
+            stock: 0,
+            type: producto.type,
+            isPreorder: true,
+            availableFrom: item.expectedDeliveryEnd
+              ? new Date(item.expectedDeliveryEnd)
+              : undefined,
+          },
+        })
+
+        productosCreados.push(productoPrevent.id)
       } catch (err) {
-        console.error(`Error creando preventa: ${code}`, err)
+        console.error(`Error creando preventa online:`, err)
       }
     }
 
+    // Limpiar cache de productos
+    productCache.clear()
+
     return NextResponse.json({
       success: true,
-      codigos,
-      total: codigos.length,
+      productosCreados,
+      total: productosCreados.length,
+      message: `${productosCreados.length} producto${productosCreados.length !== 1 ? 's' : ''} de preventa agregado${productosCreados.length !== 1 ? 's' : ''}`,
     })
   } catch (error) {
     return handleRouteError(error)
