@@ -53,7 +53,7 @@ export default function PreventaOnlineClient() {
   const [enviando, setEnviando] = useState(false)
   const [fechaGlobal, setFechaGlobal] = useState(enDias(30))
   const [modalProducto, setModalProducto] = useState<PriceListItem | null>(null)
-  const [modalColor, setModalColor] = useState('')
+  const [modalColoresSeleccionados, setModalColoresSeleccionados] = useState<Set<string>>(new Set())
   const [modalPrecio, setModalPrecio] = useState('')
   const [modalFecha, setModalFecha] = useState('')
 
@@ -83,29 +83,35 @@ export default function PreventaOnlineClient() {
 
   const handleAbrirModal = (producto: PriceListItem) => {
     setModalProducto(producto)
-    setModalColor(coloresDisponibles(producto)[0])
+    setModalColoresSeleccionados(new Set(coloresDisponibles(producto)))
     setModalPrecio(String(producto.preventaARS))
     setModalFecha(fechaGlobal)
   }
 
   const handleAgregarColor = () => {
-    if (!modalProducto || !modalColor) return
+    if (!modalProducto || modalColoresSeleccionados.size === 0) return
 
-    const id = `${Date.now()}-${Math.random()}`
-    const nueva: PreventaAgregada = {
-      id,
-      productId: modalProducto.id,
-      modelo: modalProducto.modelo,
-      almacenamiento: modalProducto.almacenamiento,
-      color: modalColor,
-      precio: parseInt(modalPrecio) || 0,
-      fecha: modalFecha,
-      imageUrl: modalProducto.imageUrl,
-    }
+    const nuevas: PreventaAgregada[] = []
+    modalColoresSeleccionados.forEach(color => {
+      const id = `${Date.now()}-${Math.random()}`
+      nuevas.push({
+        id,
+        productId: modalProducto.id,
+        modelo: modalProducto.modelo,
+        almacenamiento: modalProducto.almacenamiento,
+        color,
+        precio: parseInt(modalPrecio) || 0,
+        fecha: modalFecha,
+        imageUrl: modalProducto.imageUrl,
+      })
+    })
 
-    setPreventasAgregadas([...preventasAgregadas, nueva])
+    setPreventasAgregadas([...preventasAgregadas, ...nuevas])
     setModalProducto(null)
-    setMensaje({ tipo: 'success', texto: `${modalColor} agregado a la lista` })
+    setMensaje({
+      tipo: 'success',
+      texto: `${nuevas.length} color${nuevas.length > 1 ? 'es' : ''} agregado${nuevas.length > 1 ? 's' : ''} a la lista`
+    })
   }
 
   const handleEliminarPreventa = (id: string) => {
@@ -466,20 +472,44 @@ export default function PreventaOnlineClient() {
               </h3>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ fontSize: 12, fontWeight: 600, color: '#3D4356', display: 'block', marginBottom: 6 }}>
-                  Color
+                <label style={{ fontSize: 12, fontWeight: 600, color: '#3D4356', display: 'block', marginBottom: 8 }}>
+                  Colores
                 </label>
-                <select
-                  value={modalColor}
-                  onChange={e => setModalColor(e.target.value)}
-                  style={{ ...inputStyle }}
-                >
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {coloresDisponibles(modalProducto).map(color => (
-                    <option key={color} value={color}>
+                    <label
+                      key={color}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        fontSize: 13,
+                        color: '#181B2E',
+                        cursor: 'pointer',
+                        padding: '8px 10px',
+                        borderRadius: 6,
+                        background: modalColoresSeleccionados.has(color) ? '#F0F4FF' : 'transparent',
+                        transition: 'background .15s',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={modalColoresSeleccionados.has(color)}
+                        onChange={e => {
+                          const nuevos = new Set(modalColoresSeleccionados)
+                          if (e.target.checked) {
+                            nuevos.add(color)
+                          } else {
+                            nuevos.delete(color)
+                          }
+                          setModalColoresSeleccionados(nuevos)
+                        }}
+                        style={{ cursor: 'pointer', width: 16, height: 16 }}
+                      />
                       {color}
-                    </option>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div style={{ marginBottom: 16 }}>
