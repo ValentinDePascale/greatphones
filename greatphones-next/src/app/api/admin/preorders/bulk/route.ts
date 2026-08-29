@@ -50,12 +50,42 @@ export async function POST(request: Request) {
       const code = await generatePreOrderCode()
 
       try {
+        // Obtener producto para copiar datos
+        const producto = item.productId ? await prisma.product.findUnique({
+          where: { id: item.productId },
+        }) : null
+
+        // Crear producto de preventa si el producto original existe
+        let productoPreventId = item.productId
+        if (producto) {
+          const productoPrevent = await prisma.product.create({
+            data: {
+              name: `${producto.name} - ${item.productColor}`,
+              ico: producto.ico,
+              imageUrl: producto.imageUrl,
+              images: producto.images,
+              brand: producto.brand,
+              sub: producto.sub,
+              condition: producto.condition,
+              price: item.customPrice,
+              cost: 0,
+              stock: 0, // Sin stock real
+              type: producto.type,
+              isPreorder: true, // Marcar como preventa
+              availableFrom: item.expectedDeliveryEnd
+                ? new Date(item.expectedDeliveryEnd)
+                : undefined,
+            },
+          })
+          productoPreventId = productoPrevent.id
+        }
+
         const preorder = await prisma.preOrder.create({
           data: {
             code,
             status: 'PENDING',
             source: 'online',
-            productId: item.productId || undefined,
+            productId: productoPreventId || undefined,
             productColor: item.productColor || undefined,
             customPrice: item.customPrice || 0,
             expectedDeliveryEnd: item.expectedDeliveryEnd
@@ -67,7 +97,7 @@ export async function POST(request: Request) {
         codigos.push(code)
         creadas.push(preorder)
 
-        // Registrar asiento contable para INGRESO (como en el flujo manual)
+        // Registrar asiento contable para INGRESO
         if (item.customPrice > 0) {
           await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/accounting/entry`, {
             method: 'POST',
@@ -82,13 +112,10 @@ export async function POST(request: Request) {
               description: `Preventa ${item.productColor || 'estándar'}`,
               category: 'SALES',
             }),
-          }).catch(() => {
-            // Si falla el asiento, no detener la preventa
-          })
+          }).catch(() => {})
         }
       } catch (err) {
         console.error(`Error creando preventa: ${code}`, err)
-        // Continuar con la siguiente
       }
     }
 
