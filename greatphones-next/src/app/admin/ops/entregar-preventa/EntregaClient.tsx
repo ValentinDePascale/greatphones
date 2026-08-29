@@ -7,10 +7,15 @@ interface PreEntrega {
   id: string
   code: string
   clientName: string
+  clientDni?: string
+  clientPhone?: string
   productModelName: string | null
   price: number
   saldo?: number
   status: string
+  expectedDeliveryStart?: string
+  expectedDeliveryEnd?: string
+  notes?: string
 }
 
 const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
@@ -42,6 +47,9 @@ const labelStyle: React.CSSProperties = {
 }
 
 export default function EntregaClient() {
+  const [tab, setTab] = useState<'entregar' | 'eliminar' | 'editar'>('entregar')
+
+  // Tab: Entregar
   const [operador, setOperador] = useState('')
   const [preorders, setPreorders] = useState<PreEntrega[]>([])
   const [nPre, setNPre] = useState('')
@@ -51,13 +59,28 @@ export default function EntregaClient() {
   const [cuotas, setCuotas] = useState('')
   const [usd, setUsd] = useState('')
   const [obs, setObs] = useState('')
-
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [serverMsg, setServerMsg] = useState<string | null>(null)
   const [sending, setSending] = useState(false)
   const [done, setDone] = useState<{ preventa: string } | null>(null)
+
+  // Tab: Eliminar
+  const [eliminarPreId, setEliminarPreId] = useState('')
+  const [eliminarOperador, setEliminarOperador] = useState('')
+  const [eliminarMotivo, setEliminarMotivo] = useState('')
+  const [eliminarConfirm, setEliminarConfirm] = useState(false)
+  const [eliminarSending, setEliminarSending] = useState(false)
+  const [eliminarMsg, setEliminarMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  // Tab: Editar
+  const [editarPreId, setEditarPreId] = useState('')
+  const [editarOpen, setEditarOpen] = useState(false)
+  const [editarData, setEditarData] = useState<Partial<PreEntrega>>({})
+  const [editarSending, setEditarSending] = useState(false)
+  const [editarMsg, setEditarMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
   const errRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -204,6 +227,90 @@ export default function EntregaClient() {
     }
   }
 
+  const eliminarPreventa = async () => {
+    if (!eliminarPreId || !eliminarOperador) return
+    setEliminarSending(true)
+    setEliminarMsg(null)
+    try {
+      const r = await fetch('/api/admin/ops/entregar-preventa', {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          preOrderId: eliminarPreId,
+          operador: eliminarOperador,
+          motivo: eliminarMotivo,
+        }),
+      })
+      const d = await r.json()
+      if (!r.ok) {
+        setEliminarMsg({ type: 'error', text: d.error || 'Error al eliminar' })
+        return
+      }
+      setEliminarMsg({ type: 'success', text: `Preventa ${d.code} eliminada correctamente` })
+      setEliminarPreId('')
+      setEliminarOperador('')
+      setEliminarMotivo('')
+      setEliminarConfirm(false)
+      recargarPreorders()
+    } catch {
+      setEliminarMsg({ type: 'error', text: 'Error de conexión. Intentá de nuevo.' })
+    } finally {
+      setEliminarSending(false)
+    }
+  }
+
+  const abrirEditar = (pre: PreEntrega) => {
+    setEditarPreId(pre.id)
+    setEditarData({
+      clientName: pre.clientName,
+      clientDni: pre.clientDni || '',
+      clientPhone: pre.clientPhone || '',
+      productModelName: pre.productModelName || '',
+      price: pre.price,
+      expectedDeliveryStart: pre.expectedDeliveryStart ? pre.expectedDeliveryStart.split('T')[0] : '',
+      expectedDeliveryEnd: pre.expectedDeliveryEnd ? pre.expectedDeliveryEnd.split('T')[0] : '',
+      notes: pre.notes || '',
+    })
+    setEditarOpen(true)
+    setEditarMsg(null)
+  }
+
+  const guardarEdicion = async () => {
+    if (!editarPreId) return
+    setEditarSending(true)
+    setEditarMsg(null)
+    try {
+      const r = await fetch(`/api/admin/preorders/${editarPreId}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientName: editarData.clientName,
+          clientDni: editarData.clientDni,
+          clientPhone: editarData.clientPhone,
+          productModelName: editarData.productModelName,
+          price: editarData.price,
+          expectedDeliveryStart: editarData.expectedDeliveryStart || null,
+          expectedDeliveryEnd: editarData.expectedDeliveryEnd || null,
+          notes: editarData.notes,
+        }),
+      })
+      const d = await r.json()
+      if (!r.ok) {
+        setEditarMsg({ type: 'error', text: d.error || 'Error al guardar' })
+        return
+      }
+      setEditarMsg({ type: 'success', text: 'Preventa actualizada correctamente' })
+      setEditarOpen(false)
+      recargarPreorders()
+    } catch {
+      setEditarMsg({ type: 'error', text: 'Error de conexión. Intentá de nuevo.' })
+    } finally {
+      setEditarSending(false)
+    }
+  }
+
   const fieldProps = (id: string) => ({
     id,
     style: { ...inputStyle, ...(errors[id] ? inputErrorStyle : {}) },
@@ -211,7 +318,7 @@ export default function EntregaClient() {
     'aria-describedby': errors[id] ? `${id}-error` : undefined,
   })
 
-  if (done) {
+  if (done && tab === 'entregar') {
     return (
       <div style={{ padding: 24, maxWidth: 720, margin: '0 auto' }}>
         <style>{`
@@ -301,6 +408,9 @@ export default function EntregaClient() {
         .cw-back:not(:disabled):hover { background: #F4F6F9; }
         .cw-dot-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
         .cw-chip-btn:hover { background: #FFF1E8; }
+        .cw-tab-btn { transition: all .15s; }
+        .cw-tab-btn:hover { background: #F4F6F9; }
+        .cw-tab-btn.active { background: #FF6B2C; color: #fff; }
         .cw-spin { animation: cws 1s linear infinite; }
         @keyframes cws { to { transform: rotate(360deg); } }
         @media (prefers-reduced-motion: reduce) {
@@ -309,11 +419,36 @@ export default function EntregaClient() {
         }
       `}</style>
 
-        <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
-          Cobro del saldo pendiente y entrega del equipo
-        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+          {(['entregar', 'eliminar', 'editar'] as const).map(t => (
+            <button
+              key={t}
+              type="button"
+              className="cw-tab-btn"
+              onClick={() => setTab(t)}
+              style={{
+                padding: '10px 16px',
+                border: tab === t ? 'none' : '1.5px solid #E6E7F0',
+                borderRadius: 8,
+                background: tab === t ? '#FF6B2C' : '#fff',
+                color: tab === t ? '#fff' : '#3D4356',
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {t === 'entregar' ? 'Entregar' : t === 'eliminar' ? 'Eliminar' : 'Editar'}
+            </button>
+          ))}
+        </div>
 
-        <nav aria-label="Progreso del formulario">
+        {tab === 'entregar' && (
+          <>
+            <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 18px' }}>
+              Cobro del saldo pendiente y entrega del equipo
+            </p>
+
+            <nav aria-label="Progreso del formulario">
           <div
             style={{
               display: 'flex',
@@ -971,7 +1106,449 @@ export default function EntregaClient() {
           <p style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', margin: '12px 0 0' }}>
             Podés volver a los pasos anteriores con el menú superior para corregir cualquier dato.
           </p>
-        </form>
+            </form>
+          </>
+        )}
+
+        {tab === 'eliminar' && (
+          <div
+            style={{
+              background: '#fff',
+              border: '1px solid #E6E7F0',
+              borderRadius: 14,
+              padding: 24,
+              marginTop: 0,
+              boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
+            }}
+          >
+            <fieldset style={{ border: 'none', margin: 0, padding: 0 }}>
+              <legend style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Eliminar Preventa
+              </legend>
+              <p style={{ fontSize: 13, color: '#6B7280', margin: '8px 0 18px' }}>
+                Elimina una preventa del sistema registrando el motivo
+              </p>
+
+              {eliminarMsg && (
+                <div
+                  role="alert"
+                  style={{
+                    background: eliminarMsg.type === 'error' ? '#FEF2F2' : '#F0FDF4',
+                    border: `1px solid ${eliminarMsg.type === 'error' ? '#FECACA' : '#BBEF63'}`,
+                    borderRadius: 8,
+                    padding: '11px 14px',
+                    marginBottom: 16,
+                    color: eliminarMsg.type === 'error' ? '#B91C1C' : '#166534',
+                    fontWeight: 600,
+                    fontSize: 13,
+                  }}
+                >
+                  {eliminarMsg.text}
+                </div>
+              )}
+
+              <label htmlFor="eliminar-pre-id" style={labelStyle}>
+                Preventa a eliminar *
+              </label>
+              <select
+                id="eliminar-pre-id"
+                className="cw-input"
+                style={inputStyle}
+                value={eliminarPreId}
+                onChange={e => {
+                  setEliminarPreId(e.target.value)
+                  setEliminarConfirm(false)
+                }}
+              >
+                <option value="">Seleccionar preventa...</option>
+                {preorders.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} — {p.productModelName || ''} → {p.clientName}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="eliminar-operador" style={labelStyle}>
+                Operador *
+              </label>
+              <select
+                id="eliminar-operador"
+                className="cw-input"
+                style={inputStyle}
+                value={eliminarOperador}
+                onChange={e => setEliminarOperador(e.target.value)}
+              >
+                <option value="">Seleccionar...</option>
+                {OPERADORES.map(o => (
+                  <option key={o} value={o}>
+                    {o}
+                  </option>
+                ))}
+              </select>
+
+              <label htmlFor="eliminar-motivo" style={labelStyle}>
+                Motivo de eliminación
+              </label>
+              <textarea
+                id="eliminar-motivo"
+                className="cw-input"
+                style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }}
+                value={eliminarMotivo}
+                onChange={e => setEliminarMotivo(e.target.value)}
+                placeholder="Ej: cliente desistió, cambio de planes"
+              />
+
+              {eliminarPreId && eliminarOperador && !eliminarConfirm && (
+                <button
+                  type="button"
+                  className="cw-btn cw-primary"
+                  onClick={() => setEliminarConfirm(true)}
+                  style={{
+                    marginTop: 16,
+                    background: 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
+                    color: '#fff',
+                    padding: '12px 20px',
+                    border: 'none',
+                    borderRadius: 10,
+                    fontSize: 13.5,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    width: '100%',
+                  }}
+                >
+                  Continuar
+                </button>
+              )}
+
+              {eliminarConfirm && (
+                <div
+                  style={{
+                    background: '#FEF6E7',
+                    borderLeft: '4px solid #D97706',
+                    borderRadius: 8,
+                    padding: '14px',
+                    marginTop: 16,
+                  }}
+                >
+                  <p style={{ fontSize: 13, fontWeight: 700, color: '#92400E', margin: '0 0 10px' }}>
+                    ¿Eliminar esta preventa?
+                  </p>
+                  <p style={{ fontSize: 12, color: '#9C6500', margin: 0 }}>
+                    Se registrará la eliminación en el historial de la preventa con el motivo especificado.
+                  </p>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+                    <button
+                      type="button"
+                      className="cw-btn cw-back"
+                      onClick={() => setEliminarConfirm(false)}
+                      disabled={eliminarSending}
+                      style={{
+                        padding: '10px 16px',
+                        border: '1.5px solid #E6E7F0',
+                        borderRadius: 8,
+                        background: '#fff',
+                        color: '#3D4356',
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="cw-btn cw-primary"
+                      onClick={eliminarPreventa}
+                      disabled={eliminarSending}
+                      style={{
+                        flex: 1,
+                        background: eliminarSending ? '#FFB48C' : '#DC2626',
+                        color: '#fff',
+                        padding: '10px 16px',
+                        border: 'none',
+                        borderRadius: 8,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        cursor: eliminarSending ? 'wait' : 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                      }}
+                    >
+                      {eliminarSending ? (
+                        <>
+                          <span
+                            className="material-symbols-outlined cw-spin"
+                            style={{ fontSize: 16 }}
+                            aria-hidden="true"
+                          >
+                            progress_activity
+                          </span>
+                          Eliminando…
+                        </>
+                      ) : (
+                        <>
+                          <span
+                            className="material-symbols-outlined"
+                            style={{ fontSize: 16 }}
+                            aria-hidden="true"
+                          >
+                            delete
+                          </span>
+                          Eliminar preventa
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </fieldset>
+          </div>
+        )}
+
+        {tab === 'editar' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div
+              style={{
+                background: '#fff',
+                border: '1px solid #E6E7F0',
+                borderRadius: 14,
+                padding: 24,
+                boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
+              }}
+            >
+              <h3 style={{ fontSize: 15, fontWeight: 800, color: '#181B2E', marginBottom: 2 }}>
+                Editar Preventa
+              </h3>
+              <p style={{ fontSize: 13, color: '#6B7280', margin: '8px 0 16px' }}>
+                Selecciona una preventa para editar sus datos
+              </p>
+
+              <label htmlFor="editar-pre-id" style={labelStyle}>
+                Preventa a editar *
+              </label>
+              <select
+                id="editar-pre-id"
+                className="cw-input"
+                style={inputStyle}
+                value={editarPreId}
+                onChange={e => {
+                  const id = e.target.value
+                  setEditarPreId(id)
+                  if (id) {
+                    const pre = preorders.find(p => p.id === id)
+                    if (pre) abrirEditar(pre)
+                  } else {
+                    setEditarOpen(false)
+                  }
+                }}
+              >
+                <option value="">Seleccionar preventa...</option>
+                {preorders.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.code} — {p.productModelName || ''} → {p.clientName}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {editarOpen && (
+              <div
+                style={{
+                  background: '#fff',
+                  border: '1px solid #E6E7F0',
+                  borderRadius: 14,
+                  padding: 24,
+                  boxShadow: '0 1px 2px rgba(23,23,45,.04),0 6px 20px rgba(23,23,45,.06)',
+                }}
+              >
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#181B2E', marginBottom: 16 }}>
+                  Datos de la preventa
+                </h3>
+
+                {editarMsg && (
+                  <div
+                    role="alert"
+                    style={{
+                      background: editarMsg.type === 'error' ? '#FEF2F2' : '#F0FDF4',
+                      border: `1px solid ${editarMsg.type === 'error' ? '#FECACA' : '#BBEF63'}`,
+                      borderRadius: 8,
+                      padding: '11px 14px',
+                      marginBottom: 16,
+                      color: editarMsg.type === 'error' ? '#B91C1C' : '#166534',
+                      fontWeight: 600,
+                      fontSize: 13,
+                    }}
+                  >
+                    {editarMsg.text}
+                  </div>
+                )}
+
+                <label htmlFor="edit-clientName" style={labelStyle}>
+                  Nombre del cliente
+                </label>
+                <input
+                  id="edit-clientName"
+                  type="text"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.clientName || ''}
+                  onChange={e => setEditarData({ ...editarData, clientName: e.target.value })}
+                />
+
+                <label htmlFor="edit-clientDni" style={labelStyle}>
+                  DNI del cliente
+                </label>
+                <input
+                  id="edit-clientDni"
+                  type="text"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.clientDni || ''}
+                  onChange={e => setEditarData({ ...editarData, clientDni: e.target.value })}
+                />
+
+                <label htmlFor="edit-clientPhone" style={labelStyle}>
+                  Teléfono
+                </label>
+                <input
+                  id="edit-clientPhone"
+                  type="tel"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.clientPhone || ''}
+                  onChange={e => setEditarData({ ...editarData, clientPhone: e.target.value })}
+                />
+
+                <label htmlFor="edit-productModelName" style={labelStyle}>
+                  Modelo del producto
+                </label>
+                <input
+                  id="edit-productModelName"
+                  type="text"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.productModelName || ''}
+                  onChange={e => setEditarData({ ...editarData, productModelName: e.target.value })}
+                />
+
+                <label htmlFor="edit-price" style={labelStyle}>
+                  Precio ($)
+                </label>
+                <input
+                  id="edit-price"
+                  type="number"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.price || ''}
+                  onChange={e => setEditarData({ ...editarData, price: parseInt(e.target.value) || 0 })}
+                />
+
+                <label htmlFor="edit-expectedDeliveryStart" style={labelStyle}>
+                  Entrega esperada desde
+                </label>
+                <input
+                  id="edit-expectedDeliveryStart"
+                  type="date"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.expectedDeliveryStart || ''}
+                  onChange={e => setEditarData({ ...editarData, expectedDeliveryStart: e.target.value })}
+                />
+
+                <label htmlFor="edit-expectedDeliveryEnd" style={labelStyle}>
+                  Entrega esperada hasta
+                </label>
+                <input
+                  id="edit-expectedDeliveryEnd"
+                  type="date"
+                  className="cw-input"
+                  style={inputStyle}
+                  value={editarData.expectedDeliveryEnd || ''}
+                  onChange={e => setEditarData({ ...editarData, expectedDeliveryEnd: e.target.value })}
+                />
+
+                <label htmlFor="edit-notes" style={labelStyle}>
+                  Notas
+                </label>
+                <textarea
+                  id="edit-notes"
+                  className="cw-input"
+                  style={{ ...inputStyle, minHeight: 56, resize: 'vertical' }}
+                  value={editarData.notes || ''}
+                  onChange={e => setEditarData({ ...editarData, notes: e.target.value })}
+                />
+
+                <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+                  <button
+                    type="button"
+                    className="cw-btn cw-back"
+                    onClick={() => setEditarOpen(false)}
+                    disabled={editarSending}
+                    style={{
+                      padding: '12px 20px',
+                      border: '1.5px solid #E6E7F0',
+                      borderRadius: 10,
+                      background: '#fff',
+                      color: '#3D4356',
+                      fontSize: 13.5,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="cw-btn cw-primary"
+                    onClick={guardarEdicion}
+                    disabled={editarSending}
+                    style={{
+                      flex: 1,
+                      background: editarSending ? '#FFB48C' : 'linear-gradient(135deg,#FF6B2C,#FF8A50)',
+                      color: '#fff',
+                      padding: 12,
+                      border: 'none',
+                      borderRadius: 10,
+                      fontSize: 14,
+                      fontWeight: 700,
+                      cursor: editarSending ? 'wait' : 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                    }}
+                  >
+                    {editarSending ? (
+                      <>
+                        <span
+                          className="material-symbols-outlined cw-spin"
+                          style={{ fontSize: 18 }}
+                          aria-hidden="true"
+                        >
+                          progress_activity
+                        </span>
+                        Guardando…
+                      </>
+                    ) : (
+                      <>
+                        <span
+                          className="material-symbols-outlined"
+                          style={{ fontSize: 18 }}
+                          aria-hidden="true"
+                        >
+                          save
+                        </span>
+                        Guardar cambios
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </>
   )

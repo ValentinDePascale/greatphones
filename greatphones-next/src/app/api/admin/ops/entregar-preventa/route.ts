@@ -130,3 +130,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Error al registrar la entrega' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const admin = await requireAdmin(request)
+    const body = await request.json()
+    const { preOrderId, operador, motivo } = body
+
+    if (!preOrderId) {
+      return NextResponse.json({ error: 'ID de preventa requerido' }, { status: 400 })
+    }
+
+    const pre = await prisma.preOrder.findUnique({ where: { id: preOrderId } })
+    if (!pre) {
+      return NextResponse.json({ error: 'Preventa no encontrada' }, { status: 404 })
+    }
+
+    // Registrar motivo de eliminación en notas
+    const notasActualizadas =
+      (pre.notes || '') +
+      ` | Eliminada ${new Date().toISOString()} por ${operador || admin.id} — Motivo: ${motivo || 'Sin especificar'}`
+
+    await prisma.preOrder.update({
+      where: { id: pre.id },
+      data: {
+        deletedAt: new Date(),
+        notes: notasActualizadas,
+      },
+    })
+
+    return NextResponse.json({ success: true, code: pre.code }, { status: 200 })
+  } catch (error) {
+    console.error('[Ops Entrega DELETE]', error)
+    return NextResponse.json({ error: 'Error al eliminar la preventa' }, { status: 500 })
+  }
+}

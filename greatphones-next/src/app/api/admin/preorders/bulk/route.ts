@@ -85,6 +85,7 @@ export async function POST(request: Request) {
             code,
             status: 'PENDING',
             source: 'online',
+            clientName: 'Online',
             productId: productoPreventId || undefined,
             productColor: item.productColor || undefined,
             customPrice: item.customPrice || 0,

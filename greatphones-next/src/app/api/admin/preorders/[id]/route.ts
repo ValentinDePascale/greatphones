@@ -38,19 +38,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const admin = await requireAdmin(request)
     const { id } = await params
     const body = await request.json()
-    const { status } = body
-
-    if (!status || !VALID_STATUSES.includes(status)) {
-      return NextResponse.json({ error: 'Estado inválido. Valores: ' + VALID_STATUSES.join(', ') }, { status: 400 })
-    }
+    const { status, clientName, clientDni, clientPhone, productModelName, price, expectedDeliveryStart, expectedDeliveryEnd, notes } = body
 
     const existing = await prisma.preOrder.findUnique({ where: { id }, select: { id: true, status: true, price: true, clientName: true, clientDni: true, clientPhone: true, clientEmail: true, productModelName: true, productStorage: true, productColor: true, paymentMethod: true, paymentType: true, installments: true } })
     if (!existing) {
       return NextResponse.json({ error: 'Preventa no encontrada' }, { status: 404 })
     }
 
-    // If marking as DELIVERED, create an Order first
-    if (status === 'DELIVERED') {
+    // If changing status to DELIVERED, create an Order first
+    if (status === 'DELIVERED' && existing.status !== 'DELIVERED') {
       const result = await prisma.$transaction(async (tx) => {
         // Find or create a generic user for walk-in pre-sale customers
         let userId = admin.id
@@ -60,7 +56,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         }
 
         const orderCode = generateOrderCode()
-        const totalAmount = existing.price || 0
+        const totalAmount = price || existing.price || 0
 
         const order = await tx.order.create({
           data: {
@@ -72,14 +68,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
             payment: existing.paymentMethod === 'cash' ? 'Efectivo' : existing.paymentMethod === 'transfer' ? 'Transferencia' : null,
             cuotas: existing.installments || 1,
             saleChannel: 'preorder',
-            clientName: existing.clientName,
-            clientDni: existing.clientDni,
-            clientPhone: existing.clientPhone,
+            clientName: clientName || existing.clientName,
+            clientDni: clientDni || existing.clientDni,
+            clientPhone: clientPhone || existing.clientPhone,
             clientEmail: existing.clientEmail,
             adminId: admin.id,
             items: {
               create: {
-                customName: [existing.productModelName, existing.productStorage, existing.productColor].filter(Boolean).join(' · ') || 'Producto en preventa',
+                customName: [productModelName || existing.productModelName, existing.productStorage, existing.productColor].filter(Boolean).join(' · ') || 'Producto en preventa',
                 price: totalAmount,
                 quantity: 1,
               },
@@ -88,9 +84,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           include: { items: true },
         })
 
+        const updateData: any = { status: 'DELIVERED', deliveredAt: new Date() }
+        if (clientName !== undefined) updateData.clientName = clientName
+        if (clientDni !== undefined) updateData.clientDni = clientDni
+        if (clientPhone !== undefined) updateData.clientPhone = clientPhone
+        if (productModelName !== undefined) updateData.productModelName = productModelName
+        if (price !== undefined) updateData.price = price
+        if (expectedDeliveryStart !== undefined) updateData.expectedDeliveryStart = expectedDeliveryStart ? new Date(expectedDeliveryStart) : null
+        if (expectedDeliveryEnd !== undefined) updateData.expectedDeliveryEnd = expectedDeliveryEnd ? new Date(expectedDeliveryEnd) : null
+        if (notes !== undefined) updateData.notes = notes
+
         const updated = await tx.preOrder.update({
           where: { id },
-          data: { status: 'DELIVERED', deliveredAt: new Date() },
+          data: updateData,
           include: INCLUDE_DEFAULT,
         })
 
@@ -100,9 +106,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       return NextResponse.json({ success: true, order: result.order, preOrder: result.preOrder })
     }
 
+    // Handle regular field updates (edit mode)
+    const updateData: any = {}
+    if (status && VALID_STATUSES.includes(status)) updateData.status = status
+    if (clientName !== undefined) updateData.clientName = clientName
+    if (clientDni !== undefined) updateData.clientDni = clientDni
+    if (clientPhone !== undefined) updateData.clientPhone = clientPhone
+    if (productModelName !== undefined) updateData.productModelName = productModelName
+    if (price !== undefined) updateData.price = price
+    if (expectedDeliveryStart !== undefined) updateData.expectedDeliveryStart = expectedDeliveryStart ? new Date(expectedDeliveryStart) : null
+    if (expectedDeliveryEnd !== undefined) updateData.expectedDeliveryEnd = expectedDeliveryEnd ? new Date(expectedDeliveryEnd) : null
+    if (notes !== undefined) updateData.notes = notes
+
     const updated = await prisma.preOrder.update({
       where: { id },
-      data: { status },
+      data: updateData,
       include: INCLUDE_DEFAULT,
     })
 

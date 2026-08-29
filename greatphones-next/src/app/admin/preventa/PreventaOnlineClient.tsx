@@ -221,8 +221,8 @@ export default function PreventaOnlineClient() {
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-                gap: 16,
+                gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+                gap: 12,
               }}
             >
               {productos.map(prod => (
@@ -232,7 +232,7 @@ export default function PreventaOnlineClient() {
                   style={{
                     background: '#fff',
                     border: '1px solid #E6E7F0',
-                    borderRadius: 12,
+                    borderRadius: 10,
                     overflow: 'hidden',
                   }}
                 >
@@ -242,20 +242,20 @@ export default function PreventaOnlineClient() {
                       alt={prod.modelo}
                       style={{
                         width: '100%',
-                        height: 180,
+                        height: 130,
                         objectFit: 'cover',
                         background: '#FAFBFD',
                       }}
                     />
                   )}
-                  <div style={{ padding: 14 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#181B2E' }}>
+                  <div style={{ padding: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: '#181B2E' }}>
                       {prod.modelo}
                     </div>
-                    <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                    <div style={{ fontSize: 10, color: '#6B7280', marginTop: 2, lineHeight: 1.3 }}>
                       {prod.almacenamiento}
                     </div>
-                    <div style={{ fontSize: 15, fontWeight: 800, color: '#FF6B2C', marginTop: 6 }}>
+                    <div style={{ fontSize: 13, fontWeight: 800, color: '#FF6B2C', marginTop: 4 }}>
                       {fmt(prod.preventaARS)}
                     </div>
                     <button
@@ -263,11 +263,11 @@ export default function PreventaOnlineClient() {
                       className="btn-primary"
                       style={{
                         width: '100%',
-                        marginTop: 12,
-                        padding: '10px 14px',
+                        marginTop: 8,
+                        padding: '8px 10px',
                         border: 'none',
-                        borderRadius: 8,
-                        fontSize: 13,
+                        borderRadius: 6,
+                        fontSize: 12,
                         fontWeight: 700,
                         cursor: 'pointer',
                       }}
