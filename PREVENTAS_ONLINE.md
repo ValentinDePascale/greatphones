@@ -1,182 +1,128 @@
 # Preventas Online - Documentación
 
-> **Actualizado 2026-08-29.** Esta es la segunda reescritura de este documento.
-> La primera versión describía un componente React (`PreventaOnlineClient.tsx`)
-> que terminó siendo una reimplementación peor de algo que ya existía. Se
-> eliminó ese componente y `/admin/preventa` vuelve a usar el panel admin
-> legacy (`public/lib/preventa.js`), que es más completo. Este documento
-> describe el sistema real, tal como quedó.
+> Actualizado 2026-08-29. `/admin/preventa` usa el componente React
+> `PreventaOnlineClient.tsx` (no el panel admin legacy). Este documento
+> quedó desactualizado dos veces por indecisión entre ambos sistemas —
+> esta versión es la definitiva: se mantiene React.
 
-## ¿Qué son las Preventas Online?
+## ¿Qué son?
 
-Productos que aparecen en el catálogo público sin stock real, con una fecha
-de entrega estimada. El cliente los "reserva" en vez de comprarlos. Cada
-color/almacenamiento de un mismo dispositivo es un `Product` real
-(`isPreorder: true`, `stock: 0`) — no hay ninguna tabla ni JSON especial para
-las variantes, es el mismo mecanismo (`modelGroup`) que ya usa el resto del
-catálogo para productos con variantes de color.
+Productos en el catálogo público sin stock real, con fecha de entrega
+estimada, que el cliente puede reservar. Cada combinación de
+color+almacenamiento de un mismo dispositivo es un `Product` real
+(`isPreorder: true`, `stock: 0`), agrupados por `modelGroup` — el mismo
+mecanismo que usa el resto del sitio para variantes de color/almacenamiento
+(`/detail/[id]` arma el selector buscando productos con igual `modelGroup`).
 
-## Dónde vive esto
+## Dónde vive
 
-`/admin/preventa` sirve el **panel admin legacy** (el mismo sistema que
-`/admin/stock`, `/admin/productos`, etc.: `serveAdminSpa` + `AdminPageClient`,
-HTML inyectado y controlado por scripts vanilla JS en `public/lib/`). La
-lógica específica de preventas está en **`public/lib/preventa.js`**.
+- **UI**: `/admin/preventa` → [PreventaOnlineClient.tsx](greatphones-next/src/app/admin/preventa/PreventaOnlineClient.tsx)
+- **API**: `POST /api/admin/preorders/bulk` → [route.ts](greatphones-next/src/app/api/admin/preorders/bulk/route.ts)
 
-Al entrar a `/admin/preventa`, `admin.js` dispara `renderPreventaTab('catalogo')`,
-que muestra 3 sub-pestañas:
+Dos pestañas: **Agregar preventa** (grid de Lista de Precios + modal de
+colores + panel lateral de staging) y **Preventas activas** (lista de lo ya
+publicado, agrupado por dispositivo, con editar/eliminar por variante).
 
-1. **Catálogo Preventa** — administrar qué productos de preventa están
-   publicados (crear, editar, eliminar). Es el tema de este documento.
-2. **Preventas Online** — pedidos que los clientes ya hicieron reservando
-   estos productos (`PreOrder` records, `source: 'online'`). No confundir
-   con la pestaña anterior: acá se ven reservas de clientes, no se cargan
-   productos.
-3. **Historial** — preventas registradas a mano (venta local/presencial),
-   comparte el mismo modelo `PreOrder` que usa `/admin/ops/preventas`.
+## Flujo: Agregar preventa
 
-## Flujo: crear/editar un producto de preventa (pestaña "Catálogo Preventa")
+1. Grid de dispositivos desde `GET /api/admin/precios` (Lista de Precios)
+2. Click "Agregar" en un dispositivo → modal con checkboxes de color (todos
+   marcados por defecto), precio sugerido (`preventaARS`) y fecha (+30 días
+   por defecto)
+3. Se agrega al panel lateral de staging, agrupado por `modelo|almacenamiento`
+4. "Agregar a página" → `POST /api/admin/preorders/bulk` con un item por
+   color: `{ modelo, almacenamiento, imageUrl, brand, color, precio, fecha }`
 
-Botón **"+ Nueva Preventa"** abre un wizard de 3 pasos (`openPreventaForm` →
-`renderPrevWizardStep`):
+### Qué hace el endpoint por cada color
 
-### Paso 1 — Datos del modelo
-- **Marca**: dropdown real (`getUniqueBrands()` — Apple, Samsung, MacBook,
-  iPad, Motorola, Xiaomi, Google), no texto libre.
-- **Tipo**: celular / tablet / laptop / smartwatch.
-- **Modelo**: dropdown poblado desde `SELL_MODELS[brand]` (o `SELL_MODELS['iPhone']`
-  si la marca es Apple), definido en `public/lib/constants.js`.
-- **Condición**, **Descripción** (opcional).
+```ts
+const modelGroup = `pre-${slugify(item.modelo)}`   // SIN almacenamiento
+const storage = item.almacenamiento || null
+const brand = item.brand || inferBrand(item.modelo) // Lista de Precios no tiene brand
 
-### Paso 2 — Combinaciones (la matriz color × almacenamiento)
-Al elegir el modelo, `buildPrevMatrixRows()` genera automáticamente **una
-fila por cada combinación de color × almacenamiento** de ese modelo, usando
-`MODEL_COLORS[model]` y `MODEL_STORAGES[model]` (constantes curadas en
-`constants.js` — para iPhones, storages reales según generación: p. ej.
-"iPhone 12 Pro Max" → `['128 GB','256 GB','512 GB']`).
-
-Para cada fila, se autocompleta el **precio según el almacenamiento**
-consultando Lista de Precios: `cargarPreciosLista()` trae
-`/api/admin/precios` + `/api/admin/precios/macipad`, y
-`buscarPrecioLista(modelo, almacenamiento)` busca la fila exacta
-(modelo + almacenamiento) y usa su `preventaARS`. Esto es exactamente lo
-que hace que "128 GB" y "256 GB" del mismo modelo tengan precios distintos
-tomados de Lista de Precios.
-
-Cada fila se puede:
-- Activar/desactivar (✓ verde) — las desactivadas no se publican
-- Cambiar de color (círculo de color → abre selector)
-- Editar precio y fecha de disponibilidad manualmente
-- Subir una imagen propia (si no, usa la imagen general del modelo)
-- Eliminar (✕)
-
-### Paso 3 — Revisar y guardar
-Resumen de marca/modelo/condición y de cada combinación activa (color,
-almacenamiento, precio, fecha). Botón **"✓ Guardar preventa"** dispara
-`savePreventaProduct()`.
-
-## Qué pasa al guardar (`savePreventaProduct`)
-
-Por cada fila activa se hace un `POST /api/products` (o `PUT
-/api/products?id=X` para la primera fila si se está editando un grupo
-existente):
-
-```js
-{
-  name: model,            // "iPhone 12 Pro Max"
-  modelGroup: model,      // MISMO valor que name — legible, no un slug
-  brand: brand,           // "Apple" (real, del dropdown)
-  type: type,
-  condition: cond,
-  storage: storage,       // "128 GB" — campo real, no solo dentro de `sub`
-  color: color,            // "Silver"
-  price: parseInt(r.price),
-  cost: 0,
-  stock: 0,
-  availableFrom: r.availableFrom + 'T00:00:00.000Z',
-  imageUrl: r.imageUrl || img,
-  images: [...],
-  sub: `${color} · ${storage}`,
-  isPreorder: true,
-  ico: '📱',
-}
+// upsert por (modelGroup, color, storage) — evita duplicar si ya existe
+Product.create({
+  name: item.modelo, brand, storage, color, modelGroup,
+  isPreorder: true, stock: 0, price: item.precio,
+  availableFrom: new Date(item.fecha),
+})
 ```
 
-Todas las filas de un mismo modelo comparten `modelGroup` (el nombre del
-modelo, legible). Es el mismo campo que usa `/detail/[id]` para juntar
-variantes hermanas y que usa `products/route.ts` (`progroupMin`/
-`progroupCount`) para calcular el "Desde $X, N variantes" en las cards del
-catálogo.
+Puntos importantes:
+
+- **`modelGroup` no incluye el almacenamiento.** Así, "iPhone 12 Pro Max
+  128GB" y "iPhone 12 Pro Max 256GB" comparten `modelGroup` y aparecen como
+  variantes hermanas en el detalle (el almacenamiento es un eje de variante
+  más, igual que el color) — antes cada almacenamiento generaba un
+  `modelGroup` distinto y quedaban como dispositivos separados.
+- **`storage` es un campo real del `Product`**, no solo texto dentro de
+  `sub`. `renderDetailVariants()` en `public/lib/render.js` lee `v.storage`
+  para armar los chips de almacenamiento en el detalle; si no está seteado,
+  el selector no tiene datos reales para mostrar.
+- **`brand` se infiere del nombre del modelo** (`inferBrand()`): Lista de
+  Precios (`PriceList`) no tiene columna `brand`, así que no hay de dónde
+  sacarla directamente. Cubre iPhone/iPad/MacBook → Apple, Galaxy →
+  Samsung, Redmi/Xiaomi/Poco → Xiaomi, Moto → Motorola, Pixel → Google;
+  cualquier otro caso cae en "Otro".
 
 ## Cómo se ven en el catálogo público
 
 - **Grilla** (`renderShopGrid` en `render.js`): agrupa por `modelGroup`,
-  muestra la variante más barata, badge de días hasta disponibilidad
-  (`preorderCountdown`) y botón "Agregar al carrito" (que en realidad
-  reserva). Marca se normaliza a "APPLE" vía `preorderBrand()`.
-- **Detalle** (`/detail/[id]`): busca todos los `Product` con el mismo
-  `modelGroup`, arma círculos de color y — para el color elegido — chips de
-  almacenamiento disponibles (`renderDetailVariants`, rama
-  `window._isPreorderDetail`). Selecciona automáticamente la variante que
-  matchea color+almacenamiento elegidos.
+  muestra la variante más barata. La card usa `cheapest.name` como nombre
+  a mostrar (no el `modelGroup`, que es un slug interno tipo
+  `pre-iphone-12-pro-max` — mostrarlo directamente fue un bug ya corregido).
+- **Detalle** (`/detail/[id]`): círculos de color: al elegir un color,
+  chips de los almacenamientos disponibles *para ese color* (lee
+  `p.storage` de cada variante hermana).
 
-## Administrar lo publicado (pestaña "Catálogo Preventa")
+## Pestaña "Preventas activas"
 
-`loadPreventaProducts()` trae `GET /api/products?preorder=true&limit=200`
-(este filtro aplica siempre, sea o no admin) y muestra una card compacta por
-`Product` — no agrupada por modelo, cada color/almacenamiento es su propia
-card (`prevCatalogCardHtml`): imagen, nombre, `storage color · condición`,
-fecha de disponibilidad, precio, y **exactamente dos botones**:
+`GET /api/products?preorder=true&limit=100` (este filtro aplica siempre,
+sin importar si el caller es admin), agrupado en el cliente por
+`modelGroup`. Por dispositivo:
 
-- **✏ Editar** (`editPreventaProduct(id)`) — trae el producto
-  (`GET /api/products/[id]`) y reabre el wizard con `openPreventaForm(p)`,
-  precargando **todas** las variantes del mismo `modelGroup` para editarlas
-  juntas.
-- **🗑 Eliminar** (`deletePreventaProduct(id)`) — `DELETE
-  /api/products?id=X`, que hace **soft-delete** (marca `deletedAt` y
-  `isPreorder: false`) vía el sistema de auditoría normal de productos, no
-  un hard-delete.
+- Header compacto: imagen + nombre + cantidad de variantes + un ícono de
+  papelera para borrar todo el dispositivo
+- Cada variante es una fila de una línea: `color · almacenamiento ·
+  precio`, con dos botones ícono (✏ editar, 🗑 eliminar). "Editar" abre un
+  formulario inline solo para esa fila (precio + fecha + Guardar/Cancelar);
+  el resto de las filas se mantienen compactas.
 
-Hay chips de marca arriba de la grilla para filtrar, y un buscador que
-matchea por modelo/color/almacenamiento.
+Editar → `PUT /api/products/[id]` (`price`, `availableFrom`). Eliminar →
+`DELETE /api/products/[id]` (hard delete — no hay `PreOrder` ni inventario
+real asociado a estos productos).
 
 ## Por qué NO aparecen en `/admin/productos` ni `/admin/stock`
 
-- `/admin/productos` (`renderAdminProductsFiltered` en `render.js`): filtra
-  `if(p.isPreorder)return false;`
-- `/admin/stock` (`renderStockList` en `render.js`): mismo filtro, agregado
-  el 2026-08-29 (antes faltaba y las preventas sí aparecían ahí — bug ya
-  corregido).
+- `/admin/productos`: `renderAdminProductsFiltered` filtra `isPreorder`
+- `/admin/stock`: `renderStockList` — mismo filtro, agregado 2026-08-29
+  (antes faltaba)
 
-La única vista de administración donde se ven es "Catálogo Preventa" dentro
-de `/admin/preventa`.
+## Diferencias con otros flujos de preventa
 
-## Diferencias: Preventa Online vs Registra Preventa vs Preventas Online (pedidos)
-
-| Aspecto | Catálogo Preventa (`/admin/preventa`) | Registra Preventa (`/admin/ops/preventas`) | Preventas Online — pedidos (sub-tab dentro de `/admin/preventa`) |
-|---|---|---|---|
-| Qué administra | Productos publicados en el catálogo | Ventas locales/presenciales registradas a mano | Pedidos que clientes ya hicieron reservando productos del catálogo |
-| Qué crea/edita | `Product` (`isPreorder: true`) | `PreOrder` | Lee `PreOrder` (`source: 'online'`), no crea |
-| Contabilidad | No aplica | Registra asiento INGRESO | No aplica directamente |
+| | `/admin/preventa` (este) | `/admin/ops/preventas` |
+|---|---|---|
+| Qué crea | `Product` (`isPreorder: true`) | `PreOrder` |
+| Uso | Publicar en el catálogo online | Registrar venta local/presencial |
+| Contabilidad | No aplica | Registra asiento INGRESO |
 
 ## Endpoints relevantes
 
-- `GET /api/admin/precios` + `GET /api/admin/precios/macipad` — Lista de
-  Precios, fuente del autocompletado de precio por almacenamiento
-- `POST /api/products` / `PUT /api/products?id=X` — crear/editar cada
-  variante (color × almacenamiento) del wizard
-- `GET /api/products?preorder=true&limit=200` — listar lo publicado (usa
-  este filtro sin importar si el caller es admin)
-- `DELETE /api/products?id=X` — soft-delete de una variante puntual
-- `GET /api/products/[id]` / `PUT /api/products/[id]` — usados por
-  `editPreventaProduct` para traer y (parcialmente) actualizar un producto
+- `GET /api/admin/precios` — Lista de Precios, origen de los dispositivos
+  del grid y de `preventaARS` (precio sugerido)
+- `POST /api/admin/preorders/bulk` — crea/actualiza variantes (un item por
+  color en el body)
+- `GET /api/products?preorder=true&limit=100` — listar lo publicado
+- `PUT /api/products/[id]` / `DELETE /api/products/[id]` — editar/eliminar
+  una variante puntual
 
-## Notas / limitaciones conocidas
+## Limitaciones conocidas
 
-- El wizard genera la matriz de color×almacenamiento desde constantes
-  curadas a mano (`MODEL_COLORS`/`MODEL_STORAGES` en `constants.js`), no
-  desde Lista de Precios directamente — si un modelo no está en esas
-  constantes, no aparece en el dropdown del wizard.
-- `deletePreventaProduct` borra una variante a la vez (un color +
-  almacenamiento), no el grupo completo de un click — para borrar un modelo
-  entero hay que eliminar cada card.
+- El precio sugerido al agregar un color es el mismo para todos los colores
+  de esa carga (se puede editar por color en el modal antes de agregar, o
+  después desde "Preventas activas", pero no hay autocompletado por
+  almacenamiento como si tiene el wizard legacy de `public/lib/preventa.js`
+  — ese wizard sigue existiendo en el código pero no está enrutado a
+  ninguna página).
+- Eliminar es de a una variante por vez; no hay "eliminar solo este color en
+  todos los almacenamientos" de un click.
