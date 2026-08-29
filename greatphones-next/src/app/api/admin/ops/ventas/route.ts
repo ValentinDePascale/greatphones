@@ -87,19 +87,16 @@ export async function POST(request: Request) {
     const usdPesos = Math.round(Number(d.usd || 0) * usdRate)
     const totalCobradoPesos = d.efectivo + d.transferencia + d.cuotas + usdPesos
 
-    const prorratear = (monto: number) => {
-      if (totalOperacion <= 0 || !monto) return 0
-      return Math.round((d.precioVenta / totalOperacion) * monto)
-    }
-    const efCel = prorratear(d.efectivo)
-    const trCel = prorratear(d.transferencia)
-    const cuCel = prorratear(d.cuotas)
-    const usdCel = prorratear(Number(d.usd) || 0)
+    // No prorratear: registrar exactamente lo que se cobró en cada medio
+    const efCel = d.efectivo
+    const trCel = d.transferencia
+    const cuCel = d.cuotas
+    const usdCel = Number(d.usd || 0)
 
     const numero = 'VTA-' + Date.now().toString().slice(-7)
     const costo = producto.cost || 0
     const gananciaTeorica = d.precioVenta - costo
-    const gananciaCobrada = efCel + trCel + cuCel + Math.round(usdCel * usdRate) - costo
+    const gananciaCobrada = totalCobradoPesos - costo
 
     for (const a of accs) {
       const acc = await prisma.accessory.findFirst({ where: { name: a.nombre, isActive: true } })
