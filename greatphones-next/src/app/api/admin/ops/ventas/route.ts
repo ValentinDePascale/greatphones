@@ -119,6 +119,7 @@ export async function POST(request: Request) {
         }),
       ),
     ])
+    console.log(`[Venta Registrada] ${numero} - Stock actualizado para ${producto.name} y ${accs.length} accesorios`)
 
     const medios: Array<{ medio: string; monto: number; esUSD?: boolean }> = [
       { medio: 'Efectivo', monto: efCel },
