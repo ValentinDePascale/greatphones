@@ -967,7 +967,10 @@ function renderShopGrid(){
       isGroup:true,
       modelGroup:key,
       brand:cheapest.brand,
-      name:key,
+      // Preventa: `key` es el modelGroup (slug interno para agrupar
+      // variantes), no un nombre para mostrar. Usar el nombre real del
+      // producto más barato del grupo.
+      name:cheapest.isPreorder?cheapest.name:key,
       sub:variants.length+' '+(variants.length===1?'variante':'variantes'),
       price:cheapest.price,
       imageUrl:cheapest.imageUrl,

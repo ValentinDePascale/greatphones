@@ -1,5 +1,7 @@
-import PreventaOnlineClient from './PreventaOnlineClient'
+import { serveAdminSpa } from '@/lib/spa-pages'
+import AdminPageClient from '../AdminPageClient'
 export const dynamic = 'force-dynamic'
 export default function Page() {
-  return <PreventaOnlineClient />
+  const html = serveAdminSpa('preventa')
+  return <AdminPageClient html={html} tab="preventa" />
 }
