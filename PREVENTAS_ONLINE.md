@@ -91,21 +91,31 @@ Cuando hayas agregado todos los dispositivos y variantes:
 
 ## Cómo Aparecen en el Catálogo
 
-### Un producto = Un dispositivo (modelo + almacenamiento)
+### Cada color = un Product real, agrupados por `modelGroup`
+Cada variante de color que agregás se guarda como su propio registro
+`Product` (`isPreorder: true`, `stock: 0`), y todos los colores de un
+mismo dispositivo comparten el mismo `modelGroup`. Es el mecanismo que ya
+usa el resto del catálogo para variantes de color/almacenamiento — no es
+un campo nuevo ni un JSON embebido.
+
 ```
 Catálogo público → /productos
-├─ iPhone 15 Pro 256GB (isPreorder: true)
-│  ├─ Negro - $1,200,000 - Disponible en 7 días
-│  ├─ Azul - $1,250,000 - Disponible en 7 días
-│  └─ Titanio - $1,300,000 - Disponible en 12 días
+modelGroup "pre-iphone-15-pro-256gb"
+├─ Product Negro   - $1,200,000 - Disponible en 7 días
+├─ Product Azul    - $1,250,000 - Disponible en 7 días
+└─ Product Titanio - $1,300,000 - Disponible en 12 días
 ```
 
-### En la tarjeta del producto:
+### En la grilla del catálogo:
+- `products/route.ts` agrupa los Products preorder por `modelGroup` y
+  calcula `progroupMin` (precio del color más barato) y `progroupCount`
+  (cantidad de colores) para esa card
 - Muestra el **precio mínimo** (Negro: $1,200,000)
 - Dice "**Desde X colores disponibles**"
 - Indica "**Stock disponible en X días - Reservar ahora**"
 
-### Cuando el usuario abre el producto:
+### Cuando el usuario abre el producto (`/detail/[id]`):
+- El detalle busca todos los Products con el mismo `modelGroup` (variantes hermanas)
 - Ve un **selector/lista de colores**
 - Para cada color:
   - Nombre del color
@@ -137,22 +147,49 @@ Al hacer clic → Abre detalle con:
 
 ### Antes (sin preventa agregada)
 ```
-Catálogo: iPhone 15 Pro 256GB (stock: 50)
+Producto normal: iPhone 15 Pro 256GB (stock: 50)
 - Precio: $1,199,999
 - Stock disponible ahora
 ```
 
-### Después (con preventa agregada)
+### Después (con preventa agregada) — un Product por color
 ```
-Catálogo: iPhone 15 Pro 256GB (isPreorder: true, stock: 0)
-- Precio: $1,200,000 (precio mínimo de variantes)
-- Images (campo JSON): [
-    { color: "Negro", precio: 1200000, disponibleEn: "2026-10-15" },
-    { color: "Azul", precio: 1250000, disponibleEn: "2026-10-15" },
-    { color: "Titanio", precio: 1300000, disponibleEn: "2026-10-20" }
-  ]
-- Disponible en X días - Reservar ahora
+Product { id: "abc1", name: "iPhone 15 Pro", sub: "256GB", color: "Negro",
+          modelGroup: "pre-iphone-15-pro-256gb", isPreorder: true, stock: 0,
+          price: 1200000, availableFrom: "2026-10-15" }
+
+Product { id: "abc2", name: "iPhone 15 Pro", sub: "256GB", color: "Azul",
+          modelGroup: "pre-iphone-15-pro-256gb", isPreorder: true, stock: 0,
+          price: 1250000, availableFrom: "2026-10-15" }
+
+Product { id: "abc3", name: "iPhone 15 Pro", sub: "256GB", color: "Titanio",
+          modelGroup: "pre-iphone-15-pro-256gb", isPreorder: true, stock: 0,
+          price: 1300000, availableFrom: "2026-10-20" }
 ```
+El `modelGroup` compartido es lo que permite que el detalle de producto
+los muestre como "un mismo dispositivo con 3 colores".
+
+---
+
+## Administrar lo ya publicado: pestaña "Preventas activas"
+
+`/admin/preventa` tiene dos pestañas:
+
+- **Agregar preventa**: el flujo descrito arriba (grid + modal + panel lateral)
+- **Preventas activas**: lista todo lo que ya está publicado en el catálogo,
+  agrupado por dispositivo (mismo `modelGroup`)
+
+Esta pestaña **no** es lo mismo que `/admin/productos` ni `/admin/stock` —
+esos dos excluyen explícitamente los productos con `isPreorder: true`.
+"Preventas activas" es la única vista de administración donde se ven.
+
+Por cada dispositivo se muestra una tarjeta con:
+- Imagen, modelo y almacenamiento
+- Un bloque por color, con campos editables de **precio** y **fecha**, un
+  botón **Guardar** (llama a `PUT /api/products/[id]`) y un botón
+  **Eliminar** (llama a `DELETE /api/products/[id]`, borra ese color)
+- Un botón **"Eliminar dispositivo del catálogo"** que borra todos los
+  colores de ese `modelGroup` de una vez
 
 ---
 
@@ -223,6 +260,14 @@ Catálogo: iPhone 15 Pro 256GB (isPreorder: true, stock: 0)
 
 ## Flujo Técnico (para desarrolladores)
 
+> **Nota (2026-08-29):** la primera versión de este endpoint guardaba las
+> variantes de color como un array de objetos dentro de `Product.images`.
+> Ese campo es `String[]` en el schema de Prisma, así que cada `create()`
+> fallaba en silencio (el `catch` por-item ocultaba el error) y las
+> preventas nunca se publicaban. Se rediseñó para usar el mismo mecanismo
+> que ya usa el resto del sitio para variantes de color: un `Product` real
+> por color, agrupados por `modelGroup`.
+
 ### 1. Frontend: Recolecta datos
 ```javascript
 preventasAgregadas = [
@@ -238,53 +283,41 @@ preventasAgregadas = [
 ]
 ```
 
-### 2. Frontend: Envía al API
+### 2. Frontend: Envía al API (una entrada por color)
 ```
 POST /api/admin/preorders/bulk
 {
   preventas: [
-    {
-      modelo: "iPhone 15 Pro",
-      almacenamiento: "256GB",
-      imageUrl: "...",
-      color: "Negro",
-      precio: 1200000,
-      fecha: "2026-10-15"
-    },
-    {
-      modelo: "iPhone 15 Pro",
-      almacenamiento: "256GB",
-      imageUrl: "...",
-      color: "Azul",
-      precio: 1250000,
-      fecha: "2026-10-15"
-    }
+    { modelo: "iPhone 15 Pro", almacenamiento: "256GB", imageUrl: "...", color: "Negro", precio: 1200000, fecha: "2026-10-15" },
+    { modelo: "iPhone 15 Pro", almacenamiento: "256GB", imageUrl: "...", color: "Azul",  precio: 1250000, fecha: "2026-10-15" }
   ]
 }
 ```
 
-### 3. API: Agrupa y crea productos
+### 3. API: crea UN Product real por color, agrupados por `modelGroup`
 ```javascript
-// Agrupa por modelo + almacenamiento
-grouped = {
-  "iPhone 15 Pro|256GB": {
-    variantes: [...]
-  }
-}
+const modelGroup = `pre-${slugify(modelo)}-${slugify(almacenamiento)}`
+// -> "pre-iphone-15-pro-256gb"
 
-// Crea UN producto por grupo
-for cada grupo:
-  Product.create({
-    name: "iPhone 15 Pro",
-    sub: "256GB",
-    isPreorder: true,
-    stock: 0,
-    images: JSON.stringify([
-      { color: "Negro", precio: 1200000, disponibleEn: "2026-10-15" },
-      { color: "Azul", precio: 1250000, disponibleEn: "2026-10-15" }
-    ])
-  })
+// Si ya existe un Product con ese modelGroup + color + isPreorder:true,
+// se actualiza (precio/fecha/imagen) en vez de duplicarse.
+Product.create({
+  name: "iPhone 15 Pro",
+  sub: "256GB",
+  color: "Negro",
+  modelGroup: "pre-iphone-15-pro-256gb",
+  isPreorder: true,
+  stock: 0,
+  price: 1200000,
+  availableFrom: new Date("2026-10-15"),
+})
+// ...un create() más por cada color (Azul, etc.)
 ```
+
+Este es el mismo campo `modelGroup` que usa `/detail/[id]/page.tsx` para
+buscar variantes hermanas y mostrar el selector de color, y el mismo que
+usa `products/route.ts` (`progroupMin`/`progroupCount`) para calcular el
+"desde $X, N variantes" en las cards del catálogo.
 
 ### 4. API: Limpia cache
 ```javascript
@@ -292,20 +325,24 @@ productCache.clear()
 // El producto aparece inmediatamente en catálogo
 ```
 
+### 5. Administración: pestaña "Preventas activas"
+`GET /api/products?preorder=true&limit=100` devuelve todos los Products
+con `isPreorder:true` (este filtro aplica siempre, sin importar si el
+caller es admin). El frontend los agrupa por `modelGroup` en memoria para
+mostrar un div por dispositivo con sus variantes. Cada variante se edita
+con `PUT /api/products/[id]` (`price`, `availableFrom`) y se elimina con
+`DELETE /api/products/[id]` (hard delete — no hay PreOrder ni inventario
+real asociado).
+
 ### 5. Base de datos
 ```sql
 SELECT * FROM products WHERE isPreorder = true;
 
-id: "xyz123"
-name: "iPhone 15 Pro"
-sub: "256GB"
-price: 1200000  -- Precio mínimo
-stock: 0
-isPreorder: true
-images: [
-  { color: "Negro", precio: 1200000, disponibleEn: "2026-10-15" },
-  { color: "Azul", precio: 1250000, disponibleEn: "2026-10-15" }
-]
+id: "abc1" | name: "iPhone 15 Pro" | sub: "256GB" | color: "Negro"
+modelGroup: "pre-iphone-15-pro-256gb" | price: 1200000 | stock: 0
+
+id: "abc2" | name: "iPhone 15 Pro" | sub: "256GB" | color: "Azul"
+modelGroup: "pre-iphone-15-pro-256gb" | price: 1250000 | stock: 0
 ```
 
 ---
@@ -318,13 +355,26 @@ Obtiene la lista de dispositivos disponibles para agregar preventas
 - Retorna: Array de PriceListItem
 
 ### POST `/api/admin/preorders/bulk`
-Publica las preventas agregadas como productos en catálogo
-- Body: `{ preventas: Array }`
-- Retorna: `{ success: true, productosCreados: [], total: number }`
+Crea/actualiza un Product por cada color enviado (agrupados por modelGroup)
+- Body: `{ preventas: [{ modelo, almacenamiento, imageUrl, brand, color, precio, fecha }] }`
+- Retorna: `{ success: true, productosCreados: string[], total: number }`
+
+### GET `/api/products?preorder=true&limit=100`
+Usado por la pestaña "Preventas activas" para listar todo lo publicado
+- Filtra `isPreorder: true` sin importar si el caller es admin
+- Retorna: `{ data: Product[], ... }`
+
+### PUT `/api/products/[id]`
+Edita precio/fecha de una variante puntual (color)
+- Body: `{ price?, availableFrom? }`
+- Limpia `productCache` al terminar
+
+### DELETE `/api/products/[id]`
+Elimina (hard delete) una variante puntual
+- Usado tanto para "Eliminar color" como, en loop, para "Eliminar dispositivo"
 
 ### GET `/api/products?preorder=false`
-Obtiene productos normales (excluye preventas) en admin
-- Admin: exclude preorder by default
+Obtiene productos normales (excluye preventas) cuando el caller es admin
 - Público: mostrar todas
 
 ---
@@ -335,28 +385,39 @@ Obtiene productos normales (excluye preventas) en admin
 R: Sí, se agruparán automáticamente. Si agregas iPhone 15 Pro 256GB dos veces con diferentes colores, en el panel lateral se verán como UN SOLO dispositivo con todos los colores.
 
 **P: ¿Qué pasa si cambio el precio después de publicar?**
-R: Debes crear una nueva preventa. Los productos ya publicados no se actualizan automáticamente.
+R: Andá a la pestaña "Preventas activas", editá el precio/fecha de ese color y hacé clic en "Guardar" — no hace falta crear una preventa nueva.
 
 **P: ¿Se puede reservar desde el catálogo?**
 R: Sí, los clientes verán un botón "Reservar ahora" en lugar de "Comprar" para productos con preventa.
 
 **P: ¿Dónde aparecen en el admin?**
-R: En `/admin/stock` y `/admin/productos` NO aparecen (isPreorder=true los excluye). Solo aparecen en el catálogo público (`/productos`).
+R: En `/admin/stock` y `/admin/productos` NO aparecen (isPreorder=true los excluye en ambos). La única vista de administración donde se ven es la pestaña "Preventas activas" en `/admin/preventa`.
 
-**P: ¿Cuándo se elimina una preventa?**
-R: Las preventas son permanentes. Para "desactivarla", debes marcar el producto como eliminado desde `/admin/productos` (si fuera visible).
+**P: ¿Cómo elimino una preventa?**
+R: En "Preventas activas": "Eliminar" borra solo ese color, "Eliminar dispositivo del catálogo" borra todos los colores de ese modelo. Es un hard delete (no queda soft-deleted como los productos normales).
 
 ---
 
 ## Solución de Problemas
 
-### "Producto no encontrado"
-**Causa:** El ID del dispositivo no es válido o no existe en Lista de Precios
-**Solución:** Verifica que el dispositivo esté en `GET /api/admin/precios`
+### "Producto no encontrado" (endpoint viejo, ya no debería aparecer)
+Este error era del diseño anterior, que intentaba reutilizar un `productId`
+de PriceList como si fuera un `Product`. El endpoint actual ya no depende
+de ningún `productId` externo — recibe modelo/almacenamiento/color/precio/fecha
+y crea el `Product` de preventa desde cero.
 
-### "0 preventas agregadas"
-**Causa:** Error al publicar (ver logs del servidor)
-**Solución:** Revisar que todos los campos sean válidos (precio > 0, fecha futura)
+### "0 preventas creadas" / "0 preventas agregadas"
+**Causa histórica:** `Product.images` es `String[]` en el schema, pero la
+versión anterior del endpoint guardaba ahí un array de objetos
+(`{color, precio, disponibleEn}`). Prisma rechazaba el `create()` y el
+`catch` por-item lo ocultaba. **Ya corregido** — ahora cada color es un
+`Product` normal sin usar `images` para nada especial.
+Si volviera a pasar: revisar los logs del servidor, ahí queda el error real.
+
+### Aparece en `/admin/stock`
+**Causa histórica:** `renderStockList` (en `public/lib/render.js`) no
+filtraba `isPreorder`, a diferencia de `renderAdminProductsFiltered` que
+sí lo hacía para `/admin/productos`. **Ya corregido.**
 
 ### No aparece en catálogo
 **Causa:** Cache de productos no fue limpiado
