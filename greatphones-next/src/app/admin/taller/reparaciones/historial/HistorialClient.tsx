@@ -56,6 +56,9 @@ export default function HistorialClient() {
   const [terceroRepairId, setTerceroRepairId] = useState<string | null>(null)
   const [terceroCosto, setTerceroCosto] = useState('')
   const [terceroEnviando, setTerceroEnviando] = useState(false)
+  const [costoRepairId, setCostoRepairId] = useState<string | null>(null)
+  const [costoValue, setCostoValue] = useState('')
+  const [costoEnviando, setCostoEnviando] = useState(false)
 
   const load = async () => {
     setCargando(true)
@@ -77,10 +80,13 @@ export default function HistorialClient() {
       setTerceroCosto('')
       return
     }
-    // Para DELIVERED
-    const mensajeConfirm = `¿Marcar ${r.code} como entregado${r.status === 'THIRD_PARTY' ? ' (venía de tercero)' : ''}?`
-    const ok = confirm(mensajeConfirm)
-    if (!ok) return
+    // Para DELIVERED — pedir costo si no viene de tercero
+    if (r.status !== 'THIRD_PARTY') {
+      setCostoRepairId(r.id)
+      setCostoValue('')
+      return
+    }
+    // Si viene de tercero, entregar sin pedir costo
     const body: Record<string, unknown> = { id: r.id, status: destino }
     if (destino === 'DELIVERED') body.deliveredAt = new Date().toISOString()
     const res = await fetch('/api/admin/taller/reparaciones', {
@@ -127,6 +133,36 @@ export default function HistorialClient() {
       load()
     } finally {
       setTerceroEnviando(false)
+    }
+  }
+
+  const confirmarCosto = async () => {
+    if (!costoRepairId) return
+    const repair = rows.find(x => x.id === costoRepairId)
+    if (!repair) return
+    setCostoEnviando(true)
+    try {
+      const body: Record<string, unknown> = { id: costoRepairId, status: 'DELIVERED', deliveredAt: new Date().toISOString() }
+      if (costoValue) body.cost = Math.round(parseFloat(costoValue) || 0)
+      const res = await fetch('/api/admin/taller/reparaciones', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) {
+        const d = await res.json()
+        setMsg({ t: 'error', s: d.error || 'Error' })
+        setTimeout(() => setMsg(null), 3000)
+        setCostoRepairId(null)
+        return
+      }
+      setMsg({ t: 'success', s: `Reparación ${repair.code} entregada` })
+      setTimeout(() => setMsg(null), 3000)
+      setCostoRepairId(null)
+      load()
+    } finally {
+      setCostoEnviando(false)
     }
   }
 
@@ -428,6 +464,91 @@ export default function HistorialClient() {
                   }}
                 >
                   {terceroEnviando ? 'Enviando…' : 'Enviar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {costoRepairId && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 999,
+            }}
+            onClick={() => !costoEnviando && setCostoRepairId(null)}
+          >
+            <div
+              style={{
+                background: '#fff',
+                borderRadius: 12,
+                padding: 24,
+                maxWidth: 400,
+                boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <h3 style={{ margin: '0 0 16px', color: '#181B2E', fontSize: 16, fontWeight: 700 }}>
+                Costo de reparación
+              </h3>
+              <p style={{ fontSize: 13.5, color: '#6B7280', marginBottom: 16 }}>
+                ¿Cuál fue el costo de la reparación?
+              </p>
+              <input
+                type="number"
+                value={costoValue}
+                onChange={e => setCostoValue(e.target.value)}
+                placeholder="Ej: 50000"
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1.5px solid #E6E7F0',
+                  borderRadius: 9,
+                  fontSize: 13.5,
+                  marginBottom: 20,
+                  boxSizing: 'border-box',
+                }}
+                disabled={costoEnviando}
+              />
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setCostoRepairId(null)}
+                  disabled={costoEnviando}
+                  style={{
+                    padding: '9px 16px',
+                    border: '1.5px solid #E6E7F0',
+                    background: '#fff',
+                    color: '#64748B',
+                    borderRadius: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: costoEnviando ? 'not-allowed' : 'pointer',
+                    opacity: costoEnviando ? 0.6 : 1,
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={confirmarCosto}
+                  disabled={costoEnviando}
+                  style={{
+                    padding: '9px 16px',
+                    border: 'none',
+                    background: '#0F9D58',
+                    color: '#fff',
+                    borderRadius: 9,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: costoEnviando ? 'not-allowed' : 'pointer',
+                    opacity: costoEnviando ? 0.6 : 1,
+                  }}
+                >
+                  {costoEnviando ? 'Guardando…' : 'Entregar'}
                 </button>
               </div>
             </div>
