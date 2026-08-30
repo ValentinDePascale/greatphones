@@ -55,6 +55,41 @@
       </div>
     </div>
   </div>
+
+  <!-- Modal de Dispositivos Compatibles -->
+  <div class="compat-modal-overlay" id="compatModal" onclick="closeCompatModal(event)" style="display:none">
+    <div class="compat-modal" onclick="event.stopPropagation()">
+      <div class="compat-modal-hdr">
+        <div>
+          <h2 class="compat-modal-title">Dispositivos compatibles</h2>
+          <p class="compat-modal-sub">Selecciona los modelos con los que funciona este accesorio</p>
+        </div>
+        <button class="compat-modal-close" onclick="closeCompatModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="compat-modal-tools">
+        <div class="compat-actions-row" style="margin-bottom:14px">
+          <button class="compat-action-btn" onclick="selectAllCompat()">Seleccionar todo</button>
+          <button class="compat-action-btn compat-action-btn--sec" onclick="clearAllCompat()">Limpiar</button>
+        </div>
+        <div class="compat-range-row" style="margin-bottom:14px">
+          <label style="font-size:11px;color:var(--gray);font-weight:600;min-width:60px">Rango:</label>
+          <select class="compat-range-sel" id="compatRangeFrom"></select>
+          <span style="font-size:12px;color:var(--gray);min-width:15px;text-align:center">a</span>
+          <select class="compat-range-sel" id="compatRangeTo"></select>
+          <button class="compat-range-apply" onclick="applyCompatRange()">Aplicar</button>
+        </div>
+      </div>
+
+      <div class="compat-modal-grid" id="accCompatGrid"></div>
+
+      <div class="compat-modal-footer">
+        <button class="compat-done-btn" onclick="closeCompatModal()">Listo</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ============================= PAGE: ADMIN ============================= -->
