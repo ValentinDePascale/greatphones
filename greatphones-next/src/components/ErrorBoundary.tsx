@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { errorLogger } from '@/lib/error-logger'
 
 interface Props {
@@ -14,7 +14,7 @@ interface State {
 }
 
 export default function ErrorBoundary({ children, fallback }: Props) {
-  const [state, setState] = React.useState<State>({
+  const [state, setState] = useState<State>({
     hasError: false,
     error: null,
   })
