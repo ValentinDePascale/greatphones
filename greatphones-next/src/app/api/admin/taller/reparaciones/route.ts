@@ -137,8 +137,8 @@ export async function POST(request: Request) {
     const code = genCode()
 
     const pricePaid = d.precioCob || 0
-    const cost = d.cost || 0
-    const profitReal = pricePaid - cost
+    const costValue = d.cost || 0
+    const profitReal = pricePaid - costValue
 
     const repair = await prisma.repair.create({
       data: {
@@ -149,6 +149,7 @@ export async function POST(request: Request) {
         type: d.tipo || 'Particular',
         clientName: d.cliente,
         clientPhone: d.tel || null,
+        clientDni: d.clienteDni || null,
         imei: d.imei || null,
         pin: d.pin || null,
         fault1: d.falla1,
@@ -159,7 +160,6 @@ export async function POST(request: Request) {
         priceCalc: d.precioCalculado || 0,
         estimatedHours: d.tiempoEstimadoHoras || null,
         pricePaid,
-        cost,
         profitReal,
         operator: d.operador,
         status: d.esDiagnostico ? 'DIAGNOSIS' : 'PENDING',
