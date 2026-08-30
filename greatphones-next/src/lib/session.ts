@@ -44,14 +44,9 @@ export function clearSessionCookie(): string {
   return `${COOKIE_NAME}=; HttpOnly${secure}; SameSite=Lax; Path=/; Max-Age=0`
 }
 
-export function getSessionFromCookies(cookieHeader: string | null): SessionPayload | null {
-  if (!cookieHeader) return null
+export function verifySessionToken(token: string | null | undefined): SessionPayload | null {
+  if (!token) return null
 
-  const cookies = cookieHeader.split(';').map(c => c.trim())
-  const sessionCookie = cookies.find(c => c.startsWith(`${COOKIE_NAME}=`))
-  if (!sessionCookie) return null
-
-  const token = sessionCookie.slice(COOKIE_NAME.length + 1)
   const parts = token.split('.')
   if (parts.length !== 2) return null
 
@@ -60,6 +55,9 @@ export function getSessionFromCookies(cookieHeader: string | null): SessionPaylo
   const expectedSig = sign(encoded)
   const providedBuf = Buffer.from(providedSig)
   const expectedBuf = Buffer.from(expectedSig)
+  // Las firmas deben tener el mismo largo para timingSafeEqual; si difieren,
+  // el token es inválido (evita comparar buffers de distinto tamaño).
+  if (providedBuf.length !== expectedBuf.length) return null
   if (!crypto.timingSafeEqual(providedBuf, expectedBuf)) return null
 
   try {
@@ -71,4 +69,15 @@ export function getSessionFromCookies(cookieHeader: string | null): SessionPaylo
     // Invalid token format — return null (no session)
     return null
   }
+}
+
+export function getSessionFromCookies(cookieHeader: string | null): SessionPayload | null {
+  if (!cookieHeader) return null
+
+  const cookies = cookieHeader.split(';').map(c => c.trim())
+  const sessionCookie = cookies.find(c => c.startsWith(`${COOKIE_NAME}=`))
+  if (!sessionCookie) return null
+
+  const token = sessionCookie.slice(COOKIE_NAME.length + 1)
+  return verifySessionToken(token)
 }

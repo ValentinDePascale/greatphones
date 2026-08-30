@@ -1,8 +1,10 @@
 import { getServerSession } from 'next-auth'
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getSessionFromCookies } from '@/lib/session'
+import { getSessionFromCookies, verifySessionToken } from '@/lib/session'
+import { SESSION_COOKIE_NAME } from '@/config'
 
 export class AuthError extends Error {
   status: number
@@ -23,28 +25,31 @@ async function getAuthenticatedUser(request?: Request) {
     if (user) return user
   }
 
-  if (request) {
-    const cookieHeader = request.headers.get('cookie')
-    const sessionPayload = getSessionFromCookies(cookieHeader)
-    if (sessionPayload) {
-      const user = await prisma.user.findUnique({
-        where: { id: sessionPayload.id },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          phone: true,
-          dni: true,
-          direccion: true,
-          piso: true,
-          cp: true,
-          provincia: true,
-          ciudad: true,
-          role: true,
-        },
-      })
-      if (user) return user
-    }
+  // `request` está disponible en Route Handlers. En Server Components (p.ej.
+  // el layout de /admin) no existe un Request; ahí leemos la cookie firmada
+  // vía la API de next/headers, que solo funciona dentro del render de RSC.
+  const sessionPayload = request
+    ? getSessionFromCookies(request.headers.get('cookie'))
+    : verifySessionToken((await cookies()).get(SESSION_COOKIE_NAME)?.value)
+
+  if (sessionPayload) {
+    const user = await prisma.user.findUnique({
+      where: { id: sessionPayload.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        dni: true,
+        direccion: true,
+        piso: true,
+        cp: true,
+        provincia: true,
+        ciudad: true,
+        role: true,
+      },
+    })
+    if (user) return user
   }
 
   return null
