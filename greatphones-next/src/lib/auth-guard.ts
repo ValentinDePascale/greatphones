@@ -61,10 +61,10 @@ export async function requireSession(request?: Request) {
 export async function requireAdmin(request?: Request) {
   const user = await getAuthenticatedUser(request)
   if (!user) {
-    throw new AuthError('No autenticado', 401)
+    throw new AuthError('No autenticado. Por favor, inicia sesión.', 401)
   }
   if (user.role !== 'ADMIN') {
-    throw new AuthError('Acceso denegado', 403)
+    throw new AuthError('No tienes permiso para acceder al panel de administración', 403)
   }
   return user
 }
