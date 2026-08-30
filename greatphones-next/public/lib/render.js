@@ -698,52 +698,36 @@ function renderGrid(gid,prods){
       '</article></a>';
     }
 
-    // === GROUP CARD ===
-    if(p.isGroup){
+    // === GROUP CARD (solo preventa) ===
+    // Los grupos de productos normales (mismo modelo, distinto color) NO
+    // usan una card especial: caen al render de "SINGLE PRODUCT CARD" más
+    // abajo, que ya sabe mostrar "Desde $X" cuando variantCount>1 y agrega
+    // al carrito la variante más barata directo, igual que un producto
+    // normal. El usuario elige el color real en la página de detalle
+    // ("Variantes disponibles"), no en la card del catálogo.
+    if(p.isGroup&&p.isPreorder){
       // Grupo de preventa: igual que una card normal, sin badge, mostrando
       // precio real (sin "Desde") y un contador de días hasta disponibilidad.
-      if(p.isPreorder){
-        var gInfo=preorderCountdown(p);
-        var gSubParts=[];
-        if(p.color)gSubParts.push(p.color);
-        if(p.storage)gSubParts.push(p.storage);
-        var gSub=gSubParts.length?gSubParts.join(' / '):(p.sub||'');
-        return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
-          '<article class="pcard pcard-group pcard-preorder">'+
-          '<div class="pcard-img">'+
-            '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
-            imgHtml(p.imageUrl,p.ico,false)+
-          '</div>'+
-          '<div class="pcard-body">'+
-            '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
-            '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
-            (gSub?'<div class="pcard-subtitle">'+esc(gSub)+'</div>':'')+
-            preorderSpecsHTML(p)+
-            '<div class="pcard-price-row"><span class="pcard-price">'+fmt(p.price)+'</span></div>'+
-            '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
-            gInfo.html+
-            '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
-          '</div>'+
-        '</article></a>';
-      }
-      var gBadge=p.stock===0?'<div class="pcard-badge pcard-badge--gray">Agotado</div>':(p.discount>0?'<div class="pcard-badge">Hasta -'+p.discount+'%</div>':'');
+      var gInfo=preorderCountdown(p);
+      var gSubParts=[];
+      if(p.color)gSubParts.push(p.color);
+      if(p.storage)gSubParts.push(p.storage);
+      var gSub=gSubParts.length?gSubParts.join(' / '):(p.sub||'');
       return '<a href="/detail/'+p.id+'" style="text-decoration:none;color:inherit;display:block">'+
-        '<article class="pcard pcard-group'+(p.stock===0?' pcard-out-of-stock':'')+'">'+
+        '<article class="pcard pcard-group pcard-preorder">'+
         '<div class="pcard-img">'+
-          gBadge+
           '<button class="pcard-fav '+(isFav?'on':'')+'" onclick="event.stopPropagation();event.preventDefault();toggleFavFromCard(\''+p.id+'\')">'+heartSvg+'</button>'+
-          imgHtml(p.imageUrl,p.ico,p.stock===0)+
-          '<div class="pcard-var-badge">'+p.variantCount+' var.</div>'+
+          imgHtml(p.imageUrl,p.ico,false)+
         '</div>'+
         '<div class="pcard-body">'+
-          '<div class="pcard-brand">'+esc(p.brand)+'</div>'+
-          '<div class="pcard-name">'+esc(p.name)+'</div>'+
-          condPillsHTML(p)+
-          '<div class="pcard-price-row">'+
-            '<span class="pcard-price">Desde '+fmt(p.price)+'</span>'+
-            (p.discount>0?'<span class="pcard-discount-badge">-'+p.discount+'%</span>':'')+
-          '</div>'+
-          '<button class="pcard-add" onclick="event.stopPropagation();event.preventDefault();openDetail(\''+p.id+'\')">Ver variantes</button>'+
+          '<div class="pcard-brand">'+esc(preorderBrand(p))+'</div>'+
+          '<div class="pcard-name">'+esc(p.name||p.modelGroup||'')+'</div>'+
+          (gSub?'<div class="pcard-subtitle">'+esc(gSub)+'</div>':'')+
+          preorderSpecsHTML(p)+
+          '<div class="pcard-price-row"><span class="pcard-price">'+fmt(p.price)+'</span></div>'+
+          '<div class="pcard-cuota"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg> 12x '+fmt(Math.round((p.price||0)/12))+' cuotas fijas</div>'+
+          gInfo.html+
+          '<button class="pcard-add" data-preorder="1" onclick="event.stopPropagation();event.preventDefault();addToCart(\''+p.id+'\',this,null,true,\''+(p.availableFrom||'')+'\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> Agregar al carrito</button>'+
         '</div>'+
       '</article></a>';
     }
@@ -1402,14 +1386,19 @@ function openDetail(id, variantId){
       var selV=window._selectedVariant;
       var avail=currentProd.availableFrom;
       if(selV&&selV.availableFrom)avail=selV.availableFrom;
-      addToCart(currentProd.id,this,null,true,avail);
+      // Cada color de preventa es un producto propio (selV.id): reservar
+      // siempre currentProd.id ignoraba el color elegido y agregaba el
+      // producto con el que se abrió el detalle.
+      var pid=(selV&&selV.id)||currentProd.id;
+      addToCart(pid,this,null,true,avail);
     };}
     var preBuyEl=document.getElementById('detBuyNow');
     if(preBuyEl){preBuyEl.style.display='';preBuyEl.textContent='Reservar ahora';preBuyEl.onclick=function(){
       var selV=window._selectedVariant;
       var avail=currentProd.availableFrom;
       if(selV&&selV.availableFrom)avail=selV.availableFrom;
-      addToCart(currentProd.id,null,null,true,avail);
+      var pid=(selV&&selV.id)||currentProd.id;
+      addToCart(pid,null,null,true,avail);
       setTimeout(function(){nav('checkout');},400);
     };}
     if(window._selectedVariant&&window._selectedVariant.availableFrom){}
@@ -1763,7 +1752,11 @@ function selectDetailVariant(idx){
   }else{
     renderDetBadges(mergedProd);
   }
-  startOfferTimer(variantProd||currentProd);
+  // startOfferTimer usa el mismo elemento (#detOfferTimer/#detTimerText) que
+  // el contador de "Disponible en:" de preventa, y lo oculta si el producto
+  // no tiene offerEnd (nunca lo tiene una preventa). Sin este guard, cambiar
+  // de color/variante pisaba y escondía el contador de preventa.
+  if(!window._isPreorderDetail)startOfferTimer(variantProd||currentProd);
 
   // Show variant-specific image
   if(v.imageUrl){
@@ -1842,8 +1835,12 @@ function renderDetailVariants(){
     // Buscar color en COLOR_HEX: mapear inglés→español, case-insensitive, fallback
     function findColorHex(colorName){
       if(!window.COLOR_HEX)return'#9ca3af';
-      // Mapeo de nombres en inglés a español (preventas)
-      var colorMap={'Blue':'Azul','Midnight':'Medianoche','Purple':'Púrpura','Red':'Rojo','Starlight':'Luz Estelar','Yellow':'Amarillo','Black':'Negro','White':'Blanco','Green':'Verde','Pink':'Rosa','Orange':'Naranja Coral','Silver':'Plateado','Gold':'Dorado','Gray':'Gris Espacial','Space Gray':'Gris Espacial','Rose Gold':'Rosa','Deep Purple':'Púrpura Intenso','Graphite':'Grafito','Midnight Black':'Negro','Sierra Blue':'Azul Sierra','Alpine Green':'Verde Alpino','Space Black':'Negro Espacial','Titanium Natural':'Titanio Natural','Titanium Blue':'Titanio Azul','Titanium White':'Titanio Blanco','Titanium Black':'Titanio Negro','Desert Titanium':'Titanio Desierto','Aqua':'Verde Agua','Ultra Violet':'Azul Ultramar'};
+      // Mapeo de nombres en inglés a español (preventas). Apple nombra sus
+      // acabados de titanio como "<Color> Titanium" (ej: "Natural Titanium",
+      // "Black Titanium"): ese es el orden real que llega desde la carga de
+      // preventas, no "Titanium <Color>". Se dejan ambos órdenes para no
+      // romper datos viejos que puedan estar cargados al revés.
+      var colorMap={'Blue':'Azul','Midnight':'Medianoche','Purple':'Púrpura','Red':'Rojo','Starlight':'Luz Estelar','Yellow':'Amarillo','Black':'Negro','White':'Blanco','Green':'Verde','Pink':'Rosa','Orange':'Naranja Coral','Silver':'Plateado','Gold':'Dorado','Gray':'Gris Espacial','Space Gray':'Gris Espacial','Rose Gold':'Rosa','Deep Purple':'Púrpura Intenso','Graphite':'Grafito','Midnight Black':'Negro','Sierra Blue':'Azul Sierra','Alpine Green':'Verde Alpino','Space Black':'Negro Espacial','Natural Titanium':'Titanio Natural','Blue Titanium':'Titanio Azul','White Titanium':'Titanio Blanco','Black Titanium':'Titanio Negro','Titanium Natural':'Titanio Natural','Titanium Blue':'Titanio Azul','Titanium White':'Titanio Blanco','Titanium Black':'Titanio Negro','Desert Titanium':'Titanio Desierto','Aqua':'Verde Agua','Ultra Violet':'Azul Ultramar'};
       var esp=colorMap[colorName]||colorName;
       if(window.COLOR_HEX[esp])return window.COLOR_HEX[esp];
       if(window.COLOR_HEX[colorName])return window.COLOR_HEX[colorName];
