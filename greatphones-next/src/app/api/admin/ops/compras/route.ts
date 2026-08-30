@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     const numero = 'CMP-' + Date.now().toString().slice(-7)
     const estadoInicial = d.reparacion === 'Sí' ? 'IN_REPAIR' : 'IN_STOCK'
 
-    // Crear el equipo en Inventario
+    // Crear el equipo en Inventario e inmediatamente en Productos
     const item = await prisma.inventoryItem.create({
       data: {
         code: numero,
@@ -75,6 +75,27 @@ export async function POST(request: Request) {
         targetPrice: d.precioVenta > 0 ? d.precioVenta : null,
         createdById: admin.id,
       },
+    })
+
+    // Crear también en Productos para que aparezca en el catálogo
+    const producto = await prisma.product.create({
+      data: {
+        name: d.modelo,
+        brand: d.marca || 'Genérico',
+        ico: 'smartphone',
+        condition: d.estadoFisico || 'Bueno',
+        price: d.precioVenta > 0 ? d.precioVenta : (d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig) * 1.3, // 30% margen por defecto
+        cost: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
+        stock: 1,
+        type: 'USADO',
+        imei: d.imei || undefined,
+        color: d.color || undefined,
+        description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
+        deletedAt: null,
+      },
+    }).catch(e => {
+      console.error('[Ops Compras] Error creando producto:', e)
+      return null
     })
 
     // Vincular a preventa si corresponde
