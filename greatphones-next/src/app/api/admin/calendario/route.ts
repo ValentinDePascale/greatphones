@@ -98,11 +98,11 @@ export async function GET(request: Request) {
         })
     }
 
-    // 2) Preventas pendientes / por entregar
+    // 2) Preventas pendientes / por entregar (PENDING, PAID, CONFIRMED, COMPRADO)
     const preventas = await prisma.preOrder.findMany({
       where: {
         deletedAt: null,
-        status: { in: ['PENDING', 'PAID', 'CONFIRMED'] },
+        status: { in: ['PENDING', 'PAID', 'CONFIRMED', 'COMPRADO'] },
       },
       orderBy: { expectedDeliveryStart: 'asc' },
       take: 500,
