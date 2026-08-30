@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Playfair_Display, DM_Sans } from 'next/font/google'
+import RootLayoutWrapper from '@/components/RootLayoutWrapper'
 
 const playfair = Playfair_Display({ subsets: ['latin'], display: 'swap', variable: '--font-playfair' })
 const dmSans = DM_Sans({ subsets: ['latin'], display: 'swap', variable: '--font-dm-sans' })
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <style>{`.page{display:none!important;visibility:hidden!important;height:0!important;overflow:hidden!important;position:absolute!important;width:1px!important}.page.act,.page[style*="display:block"]{display:block!important;visibility:visible!important;height:auto!important;overflow:visible!important;position:relative!important;width:auto!important}`}</style>
       </head>
       <body style={{ margin: 0 }}>
-        {children}
+        <RootLayoutWrapper>{children}</RootLayoutWrapper>
       </body>
     </html>
   )
