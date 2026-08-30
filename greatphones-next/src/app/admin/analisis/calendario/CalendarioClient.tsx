@@ -8,7 +8,8 @@ type DiaData = Record<string, Pendiente[]>
 interface Contadores { reparaciones: number; preventasPendientes: number; preventasCompradas: number; cotizaciones: number; arrepentimientos: number; pedidos: number }
 
 const MESES = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
-const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
+const DIAS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+const DIAS_CORTOS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
 const TIPOS: Array<{ key: string; label: string; color: string; soft: string }> = [
   { key: 'Reparaciones', label: 'Reparaciones', color: '#D97706', soft: '#FFFBEB' },
@@ -140,128 +141,224 @@ export default function CalendarioClient() {
   ]
 
   return (
-    <div style={{ padding: 32, maxWidth: 1280, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', margin: 0, letterSpacing: '-.3px' }}>Calendario de pendientes</h1>
-          <p style={{ fontSize: 13.5, color: '#64748B', marginTop: 4 }}>Reparaciones, preventas, pedidos, cotizaciones y arrepentimientos por día</p>
-        </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={() => cambiarMes(-1)} aria-label="Mes anterior" style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', fontSize: 17, color: '#0F172A' }}>‹</button>
-          <button onClick={() => cambiarMes(1)} aria-label="Mes siguiente" style={{ width: 40, height: 40, borderRadius: 10, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', fontSize: 17, color: '#0F172A' }}>›</button>
-          <button onClick={() => { setYear(hoy.getFullYear()); setMonth(hoy.getMonth()); setSelected(hoyIso) }} style={{ padding: '0 18px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, color: '#0F172A' }}>Hoy</button>
+    <div style={{ background: '#F8FAFC', minHeight: '100vh' }}>
+      {/* Header */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '20px 32px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div style={{ maxWidth: 1600, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', margin: 0 }}>Calendario de pendientes</h1>
+            <p style={{ fontSize: 13, color: '#64748B', marginTop: 2, margin: 0 }}>Gestión de tareas y reprogramación de fechas</p>
+          </div>
+          <button
+            onClick={() => { setYear(hoy.getFullYear()); setMonth(hoy.getMonth()); setSelected(hoyIso) }}
+            style={{ padding: '10px 20px', borderRadius: 10, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: '#0F172A', transition: 'all .2s' }}
+            onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#F1F5F9' }}
+            onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#fff' }}
+          >
+            Hoy
+          </button>
         </div>
       </div>
 
-      {/* KPIs generales (como el dashboard del ERP) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 12, marginTop: 20 }}>
-        <div style={{ background: 'linear-gradient(135deg,#FF6B2C,#F59E0B)', borderRadius: 14, padding: '16px 18px', color: '#fff' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, opacity: .85 }}>Total del mes</div>
-          <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{cargando ? '…' : totalMes}</div>
-        </div>
-        {KPI_ERP.map(k => (
-          <div key={k.label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 14, padding: '14px 16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 9, height: 9, borderRadius: '50%', background: k.color }} />
-              <span style={{ fontSize: 12.5, fontWeight: 600, color: '#475569' }}>{k.label}</span>
+      <div style={{ padding: '24px 32px', maxWidth: 1600, margin: '0 auto' }}>
+        {/* KPIs compactos en la parte superior */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
+          <div style={{ background: 'linear-gradient(135deg, #FF6B2C, #F59E0B)', borderRadius: 12, padding: '16px', color: '#fff', boxShadow: '0 2px 8px rgba(255, 107, 44, .15)' }}>
+            <div style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.9 }}>Total del mes</div>
+            <div style={{ fontSize: 32, fontWeight: 800, lineHeight: 1, marginTop: 6 }}>{cargando ? '…' : totalMes}</div>
+          </div>
+          {KPI_ERP.map(k => (
+            <div key={k.label} style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 12, padding: '12px 14px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: k.color, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748B', whiteSpace: 'nowrap' }}>{k.label}</span>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 800, color: k.color, marginTop: 4 }}>{cargando ? '…' : k.value}</div>
             </div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A', marginTop: 4 }}>{cargando ? '…' : k.value}</div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 300px', gap: 18, marginTop: 24, alignItems: 'start' }}>
-        {/* Calendario */}
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 18, overflow: 'hidden', boxShadow: '0 1px 2px rgba(15,23,42,.04),0 12px 40px rgba(15,23,42,.05)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', background: '#F8FAFC', borderBottom: '1px solid #E2E8F0' }}>
-            {DIAS.map(d => <div key={d} style={{ padding: '10px 8px', textAlign: 'center', fontSize: 11.5, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.5px' }}>{d}</div>)}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)' }}>
-            {Array.from({ length: firstWeekday }).map((_, i) => <div key={'b' + i} style={{ minHeight: 106, borderRight: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9', background: '#FAFBFC' }} />)}
-            {Array.from({ length: daysInMonth }).map((_, i) => {
-              const day = i + 1
-              const key = iso(year, month, day)
-              const d: DiaData | undefined = data[key]
-              const esHoy = key === hoyIso
-              const sel = key === selected
-              const items = TIPOS.flatMap(t => (d?.[t.key] || []).map(x => ({ ...x, tipo: t.key })))
-              return (
+        {/* Layout principal: Calendario + Sidebar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 20, alignItems: 'start' }}>
+          {/* Calendario Principal */}
+          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
+            {/* Header del Calendario */}
+            <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
-                  key={key}
-                  onClick={() => { setSelected(sel ? null : key); setTab(TIPOS[0].key) }}
-                  aria-pressed={sel}
-                  style={{
-                    minHeight: 106, padding: 7, textAlign: 'left', verticalAlign: 'top',
-                    borderRight: '1px solid #F1F5F9', borderBottom: '1px solid #F1F5F9',
-                    background: sel ? '#EEF2FF' : (esHoy ? '#FFFBEB' : '#fff'),
-                    cursor: 'pointer', position: 'relative', transition: 'background .12s',
-                  }}
+                  onClick={() => cambiarMes(-1)}
+                  aria-label="Mes anterior"
+                  style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', fontSize: 20, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
+                  onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#EFF6FF' }}
+                  onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#F8FAFC' }}
                 >
-                  <div style={{ fontSize: 12.5, fontWeight: esHoy || sel ? 800 : 600, color: esHoy ? '#D97706' : '#334155' }}>
-                    {day}
-                    {esHoy && <span style={{ fontSize: 9, marginLeft: 4, background: '#F59E0B', color: '#fff', borderRadius: 6, padding: '1px 5px' }}>hoy</span>}
-                  </div>
-                  {items.length > 0 && (
-                    <div style={{ marginTop: 5, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      {items.slice(0, 3).map((it, idx) => (
-                        <span key={idx} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, color: '#334155', background: '#F8FAFC', borderRadius: 5, padding: '2px 5px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          <span style={{ width: 6, height: 6, borderRadius: '50%', background: TIPOS.find(t => t.key === it.tipo)!.color, flexShrink: 0 }} />
-                          {it.titulo}
-                        </span>
-                      ))}
-                      {items.length > 3 && <span style={{ fontSize: 9.5, fontWeight: 700, color: '#64748B' }}>+{items.length - 3} más</span>}
-                    </div>
-                  )}
+                  ‹
                 </button>
-              )
-            })}
-          </div>
-        </div>
+                <div style={{ minWidth: 180 }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A' }}>{MESES[month]}</div>
+                  <div style={{ fontSize: 14, color: '#64748B', fontWeight: 600 }}>{year}</div>
+                </div>
+                <button
+                  onClick={() => cambiarMes(1)}
+                  aria-label="Mes siguiente"
+                  style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', fontSize: 20, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
+                  onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#EFF6FF' }}
+                  onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#F8FAFC' }}
+                >
+                  ›
+                </button>
+              </div>
+              <div style={{ fontSize: 12, color: '#94A3B8' }}>{totalMes} pendientes en {MESES[month]}</div>
+            </div>
 
-        {/* Ranking de días más ocupados */}
-        <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 800, color: '#0F172A', letterSpacing: '-.2px' }}>Días más ocupados</div>
-          <div style={{ fontSize: 11.5, color: '#64748B', marginTop: 1 }}>{MESES[month]} {year}</div>
-          {ranking.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: '#94A3B8', padding: '18px 0', textAlign: 'center' }}>Sin pendientes este mes.</div>
-          ) : (
-            ranking.map((r, idx) => (
-              <button
-                key={r.dia}
-                onClick={() => { setSelected(r.dia); setTab(TIPOS[0].key) }}
-                style={{ display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '10px 0', borderTop: '1px solid #F1F5F9' }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                  <span style={{ fontWeight: 700, fontSize: 12.5, color: '#0F172A' }}>
-                    {idx + 1}. {new Date(r.dia + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric' })}
-                  </span>
-                  <span style={{ fontWeight: 800, fontSize: 13, color: '#FF6B2C' }}>{r.total}</span>
+            {/* Grid del Calendario */}
+            <div style={{ padding: '20px 28px' }}>
+              {/* Encabezados de días */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 12 }}>
+                {DIAS_CORTOS.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#64748B', padding: '8px 0', textTransform: 'uppercase', letterSpacing: '.3px' }}>{d}</div>)}
+              </div>
+
+              {/* Días del mes */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
+                {Array.from({ length: firstWeekday }).map((_, i) => <div key={'blank' + i} />)}
+                {Array.from({ length: daysInMonth }).map((_, i) => {
+                  const day = i + 1
+                  const key = iso(year, month, day)
+                  const d: DiaData | undefined = data[key]
+                  const esHoy = key === hoyIso
+                  const sel = key === selected
+                  const items = TIPOS.flatMap(t => (d?.[t.key] || []).map(x => ({ ...x, tipo: t.key })))
+                  const conteosTipo = TIPOS.map(t => ({ key: t.key, count: d?.[t.key]?.length || 0, color: t.color }))
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => { setSelected(sel ? null : key); setTab(TIPOS[0].key) }}
+                      aria-pressed={sel}
+                      style={{
+                        aspectRatio: '1', padding: 12, textAlign: 'left', verticalAlign: 'top',
+                        background: sel ? '#EEF2FF' : (esHoy ? '#FFFBEB' : '#fff'),
+                        border: sel ? '2px solid #2563EB' : esHoy ? '2px solid #F59E0B' : '1px solid #E2E8F0',
+                        borderRadius: 14, cursor: 'pointer', position: 'relative', transition: 'all .15s',
+                        display: 'flex', flexDirection: 'column',
+                      }}
+                      onMouseOver={e => !sel && (e.currentTarget.style.background = '#F8FAFC')}
+                      onMouseOut={e => !sel && (e.currentTarget.style.background = esHoy ? '#FFFBEB' : '#fff')}
+                    >
+                      {/* Número del día */}
+                      <div style={{ fontSize: 13, fontWeight: esHoy || sel ? 800 : 700, color: sel ? '#2563EB' : esHoy ? '#D97706' : '#334155', lineHeight: 1 }}>
+                        {day}
+                      </div>
+
+                      {/* Indicadores de pendientes */}
+                      {items.length > 0 && (
+                        <div style={{ marginTop: 6, flex: 1, display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'flex-start', minHeight: 0 }}>
+                          {/* Puntos de color para cada tipo */}
+                          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                            {conteosTipo.filter(c => c.count > 0).map(c => (
+                              <span key={c.key} title={`${c.count} ${c.key}`} style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, opacity: 0.8 }} />
+                            ))}
+                          </div>
+                          {/* Número total de pendientes */}
+                          <div style={{ fontSize: 11, fontWeight: 700, color: '#0F172A', marginTop: 'auto' }}>
+                            {items.length} {items.length === 1 ? 'tarea' : 'tareas'}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Badge "hoy" */}
+                      {esHoy && (
+                        <div style={{ fontSize: 8.5, background: '#F59E0B', color: '#fff', borderRadius: 5, padding: '2px 5px', width: 'fit-content', fontWeight: 700, marginTop: 'auto' }}>
+                          HOY
+                        </div>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Sidebar: Resumen y Días ocupados */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {/* Legenda de colores */}
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>Tipos de pendientes</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {TIPOS.map(t => (
+                  <div key={t.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                    <span style={{ fontSize: 12, color: '#475569', flex: 1 }}>{t.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Días más ocupados */}
+            <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, padding: '16px', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#0F172A', marginBottom: 12 }}>Días más ocupados</div>
+              {ranking.length === 0 ? (
+                <div style={{ fontSize: 12.5, color: '#94A3B8', padding: '16px 0', textAlign: 'center' }}>Sin pendientes en {MESES[month]}</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+                  {ranking.map((r, idx) => (
+                    <button
+                      key={r.dia}
+                      onClick={() => { setSelected(r.dia); setTab(TIPOS[0].key) }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer',
+                        padding: '10px 0', borderBottom: idx < ranking.length - 1 ? '1px solid #F1F5F9' : 'none',
+                        transition: 'all .15s'
+                      }}
+                      onMouseOver={e => { (e.currentTarget as HTMLElement).style.background = '#F8FAFC' }}
+                      onMouseOut={e => { (e.currentTarget as HTMLElement).style.background = 'none' }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
+                        <span style={{ fontWeight: 700, fontSize: 12, color: '#0F172A' }}>
+                          {new Date(r.dia + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric' })}
+                        </span>
+                        <span style={{ fontWeight: 800, fontSize: 13, color: '#FF6B2C' }}>{r.total}</span>
+                      </div>
+                      <div style={{ height: 5, borderRadius: 3, background: '#F1F5F9', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${Math.round((r.total / maxRanking) * 100)}%`, background: 'linear-gradient(90deg, #FF6B2C, #F59E0B)', borderRadius: 3 }} />
+                      </div>
+                    </button>
+                  ))}
                 </div>
-                <div style={{ height: 6, borderRadius: 4, background: '#F1F5F9', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${Math.round((r.total / maxRanking) * 100)}%`, background: 'linear-gradient(90deg,#FF6B2C,#F59E0B)', borderRadius: 4 }} />
-                </div>
-              </button>
-            ))
-          )}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 14, borderTop: '1px solid #F1F5F9', paddingTop: 12 }}>
-            {TIPOS.map(t => (
-              <span key={t.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#475569' }}>
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color }} /> {t.label}
-              </span>
-            ))}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Detalle del día */}
+      {/* Detalle del día - Sección completa */}
       {selected && (
-        <div style={{ marginTop: 20 }}>
-          <div style={{ fontSize: 17, fontWeight: 800, color: '#0F172A' }}>
-            {new Date(selected + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            <span style={{ fontWeight: 500, marginLeft: 10, fontSize: 12.5, color: '#64748B' }}>{totalTipos} pendientes</span>
+        <div style={{ marginTop: 24, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
+          {/* Header del panel */}
+          <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+              <div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
+                  {new Date(selected + 'T12:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </div>
+                <div style={{ fontSize: 13, color: '#64748B', marginTop: 4 }}>
+                  {totalTipos} {totalTipos === 1 ? 'tarea pendiente' : 'tareas pendientes'}
+                </div>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                aria-label="Cerrar"
+                style={{ width: 32, height: 32, borderRadius: 10, border: '1px solid #E2E8F0', background: '#fff', cursor: 'pointer', fontSize: 18, color: '#64748B', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
+                onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#F1F5F9' }}
+                onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#fff' }}
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 12 }}>
+          {/* Filtros por tipo */}
+          <div style={{ padding: '16px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {TIPOS.map(t => {
               const n = conteoTipoDia(selected, t.key)
               const active = tabSel === t.key
@@ -271,92 +368,124 @@ export default function CalendarioClient() {
                   onClick={() => setTab(t.key)}
                   aria-pressed={active}
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 999,
-                    border: `1px solid ${active ? t.color : '#E2E8F0'}`,
-                    background: active ? t.color : '#fff', color: active ? '#fff' : '#475569',
-                    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 16px', borderRadius: 12,
+                    border: `1.5px solid ${active ? t.color : '#E2E8F0'}`,
+                    background: active ? t.soft : '#fff', color: active ? t.color : '#475569',
+                    fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all .15s'
                   }}
+                  onMouseOver={e => !active && (e.currentTarget.style.background = '#F8FAFC')}
+                  onMouseOut={e => !active && (e.currentTarget.style.background = '#fff')}
                 >
-                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? '#fff' : t.color }} />
-                  {t.label} · {n}
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: t.color, flexShrink: 0 }} />
+                  {t.label} {n > 0 && <span style={{ fontWeight: 600, marginLeft: 4 }}>({n})</span>}
                 </button>
               )
             })}
           </div>
 
-          <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 16, marginTop: 12, overflow: 'hidden' }}>
+          {/* Contenido */}
+          <div style={{ padding: '20px 28px' }}>
             {(diaSel[tabSel] || []).length === 0 ? (
-              <div style={{ padding: '26px 20px', textAlign: 'center', color: '#94A3B8', fontSize: 13.5 }}>Sin pendientes de este tipo en el día.</div>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94A3B8', fontSize: 14 }}>
+                No hay tareas de {TIPOS.find(t => t.key === tabSel)!.label.toLowerCase()} en este día
+              </div>
             ) : (
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: '#F8FAFC' }}>
-                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Referencia</th>
-                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Detalle</th>
-                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Fecha</th>
-                    <th style={{ textAlign: 'left', padding: '10px 16px', fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '.4px' }}>Reprogramar</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(diaSel[tabSel] || []).map((it: Pendiente) => (
-                    <tr key={it.id} style={{ borderTop: '1px solid #F1F5F9' }}>
-                      <td
-                        style={{ padding: '11px 16px', fontWeight: 700, color: '#0F172A', whiteSpace: 'nowrap', cursor: it.href ? 'pointer' : 'default' }}
-                        onClick={() => it.href && router.push(it.href)}
-                      >
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ color: TIPOS.find(t => t.key === tabSel)!.color }}><Icono n={ICOS[tabSel] || 'wrench'} /></span>
-                          {it.codigo}
-                        </span>
-                      </td>
-                      <td style={{ padding: '11px 16px', cursor: it.href ? 'pointer' : 'default' }} onClick={() => it.href && router.push(it.href)}>
-                        <div style={{ fontWeight: 600, color: '#0F172A' }}>{it.titulo}</div>
-                        <div style={{ fontSize: 12, color: '#64748B', marginTop: 1 }}>{it.subtitulo}</div>
-                      </td>
-                      <td style={{ padding: '11px 16px', fontSize: 12, color: '#64748B', whiteSpace: 'nowrap' }}>
-                        {new Date(it.hora).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
-                        {it.reprogramado && (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: 6, fontSize: 9.5, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', padding: '1px 6px', borderRadius: 99 }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: 11 }} aria-hidden="true">event_repeat</span>
-                            reprogramado
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {(diaSel[tabSel] || []).map((it: Pendiente) => {
+                  const tipoData = TIPOS.find(t => t.key === tabSel)!
+                  return (
+                    <div
+                      key={it.id}
+                      style={{
+                        padding: '16px', borderRadius: 14, border: '1px solid #E2E8F0', background: '#fff',
+                        transition: 'all .15s'
+                      }}
+                      onMouseOver={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = '#2563EB'
+                        ;(e.currentTarget as HTMLElement).style.background = '#EEF2FF'
+                      }}
+                      onMouseOut={e => {
+                        (e.currentTarget as HTMLElement).style.borderColor = '#E2E8F0'
+                        ;(e.currentTarget as HTMLElement).style.background = '#fff'
+                      }}
+                    >
+                      {/* Header de la tarea */}
+                      <div style={{ display: 'flex', alignItems: 'start', gap: 12, marginBottom: 8 }}>
+                        <div style={{ color: tipoData.color, marginTop: 2, flexShrink: 0 }}><Icono n={ICOS[tabSel] || 'wrench'} /></div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{ fontWeight: 700, color: '#0F172A', fontSize: 14, cursor: it.href ? 'pointer' : 'default' }}
+                            onClick={() => it.href && router.push(it.href)}
+                            onMouseOver={e => it.href && (e.currentTarget.style.color = tipoData.color)}
+                            onMouseOut={e => it.href && (e.currentTarget.style.color = '#0F172A')}
+                          >
+                            {it.codigo}
+                          </div>
+                          <div
+                            style={{ fontWeight: 600, color: '#0F172A', fontSize: 15, marginTop: 3, cursor: it.href ? 'pointer' : 'default' }}
+                            onClick={() => it.href && router.push(it.href)}
+                          >
+                            {it.titulo}
+                          </div>
+                          <div style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>{it.subtitulo}</div>
+                        </div>
+                      </div>
+
+                      {/* Footer: Fecha y acciones */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
+                            {new Date(it.hora).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                           </span>
-                        )}
-                      </td>
-                      <td style={{ padding: '11px 16px', whiteSpace: 'nowrap' }}>
+                          {it.reprogramado && (
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 700, color: '#7C3AED', background: '#F5F3FF', padding: '3px 8px', borderRadius: 6 }}>
+                              <span className="material-symbols-outlined" style={{ fontSize: 12 }} aria-hidden="true">event_repeat</span>
+                              Reprogramado
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Botones de acción */}
                         {reprogramando === it.id ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <input
                               type="date"
                               value={fechaNueva}
                               onChange={e => setFechaNueva(e.target.value)}
-                              style={{ padding: '5px 7px', border: '1px solid #E2E8F0', borderRadius: 7, fontSize: 12 }}
+                              style={{ padding: '6px 8px', border: '1px solid #E2E8F0', borderRadius: 8, fontSize: 13, fontWeight: 500 }}
                             />
                             <button
                               onClick={() => guardarReprogramacion(tabSel, it.id)}
                               disabled={guardandoReprog}
                               aria-label="Guardar nueva fecha"
-                              style={{ padding: '5px 8px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                              style={{ padding: '6px 12px', background: '#16A34A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all .2s' }}
+                              onMouseOver={e => !guardandoReprog && (e.currentTarget.style.background = '#15803D')}
+                              onMouseOut={e => !guardandoReprog && (e.currentTarget.style.background = '#16A34A')}
                             >
-                              Guardar
+                              ✓ Guardar
                             </button>
                             <button
                               onClick={cerrarReprogramar}
                               disabled={guardandoReprog}
                               aria-label="Cancelar"
-                              style={{ padding: '5px 8px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                              style={{ padding: '6px 12px', background: '#fff', color: '#64748B', border: '1px solid #E2E8F0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all .2s' }}
+                              onMouseOver={e => !guardandoReprog && (e.currentTarget.style.background = '#F8FAFC')}
+                              onMouseOut={e => !guardandoReprog && (e.currentTarget.style.background = '#fff')}
                             >
                               Cancelar
                             </button>
-                          </span>
+                          </div>
                         ) : (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                             <button
                               onClick={() => abrirReprogramar(it)}
                               aria-label={`Reprogramar ${it.codigo}`}
                               title="Mover a otra fecha"
-                              style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '5px 9px', background: '#F8FAFC', color: '#334155', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', fontSize: 11.5, fontWeight: 600 }}
+                              style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: '#F8FAFC', color: '#334155', border: '1px solid #E2E8F0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all .2s' }}
+                              onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.background = '#EFF6FF'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#2563EB' }}
+                              onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.background = '#F8FAFC'; (e.currentTarget as HTMLButtonElement).style.borderColor = '#E2E8F0' }}
                             >
-                              <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">event</span>
+                              <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden="true">event</span>
                               Mover
                             </button>
                             {it.reprogramado && (
@@ -365,18 +494,20 @@ export default function CalendarioClient() {
                                 disabled={guardandoReprog}
                                 aria-label={`Restaurar fecha original de ${it.codigo}`}
                                 title="Restaurar fecha original"
-                                style={{ padding: '5px 7px', background: '#fff', color: '#94A3B8', border: '1px solid #E2E8F0', borderRadius: 7, cursor: 'pointer', display: 'inline-flex' }}
+                                style={{ padding: '6px 10px', background: '#fff', color: '#94A3B8', border: '1px solid #E2E8F0', borderRadius: 8, cursor: 'pointer', display: 'inline-flex', transition: 'all .2s' }}
+                                onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2'; (e.currentTarget as HTMLButtonElement).style.color = '#DC2626' }}
+                                onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.background = '#fff'; (e.currentTarget as HTMLButtonElement).style.color = '#94A3B8' }}
                               >
-                                <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden="true">restart_alt</span>
+                                <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden="true">restart_alt</span>
                               </button>
                             )}
-                          </span>
+                          </div>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             )}
           </div>
         </div>
