@@ -946,7 +946,6 @@ function renderShopGrid(){
       var d=new Date(v.createdAt||0);
       return d>max?d:max;
     },new Date(0));
-    var maxDiscount=variants.reduce(function(max,v){return Math.max(max,v.discount||0);},0);
     var maxBattery=variants.reduce(function(max,v){return Math.max(max,v.battery||0);},0);
     displayList.push({
       id:cheapest.id,
@@ -963,7 +962,16 @@ function renderShopGrid(){
       ico:cheapest.ico,
       stock:inStock?variants.reduce(function(s,v){return s+v.stock;},0):0,
       createdAt:newestDate.toISOString(),
-      discount:maxDiscount,
+      // La card representa a la variante más barata (mismo precio/imagen que
+      // se muestra), así que su oferta también debe ser la de ESA variante
+      // puntual, no el mayor descuento entre todos los colores del grupo
+      // (eso mostraba el badge de oferta sin el isOffer/offerEnd real que
+      // isOfferValid() necesita, y la card nunca aparecía en oferta aunque
+      // la variante mostrada sí lo estuviera).
+      isOffer:!!cheapest.isOffer,
+      discount:cheapest.discount||0,
+      offerStart:cheapest.offerStart||null,
+      offerEnd:cheapest.offerEnd||null,
       // Preventa: exponer datos del más barato (disponibilidad, color, storage)
       isPreorder:!!cheapest.isPreorder,
       availableFrom:cheapest.isPreorder?cheapest.availableFrom:null,
