@@ -39,7 +39,11 @@
 
 ## 🟠 ALTOS (Funcionalidad incompleta)
 
-### 4. Preventas registradas no se ven en el calendario
+### 4. ✅ Preventas registradas no se ven en el calendario
+**Status:** ✅ CORREGIDO (commit c68517d)
+- **Problema:** Filtro de preventas no incluía status `'COMPRADO'`
+- **Solución:** Agregué `'COMPRADO'` al array de status permitidos
+- **Cambio:** Línea 105 del `/src/app/api/admin/calendario/route.ts`
 **Problema:** Las preventas que se registran no aparecen en el calendario de pendientes
 **Esperado:** Debe incluir preventas en la visualización del calendario
 **Status:** 🟠 Alto
