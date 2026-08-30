@@ -46,7 +46,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
     }
     const d = parsed.data
-    if (d.type !== 'NEUTRO' && (!d.amount || d.amount <= 0)) {
+    // Para transacciones en pesos, requiere amount > 0. Para USD, requiere amountUsd > 0
+    const amountForValidation = d.means === 'USD' ? d.amountUsd : d.amount
+    if (d.type !== 'NEUTRO' && (!amountForValidation || amountForValidation <= 0)) {
       return NextResponse.json({ error: 'El monto debe ser mayor a 0' }, { status: 400 })
     }
     if (d.means === 'USD' && !d.amountUsd) {
