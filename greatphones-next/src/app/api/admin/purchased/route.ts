@@ -27,16 +27,26 @@ export async function GET(request: Request) {
 
     // Compras locales registradas en "Registrar Compra" (InventoryItem con código CMP-)
     const whereLocal: any = { code: { startsWith: 'CMP-' } }
+    const searchConditions = []
     if (search) {
-      whereLocal.OR = [
-        { code: { contains: search, mode: 'insensitive' } },
-        { modelName: { contains: search, mode: 'insensitive' } },
-        { brand: { contains: search, mode: 'insensitive' } },
-        { imei: { contains: search, mode: 'insensitive' } },
-      ]
+      searchConditions.push({
+        OR: [
+          { code: { contains: search, mode: 'insensitive' } },
+          { modelName: { contains: search, mode: 'insensitive' } },
+          { brand: { contains: search, mode: 'insensitive' } },
+          { imei: { contains: search, mode: 'insensitive' } },
+        ]
+      })
     }
-    if (brand) whereLocal.brand = brand
-    if (condition) whereLocal.cosmeticCondition = condition
+    if (brand) {
+      searchConditions.push({ brand })
+    }
+    if (condition) {
+      searchConditions.push({ cosmeticCondition: condition })
+    }
+    if (searchConditions.length > 0) {
+      whereLocal.AND = searchConditions
+    }
 
     const [items, total, locales, totalLocales] = await Promise.all([
       prisma.purchasedDevice.findMany({
