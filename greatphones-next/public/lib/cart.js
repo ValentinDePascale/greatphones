@@ -454,7 +454,12 @@ function addToCartFromDetail(){
   if(currentProd){
     var v=window._selectedVariant;
     if(v){
-      addToCart(v.productId||currentProd.id,btn,v);
+      // v.productId: unidad de inventario por IMEI (apunta al Product padre).
+      // v.id: variante de color armada directo desde el Product hermano (no
+      // tiene productId propio). Sin el fallback a v.id, seleccionar un color
+      // y agregar al carrito siempre agregaba currentProd (el color con el
+      // que se abrió el detalle), ignorando el color elegido.
+      addToCart(v.productId||v.id||currentProd.id,btn,v);
     }else{
       addToCart(currentProd.id,btn);
     }
@@ -473,7 +478,12 @@ function buyNow(){
   if(currentProd){
     var v=window._selectedVariant;
     if(v){
-      addToCart(v.productId||currentProd.id,btn,v);
+      // v.productId: unidad de inventario por IMEI (apunta al Product padre).
+      // v.id: variante de color armada directo desde el Product hermano (no
+      // tiene productId propio). Sin el fallback a v.id, seleccionar un color
+      // y agregar al carrito siempre agregaba currentProd (el color con el
+      // que se abrió el detalle), ignorando el color elegido.
+      addToCart(v.productId||v.id||currentProd.id,btn,v);
     }else{
       addToCart(currentProd.id,btn);
     }

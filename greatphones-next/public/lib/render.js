@@ -791,7 +791,9 @@ function preorderBrand(p){
     // === SINGLE PRODUCT CARD ===
     var isPromoActive=isOfferValid(p);
     var basePrice=displayBasePrice(p);
-    var priceLabel=(p.variantCount>1?'Desde ':'');
+    // Sin "Desde": la card siempre muestra el precio real de la variante que
+    // representa al grupo (la más barata), como un producto normal.
+    var priceLabel='';
     var finalPrice=isPromoActive?Math.round(basePrice-basePrice*p.discount/100):basePrice;
     var cuota=Math.round(finalPrice/12);
     var badge=badgeHTML(p,isOutOfStock);
@@ -1417,6 +1419,46 @@ function openDetail(id, variantId){
     return;
   }
   window._isPreorderDetail=false;
+
+  // Mismo modelo, distinto color/storage: variantes = productos hermanos
+  // por modelGroup directo (igual que en preventa), SIN pedir inventario
+  // individual por IMEI para elegir color. Ese fetch (más abajo, todavía
+  // usado para productos sin hermanos por color) traía una lista que muchas
+  // veces ni siquiera incluía el color del producto abierto, y terminaba
+  // pisando el render con datos de otro color/precio: precio "Desde $X" y
+  // una mezcla de nombre/precio de un color con imagen/specs de otro.
+  var groupSiblings=[];
+  if(currentProd.modelGroup){
+    for(var gsi=0;gsi<PRODUCTS.length;gsi++){
+      var gsp=PRODUCTS[gsi];
+      if(!gsp.isPreorder&&gsp.modelGroup===currentProd.modelGroup)groupSiblings.push(gsp);
+    }
+  }
+  if(groupSiblings.length>1){
+    window._detailVariants=groupSiblings.map(function(gp){return Object.assign({},gp,{targetPrice:gp.price});});
+    window._variantsLoaded=true;
+    renderDetailVariants();
+    if(variantId){
+      for(var gvi=0;gvi<window._detailVariants.length;gvi++){
+        if(window._detailVariants[gvi].id===variantId){selectDetailVariant(gvi);break;}
+      }
+    }
+    if(window._selectedVariantIdx<0&&window._detailVariants.length>0)selectDetailVariant(0);
+    var gAddCartBtn=document.getElementById('detAddCart');var gBuyNowBtn=document.getElementById('detBuyNow');
+    if(gAddCartBtn){gAddCartBtn.style.display='';gAddCartBtn.textContent='Agregar al carrito';gAddCartBtn.onclick=function(){addToCartFromDetail();};}
+    if(gBuyNowBtn){gBuyNowBtn.style.display='';gBuyNowBtn.textContent='Comprar ahora';gBuyNowBtn.onclick=function(){buyNow();};}
+    if(typeof syncDetSticky==='function')syncDetSticky(gAddCartBtn);
+    var gConsultBtn=document.getElementById('detConsultBtn');if(gConsultBtn)gConsultBtn.style.display='flex';
+    updDetTotal();
+    renderRelatedAccs();
+    setDetLoading(false);
+    nav('detail');
+    return;
+  }
+
+  // Sin hermanos por color: se mantiene el flujo existente, que puede
+  // buscar unidades individuales por IMEI si el producto las tiene
+  // (inventario usado con selección granular por condición/batería).
   // Collect all product IDs sharing the same modelGroup
   var variantProdIds=[id];
   if(currentProd.modelGroup){
@@ -1431,47 +1473,55 @@ function openDetail(id, variantId){
   if(window._variantCache[cacheKey]&&window._variantCache[cacheKey].length>0){
     window._detailVariants=window._variantCache[cacheKey].filter(function(v){return v.status!=='SOLD';});
     window._variantsLoaded=true;
+    // renderDetailVariants() ya auto-selecciona una variante coherente (ver
+    // fix de selecci\u00f3n por defecto m\u00e1s abajo en esa funci\u00f3n) llamando a
+    // selectDetailVariant(), que deja nombre/precio/imagen/specs/badges
+    // consistentes entre s\u00ed. Antes, este bloque volv\u00eda a pisar todo eso con
+    // datos de currentProd + un precio "Desde", y como selectDetailVariant()
+    // no vuelve a reprocesar el mismo \u00edndice (guard anti-loop), la p\u00e1gina
+    // quedaba con una mezcla: nombre/precio de un color e imagen/specs de
+    // otro. Por eso ahora solo se arma el render gen\u00e9rico si nada qued\u00f3
+    // seleccionado (caso sin c\u00edrculos de color reconocidos).
     renderDetailVariants();
-    var isPromoActive=isOfferValid(currentProd);
-    // For variant products, use the minimum variant targetPrice
-    var basePrice=currentProd.price;
-    if(window._detailVariants.length>0){
-      var minTarget=Infinity;
-      for(var mi=0;mi<window._detailVariants.length;mi++){
-        if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
-          minTarget=window._detailVariants[mi].targetPrice;
-        }
-      }
-      if(minTarget<Infinity)basePrice=minTarget;
-    }
-    var finalPrice=isPromoActive?Math.round(basePrice*(1-currentProd.discount/100)):basePrice;
-    var cuota12=Math.round(finalPrice/12);
-    var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
-    var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
-    var name2El=document.getElementById('detName2');if(name2El)name2El.textContent=currentProd.name;
-    var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentProd.name;
-    // Show "Desde" if multiple variants
-    var priceLabel=window._detailVariants.length>1?'Desde ':'';
-    var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=priceLabel+fmt(finalPrice);
-    var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
-    var oldEl=document.getElementById('detOld');
-    if(isPromoActive&&currentProd.discount){
-      var originalPrice=basePrice;
-      if(oldEl){oldEl.textContent=fmt(originalPrice);oldEl.style.display='inline';}
-    }else{if(oldEl)oldEl.style.display='none';}
-    renderDetailImages();updDetTotal();
-    renderDetBadges(currentProd);
-    startOfferTimer(currentProd);
-    var fb=document.getElementById('detFavBtn');
-    if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
-    // Select variant AFTER base render so it can override specs/name/badges
+    // Deep link a una variante puntual: manda sobre la auto-selecci\u00f3n.
     if(variantId){
       for(var vi=0;vi<window._detailVariants.length;vi++){
         if(window._detailVariants[vi].id===variantId||window._detailVariants[vi].imei===variantId){
           selectDetailVariant(vi);break;
         }
       }
-    }else if(window._detailVariants.length>0)selectDetailVariant(0);
+    }
+    if(window._selectedVariantIdx<0){
+      var isPromoActive=isOfferValid(currentProd);
+      var basePrice=currentProd.price;
+      if(window._detailVariants.length>0){
+        var minTarget=Infinity;
+        for(var mi=0;mi<window._detailVariants.length;mi++){
+          if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
+            minTarget=window._detailVariants[mi].targetPrice;
+          }
+        }
+        if(minTarget<Infinity)basePrice=minTarget;
+      }
+      var finalPrice=isPromoActive?Math.round(basePrice*(1-currentProd.discount/100)):basePrice;
+      var brandEl=document.getElementById('detBrand');if(brandEl)brandEl.textContent=currentProd.brand||'Apple';
+      var typeEl=document.getElementById('detType');if(typeEl)typeEl.textContent=currentProd.type||'iPhone';
+      var name2El=document.getElementById('detName2');if(name2El)name2El.textContent=currentProd.name;
+      var nameEl=document.getElementById('detName');if(nameEl)nameEl.textContent=currentProd.name;
+      var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalPrice);
+      var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalPrice);
+      var oldEl=document.getElementById('detOld');
+      if(isPromoActive&&currentProd.discount){
+        if(oldEl){oldEl.textContent=fmt(basePrice);oldEl.style.display='inline';}
+      }else{if(oldEl)oldEl.style.display='none';}
+      renderDetailImages();
+      renderDetBadges(currentProd);
+      startOfferTimer(currentProd);
+      var fb=document.getElementById('detFavBtn');
+      if(fb){if(isFavorite(currentProd.id)){fb.innerHTML='\u2665';fb.classList.add('saved');}else{fb.innerHTML='\u2661';fb.classList.remove('saved');}}
+      if(window._detailVariants.length>0)selectDetailVariant(0);
+    }
+    updDetTotal();
     renderRelatedAccs();
     setDetLoading(false);
     nav('detail');
@@ -1498,26 +1548,11 @@ function openDetail(id, variantId){
     if(items.length>0)window._variantCache[cacheKey]=items;
     window._detailVariants=items.filter(function(v){return v.status!=='SOLD';});
     window._variantsLoaded=true;
+    // Mismo criterio que en el bloque con caché: renderDetailVariants() ya
+    // auto-selecciona una variante coherente (nombre+precio+imagen+specs
+    // juntos). Solo se arma el precio "Desde" genérico si nada quedó
+    // seleccionado, para no pisar esa selección con datos de currentProd.
     renderDetailVariants();
-    // Update price to show minimum variant price with discount
-    var isPromo=isOfferValid(currentProd);
-    var minTarget=Infinity;
-    for(var mi=0;mi<window._detailVariants.length;mi++){
-      if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
-        minTarget=window._detailVariants[mi].targetPrice;
-      }
-    }
-    if(minTarget<Infinity){
-      var finalP=isPromo?Math.round(minTarget*(1-currentProd.discount/100)):minTarget;
-      var priceLabel=window._detailVariants.length>1?'Desde ':'';
-      var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=priceLabel+fmt(finalP);
-      var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalP);
-      var oldEl=document.getElementById('detOld');
-      if(isPromo&&oldEl){oldEl.textContent=fmt(minTarget);oldEl.style.display='inline';}
-      var cuota12=Math.round(finalP/12);
-      var cuotaText=document.getElementById('detCuotaText');
-      if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
-    }
     if(variantId){
       for(var vi=0;vi<window._detailVariants.length;vi++){
         if(window._detailVariants[vi].id===variantId||window._detailVariants[vi].imei===variantId){
@@ -1525,8 +1560,26 @@ function openDetail(id, variantId){
           break;
         }
       }
-    }else if(window._detailVariants.length>0){
-      selectDetailVariant(0);
+    }
+    if(window._selectedVariantIdx<0){
+      var isPromo=isOfferValid(currentProd);
+      var minTarget=Infinity;
+      for(var mi=0;mi<window._detailVariants.length;mi++){
+        if(window._detailVariants[mi].targetPrice&&window._detailVariants[mi].targetPrice<minTarget){
+          minTarget=window._detailVariants[mi].targetPrice;
+        }
+      }
+      if(minTarget<Infinity){
+        var finalP=isPromo?Math.round(minTarget*(1-currentProd.discount/100)):minTarget;
+        var priceEl=document.getElementById('detPrice');if(priceEl)priceEl.textContent=fmt(finalP);
+        var totalEl=document.getElementById('detTotal');if(totalEl)totalEl.textContent=fmt(finalP);
+        var oldEl=document.getElementById('detOld');
+        if(isPromo&&oldEl){oldEl.textContent=fmt(minTarget);oldEl.style.display='inline';}
+        var cuota12=Math.round(finalP/12);
+        var cuotaText=document.getElementById('detCuotaText');
+        if(cuotaText)cuotaText.textContent='12x '+fmt(cuota12)+' sin interes';
+      }
+      if(window._detailVariants.length>0)selectDetailVariant(0);
     }
     setDetLoading(false);
   }).catch(function(){
@@ -1915,6 +1968,15 @@ function renderDetailVariants(){
       colorMap[v.color].push(v);
     });
 
+    // Preferir el color del producto con el que se abrió el detalle (el que
+    // el usuario clickeó) como selección inicial. Sin esto, se elegía "el
+    // primer color de modelColors que tenga stock", sin relación con la URL
+    // abierta, y el render quedaba mezclado: nombre/precio del producto
+    // abierto pero imagen/specs de un color arbitrario distinto.
+    if(!state.selectedColor&&currentProd&&currentProd.color&&colorMap[currentProd.color]){
+      state.selectedColor=currentProd.color;
+    }
+
     var circlesHtml=modelColors.map(function(c){
       var hex=hexMap[c]||'#ccc';
       var available=!!colorMap[c];
@@ -1932,7 +1994,13 @@ function renderDetailVariants(){
     var storageHtml='';
     var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
     if(storagesForColor&&storagesForColor.length){
-      if(!state.selectedStorage)state.selectedStorage=storagesForColor[0].storage||'';
+      if(!state.selectedStorage){
+        // Idem color: preferir el almacenamiento del producto abierto si es
+        // una opción válida para el color seleccionado.
+        var preferredStorage=currentProd&&currentProd.storage;
+        var hasPreferred=preferredStorage&&storagesForColor.some(function(v){return (v.storage||'—')===preferredStorage;});
+        state.selectedStorage=hasPreferred?preferredStorage:(storagesForColor[0].storage||'');
+      }
       var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
       // Also get all storages from other colors to gray them out
       var allColorStorages={};
