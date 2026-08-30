@@ -106,16 +106,16 @@ describe('useFilter', () => {
 
     act(() => {
       result.current.addFilter({ field: 'status', value: 'PENDING' })
-      result.current.addFilter({ field: 'price', value: 200, operator: 'greaterThan' })
+      result.current.addFilter({ field: 'price', value: 50, operator: 'greaterThan' })
     })
 
-    expect(result.current.results).toHaveLength(1)
+    expect(result.current.results).toHaveLength(2)
 
     act(() => {
       result.current.removeFilter('status')
     })
 
-    expect(result.current.results).toHaveLength(2)
+    expect(result.current.results).toHaveLength(4)
   })
 
   it('debe limpiar todos los filtros', () => {

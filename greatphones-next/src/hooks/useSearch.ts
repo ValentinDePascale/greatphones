@@ -42,7 +42,8 @@ export function useSearch<T extends Record<string, any>>(
 
     const filtered = items.filter(item => {
       return searchFields.some(field => {
-        const value = String(item[field] ?? '').toLowerCase()
+        const fieldValue = String(item[field] ?? '')
+        const value = caseSensitive ? fieldValue : fieldValue.toLowerCase()
         return value.includes(searchQuery)
       })
     })

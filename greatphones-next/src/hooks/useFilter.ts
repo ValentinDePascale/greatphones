@@ -41,12 +41,21 @@ export function useFilter<T extends Record<string, any>>(
 
         switch (operator) {
           case 'equals':
+            if (Array.isArray(filter.value) && Array.isArray(value)) {
+              return filter.value.some(v => value.includes(v))
+            }
             if (Array.isArray(filter.value)) {
               return filter.value.includes(value)
+            }
+            if (Array.isArray(value)) {
+              return value.includes(filter.value)
             }
             return value === filter.value
 
           case 'includes':
+            if (Array.isArray(value)) {
+              return value.includes(filter.value)
+            }
             return String(value).toLowerCase().includes(String(filter.value).toLowerCase())
 
           case 'startsWith':

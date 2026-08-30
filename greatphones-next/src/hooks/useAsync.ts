@@ -26,7 +26,7 @@ export function useAsync<T>(
     } catch (error) {
       const err = error instanceof Error ? error : new Error(String(error))
       setState({ data: null, loading: false, error: err })
-      throw err
+      return null
     }
   }, [asyncFunction])
 

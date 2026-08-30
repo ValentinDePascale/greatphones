@@ -50,16 +50,18 @@ describe('useSearch', () => {
     )
 
     act(() => {
-      result.current.setQuery('john')
-    })
-
-    expect(result.current.results).toHaveLength(2)
-
-    act(() => {
-      result.current.setQuery('John')
+      result.current.setQuery('John Doe')
     })
 
     expect(result.current.results).toHaveLength(1)
+    expect(result.current.results[0].name).toBe('John Doe')
+
+    act(() => {
+      result.current.setQuery('john')
+    })
+
+    expect(result.current.results).toHaveLength(1)
+    expect(result.current.results[0].name).toBe('Johnny Walker')
   })
 
   it('debe respetar minChars', () => {
