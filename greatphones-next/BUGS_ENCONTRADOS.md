@@ -51,17 +51,38 @@
 ### 5. Ingresos online no se registran en Reportes como operación
 **Problema:** Los pagos online no aparecen en los reportes financieros
 **Esperado:** Deben registrarse como movimientos financieros en Reportes
-**Status:** 🟠 Alto
+**Status:** 🟠 Alto (Investigado - webhook implementado, posible problema en disparo de Mercado Pago)
 
-### 6. Chat no muestra mensajes
+### 6. ✅ Chat no muestra mensajes
 **Problema:** Chat muestra conversaciones con usuarios pero no los mensajes individuales
 **Esperado:** Debe mostrar el historial de mensajes de cada conversación
-**Status:** 🟠 Alto
+**Status:** ✅ CORREGIDO (commit ae8c7e1)
+- Problema: `loadMessages()` en chat.js usaba variable `API_URL` no definida
+- Solución: Agregué definición de `API_URL` al inicio de chat.js
 
-### 7. Dispositivos Comprados no muestra compras registradas
-**Problema:** No aparecen dispositivos de "Registrar Compra" ni los aceptados en "Cotizaciones"
-**Esperado:** Debe integrar ambas fuentes de datos
-**Status:** 🟠 Alto
+### 7. ✅ Dispositivos Comprados - filtro de búsqueda roto
+**Problema:** Al buscar dispositivos comprados locales (CMP-*), se perdía el filtro de código
+**Esperado:** Debe mantener el prefijo CMP- al aplicar búsqueda
+**Status:** ✅ CORREGIDO (commit 2509e9f)
+- Problema: `whereLocal.OR` reemplazaba la condición de `code: { startsWith: 'CMP-' }`
+- Solución: Usé `whereLocal.AND` para combinar búsqueda con filtro de código
+
+### ✅ BUGS ADICIONALES CORREGIDOS EN ESTA SESIÓN
+
+### 1. Comisiones solo suma movimientos
+**Status:** ✅ CORREGIDO (commit ef32624)
+- Problema: El cálculo de comisiones incluía EGRESOS además de INGRESOS
+- Solución: Agregué filtro `type: 'INGRESO'` en el groupBy principal
+
+### 2. Caja/Contabilidad - Validación de USD
+**Status:** ✅ CORREGIDO (commit eb9fec5)
+- Problema: Para transacciones en USD, validaba `amount` en lugar de `amountUsd`
+- Solución: Cambié validación a usar `amountUsd` cuando means === 'USD'
+
+### 3. Valor del dólar - permitir override manual
+**Status:** ✅ MEJORADO (commit 3a2e204)
+- Problema: No había forma de hacer override manual del valor del dólar
+- Solución: Agregué endpoints POST/DELETE para guardar/eliminar override en AppConfig
 
 ---
 
