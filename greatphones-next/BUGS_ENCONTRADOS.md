@@ -22,14 +22,18 @@
 - Ahora ambos (InventoryItem + Product) se crean simultáneamente
 - Los dispositivos aparecerán en la sección de Productos con precio calculado (30% margen default)
 
-### 3. Error en agregar accesorio - Dispositivos Compatibles no se abre
+### 3. ✅ Error en agregar accesorio - Dispositivos Compatibles no se abre
 **Archivo:** `/public/pages/admin-acc.html` + `/public/lib/admin.js`
-**Problema:** El modal `compatModal` no existe en el HTML, función `openCompatModal()` lo busca pero no lo encuentra
-**Status:** 🔴 PENDIENTE - Necesita crear HTML del modal
-- La función existe en `admin.js` línea 1576
-- El modal `compatModal` necesita crearse en `admin-acc.html`
-- Posible solución: Copiar estructura de modal desde otra página o crear uno nuevo
-- Requiere revisión de cómo se ve el modal en la versión pública de accesorios
+**Problema:** El modal `compatModal` no existía en el HTML, función `openCompatModal()` lo buscaba pero no lo encontraba
+**Status:** ✅ CORREGIDO (commit 89ec9c3)
+- Agregué el HTML del modal `compatModal` en `admin-acc.html`
+- El modal ahora tiene:
+  - Header con título y botón de cierre
+  - Herramientas: Select Todo, Limpiar, Rango de selección
+  - Grid de dispositivos agrupados (iPhone/iPad vs Otros)
+  - Footer con botón "Listo"
+- Los estilos CSS ya existían en `components.css`
+- Toda la lógica de JavaScript ya estaba implementada en `admin.js`
 
 ---
 
