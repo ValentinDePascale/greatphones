@@ -6,22 +6,30 @@
 
 ## 🔴 CRÍTICOS (Rompen funcionalidad)
 
-### 1. Error al registrar reparación - `cost` field missing
+### 1. ✅ Error al registrar reparación - `cost` field missing
 **Archivo:** `/src/app/api/admin/taller/reparaciones/route.ts:143`
 **Problema:** PrismaClientValidationError - campo `cost` no existe en el schema de `repair`
 **Error:** `Unknown argument 'cost'. Did you mean 'code'?`
 **Solución:** Remover campo `cost` del create() o agregarlo al schema de Prisma si es necesario
-**Status:** 🔴 Bloqueante
+**Status:** ✅ CORREGIDO (commit 5d79a2d)
+- Removí el campo `cost` del create ya que tiene `@default(0)` en el schema
 
-### 2. Registrar Compra - dispositivos no aparecen como stock en Productos
+### 2. ✅ Registrar Compra - dispositivos no aparecen como stock en Productos
 **Problema:** Las compras de dispositivos pasan a ser stock real pero no se ven en Productos
 **Esperado:** Los dispositivos comprados deben aparecer en el inventario de Productos
-**Status:** 🔴 Bloqueante
+**Status:** ✅ CORREGIDO (commit b4ee62e)
+- Agregué lógica para crear un `Product` cuando se registra una `Compra`
+- Ahora ambos (InventoryItem + Product) se crean simultáneamente
+- Los dispositivos aparecerán en la sección de Productos con precio calculado (30% margen default)
 
-### 3. Error en agregar accesorio - Elegir Color y Dispositivos Compatibles no se abren
-**Archivo:** `/src/app/admin/productos/accesorios/`
-**Problema:** Los selects/modales no se abren en la pantalla de admin (solo funcionan en home)
-**Status:** 🔴 Bloqueante
+### 3. Error en agregar accesorio - Dispositivos Compatibles no se abre
+**Archivo:** `/public/pages/admin-acc.html` + `/public/lib/admin.js`
+**Problema:** El modal `compatModal` no existe en el HTML, función `openCompatModal()` lo busca pero no lo encuentra
+**Status:** 🔴 PENDIENTE - Necesita crear HTML del modal
+- La función existe en `admin.js` línea 1576
+- El modal `compatModal` necesita crearse en `admin-acc.html`
+- Posible solución: Copiar estructura de modal desde otra página o crear uno nuevo
+- Requiere revisión de cómo se ve el modal en la versión pública de accesorios
 
 ---
 
