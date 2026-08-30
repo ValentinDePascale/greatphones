@@ -1,4 +1,5 @@
 // =========== CHAT SIMPLIFICADO ===========
+var API_URL=window.API_URL||(window.location.hostname==='localhost'?'http://localhost:3000':window.location.origin);
 var chatSocket=null;
 var userConvId=null;
 var typingTimeout=null;
