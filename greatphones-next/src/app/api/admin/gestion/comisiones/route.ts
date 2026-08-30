@@ -19,7 +19,7 @@ export async function GET(request: Request) {
 
     const groupBy = await prisma.accountingEntry.groupBy({
       by: ['operator'],
-      where: { ...whereDate, ...(whereOperators.length ? { operator: { not: null } } : {}) },
+      where: { ...whereDate, type: 'INGRESO', operator: { not: null } },
       _count: { _all: true },
       _sum: { amount: true },
     })
@@ -33,7 +33,7 @@ export async function GET(request: Request) {
     })
     const reparacionesPorOp = await prisma.accountingEntry.groupBy({
       by: ['operator'],
-      where: { ...whereDate, source: { in: ['REPAIR'] }, type: 'INGRESO' },
+      where: { ...whereDate, source: { in: ['REPAIR'] }, type: 'INGRESO', operator: { not: null } },
       _count: { _all: true },
       _sum: { amount: true },
     })
