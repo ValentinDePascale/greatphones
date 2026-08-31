@@ -42,15 +42,28 @@ export async function GET(request: Request) {
     const ventas = byOperator(ventasPorOp)
     const reparaciones = byOperator(reparacionesPorOp)
 
-    const result = await Promise.all(groupBy.map(async g => ({
-      operador: g.operator,
-      cantidadVentas: ventas.find(v => v.operator === g.operator)?.count || 0,
-      facturacion: ventas.find(v => v.operator === g.operator)?.sum || 0,
-      ganancia: 0, // no calculada aún (requiere costos)
-      preventas: await prisma.accountingEntry.count({ where: { ...whereDate, source: 'PREORDER', operator: g.operator } }),
-      reparaciones: reparaciones.find(r => r.operator === g.operator)?.count || 0,
-      totalMovimientos: g._count._all,
-    })))
+    const result = await Promise.all(groupBy.map(async g => {
+      // Calcular ganancia de reparaciones (pricePaid - cost/thirdPartyCost)
+      const repairsGanancia = await prisma.repair.aggregate({
+        where: {
+          operator: g.operator,
+          deletedAt: null,
+          status: { in: ['DELIVERED', 'COMPLETED', 'THIRD_PARTY'] },
+          ...(Object.keys(range).length ? { createdAt: range } : {}),
+        },
+        _sum: { profitReal: true },
+      })
+
+      return {
+        operador: g.operator,
+        cantidadVentas: ventas.find(v => v.operator === g.operator)?.count || 0,
+        facturacion: ventas.find(v => v.operator === g.operator)?.sum || 0,
+        ganancia: (repairsGanancia._sum.profitReal || 0),
+        preventas: await prisma.accountingEntry.count({ where: { ...whereDate, source: 'PREORDER', operator: g.operator } }),
+        reparaciones: reparaciones.find(r => r.operator === g.operator)?.count || 0,
+        totalMovimientos: g._count._all,
+      }
+    }))
 
     return NextResponse.json(result)
   } catch (error) {
