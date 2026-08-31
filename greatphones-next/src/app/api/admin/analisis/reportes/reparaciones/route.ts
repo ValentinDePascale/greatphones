@@ -29,15 +29,15 @@ export async function GET(request: Request) {
       take: 500,
     })
 
-    // Calcular ganancia por cada reparación
+    // Calcular ganancia por cada reparación (usar thirdPartyCost si existe, sin importar status)
     const reparacionesConGanancia = repairs.map(r => {
       const pricePaid = r.pricePaid || 0
-      const costAplicable = r.status === 'THIRD_PARTY' ? (r.thirdPartyCost || 0) : r.cost
+      const costAplicable = r.thirdPartyCost ? (r.thirdPartyCost || 0) : r.cost
       const profitReal = pricePaid - costAplicable
       return { ...r, profitReal }
     })
 
-    // Agrupar por estado
+    // Agrupar por estado (usar thirdPartyCost si existe, sin importar status)
     const porEstado: Record<string, any> = {}
     for (const r of reparacionesConGanancia) {
       if (!porEstado[r.status]) {
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
         }
       }
       const pricePaid = r.pricePaid || 0
-      const costAplicable = r.status === 'THIRD_PARTY' ? (r.thirdPartyCost || 0) : r.cost
+      const costAplicable = r.thirdPartyCost ? (r.thirdPartyCost || 0) : r.cost
       porEstado[r.status].cantidad += 1
       porEstado[r.status].ingresos += pricePaid
       porEstado[r.status].costos += costAplicable
@@ -59,11 +59,11 @@ export async function GET(request: Request) {
 
     const detalleEstado = Object.values(porEstado)
 
-    // Totales
+    // Totales (usar thirdPartyCost si existe, sin importar status)
     const totalReparaciones = reparacionesConGanancia.length
     const ingresoTotal = reparacionesConGanancia.reduce((sum, r) => sum + (r.pricePaid || 0), 0)
     const costoTotal = reparacionesConGanancia.reduce(
-      (sum, r) => sum + (r.status === 'THIRD_PARTY' ? r.thirdPartyCost || 0 : r.cost),
+      (sum, r) => sum + (r.thirdPartyCost ? r.thirdPartyCost || 0 : r.cost),
       0,
     )
     const gananciaNeta = ingresoTotal - costoTotal
