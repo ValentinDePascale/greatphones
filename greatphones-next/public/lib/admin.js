@@ -2476,3 +2476,62 @@ function updateAdminCoupon(action) {
     })
     .catch(function (e) { showToast(e.message, 'error') })
 }
+
+// Bug #15: iPhone Model → Pantalla autocompletar
+var IPHONE_SPECS = {
+  'iPhone 15': 6.1,
+  'iPhone 15 Plus': 6.7,
+  'iPhone 15 Pro': 6.1,
+  'iPhone 15 Pro Max': 6.7,
+  'iPhone 14': 6.1,
+  'iPhone 14 Plus': 6.7,
+  'iPhone 14 Pro': 6.1,
+  'iPhone 14 Pro Max': 6.7,
+  'iPhone 13': 6.1,
+  'iPhone 13 mini': 5.4,
+  'iPhone 13 Pro': 6.1,
+  'iPhone 13 Pro Max': 6.7,
+  'iPhone SE (3ra gen)': 4.7,
+  'iPhone 12': 6.1,
+  'iPhone 12 mini': 5.4,
+  'iPhone 12 Pro': 6.1,
+  'iPhone 12 Pro Max': 6.7,
+}
+
+function onAdminIphoneModelChange() {
+  var modelSelect = document.getElementById('prodIphoneModel')
+  var screenInput = document.getElementById('prodScreen')
+  var selectedModel = modelSelect ? modelSelect.value : ''
+
+  if (selectedModel && IPHONE_SPECS[selectedModel]) {
+    var screenSize = IPHONE_SPECS[selectedModel]
+    screenInput.value = screenSize
+  } else {
+    screenInput.value = ''
+  }
+}
+
+function updateProductFields() {
+  var typeSelect = document.getElementById('prodType')
+  var brandSelect = document.getElementById('prodBrand')
+  var iPhoneModelField = document.getElementById('prodIphoneModelField')
+  var iPhoneModelSelect = document.getElementById('prodIphoneModel')
+  var processorField = document.getElementById('prodProcessorField')
+  var batteryField = document.getElementById('prodBatteryField')
+  var selectedType = typeSelect ? typeSelect.value : 'celular'
+  var selectedBrand = brandSelect ? brandSelect.value : ''
+
+  // Mostrar/ocultar campos según tipo
+  if (iPhoneModelField) iPhoneModelField.style.display = (selectedBrand === 'iPhone') ? 'block' : 'none'
+  if (processorField) processorField.style.display = (selectedType === 'laptop') ? 'block' : 'none'
+  if (batteryField) batteryField.style.display = (selectedType === 'celular') ? 'block' : 'none'
+
+  // Poblar modelos iPhone si es necesario
+  if (selectedBrand === 'iPhone' && iPhoneModelSelect && iPhoneModelSelect.options.length <= 1) {
+    var modelsHtml = '<option value="">Seleccionar...</option>'
+    for (var model in IPHONE_SPECS) {
+      modelsHtml += '<option value="' + model + '">' + model + '</option>'
+    }
+    iPhoneModelSelect.innerHTML = modelsHtml
+  }
+}
