@@ -1637,7 +1637,6 @@ function editProduct(id){
       if(p.imageUrl){
         document.getElementById('prodImagePreview').innerHTML='<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
       }
-      renderAdditionalProductImages();
       nav('admin-product');
     }
   });
