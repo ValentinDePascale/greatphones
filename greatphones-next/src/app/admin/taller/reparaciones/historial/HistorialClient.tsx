@@ -86,9 +86,13 @@ export default function HistorialClient() {
       setCostoValue('')
       return
     }
-    // Si viene de tercero, entregar sin pedir costo
+    // Si viene de tercero, entregar sin pedir costo (mantener thirdPartyCost)
     const body: Record<string, unknown> = { id: r.id, status: destino }
-    if (destino === 'DELIVERED') body.deliveredAt = new Date().toISOString()
+    if (destino === 'DELIVERED') {
+      body.deliveredAt = new Date().toISOString()
+      // Mantener thirdPartyCost al cambiar a DELIVERED
+      if (r.thirdPartyCost) body.thirdPartyCost = r.thirdPartyCost
+    }
     const res = await fetch('/api/admin/taller/reparaciones', {
       method: 'PATCH',
       credentials: 'include',

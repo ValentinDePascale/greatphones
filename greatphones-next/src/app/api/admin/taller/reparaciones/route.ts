@@ -90,9 +90,10 @@ export async function PATCH(request: Request) {
     const newCost = cost !== undefined ? Math.max(0, cost) : existing.cost
     const newThirdPartyCost = thirdPartyCost !== undefined ? Math.max(0, thirdPartyCost) : existing.thirdPartyCost
 
-    if (newStatus === 'THIRD_PARTY' && newThirdPartyCost) {
+    // Si hay thirdPartyCost, siempre usarlo (incluso si cambia a DELIVERED)
+    if (newThirdPartyCost) {
       data.profitReal = newPricePaid - newThirdPartyCost
-    } else if (newStatus !== 'THIRD_PARTY') {
+    } else {
       data.profitReal = newPricePaid - newCost
     }
 
