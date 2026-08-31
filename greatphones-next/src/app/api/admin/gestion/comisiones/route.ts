@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       const salesGanancia = await prisma.sale.aggregate({
         where: {
           operator: g.operator,
-          status: { in: ['COMPLETED', 'DELIVERED'] },
+          status: 'COMPLETED',
           ...(Object.keys(range).length ? { createdAt: range } : {}),
         },
         _sum: { profitReal: true },
