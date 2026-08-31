@@ -132,7 +132,7 @@ export async function POST(request: Request) {
           profitReal: gananciaCobrada,
           payment: d.efectivo > 0 ? 'Efectivo' : d.transferencia > 0 ? 'Transferencia' : 'Otro',
           status: 'COMPLETED',
-          operator: d.operador || d.vendedor || admin.id,
+          operator: d.operador || d.vendedor || 'SIN_OPERADOR',
         },
       }),
     ])
