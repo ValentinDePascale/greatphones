@@ -148,11 +148,14 @@
 - Función updateProductFields() maneja visibilidad de campos dinámicamente
 - Popula el select de modelos iPhone cuando se selecciona marca iPhone
 
-### 16. Select de Proveedor → cambiar a Input
+### 16. ✅ Select de Proveedor → cambiar a Input
 **Problema:** Select es poco flexible
 **Mejora:** Cambiar por input con autocompletar/búsqueda
-**Status:** 🔵 Bajo (sin resolver - legacy)
-**Nota:** El campo accSupplier en admin.js necesitaría cambiar de `<select>` a input custom con autocomplete. Es un cambio significativo en componente legacy
+**Status:** ✅ IMPLEMENTADO (commit 72f932b)
+- Cambié accSupplier de `<select>` a `<input type="text">`
+- El usuario ahora puede escribir cualquier nombre de proveedor libremente
+- Mayor flexibilidad para proveedores no predefinidos
+- Desactivé función loadAccSuppliers() ya que no es necesaria
 
 ### 17. Revisar Inversores - mejoras de diseño y forms
 **Problema:** Formularios y diseño general necesita revisión
