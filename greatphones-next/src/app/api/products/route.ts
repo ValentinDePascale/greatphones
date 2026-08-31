@@ -110,6 +110,31 @@ export async function GET(request: NextRequest) {
         })
       }
 
+      // Equipos en reparación por producto (solo para admin)
+      let repairItemsByProduct: Record<string, string[]> = {}
+      if (isAdmin && products.length > 0) {
+        try {
+          const repairItems = await prisma.inventoryItem.findMany({
+            where: {
+              productId: { in: products.map((p: any) => p.id) },
+              status: 'IN_REPAIR',
+            },
+            select: { id: true, productId: true },
+          })
+          repairItems.forEach((item: any) => {
+            if (!repairItemsByProduct[item.productId]) {
+              repairItemsByProduct[item.productId] = []
+            }
+            repairItemsByProduct[item.productId].push(item.id)
+          })
+          products.forEach((p: any) => {
+            p.repairItemIds = repairItemsByProduct[p.id] || []
+          })
+        } catch (err) {
+          console.error('[Products] Error computing repair stats:', err)
+        }
+      }
+
       // Preventas: sin IMEIs en stock. El "Desde/ N variantes" se calcula
       // agrupando productos con el mismo modelGroup e isPreorder=true.
       const pregroup = products.filter((p: any) => p.isPreorder && p.modelGroup)
