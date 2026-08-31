@@ -55,11 +55,12 @@ const precios: SubGroup = {
 const taller: SubGroup = {
   title: '',
   items: [
-    { href: '/admin/taller/reparaciones', label: 'Registrar Reparación', icon: 'handyman' },
+    { href: '/admin/taller/reparaciones', label: 'Registrar Reparación', icon: 'handyman', exact: true },
     {
       href: '/admin/taller/reparaciones/historial',
       label: 'Historial Reparaciones',
       icon: 'history',
+      exact: true,
     },
     { href: '/admin/taller/tarifario', label: 'Tarifario Reparaciones', icon: 'price_check' },
     { href: '/admin/taller/gastos', label: 'Registrar Gasto', icon: 'payments' },

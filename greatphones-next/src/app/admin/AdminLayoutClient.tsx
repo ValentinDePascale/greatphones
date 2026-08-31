@@ -2,13 +2,15 @@
 
 import AdminSidebar from '@/components/AdminSidebar'
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 
 export default function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     setOpen(false)
-  }, [])
+  }, [pathname])
 
   return (
     <div className="admin-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--cream)' }}>

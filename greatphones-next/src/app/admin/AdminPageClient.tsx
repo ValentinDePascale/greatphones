@@ -94,35 +94,60 @@ export default function AdminPageClient({ html, tab }: Props) {
     const ensureLegacyReady = async () => {
       try {
         await loadLegacyScriptsSequential(html)
-      } catch {}
+      } catch (e) {
+        console.error('[AdminPageClient] Error loading legacy scripts:', e)
+      }
       if (cancelled) return
+
       let attempts = 0
-      const MAX_ATTEMPTS = 80
-      pollIv = window.setInterval(() => {
-        const w2 = window as any
-        if (typeof w2.renderAdminContent !== 'function') {
-          attempts++
-          if (attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
-          return
-        }
-        try {
-          w2.renderAdminContent(tab)
-        } catch {
-          attempts++
-          if (attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
-          return
-        }
-        const el = document.getElementById('adminContent')
-        const populated = el && el.innerHTML.trim() !== ''
-        if (populated || attempts >= MAX_ATTEMPTS) window.clearInterval(pollIv)
-        attempts++
-      }, 120) as unknown as number
+      const MAX_ATTEMPTS = 100
+      let lastError: string | null = null
+
+      // Intenta llamar renderAdminContent inmediatamente
       const w0 = window as any
       if (typeof w0.renderAdminContent === 'function') {
         try {
           w0.renderAdminContent(tab)
-        } catch {}
+        } catch (e) {
+          lastError = String(e)
+          console.error('[AdminPageClient] Error calling renderAdminContent:', e)
+        }
       }
+
+      // Polling para confirmar que el contenido se populate
+      pollIv = window.setInterval(() => {
+        const w2 = window as any
+        if (typeof w2.renderAdminContent !== 'function') {
+          attempts++
+          if (attempts >= MAX_ATTEMPTS) {
+            console.error('[AdminPageClient] renderAdminContent never became available after', MAX_ATTEMPTS, 'attempts')
+            window.clearInterval(pollIv)
+          }
+          return
+        }
+
+        const el = document.getElementById('adminContent')
+        const populated = el && el.innerHTML.trim() !== ''
+        if (populated) {
+          window.clearInterval(pollIv)
+          return
+        }
+
+        // Si no está populated, intenta llamar de nuevo
+        if (attempts % 10 === 0) {
+          try {
+            w2.renderAdminContent(tab)
+          } catch (e) {
+            lastError = String(e)
+          }
+        }
+
+        attempts++
+        if (attempts >= MAX_ATTEMPTS) {
+          console.error('[AdminPageClient] Content not populated after', MAX_ATTEMPTS, 'attempts', { tab, lastError })
+          window.clearInterval(pollIv)
+        }
+      }, 100) as unknown as number
     }
     ensureLegacyReady()
 
