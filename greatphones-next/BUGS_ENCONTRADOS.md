@@ -128,26 +128,33 @@
 
 ## 🔵 BAJOS (Mejoras de UX/UI)
 
-### 14. Lista de precios (Mac/iPad) - agregar foto no solo link
+### 14. ✅ Lista de precios (Mac/iPad) - agregar foto no solo link
 **Problema:** Solo permite ingresar URL, no subir archivo
 **Mejora:** Permitir upload de imágenes además de links
-**Status:** 🔵 Bajo
+**Status:** ✅ IMPLEMENTADO (commit 04a805d)
+- Agregué input file type="image"
+- Convierte imagen a base64 para almacenamiento
+- Mantiene opción de pegar URL
+- Preview en tiempo real
 
 ### 15. Formulario Agregar Producto - pantalla autocompletar
 **Problema:** Pantalla no se autocompleta con tamaño según dispositivo seleccionado
 **Mejora:** 
   - RAM debe depender del modelo de iPhone (select dinámico)
   - Si hay solo una opción, auto-seleccionar
-**Status:** 🔵 Bajo
+**Status:** 🔵 Bajo (sin resolver - legacy)
+**Nota:** Requiere reescribir lógica de JavaScript legacy en admin.js para hacerlo dinámico
 
 ### 16. Select de Proveedor → cambiar a Input
 **Problema:** Select es poco flexible
 **Mejora:** Cambiar por input con autocompletar/búsqueda
-**Status:** 🔵 Bajo
+**Status:** 🔵 Bajo (sin resolver - legacy)
+**Nota:** El campo accSupplier en admin.js necesitaría cambiar de `<select>` a input custom con autocomplete. Es un cambio significativo en componente legacy
 
 ### 17. Revisar Inversores - mejoras de diseño y forms
 **Problema:** Formularios y diseño general necesita revisión
-**Status:** 🔵 Bajo
+**Status:** 🔵 Bajo (sin resolver - requiere rediseño)
+**Nota:** Necesita rediseño completo de componentes - no hay entrada clara para este módulo
 
 ---
 
