@@ -40,7 +40,8 @@ interface Op {
 const SOURCES = [
   'SALE',
   'PREORDER',
-  'PURCHASE',
+  'PREVENTA_ENTREGA',
+  'COMPRA',
   'REPAIR',
   'GASTO',
   'CAMBIO',

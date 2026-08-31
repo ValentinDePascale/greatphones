@@ -183,15 +183,19 @@ export async function POST(request: Request) {
       return { item, producto }
     })
 
-    // Registrar asiento contable fuera de transacción
-    const monto = d.tipo === 'COMPRA' ? d.precioCompra : 0
+    // Registrar asiento contable fuera de transacción. Siempre queda algo
+    // visible en Mis Operaciones: EGRESO si es COMPRA (sale plata de caja),
+    // NEUTRO si es CONSIGNACIÓN (no sale plata todavía, pero la operación
+    // debe quedar registrada — antes no se creaba ningún asiento acá y la
+    // compra desaparecía sin dejar rastro contable).
+    const monto = d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig
     if (monto > 0) {
       await registerEntry({
         source: 'COMPRA',
         operationId: numero,
-        description: `Compra: ${d.modelo}${d.imei ? ' IMEI:' + d.imei : ''}`,
+        description: `${d.tipo === 'COMPRA' ? 'Compra' : 'Consignación'}: ${d.modelo}${d.imei ? ' IMEI:' + d.imei : ''}`,
         category: 'COMPRA_EQUIPO',
-        type: 'EGRESO',
+        type: d.tipo === 'COMPRA' ? 'EGRESO' : 'NEUTRO',
         means: d.formaPago === 'Transferencia' ? 'TRANSFERENCIA' : 'EFECTIVO',
         amount: monto,
         operator: d.operador || admin.id,
