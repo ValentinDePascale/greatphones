@@ -5,6 +5,7 @@ export interface SkeletonProps {
   className?: string
   variant?: 'text' | 'circular' | 'rectangular'
   animation?: 'pulse' | 'wave'
+  style?: React.CSSProperties
 }
 
 export default function Skeleton({
@@ -14,6 +15,7 @@ export default function Skeleton({
   className = '',
   variant = 'rectangular',
   animation = 'pulse',
+  style,
 }: SkeletonProps) {
   const baseStyle: React.CSSProperties = {
     display: 'inline-block',
@@ -22,6 +24,7 @@ export default function Skeleton({
       variant === 'circular' ? '50%' : variant === 'text' ? '4px' : String(borderRadius),
     width: typeof width === 'number' ? `${width}px` : width,
     height: typeof height === 'number' ? `${height}px` : height,
+    ...style,
   }
 
   const animationStyle =
