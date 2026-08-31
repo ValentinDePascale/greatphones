@@ -1292,17 +1292,8 @@ function editAccessory(id){
   });
 }
 function loadAccSuppliers(){
-  var sel=document.getElementById('accSupplier');
-  if(!sel)return;
-  fetch(API_URL+'/api/suppliers',{headers:{}})
-    .then(function(r){return r.json();})
-    .then(function(list){
-      var arr=Array.isArray(list)?list:(list&&Array.isArray(list.data)?list.data:[]);
-      sel.innerHTML='<option value="">Sin proveedor</option>'+arr.map(function(s){
-        return '<option value="'+s.id+'">'+s.name+'</option>';
-      }).join('');
-    })
-    .catch(function(){});
+  // Bug #16: accSupplier cambió de select a input text
+  // Ya no es necesario poblar opciones - el usuario escribe directamente
 }
 function fillAccForm(a){
   document.getElementById('accId').value=a.id;
