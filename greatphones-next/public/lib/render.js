@@ -4346,7 +4346,9 @@ function markItemAsReady(inventoryItemId){
   }).then(function(item){
     invalidateCache('/api/products');
     showSuccessToast('Listo', 'Equipo marcado como disponible');
-    renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
+    loadProducts().then(function(){
+      renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
+    });
   }).catch(function(e){
     console.error('Error marking item as ready:', e);
     showErrorToast('Error', 'No se pudo marcar el equipo como listo');

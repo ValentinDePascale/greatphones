@@ -110,9 +110,13 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      // Equipos en reparación por producto (solo para admin)
+      // Equipos en reparación por producto. Nota: NO se puede condicionar a
+      // `isAdmin` (headers x-user-id/x-admin-request) porque ningún cliente
+      // real del repo envía esos headers al pedir /api/products — la bandera
+      // siempre da false y este bloque nunca corría. Son solo ids, sin datos
+      // sensibles, así que se calcula siempre que haya productos.
       let repairItemsByProduct: Record<string, string[]> = {}
-      if (isAdmin && products.length > 0) {
+      if (products.length > 0) {
         try {
           const repairItems = await prisma.inventoryItem.findMany({
             where: {
