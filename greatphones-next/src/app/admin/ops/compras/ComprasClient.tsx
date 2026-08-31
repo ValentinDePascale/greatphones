@@ -8,22 +8,47 @@ const TOTAL = 6
 const STEPS = ['Operación', 'Equipo', 'Precio y pago', 'Reparación', 'Preventa', 'Confirmar']
 const OTRO_MODELO = '__otro__'
 
-// Mismo mapeo nombre→hex que usa el catálogo público (public/lib/render.js)
+// La Lista de Precios (PriceList.colors) guarda los nombres en inglés,
+// tal como los publica Apple (Black, Space Gray, Deep Purple, etc.).
 const COLOR_HEX: Record<string, string> = {
-  Negro: '#1a1a1a', Blanco: '#f0f0f0', Rojo: '#e53e3e', Azul: '#3182ce', Verde: '#38a169',
-  Amarillo: '#ecc94b', Naranja: '#ed8936', Rosa: '#ed64a6', Gris: '#a0aec0', Plata: '#cbd5e0',
-  Dorado: '#d69e2e', 'Púrpura': '#805ad5', Celeste: '#63b3ed', Beige: '#f5e6cc', 'Marrón': '#8b4513',
-  Turquesa: '#4fd1c5', Coral: '#fc8181', Lavanda: '#b794f4', Oliva: '#68d391', 'Carbón': '#2d3748',
-  'Azul Marino': '#1a365d', 'Verde Menta': '#81e6d9', 'Gris Oscuro': '#4a5568', Crema: '#fefcbf',
-  'Negro Espacial': '#1a1a1a', 'Gris Espacial': '#5f5f5f', 'Titanio Natural': '#8f8a81',
-  'Titanio Azul': '#3a4a5c', 'Titanio Blanco': '#e8e6e0', 'Titanio Negro': '#3b3b3b',
-  'Titanio Desierto': '#a68b6c', 'Azul Sierra': '#a8c5d6', 'Verde Alpino': '#4a5c4c',
-  Medianoche: '#1c1c28', 'Luz Estelar': '#f0e6d2', Plateado: '#e0e0e0', Grafito: '#4a4a4a',
-  'Rosa Intenso': '#d88ba0', 'Púrpura Intenso': '#5e5375', 'Naranja Coral': '#ff8a5c', 'Verde Agua': '#7fd4c1',
-  'Azul Ultramar': '#3a5fcd',
+  'Black': '#1a1a1a',
+  'Black Titanium': '#3b3b3b',
+  'Blue': '#3182ce',
+  'Blue Titanium': '#3a4a5c',
+  'Coral': '#fc8181',
+  'Deep Purple': '#5e5375',
+  'Desert Titanium': '#a68b6c',
+  'Gold': '#d69e2e',
+  'Graphite': '#4a4a4a',
+  'Gray': '#a0aec0',
+  'Green': '#38a169',
+  'Indigo Titanium': '#4f5b93',
+  'Midnight': '#1c1c28',
+  'Midnight Green': '#25332c',
+  'Natural Titanium': '#8f8a81',
+  'Orange': '#ed8936',
+  'Pacific Blue': '#1f5f6e',
+  'Pink': '#ed64a6',
+  'Product Red': '#e53e3e',
+  'Purple': '#805ad5',
+  'Red': '#e53e3e',
+  'Rose Gold': '#d88ba0',
+  'Sierra Blue': '#a8c5d6',
+  'Silver': '#e0e0e0',
+  'Space Black': '#1a1a1a',
+  'Space Gray': '#5f5f5f',
+  'Starlight': '#f0e6d2',
+  'Teal': '#2c7a7b',
+  'Ultramarine': '#3a5fcd',
+  'White': '#f0f0f0',
+  'White Titanium': '#e8e6e0',
+  'Yellow': '#ecc94b',
+  'Alpine Green': '#4a5c4c',
 }
 function colorHex(name: string) {
-  return COLOR_HEX[name] || '#ccc'
+  if (COLOR_HEX[name]) return COLOR_HEX[name]
+  const found = Object.keys(COLOR_HEX).find(k => k.toLowerCase() === name?.trim().toLowerCase())
+  return found ? COLOR_HEX[found] : '#ccc'
 }
 
 function fmt(n: number) {
