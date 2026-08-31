@@ -4157,6 +4157,7 @@ function renderAdminProductCard(p){
   var imgHtml=p.imageUrl?'<img loading="lazy" src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">':'<span style="font-size:32px">📱</span>';
   var badgeHtml='';
   if(p.isOffer){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">OFERTA'+(p.discount?(' -'+p.discount+'%'):'')+'</span>';}
+  if(p.repairItemIds && p.repairItemIds.length > 0){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,107,44,.12);color:var(--orange)">EN REPARACIÓN</span>';}
   if(lowStock){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(192,57,43,.12);color:var(--red)">SIN STOCK</span>';}
   else if(p.stock<=3){badgeHtml+='<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(255,107,44,.12);color:var(--orange)">STOCK BAJO</span>';}
   return '<div style="background:#fff;border-radius:12px;overflow:hidden;border:1px solid '+(lowStock?'var(--red)':'var(--border)')+';transition:all .2s" onmouseover="this.style.boxShadow=\'0 6px 20px rgba(0,0,0,.12)\'" onmouseout="this.style.boxShadow=\'none\'">'+
@@ -4189,6 +4190,7 @@ function renderAdminProductCard(p){
         '<span style="font-size:13px;font-weight:800;color:'+stockColor+'">'+p.stock+'</span>'+
       '</div>'+
       '<div style="display:flex;gap:4px;margin-top:auto;flex-wrap:wrap">'+
+        (p.repairItemIds&&p.repairItemIds.length>0?'<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="markItemAsReady(\''+p.repairItemIds[0]+'\')">Listo ✓</button>':'')+
         '<button class="btn btn-g btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="editProduct(\''+p.id+'\')">Editar</button>'+
         '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="duplicateProduct(\''+p.id+'\')">Duplicar</button>'+
         '<button class="btn btn-o btn-sm" style="flex:1;min-width:0;font-size:10px;padding:6px 4px" onclick="deleteProduct(\''+p.id+'\')">Eliminar</button>'+
@@ -4332,6 +4334,23 @@ function undoAllStock(){
     input.value=input.getAttribute('data-original');
   });
   showInfoToast('Cambios revertidos', 'Se han deshecho los cambios');
+}
+function markItemAsReady(inventoryItemId){
+  fetch(API_URL+'/api/inventory/'+inventoryItemId+'/status',{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({status:'IN_STOCK'})
+  }).then(function(r){
+    if(!r.ok)throw new Error('Error '+r.status);
+    return r.json();
+  }).then(function(item){
+    invalidateCache('/api/products');
+    showSuccessToast('Listo', 'Equipo marcado como disponible');
+    renderAdminProductsFiltered(document.getElementById('adminProdSearch')?document.getElementById('adminProdSearch').value:'');
+  }).catch(function(e){
+    console.error('Error marking item as ready:', e);
+    showErrorToast('Error', 'No se pudo marcar el equipo como listo');
+  });
 }
 function renderStockList(){
   var list=document.getElementById('stockList');
