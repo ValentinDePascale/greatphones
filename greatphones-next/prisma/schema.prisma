@@ -131,6 +131,7 @@ model InventoryItem {
   functionalCondition String?
   batteryHealth       Int?
   notes               String?
+  repairCost          Int?
   investor            String?
   targetPrice         Int?
   status              InventoryStatus    @default(IN_STOCK)
@@ -147,6 +148,7 @@ model InventoryItem {
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   history             InventoryHistory[]
+  preOrder            PreOrder?
   createdBy           User               @relation("CreatedBy", fields: [createdById], references: [id])
   product             Product?           @relation(fields: [productId], references: [id])
   soldBy              User?              @relation("SoldBy", fields: [soldById], references: [id])
@@ -290,12 +292,14 @@ model PreOrder {
   orderId               String?
   mpPaymentId           String?
   mpPreferenceId        String?
+  inventoryItemId       String?           @unique
   deletedAt             DateTime?
   deletedBy             String?
   deleteReason          String?
   product               Product?  @relation(fields: [productId], references: [id])
   user                  User?     @relation(fields: [userId], references: [id])
   order                 Order?    @relation(fields: [orderId], references: [id])
+  inventoryItem         InventoryItem?    @relation(fields: [inventoryItemId], references: [id])
 }
 
 model Quote {
