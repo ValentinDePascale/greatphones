@@ -14,7 +14,7 @@ export default function AdminTopbar({ titulo }: Props) {
       </div>
       <div className="admin-topbar-actions">
         <Link
-          href="/home"
+          href="/"
           className="admin-btn"
           style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}
         >

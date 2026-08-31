@@ -20,7 +20,9 @@ interface Comision {
   operador: string
   cantidadVentas: number
   facturacion: number
-  ganancia: number
+  gananciaReparaciones: number
+  gananciaVentas: number
+  gananciaTotal: number
   preventas: number
   reparaciones: number
   totalMovimientos: number
@@ -57,7 +59,7 @@ export default function ComisionesClient() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalFact = rows.reduce((s, r) => s + r.facturacion, 0)
-  const totalGan = rows.reduce((s, r) => s + r.ganancia, 0)
+  const totalGan = rows.reduce((s, r) => s + r.gananciaTotal, 0)
 
   return (
     <>
@@ -329,7 +331,7 @@ export default function ComisionesClient() {
                         color: '#0F9D58',
                       }}
                     >
-                      {fmtP(r.ganancia)}
+                      {fmtP(r.gananciaTotal)}
                     </td>
                     <td style={{ padding: '8px 10px', textAlign: 'right' }}>{r.preventas}</td>
                     <td style={{ padding: '8px 10px', textAlign: 'right' }}>{r.reparaciones}</td>
