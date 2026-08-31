@@ -125,6 +125,8 @@ export async function POST(request: Request) {
           brand: d.marca || 'Generico',
           modelName: d.modelo,
           color: d.color || null,
+          storage: d.storage || null,
+          imageUrl: d.imageUrl || null,
           deviceType: 'celular',
           purchasePrice: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
           cosmeticCondition: d.estadoFisico || 'Bueno',
