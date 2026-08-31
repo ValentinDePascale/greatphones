@@ -88,20 +88,26 @@
 
 ## 🟡 MEDIOS (Errores/Comportamientos raros)
 
-### 8. Al seleccionar Historial Reparaciones se cambia estado de seleccionado
+### 8. ✅ Al seleccionar Historial Reparaciones se cambia estado de seleccionado
 **Problema:** Selecciona también "Registrar Reparación" cuando se elige "Historial"
 **Esperado:** Solo debe seleccionar la opción elegida
-**Status:** 🟡 Medio
+**Status:** ✅ CORREGIDO (commit c80af2e)
+- Problema: `pathname.startsWith()` en AdminSidebar coincidía con prefijos
+- Solución: Agregué `exact: true` en items de reparaciones para exactMatch
 
-### 9. Bug sidebar al dar al botón para atrás en panel de admin
+### 9. ✅ Bug sidebar al dar al botón para atrás en panel de admin
 **Problema:** El sidebar se mantiene visible cuando se vuelve atrás
 **Esperado:** Debe cerrarse o ajustarse según el flujo de navegación
-**Status:** 🟡 Medio
+**Status:** ✅ CORREGIDO (commit c80af2e)
+- Problema: El useEffect solo se ejecutaba al montar (dependencias vacías)
+- Solución: Agregué `usePathname()` y lo pasé al array de dependencias
 
-### 10. Secciones legacy a veces no cargan
+### 10. ✅ Secciones legacy a veces no cargan
 **Problema:** Las secciones legacy requieren actualizar la página para cargar
 **Esperado:** Deben cargar sin necesidad de refresh
-**Status:** 🟡 Medio
+**Status:** ✅ MEJORADO (commit c80af2e)
+- Problema: Errores silenciados y falta de reintentos si contenido no se popula
+- Solución: Agregué logging detallado y reintentos automáticos de renderAdminContent
 
 ### 11. Comisiones solo suma movimientos
 **Problema:** El cálculo de comisiones no es correcto
