@@ -149,7 +149,7 @@ export async function POST(request: Request) {
         type: d.tipo || 'Particular',
         clientName: d.cliente,
         clientPhone: d.tel || null,
-        clientDni: d.clienteDni || null,
+        clientDni: null,
         imei: d.imei || null,
         pin: d.pin || null,
         fault1: d.falla1,

@@ -153,10 +153,10 @@ export async function POST(request: Request) {
 
     // Auditar fuera de transacción
     await auditar({
-      entityType: 'InventoryItem',
-      entityId: result.item.id,
+      entityType: 'Product',
+      entityId: result.producto.id,
       action: 'CREACION',
-      reason: `Registro de compra de equipo (${d.modelo})${necesitaArreglo ? ' - Necesita arreglo' : ''}${esPreventa ? ' - Para preventa' : ''}`,
+      reason: `Compra de equipo (${d.modelo})${necesitaArreglo ? ' - Necesita arreglo' : ''}${esPreventa ? ' - Para preventa' : ''}`,
       operator: d.operador,
     }).catch(() => {})
 
