@@ -881,6 +881,31 @@ export default function ComprasClient() {
                   El equipo fue marcado como “Para Reparación” en el paso 2.
                 </p>
               )}
+              {reparacion === 'Sí' && (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    color: '#0369A1',
+                    background: '#F0F9FF',
+                    border: '1px solid #BAE6FD',
+                    borderRadius: 8,
+                    padding: '9px 12px',
+                    marginTop: 12,
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 16 }}
+                    aria-hidden="true"
+                  >
+                    info
+                  </span>
+                  El equipo entrará a stock con disponibilidad 0 hasta marcarlo como listo en admin/productos.
+                </p>
+              )}
             </fieldset>
           )}
 
@@ -956,6 +981,31 @@ export default function ComprasClient() {
                     </p>
                   )}
                 </div>
+              )}
+              {esPreventa === 'Si' && (
+                <p
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6,
+                    fontSize: 12,
+                    color: '#0369A1',
+                    background: '#F0F9FF',
+                    border: '1px solid #BAE6FD',
+                    borderRadius: 8,
+                    padding: '9px 12px',
+                    marginTop: 12,
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined"
+                    style={{ fontSize: 16 }}
+                    aria-hidden="true"
+                  >
+                    info
+                  </span>
+                  El equipo no sumará stock (quedarà reservado). Cobra y entrega en "Entregar preventa".
+                </p>
               )}
             </fieldset>
           )}
