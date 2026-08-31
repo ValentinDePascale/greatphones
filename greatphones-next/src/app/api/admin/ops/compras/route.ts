@@ -80,6 +80,20 @@ export async function POST(request: Request) {
     const esPreventa = d.esPreventa === true
     const status = necesitaArreglo ? 'IN_REPAIR' : (esPreventa ? 'RESERVED' : 'IN_STOCK')
     const stock = (necesitaArreglo || esPreventa) ? 0 : 1
+    const costo = d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig
+
+    // Precio de venta: prioridad manual (precioVenta) > Lista de Precios > margen por defecto
+    let precioLista = 0
+    const priceEntry = await prisma.priceList.findFirst({
+      where: {
+        category: 'CELULAR',
+        modelo: d.modelo,
+        ...(d.storage ? { almacenamiento: d.storage } : {}),
+      },
+      orderBy: { almacenamiento: 'asc' },
+    })
+    if (priceEntry?.precioARS) precioLista = priceEntry.precioARS
+    const precioFinal = d.precioVenta > 0 ? d.precioVenta : (precioLista > 0 ? precioLista : Math.round(costo * 1.3))
 
     // Crear dentro de una transacción
     const result = await prisma.$transaction(async (tx) => {
@@ -90,10 +104,10 @@ export async function POST(request: Request) {
           brand: d.marca || 'Genérico',
           ico: 'smartphone',
           condition: d.estadoFisico || 'Bueno',
-          price: d.precioVenta > 0 ? d.precioVenta : (d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig) * 1.3,
-          cost: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
+          price: precioFinal,
+          cost: costo,
           stock: stock,
-          type: 'USADO',
+          type: 'celular',
           imei: d.imei || undefined,
           color: d.color || undefined,
           storage: d.storage || undefined,
@@ -117,7 +131,7 @@ export async function POST(request: Request) {
           purchasedFrom: d.proveedor || null,
           notes: d.obs || null,
           status: status as any,
-          targetPrice: d.precioVenta > 0 ? d.precioVenta : null,
+          targetPrice: precioFinal > 0 ? precioFinal : null,
           repairCost: d.costoRep > 0 ? d.costoRep : null,
           productId: producto.id,
           createdById: admin.id,
