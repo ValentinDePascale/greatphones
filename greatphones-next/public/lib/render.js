@@ -222,7 +222,12 @@ function loadProducts(){
     renderSkeletonGrid('featuredGrid',4);
     showLoadingBar();
   }
-  return cachedFetch(API_URL+'/api/products',null,60000).then(function(res){
+  // limit=300: PRODUCTS es un array plano usado por catálogo público y admin
+  // por igual, sin paginación real contra el server (todo filtro/orden pasa
+  // client-side). El endpoint por default trae solo 20 — con >20 productos
+  // activos el más viejo caía de la página 1 y desaparecía del panel admin
+  // apenas se creaba uno nuevo (siempre ordenado por createdAt desc).
+  return cachedFetch(API_URL+'/api/products?limit=300',null,60000).then(function(res){
     PRODUCTS=res.data||res;
     window._productsLoaded=true;
     // Re-render la grilla admin apenas hay datos (incluso en uso de caché, que
@@ -3161,6 +3166,14 @@ function editProduct(id){
       vl.innerHTML='<div style="font-size:12px;color:var(--red);padding:10px;text-align:center">Error al cargar variantes</div>';
     });
   }
+}
+function cancelEditProduct(){
+  // El toggle SPA nav('admin') depende de window.currentAdminTab, que puede
+  // no coincidir con 'prods' según cómo se haya llegado a esta pantalla
+  // (mostrando "Sección en desarrollo" en ese caso). Una navegación real
+  // a /admin/productos es lo único que garantiza volver siempre ahí.
+  window.isEditingProduct=false;
+  window.location.href='/admin/productos';
 }
 window.downloadProductQr=function(productId){
   fetch(API_URL+'/api/inventory?productId='+productId+'&limit=5').then(function(r){return r.json();}).then(function(res){

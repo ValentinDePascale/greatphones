@@ -103,7 +103,7 @@ export default function ComprasClient() {
   const [obs, setObs] = useState('')
 
   const [priceList, setPriceList] = useState<
-    { modelo: string; almacenamiento: string; imageUrl: string | null; colors: string[] }[]
+    { modelo: string; almacenamiento: string; imageUrl: string | null; colors: string[]; precioARS: number }[]
   >([])
   const [iPhoneModels, setIPhoneModels] = useState<string[]>([])
   const [storages, setStorages] = useState<string[]>([])
@@ -332,6 +332,9 @@ export default function ComprasClient() {
   })
 
   const preventaSel = preventas.find(p => p.id === nPre)
+
+  const precioListaMatch =
+    priceList.find(p => p.modelo === modelo && (!storage || p.almacenamiento === storage))?.precioARS || 0
 
   if (done) {
     return (
@@ -1078,7 +1081,12 @@ export default function ComprasClient() {
                     type="button"
                     role="radio"
                     aria-checked={reparacion === op}
-                    onClick={() => setReparacion(op)}
+                    onClick={() => {
+                      setReparacion(op)
+                      if (op === 'Sí' && !precioVenta && precioListaMatch > 0) {
+                        setPrecioVenta(String(precioListaMatch))
+                      }
+                    }}
                     style={{
                       padding: '13px 10px',
                       borderRadius: 10,
@@ -1124,6 +1132,11 @@ export default function ComprasClient() {
                       onChange={e => setPrecioVenta(e.target.value)}
                       placeholder="0"
                     />
+                    {precioListaMatch > 0 && (
+                      <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
+                        Lista de Precios: {fmt(precioListaMatch)} · podés editarlo
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

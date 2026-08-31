@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 import { registerEntry } from '@/lib/accounting'
 import { auditar } from '@/lib/audit'
+import { productCache } from '@/lib/cache'
 import { z } from 'zod'
 
 export async function GET(request: Request) {
@@ -76,9 +77,19 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message || 'Datos inválidos' }, { status: 400 })
     const d = parsed.data
 
-    // Buscar los asientos del operationId dado
+    // Buscar los asientos del operationId dado. El InventoryItem se busca
+    // aparte (no depende de que exista un asiento): una compra puede no
+    // tener asiento contable (ej. precio $0 en una prueba, o CONSIGNACION
+    // antes de que se registrara como NEUTRO) y aun así haber creado un
+    // equipo/producto real que hay que poder anular igual.
     const entries = await prisma.accountingEntry.findMany({ where: { operationId: d.operationId } })
-    if (entries.length === 0) return NextResponse.json({ error: 'No se encontró la operación' }, { status: 404 })
+    const relatedItem = await prisma.inventoryItem.findUnique({
+      where: { code: d.operationId },
+      include: { preOrder: true },
+    })
+    if (entries.length === 0 && !relatedItem) {
+      return NextResponse.json({ error: 'No se encontró la operación' }, { status: 404 })
+    }
 
     // Si se anula una VENTA, restaurar stock
     const salesEntries = entries.filter(e => e.source === 'VENTA')
@@ -114,37 +125,33 @@ export async function POST(request: Request) {
       }
     }
 
-    // Si se anula una COMPRA, eliminar el equipo/producto que generó
-    // (salvo que ya se haya vendido: ahí solo se avisa, no se toca nada).
+    // Si el operationId corresponde a un equipo de Registrar Compra, eliminar
+    // el equipo/producto que generó (salvo que ya se haya vendido: ahí solo
+    // se avisa, no se toca nada). Independiente de si tenía o no asiento
+    // contable — el estado 'IN_REPAIR' de una compra marcada para arreglar
+    // no cambia esta lógica, solo el status 'SOLD' la bloquea.
     let avisoCompra: string | null = null
-    const entriesCompra = entries.filter(e => e.source === 'COMPRA')
-    if (entriesCompra.length > 0) {
-      const item = await prisma.inventoryItem.findUnique({
-        where: { code: d.operationId },
-        include: { preOrder: true },
-      })
-      if (item) {
-        if (item.status === 'SOLD') {
-          avisoCompra = 'El equipo de esta compra ya fue vendido: el producto NO fue eliminado. Revisá manualmente en admin/productos.'
-        } else {
-          if (item.preOrder) {
-            await prisma.preOrder.update({
-              where: { id: item.preOrder.id },
-              data: {
-                status: 'PENDING',
-                inventoryItemId: null,
-                notes: (item.preOrder.notes || '') + ` | Compra ${d.operationId} anulada: ${d.motivo}`,
-              },
-            }).catch(() => {})
-          }
-          if (item.productId) {
-            await prisma.product.update({
-              where: { id: item.productId },
-              data: { deletedAt: new Date(), deletedBy: d.operador, deleteReason: `Compra ${d.operationId} anulada: ${d.motivo}` },
-            }).catch(() => {})
-          }
-          await prisma.inventoryItem.delete({ where: { id: item.id } }).catch(() => {})
+    if (relatedItem) {
+      if (relatedItem.status === 'SOLD') {
+        avisoCompra = 'El equipo de esta compra ya fue vendido: el producto NO fue eliminado. Revisá manualmente en admin/productos.'
+      } else {
+        if (relatedItem.preOrder) {
+          await prisma.preOrder.update({
+            where: { id: relatedItem.preOrder.id },
+            data: {
+              status: 'PENDING',
+              inventoryItemId: null,
+              notes: (relatedItem.preOrder.notes || '') + ` | Compra ${d.operationId} anulada: ${d.motivo}`,
+            },
+          }).catch(() => {})
         }
+        if (relatedItem.productId) {
+          await prisma.product.update({
+            where: { id: relatedItem.productId },
+            data: { deletedAt: new Date(), deletedBy: d.operador, deleteReason: `Compra ${d.operationId} anulada: ${d.motivo}` },
+          }).catch(() => {})
+        }
+        await prisma.inventoryItem.delete({ where: { id: relatedItem.id } }).catch(() => {})
       }
     }
 
@@ -159,6 +166,8 @@ export async function POST(request: Request) {
       operator: d.operador,
       createdById: admin.id,
     }).catch(() => {})
+
+    if (relatedItem?.productId) productCache.clear()
 
     return NextResponse.json({
       ok: true,
