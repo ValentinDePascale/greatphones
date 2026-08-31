@@ -54,11 +54,25 @@ export async function GET(request: Request) {
         _sum: { profitReal: true },
       })
 
+      // Calcular ganancia de ventas (usando profitReal del modelo Sale)
+      const salesGanancia = await prisma.sale.aggregate({
+        where: {
+          operator: g.operator,
+          status: { in: ['COMPLETED', 'DELIVERED'] },
+          ...(Object.keys(range).length ? { createdAt: range } : {}),
+        },
+        _sum: { profitReal: true },
+      })
+
+      const totalGanancia = (repairsGanancia._sum.profitReal || 0) + (salesGanancia._sum.profit || 0)
+
       return {
         operador: g.operator,
         cantidadVentas: ventas.find(v => v.operator === g.operator)?.count || 0,
         facturacion: ventas.find(v => v.operator === g.operator)?.sum || 0,
-        ganancia: (repairsGanancia._sum.profitReal || 0),
+        gananciaReparaciones: (repairsGanancia._sum.profitReal || 0),
+        gananciaVentas: (salesGanancia._sum.profit || 0),
+        gananciaTotal: totalGanancia,
         preventas: await prisma.accountingEntry.count({ where: { ...whereDate, source: 'PREORDER', operator: g.operator } }),
         reparaciones: reparaciones.find(r => r.operator === g.operator)?.count || 0,
         totalMovimientos: g._count._all,
