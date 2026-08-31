@@ -6,6 +6,30 @@ import { auditar } from '@/lib/audit'
 import { productCache } from '@/lib/cache'
 import { z } from 'zod'
 
+// La Lista de Precios guarda los colores en inglés (Apple), pero el resto
+// de la app (catálogo público, círculos de color en admin/productos) usa
+// el catálogo MODEL_COLORS en español de public/lib/constants.js. Sin esta
+// traducción, el color queda guardado pero no matchea ningún nombre
+// conocido y se muestra como "no disponible" en el detalle del producto.
+const COLOR_EN_TO_ES: Record<string, string> = {
+  'Blue': 'Azul', 'Midnight': 'Medianoche', 'Purple': 'Púrpura', 'Red': 'Rojo',
+  'Starlight': 'Luz Estelar', 'Yellow': 'Amarillo', 'Black': 'Negro', 'White': 'Blanco',
+  'Green': 'Verde', 'Pink': 'Rosa', 'Orange': 'Naranja Coral', 'Silver': 'Plateado',
+  'Gold': 'Dorado', 'Gray': 'Gris Espacial', 'Space Gray': 'Gris Espacial',
+  'Rose Gold': 'Rosa', 'Deep Purple': 'Púrpura Intenso', 'Graphite': 'Grafito',
+  'Midnight Black': 'Negro', 'Sierra Blue': 'Azul Sierra', 'Alpine Green': 'Verde Alpino',
+  'Space Black': 'Negro Espacial', 'Natural Titanium': 'Titanio Natural',
+  'Blue Titanium': 'Titanio Azul', 'White Titanium': 'Titanio Blanco',
+  'Black Titanium': 'Titanio Negro', 'Desert Titanium': 'Titanio Desierto',
+  'Aqua': 'Verde Agua', 'Ultra Violet': 'Azul Ultramar', 'Teal': 'Verde Azulado',
+  'Ultramarine': 'Azul Ultramar', 'Pacific Blue': 'Azul Pacífico', 'Coral': 'Coral',
+  'Indigo Titanium': 'Titanio Índigo', 'Midnight Green': 'Verde Medianoche',
+}
+function colorToSpanish(name: string | undefined | null): string | null {
+  if (!name) return null
+  return COLOR_EN_TO_ES[name] || name
+}
+
 const CompraSchema = z.object({
   tipo: z.enum(['COMPRA', 'CONSIGNACION']),
   fecha: z.string().optional(),
@@ -94,6 +118,7 @@ export async function POST(request: Request) {
     })
     if (priceEntry?.precioARS) precioLista = priceEntry.precioARS
     const precioFinal = d.precioVenta > 0 ? d.precioVenta : (precioLista > 0 ? precioLista : Math.round(costo * 1.3))
+    const colorEs = colorToSpanish(d.color)
 
     // Crear dentro de una transacción
     const result = await prisma.$transaction(async (tx) => {
@@ -109,7 +134,7 @@ export async function POST(request: Request) {
           stock: stock,
           type: 'celular',
           imei: d.imei || undefined,
-          color: d.color || undefined,
+          color: colorEs || undefined,
           storage: d.storage || undefined,
           imageUrl: d.imageUrl || undefined,
           description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
@@ -124,7 +149,7 @@ export async function POST(request: Request) {
           imei: d.imei || `NOIMEI-${Date.now().toString().slice(-9)}`,
           brand: d.marca || 'Generico',
           modelName: d.modelo,
-          color: d.color || null,
+          color: colorEs || null,
           storage: d.storage || null,
           imageUrl: d.imageUrl || null,
           deviceType: 'celular',

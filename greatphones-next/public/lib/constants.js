@@ -230,6 +230,19 @@ var MODEL_COLORS = {
   'iPhone 16 Pro Max':['Titanio Natural', 'Titanio Desierto', 'Titanio Blanco', 'Titanio Negro'],
 }
 
+// Lookup case-insensitive: otras fuentes de datos (ej. Lista de Precios,
+// admin/precios) no siempre respetan el casing exacto de Apple ("mini" vs
+// "Mini"), así que un MODEL_COLORS[modelName] directo puede fallar aunque
+// el modelo exista. Preferir esta función sobre el acceso directo.
+function getModelColors(modelName){
+  if(!modelName)return undefined;
+  if(MODEL_COLORS[modelName])return MODEL_COLORS[modelName];
+  var target=modelName.toLowerCase();
+  var key=Object.keys(MODEL_COLORS).find(function(k){return k.toLowerCase()===target;});
+  return key?MODEL_COLORS[key]:undefined;
+}
+window.getModelColors=getModelColors;
+
 var COLOR_HEX = {
   'Gris Espacial':    '#535150',
   'Plateado':         '#eae9e6',

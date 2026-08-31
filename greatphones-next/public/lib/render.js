@@ -1876,7 +1876,7 @@ function renderDetailVariants(){
   var modelName='';
   if(currentProd&&currentProd.modelGroup)modelName=currentProd.modelGroup;
   if(!modelName&&currentProd)modelName=currentProd.name;
-  var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[modelName];
+  var modelColors=window.getModelColors&&window.getModelColors(modelName);
   var hexMap=window.COLOR_HEX||{};
 
   // Use color circles for known iPhone models (y para preventas: círculos
@@ -3081,7 +3081,7 @@ function editProduct(id){
   document.getElementById('prodColor').value=p.color||'';
   // Color circles for iPhone models in admin edit
   var prodModelName=p.modelGroup||p.name||'';
-  var prodColors=window.MODEL_COLORS&&window.MODEL_COLORS[prodModelName];
+  var prodColors=window.getModelColors&&window.getModelColors(prodModelName);
   var colorField=document.getElementById('prodColor');
   var colorContainer=document.getElementById('adminColorContainer');
   if(!colorContainer){
@@ -3459,7 +3459,7 @@ function showImeiProductModal(existingProductId){
 
   window.onImeiPhoneModelChange=function(){
     var model=document.getElementById('if-iphoneModel').value;
-    if(model&&window.MODEL_COLORS&&window.MODEL_COLORS[model]){
+    if(model&&window.getModelColors&&window.getModelColors(model)){
       renderImeiColorSwatches(model,'');
       document.getElementById('if-color').style.display='none';
       document.getElementById('imeiColorContainer').style.display='flex';
@@ -3588,7 +3588,7 @@ function showImeiProductModal(existingProductId){
   window.renderImeiColorSwatches=function(modelName,preselectColor){
     var container=document.getElementById('imeiColorContainer');
     if(!container)return;
-    var colors=(window.MODEL_COLORS&&window.MODEL_COLORS[modelName])||[];
+    var colors=(window.getModelColors&&window.getModelColors(modelName))||[];
     var hexMap=window.COLOR_HEX||{};
     if(!colors.length){container.style.display='none';return;}
     container.style.display='flex';
@@ -3669,7 +3669,7 @@ function showImeiProductModal(existingProductId){
         }
       }else{
         document.getElementById('if-modelName').value=imeiModel;
-        var modelColors=window.MODEL_COLORS&&window.MODEL_COLORS[imeiModel];
+        var modelColors=window.getModelColors&&window.getModelColors(imeiModel);
         if(modelColors&&modelColors.length){
           document.getElementById('if-color').style.display='none';
           renderImeiColorSwatches(imeiModel,data.color);
