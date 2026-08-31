@@ -83,6 +83,7 @@ export default function ComprasClient() {
   const [cuil, setCuil] = useState('')
   const [modelo, setModelo] = useState('')
   const [imei, setImei] = useState('')
+  const [battery, setBattery] = useState('')
   const [color, setColor] = useState('')
   const [storage, setStorage] = useState('')
   const [marca, setMarca] = useState('')
@@ -176,7 +177,11 @@ export default function ComprasClient() {
   const validarPaso = (p: number): Record<string, string> => {
     const e: Record<string, string> = {}
     if (p === 1 && !operador) e.operador = 'Seleccioná el operador'
-    if (p === 2 && !modelo.trim()) e.modelo = 'Ingresá el modelo del equipo'
+    if (p === 2) {
+      if (!modelo.trim()) e.modelo = 'Ingresá el modelo del equipo'
+      if (imei.trim() && !/^\d{15}$/.test(imei.trim())) e.imei = 'El IMEI debe tener exactamente 15 números'
+      if (battery !== '' && (+battery < 0 || +battery > 100)) e.battery = 'La batería debe estar entre 0 y 100'
+    }
     if (p === 3) {
       if (tipo === 'COMPRA' && (!precioCompra || +precioCompra <= 0))
         e.precioCompra = 'El precio de compra debe ser mayor a 0'
@@ -228,6 +233,7 @@ export default function ComprasClient() {
   const resetear = () => {
     setModelo('')
     setImei('')
+    setBattery('')
     setProveedor('')
     setCuil('')
     setColor('')
@@ -288,6 +294,7 @@ export default function ComprasClient() {
           modelo,
           marca,
           imei,
+          battery: battery !== '' ? +battery : undefined,
           color,
           storage,
           imageUrl,
@@ -390,6 +397,7 @@ export default function ComprasClient() {
     ['Proveedor', proveedor || '—'],
     ['Modelo', modelo || '—'],
     ['IMEI / Serie', imei || '—'],
+    ['Batería', battery !== '' ? `${battery}%` : '—'],
     ['Color', color || '—'],
     ['Estado físico', estadoFisico],
     [
@@ -906,7 +914,7 @@ export default function ComprasClient() {
                 </div>
               )}
 
-              {/* IMEI y Estado físico */}
+              {/* IMEI y Batería */}
               <div className="cw-grid" style={{ marginTop: 14 }}>
                 <div>
                   <label htmlFor="imei" style={{ ...labelStyle, marginTop: 0 }}>
@@ -916,28 +924,62 @@ export default function ComprasClient() {
                     {...fieldProps('imei')}
                     className="cw-input"
                     value={imei}
-                    onChange={e => setImei(e.target.value)}
+                    onChange={e => {
+                      setImei(e.target.value.replace(/\D/g, '').slice(0, 15))
+                      limpiarError('imei')
+                    }}
+                    onBlur={() => validarEnBlur('imei')}
                     placeholder="15 dígitos"
                     inputMode="numeric"
+                    maxLength={15}
                     autoComplete="off"
                   />
+                  <p style={{ fontSize: 11, color: errors.imei ? '#DC2626' : '#94A3B8', margin: '5px 0 0' }}>
+                    {errors.imei || `${imei.length}/15 dígitos`}
+                  </p>
                 </div>
                 <div>
-                  <label htmlFor="estadoFisico" style={{ ...labelStyle, marginTop: 0 }}>
-                    Estado físico
+                  <label htmlFor="battery" style={{ ...labelStyle, marginTop: 0 }}>
+                    Batería (%)
                   </label>
-                  <select
-                    {...fieldProps('estadoFisico')}
-                    className="cw-select"
-                    value={estadoFisico}
-                    onChange={e => setEstadoFisico(e.target.value)}
-                  >
-                    <option>Excelente</option>
-                    <option>Bueno</option>
-                    <option>Regular</option>
-                    <option>Para Reparación</option>
-                  </select>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    {...fieldProps('battery')}
+                    className="cw-input"
+                    value={battery}
+                    onChange={e => {
+                      setBattery(e.target.value)
+                      limpiarError('battery')
+                    }}
+                    onBlur={() => validarEnBlur('battery')}
+                    placeholder="Ej: 87"
+                  />
+                  {errors.battery && (
+                    <p style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                      {errors.battery}
+                    </p>
+                  )}
                 </div>
+              </div>
+
+              {/* Estado físico */}
+              <div style={{ marginTop: 14 }}>
+                <label htmlFor="estadoFisico" style={{ ...labelStyle, marginTop: 0 }}>
+                  Estado físico
+                </label>
+                <select
+                  {...fieldProps('estadoFisico')}
+                  className="cw-select"
+                  value={estadoFisico}
+                  onChange={e => setEstadoFisico(e.target.value)}
+                >
+                  <option>Excelente</option>
+                  <option>Bueno</option>
+                  <option>Regular</option>
+                  <option>Para Reparación</option>
+                </select>
               </div>
             </fieldset>
           )}
