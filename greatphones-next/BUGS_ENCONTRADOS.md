@@ -137,13 +137,16 @@
 - Mantiene opción de pegar URL
 - Preview en tiempo real
 
-### 15. Formulario Agregar Producto - pantalla autocompletar
+### 15. ✅ Formulario Agregar Producto - pantalla autocompletar
 **Problema:** Pantalla no se autocompleta con tamaño según dispositivo seleccionado
 **Mejora:** 
   - RAM debe depender del modelo de iPhone (select dinámico)
   - Si hay solo una opción, auto-seleccionar
-**Status:** 🔵 Bajo (sin resolver - legacy)
-**Nota:** Requiere reescribir lógica de JavaScript legacy en admin.js para hacerlo dinámico
+**Status:** ✅ IMPLEMENTADO (commit 8128aac)
+- Agregué tabla IPHONE_SPECS con 16 modelos iPhone y sus pantallas
+- Función onAdminIphoneModelChange() auto-rellena pantalla al seleccionar modelo
+- Función updateProductFields() maneja visibilidad de campos dinámicamente
+- Popula el select de modelos iPhone cuando se selecciona marca iPhone
 
 ### 16. Select de Proveedor → cambiar a Input
 **Problema:** Select es poco flexible
