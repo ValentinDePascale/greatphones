@@ -28,6 +28,8 @@ const CreateSchema = z.object({
   efec: z.number().default(0),
   transf: z.number().default(0),
   cost: z.number().default(0),
+  thirdParty: z.boolean().optional(),
+  thirdPartyCost: z.number().optional(),
   obs: z.string().optional(),
   operador: z.string().min(1, 'Seleccioná el operador'),
 })
@@ -138,7 +140,9 @@ export async function POST(request: Request) {
 
     const pricePaid = d.precioCob || 0
     const costValue = d.cost || 0
-    const profitReal = pricePaid - costValue
+    const thirdPartyCostValue = d.thirdPartyCost || 0
+    const isThirdParty = d.thirdParty && thirdPartyCostValue > 0
+    const profitReal = isThirdParty ? pricePaid - thirdPartyCostValue : pricePaid - costValue
 
     const repair = await prisma.repair.create({
       data: {
@@ -160,9 +164,12 @@ export async function POST(request: Request) {
         priceCalc: d.precioCalculado || 0,
         estimatedHours: d.tiempoEstimadoHoras || null,
         pricePaid,
+        cost: costValue,
+        thirdParty: isThirdParty,
+        thirdPartyCost: thirdPartyCostValue || null,
         profitReal,
         operator: d.operador,
-        status: d.esDiagnostico ? 'DIAGNOSIS' : 'PENDING',
+        status: isThirdParty ? 'THIRD_PARTY' : d.esDiagnostico ? 'DIAGNOSIS' : 'PENDING',
       },
     })
 

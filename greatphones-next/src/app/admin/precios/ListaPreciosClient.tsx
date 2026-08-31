@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import AdminTopbar from '@/components/AdminTopbar'
-import { fetchDolar } from './dolar'
+import { fetchDolar, fetchDolarVenta } from './dolar'
 import PreciosVista from './PreciosVista'
 import PrecioEditor from './PrecioEditor'
+import DolarEditor from './DolarEditor'
 import type { PrecioRow } from './PrecioEditor'
 
 const TABS = [
@@ -35,7 +36,7 @@ export default function ListaPreciosClient() {
           setCargando(false)
         }
       })
-    fetchDolar('blue').then(v => {
+    fetchDolarVenta('blue').then(v => {
       if (activo && v != null) setDolar(v)
     })
     return () => {
@@ -53,8 +54,10 @@ export default function ListaPreciosClient() {
       `}</style>
 
         <p style={{ fontSize: 13, color: '#6B7280', margin: '2px 0 0' }}>
-          Precios en ARS (editables) · El valor en USD se calcula en vivo con dolarapi
+          Precios en ARS (editables) · Cotización editable manualmente o desde dolarapi
         </p>
+
+        <DolarEditor />
 
         <div
           style={{ display: 'flex', gap: 24, margin: '16px 0', borderBottom: '1px solid #E6E7F0' }}

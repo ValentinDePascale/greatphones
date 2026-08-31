@@ -78,6 +78,8 @@ export default function ReparacionClient() {
   const [efec, setEfec] = useState('')
   const [transf, setTransf] = useState('')
   const [obs, setObs] = useState('')
+  const [thirdParty, setThirdParty] = useState(false)
+  const [thirdPartyCost, setThirdPartyCost] = useState('')
 
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
@@ -215,6 +217,8 @@ export default function ReparacionClient() {
     setEfec('')
     setTransf('')
     setObs('')
+    setThirdParty(false)
+    setThirdPartyCost('')
     setMarcados({})
     setPresu(null)
     setEsDiagnostico(false)
@@ -273,6 +277,8 @@ export default function ReparacionClient() {
         precioCob: Number(precioCob) || 0,
         efec: Number(efec) || 0,
         transf: Number(transf) || 0,
+        thirdParty,
+        thirdPartyCost: thirdParty ? Number(thirdPartyCost) || 0 : undefined,
         obs: obs.trim(),
         operador,
       }
@@ -1116,6 +1122,53 @@ export default function ReparacionClient() {
                   />
                 </div>
               </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginTop: 14,
+                  padding: 12,
+                  background: '#FFF1E8',
+                  borderRadius: 8,
+                  border: '1px solid #FFD3BC',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  id="thirdParty"
+                  checked={thirdParty}
+                  onChange={e => setThirdParty(e.target.checked)}
+                  style={{ width: 18, height: 18, cursor: 'pointer' }}
+                />
+                <label htmlFor="thirdParty" style={{ flex: 1, cursor: 'pointer', margin: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: '#181B2E', margin: 0 }}>
+                    ¿Reparación a tercero?
+                  </p>
+                  <p style={{ fontSize: 12, color: '#6B7280', margin: '3px 0 0' }}>
+                    Si está marcado, el costo del tercero se usará para calcular la ganancia
+                  </p>
+                </label>
+              </div>
+
+              {thirdParty && (
+                <div style={{ marginTop: 10 }}>
+                  <label htmlFor="thirdPartyCost" style={{ ...labelStyle, marginTop: 0 }}>
+                    Costo del tercero ($)
+                  </label>
+                  <input
+                    type="number"
+                    min={0}
+                    id="thirdPartyCost"
+                    className="cw-input"
+                    style={inputStyle}
+                    value={thirdPartyCost}
+                    onChange={e => setThirdPartyCost(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              )}
+
               <label htmlFor="obs" style={{ ...labelStyle, marginTop: 12 }}>
                 Observaciones
               </label>

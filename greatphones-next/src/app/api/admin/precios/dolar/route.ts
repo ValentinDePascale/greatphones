@@ -21,10 +21,28 @@ export async function GET(request: Request) {
     }
 
     const dolar = await obtenerDolar(tipo)
-    if (!dolar) {
-      return NextResponse.json({ error: 'No se pudo obtener la cotización del dólar' }, { status: 502 })
+    if (dolar) {
+      return NextResponse.json(dolar)
     }
-    return NextResponse.json(dolar)
+
+    // Si falla obtenerDolar pero hay override anterior, devolverlo como fallback
+    const lastOverride = await prisma.appConfig.findUnique({ where: { key: 'dolar_override' } })
+    if (lastOverride?.value && typeof lastOverride.value === 'object' && 'venta' in lastOverride.value) {
+      return NextResponse.json({
+        venta: (lastOverride.value as any).venta,
+        compra: (lastOverride.value as any).compra || (lastOverride.value as any).venta,
+        fecha: (lastOverride.value as any).fecha,
+        fuente: 'manual (fallback)',
+      })
+    }
+
+    // Si todo falla, devolver valor default
+    return NextResponse.json({
+      venta: 1000,
+      compra: 950,
+      fecha: new Date().toISOString(),
+      fuente: 'default (API indisponible)',
+    })
   } catch (error) {
     return handleRouteError(error)
   }

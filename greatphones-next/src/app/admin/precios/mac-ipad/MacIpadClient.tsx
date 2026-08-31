@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import AdminTopbar from '@/components/AdminTopbar'
-import { fetchDolar } from '../dolar'
+import { fetchDolarVenta } from '../dolar'
 import PreciosVista from '../PreciosVista'
 import PrecioEditor from '../PrecioEditor'
 import type { PrecioRow } from '../PrecioEditor'
@@ -23,7 +23,7 @@ export default function MacIpadClient() {
       .catch(() => {
         if (activo) setError('No se pudieron cargar los precios')
       })
-    fetchDolar('blue').then(v => {
+    fetchDolarVenta('blue').then(v => {
       if (activo && v != null) setDolar(v)
     })
     return () => {

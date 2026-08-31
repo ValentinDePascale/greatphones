@@ -88,7 +88,7 @@ export default function FilterPanel<T extends Record<string, any>>({
                   {field.label}
                 </label>
                 <select
-                  value={currentFilter?.value ?? ''}
+                  value={String(currentFilter?.value ?? '')}
                   onChange={e => onFilterChange(field.field, e.target.value || null)}
                   style={{
                     width: '100%',
@@ -101,8 +101,8 @@ export default function FilterPanel<T extends Record<string, any>>({
                   }}
                 >
                   <option value="">Todos</option>
-                  {field.options.map(option => (
-                    <option key={option.value} value={option.value}>
+                  {field.options.map((option, idx) => (
+                    <option key={idx} value={String(option.value)}>
                       {option.label}
                     </option>
                   ))}
@@ -126,9 +126,9 @@ export default function FilterPanel<T extends Record<string, any>>({
                   {field.label}
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {field.options.map(option => (
+                  {field.options.map((option, idx) => (
                     <label
-                      key={option.value}
+                      key={idx}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -142,14 +142,14 @@ export default function FilterPanel<T extends Record<string, any>>({
                         type="checkbox"
                         checked={
                           Array.isArray(currentFilter?.value)
-                            ? currentFilter.value.includes(option.value)
-                            : currentFilter?.value === option.value
+                            ? currentFilter.value.some(v => String(v) === String(option.value))
+                            : String(currentFilter?.value) === String(option.value)
                         }
                         onChange={e => {
                           if (Array.isArray(currentFilter?.value)) {
                             const updated = e.target.checked
                               ? [...currentFilter.value, option.value]
-                              : currentFilter.value.filter(v => v !== option.value)
+                              : currentFilter.value.filter(v => String(v) !== String(option.value))
                             onFilterChange(field.field, updated.length > 0 ? updated : null)
                           } else {
                             onFilterChange(field.field, e.target.checked ? option.value : null)
@@ -180,9 +180,9 @@ export default function FilterPanel<T extends Record<string, any>>({
                   {field.label}
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {field.options.map(option => (
+                  {field.options.map((option, idx) => (
                     <label
-                      key={option.value}
+                      key={idx}
                       style={{
                         display: 'flex',
                         alignItems: 'center',
