@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 import { registerEntry } from '@/lib/accounting'
 import { auditar } from '@/lib/audit'
+import { productCache } from '@/lib/cache'
 import { z } from 'zod'
 
 const CompraSchema = z.object({
@@ -18,11 +19,19 @@ const CompraSchema = z.object({
   precioCompra: z.number().int().min(0).default(0),
   precioConsig: z.number().int().min(0).default(0),
   formaPago: z.string().optional(),
-  reparacion: z.string().optional(),
+  reparacion: z.union([z.boolean(), z.enum(['Sí', 'Si', 'No'])]).optional().transform(v => {
+    if (typeof v === 'boolean') return v
+    if (v === 'Sí' || v === 'Si') return true
+    return false
+  }),
   costoRep: z.number().int().min(0).default(0),
   precioVenta: z.number().int().min(0).default(0),
   obs: z.string().optional(),
-  esPreventa: z.enum(['No', 'Si']).optional(),
+  esPreventa: z.union([z.boolean(), z.enum(['No', 'Si', 'no', 'si'])]).optional().transform(v => {
+    if (typeof v === 'boolean') return v
+    if (v === 'Si' || v === 'si') return true
+    return false
+  }),
   nPreAsociada: z.string().optional(),
   operador: z.string().optional(),
 })
@@ -56,60 +65,77 @@ export async function POST(request: Request) {
     if (d.tipo === 'CONSIGNACION' && d.precioConsig <= 0) return NextResponse.json({ error: 'Para CONSIGNACION, el precio acordado debe ser > 0' }, { status: 400 })
 
     const numero = 'CMP-' + Date.now().toString().slice(-7)
-    const estadoInicial = d.reparacion === 'Sí' ? 'IN_REPAIR' : 'IN_STOCK'
 
-    // Crear el equipo en Inventario e inmediatamente en Productos
-    const item = await prisma.inventoryItem.create({
-      data: {
-        code: numero,
-        imei: d.imei || `NOIMEI-${Date.now().toString().slice(-9)}`,
-        brand: d.marca || 'Generico',
-        modelName: d.modelo,
-        color: d.color || null,
-        deviceType: 'celular',
-        purchasePrice: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
-        cosmeticCondition: d.estadoFisico || 'Bueno',
-        purchasedFrom: d.proveedor || null,
-        notes: d.obs || null,
-        status: estadoInicial as any,
-        targetPrice: d.precioVenta > 0 ? d.precioVenta : null,
-        createdById: admin.id,
-      },
-    })
-
-    // Crear también en Productos para que aparezca en el catálogo
-    const producto = await prisma.product.create({
-      data: {
-        name: d.modelo,
-        brand: d.marca || 'Genérico',
-        ico: 'smartphone',
-        condition: d.estadoFisico || 'Bueno',
-        price: d.precioVenta > 0 ? d.precioVenta : (d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig) * 1.3, // 30% margen por defecto
-        cost: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
-        stock: 1,
-        type: 'USADO',
-        imei: d.imei || undefined,
-        color: d.color || undefined,
-        description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
-        deletedAt: null,
-      },
-    }).catch(e => {
-      console.error('[Ops Compras] Error creando producto:', e)
-      return null
-    })
-
-    // Vincular a preventa si corresponde
-    if (d.esPreventa === 'Si' && d.nPreAsociada) {
-      await prisma.preOrder.update({
-        where: { id: d.nPreAsociada },
-        data: {
-          status: 'COMPRADO',
-          notes: ((await prisma.preOrder.findUnique({ where: { id: d.nPreAsociada } }))?.notes || '') + ` | Compra vinculada: ${numero}`,
-        },
-      }).catch(() => {})
+    // Validar preventa antes de abrir transacción
+    let preOrderToUpdate = null
+    if (d.esPreventa && d.nPreAsociada) {
+      preOrderToUpdate = await prisma.preOrder.findUnique({ where: { id: d.nPreAsociada } })
+      if (!preOrderToUpdate) return NextResponse.json({ error: 'Preventa no encontrada' }, { status: 404 })
     }
 
-    // Asiento contable: EGRESO si compra (sale plata), NEUTRO si consignación
+    // Calcular estado y stock dinámicamente
+    const necesitaArreglo = d.reparacion === true
+    const esPreventa = d.esPreventa === true
+    const status = necesitaArreglo ? 'IN_REPAIR' : (esPreventa ? 'RESERVED' : 'IN_STOCK')
+    const stock = (necesitaArreglo || esPreventa) ? 0 : 1
+
+    // Crear dentro de una transacción
+    const result = await prisma.$transaction(async (tx) => {
+      // Crear el producto
+      const producto = await tx.product.create({
+        data: {
+          name: d.modelo,
+          brand: d.marca || 'Genérico',
+          ico: 'smartphone',
+          condition: d.estadoFisico || 'Bueno',
+          price: d.precioVenta > 0 ? d.precioVenta : (d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig) * 1.3,
+          cost: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
+          stock: stock,
+          type: 'USADO',
+          imei: d.imei || undefined,
+          color: d.color || undefined,
+          description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
+          deletedAt: null,
+        },
+      })
+
+      // Crear el inventoryItem vinculado al producto
+      const item = await tx.inventoryItem.create({
+        data: {
+          code: numero,
+          imei: d.imei || `NOIMEI-${Date.now().toString().slice(-9)}`,
+          brand: d.marca || 'Generico',
+          modelName: d.modelo,
+          color: d.color || null,
+          deviceType: 'celular',
+          purchasePrice: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
+          cosmeticCondition: d.estadoFisico || 'Bueno',
+          purchasedFrom: d.proveedor || null,
+          notes: d.obs || null,
+          status: status as any,
+          targetPrice: d.precioVenta > 0 ? d.precioVenta : null,
+          repairCost: d.costoRep > 0 ? d.costoRep : null,
+          productId: producto.id,
+          createdById: admin.id,
+        },
+      })
+
+      // Vincular a preventa si corresponde
+      if (esPreventa && preOrderToUpdate) {
+        await tx.preOrder.update({
+          where: { id: d.nPreAsociada },
+          data: {
+            status: 'COMPRADO',
+            inventoryItemId: item.id,
+            notes: (preOrderToUpdate.notes || '') + ` | Compra vinculada: ${numero}`,
+          },
+        })
+      }
+
+      return { item, producto }
+    })
+
+    // Registrar asiento contable fuera de transacción
     const monto = d.tipo === 'COMPRA' ? d.precioCompra : 0
     if (monto > 0) {
       await registerEntry({
@@ -125,15 +151,21 @@ export async function POST(request: Request) {
       }).catch(e => console.error('[Ops Compras] asiento:', e))
     }
 
-    await auditar({ entityType: 'Product', entityId: item.id, action: 'CREACION', reason: 'Registro de compra de equipo', operator: d.operador }).catch(() => {})
-    productCacheClear?.()
+    // Auditar fuera de transacción
+    await auditar({
+      entityType: 'InventoryItem',
+      entityId: result.item.id,
+      action: 'CREACION',
+      reason: `Registro de compra de equipo (${d.modelo})${necesitaArreglo ? ' - Necesita arreglo' : ''}${esPreventa ? ' - Para preventa' : ''}`,
+      operator: d.operador,
+    }).catch(() => {})
 
-    return NextResponse.json({ numero, estado: estadoInicial, item }, { status: 201 })
+    // Limpiar cache de productos
+    productCache.clear()
+
+    return NextResponse.json({ numero, estado: status, item: result.item }, { status: 201 })
   } catch (error) {
     console.error('[Ops Compras POST]', error)
     return NextResponse.json({ error: 'Error al registrar la compra' }, { status: 500 })
   }
 }
-
-// Se importa sin romper
-function productCacheClear() { try { (global as any).productCache?.clear?.() } catch {} }
