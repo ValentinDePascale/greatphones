@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { InventoryStatusSchema, formatZodError } from '@/lib/validations'
 import { getCorsHeaders, corsOptions } from '@/lib/cors'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { productCache } from '@/lib/cache'
 
 
 
@@ -38,7 +39,24 @@ export async function PATCH(
       const updatedItem = await tx.inventoryItem.update({
         where: { id },
         data: { status },
+        include: { preOrder: { select: { id: true } } },
       })
+
+      // Sincronizar stock del producto si existe
+      if (updatedItem.productId) {
+        let newStock = 0
+        if (status === 'IN_STOCK') {
+          // Si tiene preventa vinculada, no suma stock (se reserva)
+          newStock = updatedItem.preOrder ? 0 : 1
+        } else if (status === 'IN_REPAIR' || status === 'RESERVED' || status === 'ON_HOLD' || status === 'SOLD') {
+          newStock = 0
+        }
+
+        await tx.product.update({
+          where: { id: updatedItem.productId },
+          data: { stock: newStock },
+        })
+      }
 
       let description = `Estado cambiado: ${getStatusLabel(oldStatus)} → ${getStatusLabel(status)}`
       if (notes) description += ` — ${notes}`
@@ -56,6 +74,11 @@ export async function PATCH(
 
       return updatedItem
     })
+
+    // Limpiar cache de productos
+    if (item.productId) {
+      productCache.clear()
+    }
 
     return NextResponse.json(updated, { headers: corsHeaders })
   } catch (error) { return handleRouteError(error) }
