@@ -118,6 +118,23 @@ export async function POST(request: Request) {
           data: { stock: { decrement: 1 } },
         }),
       ),
+      // Crear registro de venta para comisiones
+      prisma.sale.create({
+        data: {
+          code: numero,
+          userId: admin.id,
+          device: producto.name,
+          storage: producto.storage || '',
+          condition: producto.condition || '',
+          imei: '',
+          price: d.precioVenta + totalAcc,
+          cost: costo,
+          profitReal: gananciaCobrada,
+          payment: d.efectivo > 0 ? 'Efectivo' : d.transferencia > 0 ? 'Transferencia' : 'Otro',
+          status: 'COMPLETED',
+          operator: d.operador || d.vendedor || admin.id,
+        },
+      }),
     ])
     console.log(`[Venta Registrada] ${numero} - Stock actualizado para ${producto.name} y ${accs.length} accesorios`)
 
