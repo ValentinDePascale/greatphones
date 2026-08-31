@@ -1619,28 +1619,9 @@ function applyCompatRange(){
   updateCompatCount();
 }
 
-// =========== PRODUCT FUNCTIONS ===========
-function editProduct(id){
-  fetch(API_URL+'/api/products?id='+id,{headers:{}}).then(function(r){return r.json();}).then(function(p){
-    if(p){
-      document.getElementById('prodId').value=p.id;
-      document.getElementById('prodName').value=p.name;
-      document.getElementById('prodPrice').value=p.price;
-      document.getElementById('prodStock').value=p.stock;
-      document.getElementById('prodBrand').value=p.brand;
-      document.getElementById('prodDescription').value=p.description||p.sub||'';
-      document.getElementById('prodCondition').value=p.condition;
-      document.getElementById('prodType').value=p.type;
-      document.getElementById('prodColor').value=p.color;
-      document.getElementById('prodImageUrl').value=p.imageUrl;
-      window.additionalImages=p.images||[];
-      if(p.imageUrl){
-        document.getElementById('prodImagePreview').innerHTML='<img src="'+p.imageUrl+'" style="width:100%;height:100%;object-fit:cover">';
-      }
-      nav('admin-product');
-    }
-  });
-}
+// NOTA: editProduct() vive en render.js (carga antes que este archivo);
+// esa versión ya popula todos los campos del form desde PRODUCTS[]. No
+// redefinir acá — un editProduct() duplicado pisaría esa implementación.
 
 function duplicateProduct(id){
   var p=getById(PRODUCTS,id);

@@ -6,6 +6,25 @@ import AdminTopbar from '@/components/AdminTopbar'
 const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 6
 const STEPS = ['Operación', 'Equipo', 'Precio y pago', 'Reparación', 'Preventa', 'Confirmar']
+const OTRO_MODELO = '__otro__'
+
+// Mismo mapeo nombre→hex que usa el catálogo público (public/lib/render.js)
+const COLOR_HEX: Record<string, string> = {
+  Negro: '#1a1a1a', Blanco: '#f0f0f0', Rojo: '#e53e3e', Azul: '#3182ce', Verde: '#38a169',
+  Amarillo: '#ecc94b', Naranja: '#ed8936', Rosa: '#ed64a6', Gris: '#a0aec0', Plata: '#cbd5e0',
+  Dorado: '#d69e2e', 'Púrpura': '#805ad5', Celeste: '#63b3ed', Beige: '#f5e6cc', 'Marrón': '#8b4513',
+  Turquesa: '#4fd1c5', Coral: '#fc8181', Lavanda: '#b794f4', Oliva: '#68d391', 'Carbón': '#2d3748',
+  'Azul Marino': '#1a365d', 'Verde Menta': '#81e6d9', 'Gris Oscuro': '#4a5568', Crema: '#fefcbf',
+  'Negro Espacial': '#1a1a1a', 'Gris Espacial': '#5f5f5f', 'Titanio Natural': '#8f8a81',
+  'Titanio Azul': '#3a4a5c', 'Titanio Blanco': '#e8e6e0', 'Titanio Negro': '#3b3b3b',
+  'Titanio Desierto': '#a68b6c', 'Azul Sierra': '#a8c5d6', 'Verde Alpino': '#4a5c4c',
+  Medianoche: '#1c1c28', 'Luz Estelar': '#f0e6d2', Plateado: '#e0e0e0', Grafito: '#4a4a4a',
+  'Rosa Intenso': '#d88ba0', 'Púrpura Intenso': '#5e5375', 'Naranja Coral': '#ff8a5c', 'Verde Agua': '#7fd4c1',
+  'Azul Ultramar': '#3a5fcd',
+}
+function colorHex(name: string) {
+  return COLOR_HEX[name] || '#ccc'
+}
 
 function fmt(n: number) {
   return '$' + (n || 0).toLocaleString('es-AR')
@@ -57,11 +76,15 @@ export default function ComprasClient() {
   const [nPre, setNPre] = useState('')
   const [obs, setObs] = useState('')
 
+  const [priceList, setPriceList] = useState<
+    { modelo: string; almacenamiento: string; imageUrl: string | null; colors: string[] }[]
+  >([])
   const [iPhoneModels, setIPhoneModels] = useState<string[]>([])
   const [storages, setStorages] = useState<string[]>([])
-  const [colors, setColors] = useState<{ name: string; hex: string }[]>([])
+  const [colors, setColors] = useState<string[]>([])
   const [modeloCustom, setModeloCustom] = useState('')
   const [isCustomModel, setIsCustomModel] = useState(false)
+  const [selectValue, setSelectValue] = useState('')
 
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
@@ -75,13 +98,16 @@ export default function ComprasClient() {
     let activo = true
     Promise.all([
       fetch('/api/admin/ops/compras', { credentials: 'include' }).then(r => r.json()),
-      fetch('/api/price-list').then(r => r.json()),
+      fetch('/api/admin/precios', { credentials: 'include' }).then(r => r.json()),
     ])
-      .then(([prevs, priceList]) => {
+      .then(([prevs, precios]) => {
         if (!activo) return
         setPreventas(Array.isArray(prevs) ? prevs : [])
-        if (Array.isArray(priceList)) {
-          const iPhones = [...new Set(priceList.filter((p: any) => p.modelo?.includes('iPhone')).map((p: any) => p.modelo))].sort()
+        if (Array.isArray(precios)) {
+          setPriceList(precios)
+          const iPhones = [...new Set(
+            precios.filter((p: any) => p.modelo?.toLowerCase().includes('iphone')).map((p: any) => p.modelo as string)
+          )].sort()
           setIPhoneModels(iPhones)
         }
       })
@@ -91,57 +117,36 @@ export default function ComprasClient() {
     }
   }, [])
 
-  // Cuando cambia el modelo seleccionado, cargar storages, colores e imagen
+  // Cuando cambia el modelo seleccionado, derivar storages, colores e imagen
+  // de la Lista de Precios ya cargada (sin volver a pedir al servidor).
   useEffect(() => {
-    if (!modelo && !isCustomModel) {
+    if (!modelo) {
       setStorage('')
       setStorages([])
       setColors([])
       setImageUrl('')
-      setMarca('')
       return
     }
 
-    fetch('/api/price-list')
-      .then(r => r.json())
-      .then(priceList => {
-        if (!Array.isArray(priceList)) return
-        const filtered = priceList.filter((p: any) => p.modelo === modelo)
-        if (filtered.length === 0) return
+    const filtered = priceList.filter(p => p.modelo === modelo)
+    if (filtered.length === 0) {
+      setStorages([])
+      setColors([])
+      setImageUrl('')
+      return
+    }
 
-        // Storages únicos
-        const uniqueStorages = [...new Set(filtered.map((p: any) => p.almacenamiento).filter(Boolean))].sort()
-        setStorages(uniqueStorages)
+    const uniqueStorages = [...new Set(filtered.map(p => p.almacenamiento).filter(Boolean))]
+    setStorages(uniqueStorages)
+    setStorage(prev => (uniqueStorages.includes(prev) ? prev : uniqueStorages[0] || ''))
 
-        // Colores - intentar obtener del primer item con datos de color
-        const firstWithColors = filtered.find((p: any) => p.color)
-        if (firstWithColors?.color) {
-          try {
-            const colorObj = typeof firstWithColors.color === 'string'
-              ? JSON.parse(firstWithColors.color)
-              : firstWithColors.color
-            if (Array.isArray(colorObj)) {
-              setColors(colorObj)
-            }
-          } catch {
-            setColors([])
-          }
-        } else {
-          setColors([])
-        }
+    const uniqueColors = [...new Set(filtered.flatMap(p => p.colors || []))]
+    setColors(uniqueColors)
+    setColor(prev => (uniqueColors.includes(prev) ? prev : uniqueColors[0] || ''))
 
-        // Imagen - del primer item
-        if (filtered[0]?.imageUrl) {
-          setImageUrl(filtered[0].imageUrl)
-        }
-
-        // Marca
-        if (!isCustomModel && iPhoneModels.includes(modelo)) {
-          setMarca('Apple')
-        }
-      })
-      .catch(() => {})
-  }, [modelo, isCustomModel, iPhoneModels])
+    const withImage = filtered.find(p => p.imageUrl)
+    setImageUrl(withImage?.imageUrl || '')
+  }, [modelo, priceList])
 
   const validarPaso = (p: number): Record<string, string> => {
     const e: Record<string, string> = {}
@@ -206,6 +211,7 @@ export default function ComprasClient() {
     setImageUrl('')
     setModeloCustom('')
     setIsCustomModel(false)
+    setSelectValue('')
     setStorages([])
     setColors([])
     setPrecioCompra('')
@@ -388,6 +394,16 @@ export default function ComprasClient() {
         @media (max-width: 640px) { .cw-grid { grid-template-columns: 1fr; } .cw-steplabel { display: none; } }
         @media (max-width: 380px){ .cw-radio-grid{ grid-template-columns:1fr; } }
         .cw-input:focus { border-color: #FF6B2C !important; outline: none; }
+        .cw-select {
+          appearance: none;
+          -webkit-appearance: none;
+          cursor: pointer;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%2364748B' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 12px center;
+          padding-right: 34px !important;
+        }
+        .cw-select:focus { border-color: #FF6B2C !important; outline: none; }
         .cw-btn:focus-visible { outline: 2px solid #FF6B2C; outline-offset: 2px; }
         .cw-primary:not(:disabled):hover { filter: brightness(.94); }
         .cw-back:not(:disabled):hover { background: #F4F6F9; }
@@ -717,157 +733,186 @@ export default function ComprasClient() {
                 </div>
               </div>
               {/* Modelo */}
-              <div style={{ marginTop: 10 }}>
+              <div style={{ marginTop: 14 }}>
                 <label htmlFor="modeloSelect" style={{ ...labelStyle, marginTop: 0 }}>
                   Equipo / Modelo *
                 </label>
-                <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-                  <select
-                    id="modeloSelect"
-                    className="cw-input"
-                    value={isCustomModel ? '' : modelo}
-                    onChange={e => {
-                      if (e.target.value) {
-                        setIsCustomModel(false)
-                        setModelo(e.target.value)
-                        setMarca('Apple')
-                        setModeloCustom('')
-                      }
-                      limpiarError('modelo')
-                    }}
-                    style={{ flex: 1 }}
-                  >
-                    <option value="">Seleccionar modelo iPhone...</option>
-                    {iPhoneModels.map(m => (
-                      <option key={m} value={m}>{m}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="checkbox"
-                    checked={isCustomModel}
-                    onChange={e => {
-                      setIsCustomModel(e.target.checked)
-                      if (e.target.checked) {
-                        setModelo('')
-                        setMarca('')
-                        setStorage('')
-                        setColor('')
-                        setColors([])
-                      }
-                    }}
-                    style={{ width: 20, cursor: 'pointer' }}
-                    title="Marcar para ingresar modelo personalizado"
-                  />
-                  <span style={{ fontSize: 12, color: '#64748B' }}>Otro</span>
-                </div>
+                <select
+                  id="modeloSelect"
+                  className="cw-select"
+                  style={{ ...inputStyle, ...(errors.modelo ? inputErrorStyle : {}) }}
+                  value={selectValue}
+                  onChange={e => {
+                    const v = e.target.value
+                    setSelectValue(v)
+                    if (v === OTRO_MODELO) {
+                      setIsCustomModel(true)
+                      setModelo(modeloCustom)
+                      setMarca('')
+                      setStorage('')
+                      setColor('')
+                      setColors([])
+                      setStorages([])
+                      setImageUrl('')
+                    } else {
+                      setIsCustomModel(false)
+                      setModelo(v)
+                      setMarca(v ? 'Apple' : '')
+                      setModeloCustom('')
+                    }
+                    limpiarError('modelo')
+                  }}
+                  onBlur={() => validarEnBlur('modelo')}
+                >
+                  <option value="">Seleccionar modelo iPhone...</option>
+                  {iPhoneModels.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                  <option value={OTRO_MODELO}>Otro modelo (no es iPhone)...</option>
+                </select>
 
                 {isCustomModel && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 10 }}>
-                    <input
-                      className="cw-input"
-                      value={modeloCustom}
-                      onChange={e => {
-                        setModeloCustom(e.target.value)
-                        setModelo(e.target.value)
-                        limpiarError('modelo')
-                      }}
-                      onBlur={() => validarEnBlur('modelo')}
-                      placeholder="Ej: Samsung Galaxy S21"
-                      autoComplete="off"
-                    />
-                    <input
-                      className="cw-input"
-                      value={marca}
-                      onChange={e => setMarca(e.target.value)}
-                      placeholder="Marca (Ej: Samsung)"
-                      autoComplete="off"
-                    />
+                  <div className="cw-grid" style={{ marginTop: 10 }}>
+                    <div>
+                      <label htmlFor="modeloCustom" style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>
+                        Especificá el modelo *
+                      </label>
+                      <input
+                        id="modeloCustom"
+                        className="cw-input"
+                        style={{ ...inputStyle, ...(errors.modelo ? inputErrorStyle : {}) }}
+                        value={modeloCustom}
+                        onChange={e => {
+                          setModeloCustom(e.target.value)
+                          setModelo(e.target.value)
+                          limpiarError('modelo')
+                        }}
+                        onBlur={() => validarEnBlur('modelo')}
+                        placeholder="Ej: Samsung Galaxy S21"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="marcaCustom" style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>
+                        Marca *
+                      </label>
+                      <input
+                        id="marcaCustom"
+                        className="cw-input"
+                        style={inputStyle}
+                        value={marca}
+                        onChange={e => setMarca(e.target.value)}
+                        placeholder="Ej: Samsung"
+                        autoComplete="off"
+                      />
+                    </div>
                   </div>
                 )}
 
                 {errors.modelo && (
-                  <p style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                  <p style={{ fontSize: 12, color: '#DC2626', margin: '6px 0 0' }}>
                     {errors.modelo}
                   </p>
                 )}
               </div>
 
               {/* Almacenamiento y Color */}
-              <div className="cw-grid" style={{ marginTop: 10 }}>
-                {storages.length > 0 && (
-                  <div>
-                    <label style={labelStyle}>Almacenamiento</label>
-                    <select
-                      className="cw-input"
-                      value={storage}
-                      onChange={e => setStorage(e.target.value)}
-                    >
-                      <option value="">Seleccionar...</option>
-                      {storages.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {colors.length > 0 && (
-                  <div>
-                    <label style={labelStyle}>Color</label>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      {colors.map(c => (
-                        <button
-                          key={c.name}
-                          type="button"
-                          onClick={() => setColor(c.name)}
-                          title={c.name}
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            backgroundColor: c.hex,
-                            border: color === c.name ? '3px solid #1F2937' : '2px solid #E5E7EB',
-                            cursor: 'pointer',
-                            transition: 'all .2s',
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* IMEI */}
-              <div style={{ marginTop: 10 }}>
-                <label htmlFor="imei" style={{ ...labelStyle, marginTop: 0 }}>
-                  IMEI / N° de Serie
-                </label>
-                <input
-                  {...fieldProps('imei')}
-                  className="cw-input"
-                  value={imei}
-                  onChange={e => setImei(e.target.value)}
-                  placeholder="15 dígitos"
-                  inputMode="numeric"
-                  autoComplete="off"
-                />
-              </div>
-
-              {/* Estado físico */}
-              <div style={{ marginTop: 10 }}>
-                <label htmlFor="estadoFisico" style={{ ...labelStyle, marginTop: 0 }}>
-                  Estado físico
-                </label>
-                <select
-                  {...fieldProps('estadoFisico')}
-                  className="cw-input"
-                  value={estadoFisico}
-                  onChange={e => setEstadoFisico(e.target.value)}
+              {(storages.length > 0 || colors.length > 0) && (
+                <div
+                  style={{
+                    marginTop: 14,
+                    padding: 14,
+                    background: '#F7F8FC',
+                    border: '1px solid #E6E7F0',
+                    borderRadius: 10,
+                  }}
                 >
-                  <option>Excelente</option>
-                  <option>Bueno</option>
-                  <option>Regular</option>
-                  <option>Para Reparación</option>
-                </select>
+                  {storages.length > 0 && (
+                    <div>
+                      <label style={{ ...labelStyle, marginTop: 0 }}>Almacenamiento</label>
+                      <select
+                        className="cw-select"
+                        style={inputStyle}
+                        value={storage}
+                        onChange={e => setStorage(e.target.value)}
+                      >
+                        {storages.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {colors.length > 0 && (
+                    <div style={{ marginTop: storages.length > 0 ? 14 : 0 }}>
+                      <label style={{ ...labelStyle, marginTop: 0 }}>Color</label>
+                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                        {colors.map(c => (
+                          <button
+                            key={c}
+                            type="button"
+                            onClick={() => setColor(c)}
+                            title={c}
+                            aria-label={c}
+                            aria-pressed={color === c}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: '50%',
+                              backgroundColor: colorHex(c),
+                              border: color === c ? '2.5px solid #FF6B2C' : '1.5px solid #E6E7F0',
+                              boxShadow: color === c
+                                ? '0 0 0 2px #FFF, 0 0 0 4px #FF6B2C33'
+                                : '0 1px 3px rgba(0,0,0,.08)',
+                              cursor: 'pointer',
+                              transition: 'all .15s',
+                              padding: 0,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {color && (
+                        <p style={{ fontSize: 11.5, color: '#64748B', margin: '8px 0 0' }}>
+                          Seleccionado: <strong style={{ color: '#181B2E' }}>{color}</strong>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* IMEI y Estado físico */}
+              <div className="cw-grid" style={{ marginTop: 14 }}>
+                <div>
+                  <label htmlFor="imei" style={{ ...labelStyle, marginTop: 0 }}>
+                    IMEI / N° de Serie
+                  </label>
+                  <input
+                    {...fieldProps('imei')}
+                    className="cw-input"
+                    value={imei}
+                    onChange={e => setImei(e.target.value)}
+                    placeholder="15 dígitos"
+                    inputMode="numeric"
+                    autoComplete="off"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="estadoFisico" style={{ ...labelStyle, marginTop: 0 }}>
+                    Estado físico
+                  </label>
+                  <select
+                    {...fieldProps('estadoFisico')}
+                    className="cw-select"
+                    value={estadoFisico}
+                    onChange={e => setEstadoFisico(e.target.value)}
+                  >
+                    <option>Excelente</option>
+                    <option>Bueno</option>
+                    <option>Regular</option>
+                    <option>Para Reparación</option>
+                  </select>
+                </div>
               </div>
             </fieldset>
           )}
