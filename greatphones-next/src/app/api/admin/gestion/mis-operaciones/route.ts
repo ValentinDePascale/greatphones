@@ -114,6 +114,40 @@ export async function POST(request: Request) {
       }
     }
 
+    // Si se anula una COMPRA, eliminar el equipo/producto que generó
+    // (salvo que ya se haya vendido: ahí solo se avisa, no se toca nada).
+    let avisoCompra: string | null = null
+    const entriesCompra = entries.filter(e => e.source === 'COMPRA')
+    if (entriesCompra.length > 0) {
+      const item = await prisma.inventoryItem.findUnique({
+        where: { code: d.operationId },
+        include: { preOrder: true },
+      })
+      if (item) {
+        if (item.status === 'SOLD') {
+          avisoCompra = 'El equipo de esta compra ya fue vendido: el producto NO fue eliminado. Revisá manualmente en admin/productos.'
+        } else {
+          if (item.preOrder) {
+            await prisma.preOrder.update({
+              where: { id: item.preOrder.id },
+              data: {
+                status: 'PENDING',
+                inventoryItemId: null,
+                notes: (item.preOrder.notes || '') + ` | Compra ${d.operationId} anulada: ${d.motivo}`,
+              },
+            }).catch(() => {})
+          }
+          if (item.productId) {
+            await prisma.product.update({
+              where: { id: item.productId },
+              data: { deletedAt: new Date(), deletedBy: d.operador, deleteReason: `Compra ${d.operationId} anulada: ${d.motivo}` },
+            }).catch(() => {})
+          }
+          await prisma.inventoryItem.delete({ where: { id: item.id } }).catch(() => {})
+        }
+      }
+    }
+
     // Anular la operación: elimina sus asientos para que deje de aparecer
     await prisma.accountingEntry.deleteMany({ where: { operationId: d.operationId } })
 
@@ -126,7 +160,13 @@ export async function POST(request: Request) {
       createdById: admin.id,
     }).catch(() => {})
 
-    return NextResponse.json({ ok: true, anulado: d.operationId, asientos: entries.length, motivo: d.motivo })
+    return NextResponse.json({
+      ok: true,
+      anulado: d.operationId,
+      asientos: entries.length,
+      motivo: d.motivo,
+      aviso: avisoCompra,
+    })
   } catch (error) {
     return handleRouteError(error)
   }

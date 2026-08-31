@@ -122,7 +122,11 @@ export default function MisOperacionesClient() {
     })
     const d = await r.json()
     if (!r.ok) return toast('error', d.error || 'Error')
-    toast('success', `${d.anulado} anulado (${d.asientos} asientos)`)
+    if (d.aviso) {
+      toast('error', d.aviso)
+    } else {
+      toast('success', `${d.anulado} anulado (${d.asientos} asientos)`)
+    }
     load()
   }
 
