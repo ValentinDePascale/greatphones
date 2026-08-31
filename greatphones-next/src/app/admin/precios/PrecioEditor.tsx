@@ -578,27 +578,79 @@ export default function PrecioEditor({ endpoint, title, emptyText }: Props) {
             <div className="pm-grid" style={{ marginTop: 10 }}>
               <div className="pm-full">
                 <label htmlFor="m-imagen" style={labelStyle}>
-                  Imagen (URL) — fondo blanco, ej. GSMArena bigpic
+                  Imagen — fondo blanco (URL o archivo)
                 </label>
-                <input
-                  id="m-imagen"
-                  type="text"
-                  value={(modal.valores as any).imageUrl || ''}
-                  onChange={e =>
-                    setModal({
-                      ...modal,
-                      valores: { ...modal.valores, imageUrl: e.target.value },
-                    })
-                  }
-                  style={inputStyle}
-                  placeholder="https://fdn2.gsmarena.com/vv/bigpic/apple-iphone-15-pro-max.jpg"
-                />
+                <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                  <input
+                    id="m-imagen"
+                    type="text"
+                    value={(modal.valores as any).imageUrl || ''}
+                    onChange={e =>
+                      setModal({
+                        ...modal,
+                        valores: { ...modal.valores, imageUrl: e.target.value },
+                      })
+                    }
+                    style={{ ...inputStyle, flex: 1 }}
+                    placeholder="Pega URL o sube un archivo"
+                  />
+                  <label
+                    htmlFor="m-imagen-file"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      padding: '9px 14px',
+                      background: '#F0F4F8',
+                      border: '1.5px solid #E6E7F0',
+                      borderRadius: 9,
+                      cursor: 'pointer',
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: '#3D4356',
+                      transition: 'all .15s',
+                    }}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.background = '#E8ECF2'
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.background = '#F0F4F8'
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined"
+                      style={{ fontSize: 16, marginRight: 6 }}
+                      aria-hidden="true"
+                    >
+                      upload_file
+                    </span>
+                    Subir
+                  </label>
+                  <input
+                    id="m-imagen-file"
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async e => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const reader = new FileReader()
+                      reader.onload = () => {
+                        const base64 = reader.result as string
+                        setModal({
+                          ...modal,
+                          valores: { ...modal.valores, imageUrl: base64 },
+                        })
+                      }
+                      reader.readAsDataURL(file)
+                    }}
+                  />
+                </div>
                 {(modal.valores as any).imageUrl ? (
                   <img
                     src={(modal.valores as any).imageUrl}
                     alt="preview"
                     loading="lazy"
-                    style={{ height: 90, marginTop: 8, border: '1px solid #E6E7F0', borderRadius: 8, padding: 4 }}
+                    style={{ height: 90, marginTop: 8, border: '1px solid #E6E7F0', borderRadius: 8, padding: 4, maxWidth: '100%' }}
                   />
                 ) : null}
               </div>
