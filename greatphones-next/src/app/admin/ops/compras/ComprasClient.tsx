@@ -842,7 +842,6 @@ export default function ComprasClient() {
                   IMEI / N° de Serie
                 </label>
                 <input
-                  id="imei"
                   {...fieldProps('imei')}
                   className="cw-input"
                   value={imei}
@@ -859,7 +858,6 @@ export default function ComprasClient() {
                   Estado físico
                 </label>
                 <select
-                  id="estadoFisico"
                   {...fieldProps('estadoFisico')}
                   className="cw-input"
                   value={estadoFisico}
