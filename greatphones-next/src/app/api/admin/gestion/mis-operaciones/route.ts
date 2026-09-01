@@ -109,6 +109,8 @@ export async function POST(request: Request) {
           }).catch(() => {})
         }
       }
+      // Eliminar el registro de Sale para que su ganancia deje de sumar en Comisiones
+      await prisma.sale.deleteMany({ where: { code: d.operationId } }).catch(() => {})
     }
 
     // Si se anula una preventa, eliminarla completamente (no volver a PENDING)
@@ -146,10 +148,27 @@ export async function POST(request: Request) {
           }).catch(() => {})
         }
         if (relatedItem.productId) {
-          await prisma.product.update({
-            where: { id: relatedItem.productId },
-            data: { deletedAt: new Date(), deletedBy: d.operador, deleteReason: `Compra ${d.operationId} anulada: ${d.motivo}` },
-          }).catch(() => {})
+          // El Product puede estar compartido por varias compras/unidades de la
+          // misma variante (mismo modelo/storage/color, ver ops/compras). Solo
+          // hay que restar el stock que esta unidad había sumado (únicamente si
+          // estaba IN_STOCK, que es el único status que suma a Product.stock),
+          // y recién si no queda ninguna otra unidad activa vinculada, eliminar
+          // el Product — nunca eliminarlo si otras unidades siguen dependiendo de él.
+          if (relatedItem.status === 'IN_STOCK') {
+            await prisma.product.update({
+              where: { id: relatedItem.productId },
+              data: { stock: { decrement: 1 } },
+            }).catch(() => {})
+          }
+          const otrasUnidadesActivas = await prisma.inventoryItem.count({
+            where: { productId: relatedItem.productId, id: { not: relatedItem.id }, status: { not: 'SOLD' } },
+          })
+          if (otrasUnidadesActivas === 0) {
+            await prisma.product.update({
+              where: { id: relatedItem.productId },
+              data: { deletedAt: new Date(), deletedBy: d.operador, deleteReason: `Compra ${d.operationId} anulada: ${d.motivo}` },
+            }).catch(() => {})
+          }
         }
         await prisma.inventoryItem.delete({ where: { id: relatedItem.id } }).catch(() => {})
       }

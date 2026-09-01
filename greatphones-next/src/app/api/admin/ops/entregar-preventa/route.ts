@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 import { registerEntry } from '@/lib/accounting'
+import { dolarActual } from '@/lib/dolar-server'
 import { z } from 'zod'
 
 const EntregaSchema = z.object({
@@ -62,8 +63,9 @@ export async function POST(request: Request) {
 
     // Cobro del saldo
     const saldo = pre.price || 0
+    const usdRate = (await dolarActual()).compra || 1000
     const cobradoAhoraPesos =
-      d.efectivo + d.transferencia + d.cuotas + Math.round((d.usd || 0) * 1000)
+      d.efectivo + d.transferencia + d.cuotas + Math.round((d.usd || 0) * usdRate)
 
     // Marcar el equipo como vendido si se eligió
     if (d.inventoryItemId) {
@@ -158,6 +160,9 @@ export async function DELETE(request: Request) {
         notes: notasActualizadas,
       },
     })
+
+    // Eliminar los asientos contables asociados para que la ganancia deje de sumar en Comisiones
+    await prisma.accountingEntry.deleteMany({ where: { operationId: pre.code } }).catch(() => {})
 
     return NextResponse.json({ success: true, code: pre.code }, { status: 200 })
   } catch (error) {

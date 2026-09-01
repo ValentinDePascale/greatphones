@@ -31,15 +31,21 @@ export default function CalcCuotasClient() {
     Array<{ cuotas: number; total: number; valorCuota: number }>
   >([])
   const [calculado, setCalculado] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let activo = true
     fetch('/api/admin/precios/cuotas', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('cuotas')
+        return r.json()
+      })
       .then(d => {
         if (activo) setRows(Array.isArray(d) ? d.filter(c => c.mostrar && c.activo) : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setError('No se pudo cargar la configuración de cuotas. Recargá la página.')
+      })
     return () => {
       activo = false
     }
@@ -73,6 +79,24 @@ export default function CalcCuotasClient() {
         <p style={{ fontSize: 12, color: '#9CA3AF', margin: '0 0 16px' }}>
           Ingresá un precio y verás cuánto cuesta cada cuota con interés incluido.
         </p>
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: 8,
+              padding: '11px 14px',
+              marginBottom: 16,
+              color: '#B91C1C',
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <form
           onSubmit={ev => {

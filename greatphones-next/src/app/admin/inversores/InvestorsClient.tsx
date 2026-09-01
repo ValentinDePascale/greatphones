@@ -116,6 +116,8 @@ export default function InvestorsClient() {
 
   const create = async () => {
     if (!ncName.trim()) return toast('error', 'Ingresá el nombre del inversor')
+    if (ncCapital && (parseInt(ncCapital, 10) || 0) < 0)
+      return toast('error', 'El capital no puede ser negativo')
     setGuardando(true)
     try {
       const r = await fetch('/api/admin/investors', {
@@ -143,7 +145,7 @@ export default function InvestorsClient() {
   const move = async () => {
     if (!activeId) return
     const amt = parseInt(mAmount || '0', 10)
-    if (!amt) return toast('error', 'Ingresá un monto')
+    if (!amt || amt <= 0) return toast('error', 'Ingresá un monto mayor a 0')
     setGuardando(true)
     try {
       const r = await fetch('/api/admin/investors', {

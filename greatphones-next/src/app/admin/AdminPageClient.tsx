@@ -78,8 +78,8 @@ export default function AdminPageClient({ html, tab }: Props) {
       prods: 'Productos', inventory: 'Inventario',
       acc: 'Accesorios', stock: 'Stock', promos: 'Promociones',
       orders: 'Pedidos', arrep: 'Arrepentimientos', chat: 'Chat',
-      quotes: 'Cotizaciones', instore: 'Venta en Tienda', preventa: 'Preventas',
-      sales: 'Historial de Ventas', users: 'Usuarios', cupones: 'Cupones',
+      quotes: 'Cotizaciones', preventa: 'Preventas',
+      users: 'Usuarios', cupones: 'Cupones',
     }
     const titleEl = document.getElementById('adminPageTitle')
     if (titleEl && titles[tab]) titleEl.textContent = titles[tab]
@@ -126,8 +126,12 @@ export default function AdminPageClient({ html, tab }: Props) {
           return
         }
 
-        const el = document.getElementById('adminContent')
-        const populated = el && el.innerHTML.trim() !== ''
+        // #adminContent es el contenedor normal, pero _renderAdminLegacy (admin.js)
+        // cae a #adminTabs cuando #adminContent no existe: chequeamos ambos para
+        // no quedar en polling infinito por mirar el contenedor equivocado.
+        const elContent = document.getElementById('adminContent')
+        const elTabs = document.getElementById('adminTabs')
+        const populated = (elContent && elContent.innerHTML.trim() !== '') || (elTabs && elTabs.innerHTML.trim() !== '')
         if (populated) {
           window.clearInterval(pollIv)
           return

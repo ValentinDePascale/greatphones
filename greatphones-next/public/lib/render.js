@@ -1451,10 +1451,14 @@ function openDetail(id, variantId){
     window._detailVariants=groupSiblings.map(function(gp){return Object.assign({},gp,{targetPrice:gp.price});});
     window._variantsLoaded=true;
     renderDetailVariants();
-    if(variantId){
-      for(var gvi=0;gvi<window._detailVariants.length;gvi++){
-        if(window._detailVariants[gvi].id===variantId){selectDetailVariant(gvi);break;}
-      }
+    // Preseleccionar la variante correcta: variantId es un override explícito
+    // (ej. venir de un selector de color en otra pantalla); si no vino, hay que
+    // preseleccionar el producto que realmente se pidió abrir (id) — antes,
+    // sin variantId, siempre caía a la variante 0 del grupo sin importar cuál
+    // id/color se abrió, mostrando stock/imagen de otro color.
+    var wantedId=variantId||id;
+    for(var gvi=0;gvi<window._detailVariants.length;gvi++){
+      if(window._detailVariants[gvi].id===wantedId){selectDetailVariant(gvi);break;}
     }
     if(window._selectedVariantIdx<0&&window._detailVariants.length>0)selectDetailVariant(0);
     var gAddCartBtn=document.getElementById('detAddCart');var gBuyNowBtn=document.getElementById('detBuyNow');
@@ -1799,7 +1803,7 @@ function selectDetailVariant(idx){
     color:v.color,
     ram:currentProd.ram,
     storage:v.storage||currentProd.storage,
-    stock:currentProd.stock,
+    stock:v.stock!==undefined?v.stock:currentProd.stock,
     sub:currentProd.sub,
     processor:currentProd.processor,
     screen:currentProd.screen,

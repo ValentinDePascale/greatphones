@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 import { registerEntry } from '@/lib/accounting'
+import { dolarActual } from '@/lib/dolar-server'
 import { z } from 'zod'
 
 function genPreCode() {
@@ -57,7 +58,8 @@ export async function POST(request: Request) {
       )
     const d = parsed.data
 
-    const cobradoPesos = d.efectivo + d.transferencia + d.cuotas + Math.round((d.usd || 0) * 1000)
+    const usdRate = (await dolarActual()).compra || 1000
+    const cobradoPesos = d.efectivo + d.transferencia + d.cuotas + Math.round((d.usd || 0) * usdRate)
     if (cobradoPesos <= 0)
       return NextResponse.json({ error: 'Debe registrarse al menos un cobro' }, { status: 400 })
 
@@ -78,8 +80,34 @@ export async function POST(request: Request) {
       },
     })
 
-    // No registrar asientos al crear preventa — se registran solo al entregar
-    // para evitar duplicar los montos en reportes
+    const medios: Array<{ medio: string; monto: number; esUSD?: boolean }> = [
+      { medio: 'Efectivo', monto: d.efectivo },
+      { medio: 'Transferencia', monto: d.transferencia },
+      { medio: 'Cuotas', monto: d.cuotas },
+    ]
+    if (d.usd > 0) medios.push({ medio: 'USD', monto: d.usd, esUSD: true })
+    for (const m of medios) {
+      if (m.esUSD ? (m.monto || 0) <= 0 : m.monto <= 0) continue
+      await registerEntry({
+        source: 'PREORDER',
+        operationId: code,
+        description: `Preventa ${code} — ${d.cliente} — ${d.modelo}`,
+        category: 'Preventas',
+        type: 'INGRESO',
+        means:
+          m.medio === 'Efectivo'
+            ? 'EFECTIVO'
+            : m.medio === 'Transferencia'
+              ? 'TRANSFERENCIA'
+              : m.medio === 'Cuotas'
+                ? 'CUOTAS'
+                : 'USD',
+        amount: m.esUSD ? 0 : m.monto,
+        amountUsd: m.esUSD ? m.monto : null,
+        operator: d.operador || d.vendedor || admin.id,
+        createdById: admin.id,
+      }).catch(e => console.error('[Ops Preventas] asiento:', e))
+    }
 
     return NextResponse.json({ numero: code, ...pre }, { status: 201 })
   } catch (error) {

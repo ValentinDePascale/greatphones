@@ -123,26 +123,49 @@ export async function POST(request: Request) {
 
     // Crear dentro de una transacción
     const result = await prisma.$transaction(async (tx) => {
-      // Crear el producto
-      const producto = await tx.product.create({
-        data: {
-          name: d.modelo,
+      // Buscar si ya existe un Product para esta misma variante (mismo
+      // modelo/marca/storage/color, igual que el matching que ya usa
+      // src/app/api/inventory/route.ts) para sumar stock en vez de crear un
+      // producto duplicado que aparecía como "otro dispositivo" en el catálogo.
+      let producto = await tx.product.findFirst({
+        where: {
           brand: d.marca || 'Genérico',
-          ico: 'smartphone',
-          condition: d.estadoFisico || 'Bueno',
-          price: precioFinal,
-          cost: costo,
-          stock: stock,
-          type: 'celular',
-          imei: d.imei || undefined,
-          color: colorEs || undefined,
-          storage: d.storage || undefined,
-          imageUrl: d.imageUrl || undefined,
-          battery: d.battery ?? undefined,
-          description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
-          deletedAt: null,
+          modelGroup: d.modelo,
+          storage: d.storage || null,
+          color: colorEs || null,
         },
       })
+
+      if (producto) {
+        producto = await tx.product.update({
+          where: { id: producto.id },
+          data: {
+            stock: { increment: stock },
+            deletedAt: null, // por si el Product había quedado soft-eliminado de una compra anulada anteriormente
+          },
+        })
+      } else {
+        producto = await tx.product.create({
+          data: {
+            name: d.modelo,
+            brand: d.marca || 'Genérico',
+            modelGroup: d.modelo,
+            ico: 'smartphone',
+            condition: d.estadoFisico || 'Bueno',
+            price: precioFinal,
+            cost: costo,
+            stock: stock,
+            type: 'celular',
+            imei: d.imei || undefined,
+            color: colorEs || undefined,
+            storage: d.storage || undefined,
+            imageUrl: d.imageUrl || undefined,
+            battery: d.battery ?? undefined,
+            description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
+            deletedAt: null,
+          },
+        })
+      }
 
       // Crear el inventoryItem vinculado al producto
       const item = await tx.inventoryItem.create({

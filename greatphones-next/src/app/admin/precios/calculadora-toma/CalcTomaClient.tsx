@@ -45,21 +45,32 @@ export default function CalcTomaClient() {
   const [cjModelo, setCjModelo] = useState('')
   const [marcadas, setMarcadas] = useState<Record<string, boolean>>({})
   const [tipoVenta, setTipoVenta] = useState<'normal' | 'preventa'>('normal')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     let activo = true
     fetch('/api/admin/precios/toma', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('toma')
+        return r.json()
+      })
       .then(d => {
         if (activo) setTomaItems(Array.isArray(d) ? d : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setError('No se pudo cargar los precios de toma. Recargá la página.')
+      })
     fetch('/api/admin/precios', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('precios')
+        return r.json()
+      })
       .then(d => {
         if (activo) setListaItems(Array.isArray(d) ? d : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setError('No se pudo cargar la lista de precios. Recargá la página.')
+      })
     return () => {
       activo = false
     }
@@ -101,6 +112,24 @@ export default function CalcTomaClient() {
           Calcula el valor de toma según las fallas marcadas y lo que debe agregar el cliente en un
           canje.
         </p>
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: 8,
+              padding: '11px 14px',
+              marginBottom: 16,
+              color: '#B91C1C',
+              fontWeight: 600,
+              fontSize: 13,
+            }}
+          >
+            {error}
+          </div>
+        )}
 
         <section
           style={{

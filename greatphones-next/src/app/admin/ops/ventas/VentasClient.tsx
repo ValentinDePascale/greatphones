@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import AdminTopbar from '@/components/AdminTopbar'
+import { fetchDolar } from '@/app/admin/precios/dolar'
 
 interface Producto {
   id: string
@@ -64,6 +65,7 @@ export default function VentasClient() {
   const [transf, setTransf] = useState('')
   const [cuotas, setCuotas] = useState('')
   const [usd, setUsd] = useState('')
+  const [dolarCompra, setDolarCompra] = useState(1000)
   const [accesorios, setAccesorios] = useState([{ nombre: '', precio: '' }])
   const [regalos, setRegalos] = useState(true)
   const [obs, setObs] = useState('')
@@ -79,13 +81,21 @@ export default function VentasClient() {
   useEffect(() => {
     let activo = true
     fetch('/api/admin/ops/ventas', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('equipos')
+        return r.json()
+      })
       .then(d => {
         if (activo) setEquipos(Array.isArray(d) ? d : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo cargar el listado de equipos. Recargá la página.')
+      })
     fetch('/api/accessories?limit=500', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('accesorios')
+        return r.json()
+      })
       .then(d => {
         if (!activo) return
         const data = Array.isArray(d?.data) ? d.data : []
@@ -112,7 +122,12 @@ export default function VentasClient() {
             ),
         )
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo cargar el listado de accesorios. Recargá la página.')
+      })
+    fetchDolar().then(d => {
+      if (activo && d?.compra) setDolarCompra(d.compra)
+    })
     return () => {
       activo = false
     }
@@ -120,15 +135,18 @@ export default function VentasClient() {
 
   const recargarEquipos = () => {
     fetch('/api/admin/ops/ventas', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('equipos')
+        return r.json()
+      })
       .then(d => setEquipos(Array.isArray(d) ? d : []))
-      .catch(() => {})
+      .catch(() => setServerMsg('No se pudo actualizar el listado de equipos.'))
   }
 
   const totalAcc = accesorios.reduce((s, a) => s + (parseInt(a.precio) || 0), 0)
   const precio = parseInt(precioVenta) || 0
   const totalOperacion = precio + totalAcc
-  const usdPesos = Math.round((parseInt(usd) || 0) * 1000)
+  const usdPesos = Math.round((parseInt(usd) || 0) * dolarCompra)
   const totalCobrado =
     (parseInt(efec) || 0) + (parseInt(transf) || 0) + (parseInt(cuotas) || 0) + usdPesos
   const diferencia = totalCobrado - totalOperacion
@@ -904,7 +922,7 @@ export default function VentasClient() {
                 ))}
               </div>
               <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
-                Los USD se convierten a pesos al cotizar 1 USD = $1.000.
+                Los USD se convierten a pesos al cotizar 1 USD = {fmt(dolarCompra)}.
               </p>
 
               <div

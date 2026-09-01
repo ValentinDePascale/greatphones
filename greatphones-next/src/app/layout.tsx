@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${playfair.variable} ${dmSans.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${playfair.variable} ${dmSans.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         {/* DNS-prefetch external domains */}

@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-guard'
 import { registerEntry } from '@/lib/accounting'
 import { auditar } from '@/lib/audit'
+import { dolarActual } from '@/lib/dolar-server'
 import { z } from 'zod'
 
 const VentaSchema = z.object({
@@ -83,7 +84,9 @@ export async function POST(request: Request) {
     const totalAcc = accs.reduce((s, a) => s + a.precio, 0)
     const totalOperacion = d.precioVenta + totalAcc
 
-    const usdRate = (global as unknown as { dolarVenta?: number }).dolarVenta || 1000
+    // El cliente entrega dólares y la tienda los recibe/compra: se valorizan
+    // con la cotización COMPRA que fija el admin (Precios → Lista de Precios).
+    const usdRate = (await dolarActual()).compra || 1000
     const usdPesos = Math.round(Number(d.usd || 0) * usdRate)
     const totalCobradoPesos = d.efectivo + d.transferencia + d.cuotas + usdPesos
 

@@ -52,7 +52,7 @@ export async function POST(request: Request) {
       productModelName, productStorage, productColor, productCondition,
       price, paymentMethod, paymentType, installments,
       expectedDeliveryStart, expectedDeliveryEnd,
-      notes,
+      notes, operador, vendedor,
     } = body
 
     if (!clientName || !clientName.trim()) {
@@ -98,6 +98,7 @@ export async function POST(request: Request) {
           type: 'INGRESO',
           means,
           amount: amt,
+          operator: operador || vendedor || admin.id,
           createdById: admin.id,
         })
       } catch (e) { console.error('[Preorders] asiento:', e) }

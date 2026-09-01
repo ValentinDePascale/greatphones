@@ -65,11 +65,16 @@ export default function GastoClient() {
   useEffect(() => {
     let activo = true
     fetch('/api/admin/precios/dolar?tipo=blue', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('dolar')
+        return r.json()
+      })
       .then(d => {
         if (activo && d && d.venta) setCotizacion(d.venta)
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo obtener la cotización del dólar, se usará $1.000 por defecto.')
+      })
     return () => {
       activo = false
     }

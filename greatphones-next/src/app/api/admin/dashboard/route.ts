@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
+import { dolarActual } from '@/lib/dolar-server'
 
 const MONTHS = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
@@ -34,7 +35,7 @@ async function kpiVentasLocal(gte: Date, lt: Date) {
       _count: true,
     }),
   ])
-  const usdRate = (global as unknown as { dolarVenta?: number }).dolarVenta || 1000
+  const usdRate = (await dolarActual()).compra || 1000
   const revenue =
     (ventasRow._sum.amount || 0) + Math.round((ventasRow._sum.amountUsd || 0) * usdRate) + (preDlv._sum.price || 0)
   const orders = ventasCount.length + preDlv._count
@@ -52,7 +53,7 @@ async function ventasLocalesAnio(startOfYear: Date) {
       select: { price: true, deliveredAt: true },
     }),
   ])
-  const usdRate = (global as unknown as { dolarVenta?: number }).dolarVenta || 1000
+  const usdRate = (await dolarActual()).compra || 1000
   const usdVentas = ventas
     .filter(v => v.amountUsd)
     .map(v => ({ ...v, pesos: Math.round((v.amountUsd || 0) * usdRate) }))

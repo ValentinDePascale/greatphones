@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import AdminTopbar from '@/components/AdminTopbar'
+import { fetchDolar } from '@/app/admin/precios/dolar'
 
 interface PreEntrega {
   id: string
@@ -58,6 +59,7 @@ export default function EntregaClient() {
   const [transf, setTransf] = useState('')
   const [cuotas, setCuotas] = useState('')
   const [usd, setUsd] = useState('')
+  const [dolarCompra, setDolarCompra] = useState(1000)
   const [obs, setObs] = useState('')
   const [step, setStep] = useState(1)
   const [maxStep, setMaxStep] = useState(1)
@@ -86,11 +88,19 @@ export default function EntregaClient() {
   useEffect(() => {
     let activo = true
     fetch('/api/admin/ops/entregar-preventa', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('preventas')
+        return r.json()
+      })
       .then(d => {
         if (activo) setPreorders(Array.isArray(d) ? d : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo cargar el listado de preventas. Recargá la página.')
+      })
+    fetchDolar().then(d => {
+      if (activo && d?.compra) setDolarCompra(d.compra)
+    })
     return () => {
       activo = false
     }
@@ -98,14 +108,17 @@ export default function EntregaClient() {
 
   const recargarPreorders = () => {
     fetch('/api/admin/ops/entregar-preventa', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('preventas')
+        return r.json()
+      })
       .then(d => setPreorders(Array.isArray(d) ? d : []))
-      .catch(() => {})
+      .catch(() => setServerMsg('No se pudo actualizar el listado de preventas.'))
   }
 
   const sel = preorders.find(p => p.id === nPre)
   const saldo = sel ? (sel.saldo ?? sel.price) : 0
-  const usdPesos = Math.round((parseInt(usd) || 0) * 1000)
+  const usdPesos = Math.round((parseInt(usd) || 0) * dolarCompra)
   const totalIngresado =
     (parseInt(efec) || 0) + (parseInt(transf) || 0) + (parseInt(cuotas) || 0) + usdPesos
   const restante = saldo - totalIngresado
@@ -890,7 +903,7 @@ export default function EntregaClient() {
                 ))}
               </div>
               <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
-                Los USD se convierten a pesos al cotizar 1 USD = $1.000.
+                Los USD se convierten a pesos al cotizar 1 USD = {fmt(dolarCompra)}.
               </p>
 
               <div

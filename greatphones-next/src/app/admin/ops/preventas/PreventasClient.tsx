@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import AdminTopbar from '@/components/AdminTopbar'
+import { fetchDolar } from '@/app/admin/precios/dolar'
 
 const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 5
@@ -70,6 +71,7 @@ export default function PreventasClient() {
   const [transf, setTransf] = useState('')
   const [cuotas, setCuotas] = useState('')
   const [usd, setUsd] = useState('')
+  const [dolarCompra, setDolarCompra] = useState(1000)
   const [fechaDesde, setFechaDesde] = useState(() => enDias(7))
   const [fechaHasta, setFechaHasta] = useState(() => enDias(10))
   const [obs, setObs] = useState('')
@@ -89,12 +91,20 @@ export default function PreventasClient() {
   useEffect(() => {
     let activo = true
     fetch('/api/admin/precios', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('precios')
+        return r.json()
+      })
       .then(d => {
         if (!activo) return
         setPrecios(Array.isArray(d) ? d.filter((p: PrecioRow) => p.active) : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo cargar la lista de precios. Recargá la página.')
+      })
+    fetchDolar().then(d => {
+      if (activo && d?.compra) setDolarCompra(d.compra)
+    })
     return () => {
       activo = false
     }
@@ -136,7 +146,7 @@ export default function PreventasClient() {
     (parseInt(efec) || 0) +
     (parseInt(transf) || 0) +
     (parseInt(cuotas) || 0) +
-    Math.round((parseInt(usd) || 0) * 1000)
+    Math.round((parseInt(usd) || 0) * dolarCompra)
 
   const validarPaso = (p: number): Record<string, string> => {
     const e: Record<string, string> = {}
@@ -1021,7 +1031,7 @@ export default function PreventasClient() {
                 ))}
               </div>
               <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
-                Los USD se convierten a pesos al cotizar 1 USD = $1.000.
+                Los USD se convierten a pesos al cotizar 1 USD = {fmt(dolarCompra)}.
               </p>
 
               <div

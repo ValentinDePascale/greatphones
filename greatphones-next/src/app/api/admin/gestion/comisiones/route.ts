@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     // Complementar con datos de ventas / reparaciones por operador
     const ventasPorOp = await prisma.accountingEntry.groupBy({
       by: ['operator'],
-      where: { ...whereDate, source: 'SALE', type: 'INGRESO', operator: { not: null } },
+      where: { ...whereDate, source: 'VENTA', type: 'INGRESO', operator: { not: null } },
       _count: { _all: true },
       _sum: { amount: true },
     })
@@ -42,14 +42,42 @@ export async function GET(request: Request) {
     const ventas = byOperator(ventasPorOp)
     const reparaciones = byOperator(reparacionesPorOp)
 
+    // Códigos de operación (Sale.code / Repair.code == AccountingEntry.operationId) dentro
+    // del rango filtrado por opDate, para que "cantidad" y "ganancia" del mismo operador
+    // se calculen sobre el mismo conjunto de operaciones (antes la ganancia se filtraba
+    // por Sale/Repair.createdAt, que puede no coincidir con el opDate del asiento).
+    const ventaEntriesInRange = await prisma.accountingEntry.findMany({
+      where: { ...whereDate, source: 'VENTA', type: 'INGRESO', operator: { not: null } },
+      select: { operator: true, operationId: true },
+    })
+    const repairEntriesInRange = await prisma.accountingEntry.findMany({
+      where: { ...whereDate, source: { in: ['REPAIR'] }, type: 'INGRESO', operator: { not: null } },
+      select: { operator: true, operationId: true },
+    })
+    const codesByOperator = (entries: { operator: string | null; operationId: string | null }[]) => {
+      const map = new Map<string, string[]>()
+      for (const e of entries) {
+        if (!e.operator || !e.operationId) continue
+        const arr = map.get(e.operator) || []
+        arr.push(e.operationId)
+        map.set(e.operator, arr)
+      }
+      return map
+    }
+    const ventaCodesByOperator = codesByOperator(ventaEntriesInRange)
+    const repairCodesByOperator = codesByOperator(repairEntriesInRange)
+
     const result = await Promise.all(groupBy.map(async g => {
+      const saleCodes = g.operator ? ventaCodesByOperator.get(g.operator) || [] : []
+      const repairCodes = g.operator ? repairCodesByOperator.get(g.operator) || [] : []
+
       // Calcular ganancia de reparaciones (pricePaid - cost/thirdPartyCost)
       const repairsGanancia = await prisma.repair.aggregate({
         where: {
           operator: g.operator,
           deletedAt: null,
           status: { in: ['DELIVERED', 'COMPLETED', 'THIRD_PARTY'] },
-          ...(Object.keys(range).length ? { createdAt: range } : {}),
+          ...(Object.keys(range).length ? { code: { in: repairCodes } } : {}),
         },
         _sum: { profitReal: true },
       })
@@ -59,19 +87,19 @@ export async function GET(request: Request) {
         where: {
           operator: g.operator,
           status: 'COMPLETED',
-          ...(Object.keys(range).length ? { createdAt: range } : {}),
+          ...(Object.keys(range).length ? { code: { in: saleCodes } } : {}),
         },
         _sum: { profitReal: true },
       })
 
-      const totalGanancia = (repairsGanancia._sum.profitReal || 0) + (salesGanancia._sum.profit || 0)
+      const totalGanancia = (repairsGanancia._sum.profitReal || 0) + (salesGanancia._sum.profitReal || 0)
 
       return {
         operador: g.operator,
         cantidadVentas: ventas.find(v => v.operator === g.operator)?.count || 0,
         facturacion: ventas.find(v => v.operator === g.operator)?.sum || 0,
         gananciaReparaciones: (repairsGanancia._sum.profitReal || 0),
-        gananciaVentas: (salesGanancia._sum.profit || 0),
+        gananciaVentas: (salesGanancia._sum.profitReal || 0),
         gananciaTotal: totalGanancia,
         preventas: await prisma.accountingEntry.count({ where: { ...whereDate, source: 'PREORDER', operator: g.operator } }),
         reparaciones: reparaciones.find(r => r.operator === g.operator)?.count || 0,

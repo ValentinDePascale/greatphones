@@ -123,8 +123,14 @@ export default function ComprasClient() {
   useEffect(() => {
     let activo = true
     Promise.all([
-      fetch('/api/admin/ops/compras', { credentials: 'include' }).then(r => r.json()),
-      fetch('/api/admin/precios', { credentials: 'include' }).then(r => r.json()),
+      fetch('/api/admin/ops/compras', { credentials: 'include' }).then(r => {
+        if (!r.ok) throw new Error('preventas')
+        return r.json()
+      }),
+      fetch('/api/admin/precios', { credentials: 'include' }).then(r => {
+        if (!r.ok) throw new Error('precios')
+        return r.json()
+      }),
     ])
       .then(([prevs, precios]) => {
         if (!activo) return
@@ -137,7 +143,9 @@ export default function ComprasClient() {
           setIPhoneModels(iPhones)
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudieron cargar los datos (preventas/precios). Recargá la página.')
+      })
     return () => {
       activo = false
     }
@@ -187,6 +195,10 @@ export default function ComprasClient() {
         e.precioCompra = 'El precio de compra debe ser mayor a 0'
       if (tipo === 'CONSIGNACION' && (!precioConsig || +precioConsig <= 0))
         e.precioConsig = 'El precio acordado debe ser mayor a 0'
+    }
+    if (p === 4 && reparacion === 'Sí') {
+      if (costoRep !== '' && +costoRep < 0) e.costoRep = 'El costo no puede ser negativo'
+      if (precioVenta !== '' && +precioVenta < 0) e.precioVenta = 'El precio no puede ser negativo'
     }
     if (p === 5 && esPreventa === 'Si' && !nPre) e.nPre = 'Seleccioná la preventa a vincular'
     return e
@@ -1115,9 +1127,18 @@ export default function ComprasClient() {
                       {...fieldProps('costoRep')}
                       className="cw-input"
                       value={costoRep}
-                      onChange={e => setCostoRep(e.target.value)}
+                      onChange={e => {
+                        setCostoRep(e.target.value)
+                        limpiarError('costoRep')
+                      }}
+                      onBlur={() => validarEnBlur('costoRep')}
                       placeholder="0"
                     />
+                    {errors.costoRep && (
+                      <p id="costoRep-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                        {errors.costoRep}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label htmlFor="precioVenta" style={{ ...labelStyle, marginTop: 0 }}>
@@ -1129,14 +1150,22 @@ export default function ComprasClient() {
                       {...fieldProps('precioVenta')}
                       className="cw-input"
                       value={precioVenta}
-                      onChange={e => setPrecioVenta(e.target.value)}
+                      onChange={e => {
+                        setPrecioVenta(e.target.value)
+                        limpiarError('precioVenta')
+                      }}
+                      onBlur={() => validarEnBlur('precioVenta')}
                       placeholder="0"
                     />
-                    {precioListaMatch > 0 && (
+                    {errors.precioVenta ? (
+                      <p id="precioVenta-error" style={{ fontSize: 12, color: '#DC2626', margin: '5px 0 0' }}>
+                        {errors.precioVenta}
+                      </p>
+                    ) : precioListaMatch > 0 ? (
                       <p style={{ fontSize: 11, color: '#94A3B8', margin: '5px 0 0' }}>
                         Lista de Precios: {fmt(precioListaMatch)} · podés editarlo
                       </p>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               )}

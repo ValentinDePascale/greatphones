@@ -93,11 +93,16 @@ export default function ReparacionClient() {
   useEffect(() => {
     let activo = true
     fetch('/api/admin/precios/toma', { credentials: 'include' })
-      .then(r => r.json())
+      .then(r => {
+        if (!r.ok) throw new Error('modelos')
+        return r.json()
+      })
       .then(d => {
         if (activo) setModelos(Array.isArray(d) ? d.map((x: { modelo: string }) => x.modelo) : [])
       })
-      .catch(() => {})
+      .catch(() => {
+        if (activo) setServerMsg('No se pudo cargar el listado de modelos. Recargá la página.')
+      })
     return () => {
       activo = false
     }
