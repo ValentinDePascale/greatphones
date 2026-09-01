@@ -209,7 +209,7 @@ export default function ScanClient() {
           style={{
             position: 'absolute',
             inset: 0,
-            display: status === 'scanning' ? 'block' : 'none',
+            display: status === 'scanning' || status === 'requesting' ? 'block' : 'none',
           }}
         />
 
