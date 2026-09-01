@@ -143,10 +143,10 @@ export default function CalendarioClient() {
   return (
     <div style={{ background: '#F8FAFC', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '20px 32px', position: 'sticky', top: 0, zIndex: 10 }}>
-        <div style={{ maxWidth: 1600, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="calHeader" style={{ background: '#fff', borderBottom: '1px solid #E2E8F0', padding: '20px 32px', position: 'sticky', top: 0, zIndex: 10 }}>
+        <div className="calHeaderInner" style={{ maxWidth: 1600, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h1 style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', margin: 0 }}>Calendario de pendientes</h1>
+            <h1 className="calTitle" style={{ fontSize: 28, fontWeight: 800, color: '#0F172A', margin: 0 }}>Calendario de pendientes</h1>
             <p style={{ fontSize: 13, color: '#64748B', marginTop: 2, margin: 0 }}>Gestión de tareas y reprogramación de fechas</p>
           </div>
           <button
@@ -160,9 +160,9 @@ export default function CalendarioClient() {
         </div>
       </div>
 
-      <div style={{ padding: '24px 32px', maxWidth: 1600, margin: '0 auto' }}>
+      <div className="calBody" style={{ padding: '24px 32px', maxWidth: 1600, margin: '0 auto' }}>
         {/* KPIs compactos en la parte superior */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
+        <div className="calKpiGrid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12, marginBottom: 24 }}>
           <div style={{ background: 'linear-gradient(135deg, #FF6B2C, #F59E0B)', borderRadius: 12, padding: '16px', color: '#fff', boxShadow: '0 2px 8px rgba(255, 107, 44, .15)' }}>
             <div style={{ fontSize: 11.5, fontWeight: 600, opacity: 0.9 }}>Total del mes</div>
             <div style={{ fontSize: 32, fontWeight: 800, lineHeight: 1, marginTop: 6 }}>{cargando ? '…' : totalMes}</div>
@@ -179,28 +179,30 @@ export default function CalendarioClient() {
         </div>
 
         {/* Layout principal: Calendario + Sidebar */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 20, alignItems: 'start' }}>
+        <div className="calMainGrid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 20, alignItems: 'start' }}>
           {/* Calendario Principal */}
           <div style={{ background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
             {/* Header del Calendario */}
-            <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="calCalHeader" style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                 <button
                   onClick={() => cambiarMes(-1)}
                   aria-label="Mes anterior"
+                  className="calNavBtn"
                   style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', fontSize: 20, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
                   onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#EFF6FF' }}
                   onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#F8FAFC' }}
                 >
                   ‹
                 </button>
-                <div style={{ minWidth: 180 }}>
+                <div style={{ minWidth: 180 }} className="calMonthLabel">
                   <div style={{ fontSize: 24, fontWeight: 800, color: '#0F172A' }}>{MESES[month]}</div>
                   <div style={{ fontSize: 14, color: '#64748B', fontWeight: 600 }}>{year}</div>
                 </div>
                 <button
                   onClick={() => cambiarMes(1)}
                   aria-label="Mes siguiente"
+                  className="calNavBtn"
                   style={{ width: 44, height: 44, borderRadius: 12, border: '1px solid #E2E8F0', background: '#F8FAFC', cursor: 'pointer', fontSize: 20, color: '#334155', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
                   onMouseOver={e => { (e.target as HTMLButtonElement).style.background = '#EFF6FF' }}
                   onMouseOut={e => { (e.target as HTMLButtonElement).style.background = '#F8FAFC' }}
@@ -212,10 +214,10 @@ export default function CalendarioClient() {
             </div>
 
             {/* Grid del Calendario */}
-            <div style={{ padding: '20px 28px' }}>
+            <div className="calGridWrap" style={{ padding: '20px 28px' }}>
               {/* Encabezados de días */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 12 }}>
-                {DIAS_CORTOS.map(d => <div key={d} style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#64748B', padding: '8px 0', textTransform: 'uppercase', letterSpacing: '.3px' }}>{d}</div>)}
+                {DIAS_CORTOS.map(d => <div key={d} className="calDowLabel" style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#64748B', padding: '8px 0', textTransform: 'uppercase', letterSpacing: '.3px' }}>{d}</div>)}
               </div>
 
               {/* Días del mes */}
@@ -235,6 +237,7 @@ export default function CalendarioClient() {
                       key={key}
                       onClick={() => { setSelected(sel ? null : key); setTab(TIPOS[0].key) }}
                       aria-pressed={sel}
+                      className="calDayCell"
                       style={{
                         aspectRatio: '1', padding: 12, textAlign: 'left', verticalAlign: 'top',
                         background: sel ? '#EEF2FF' : (esHoy ? '#FFFBEB' : '#fff'),
@@ -246,7 +249,7 @@ export default function CalendarioClient() {
                       onMouseOut={e => !sel && (e.currentTarget.style.background = esHoy ? '#FFFBEB' : '#fff')}
                     >
                       {/* Número del día */}
-                      <div style={{ fontSize: 13, fontWeight: esHoy || sel ? 800 : 700, color: sel ? '#2563EB' : esHoy ? '#D97706' : '#334155', lineHeight: 1 }}>
+                      <div className="calDayNum" style={{ fontSize: 13, fontWeight: esHoy || sel ? 800 : 700, color: sel ? '#2563EB' : esHoy ? '#D97706' : '#334155', lineHeight: 1 }}>
                         {day}
                       </div>
 
@@ -254,13 +257,13 @@ export default function CalendarioClient() {
                       {items.length > 0 && (
                         <div style={{ marginTop: 6, flex: 1, display: 'flex', flexDirection: 'column', gap: 2, justifyContent: 'flex-start', minHeight: 0 }}>
                           {/* Puntos de color para cada tipo */}
-                          <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                          <div className="calDayDots" style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
                             {conteosTipo.filter(c => c.count > 0).map(c => (
                               <span key={c.key} title={`${c.count} ${c.key}`} style={{ width: 6, height: 6, borderRadius: '50%', background: c.color, opacity: 0.8 }} />
                             ))}
                           </div>
                           {/* Número total de pendientes */}
-                          <div style={{ fontSize: 11, fontWeight: 700, color: '#0F172A', marginTop: 'auto' }}>
+                          <div className="calDayCount" style={{ fontSize: 11, fontWeight: 700, color: '#0F172A', marginTop: 'auto' }}>
                             {items.length} {items.length === 1 ? 'tarea' : 'tareas'}
                           </div>
                         </div>
@@ -268,7 +271,7 @@ export default function CalendarioClient() {
 
                       {/* Badge "hoy" */}
                       {esHoy && (
-                        <div style={{ fontSize: 8.5, background: '#F59E0B', color: '#fff', borderRadius: 5, padding: '2px 5px', width: 'fit-content', fontWeight: 700, marginTop: 'auto' }}>
+                        <div className="calHoyBadge" style={{ fontSize: 8.5, background: '#F59E0B', color: '#fff', borderRadius: 5, padding: '2px 5px', width: 'fit-content', fontWeight: 700, marginTop: 'auto' }}>
                           HOY
                         </div>
                       )}
@@ -333,9 +336,9 @@ export default function CalendarioClient() {
 
       {/* Detalle del día - Sección completa */}
       {selected && (
-        <div style={{ marginTop: 24, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)' }}>
+        <div className="calDetailWrap" style={{ marginTop: 24, background: '#fff', border: '1px solid #E2E8F0', borderRadius: 20, overflow: 'hidden', boxShadow: '0 2px 8px rgba(15, 23, 42, .06)', maxWidth: 1600, margin: '24px auto 0' }}>
           {/* Header del panel */}
-          <div style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
+          <div className="calDetailHeader" style={{ padding: '24px 28px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFC' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
                 <div style={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>
@@ -358,7 +361,7 @@ export default function CalendarioClient() {
           </div>
 
           {/* Filtros por tipo */}
-          <div style={{ padding: '16px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div className="calDetailFilters" style={{ padding: '16px 28px', borderBottom: '1px solid #E2E8F0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {TIPOS.map(t => {
               const n = conteoTipoDia(selected, t.key)
               const active = tabSel === t.key
@@ -432,7 +435,7 @@ export default function CalendarioClient() {
                       </div>
 
                       {/* Footer: Fecha y acciones */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid #F1F5F9' }}>
+                      <div className="calItemFooter" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10, borderTop: '1px solid #F1F5F9', flexWrap: 'wrap', gap: 10 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                           <span style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>
                             {new Date(it.hora).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
@@ -512,6 +515,96 @@ export default function CalendarioClient() {
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @media (max-width: 1024px) {
+          .calMainGrid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .calHeader {
+            padding: 16px 16px !important;
+          }
+          .calHeaderInner {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+          }
+          .calHeaderInner button {
+            align-self: stretch !important;
+          }
+          .calTitle {
+            font-size: 21px !important;
+          }
+          .calBody, .calDetailWrap {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+          }
+          .calKpiGrid {
+            grid-template-columns: repeat(2, 1fr) !important;
+          }
+          .calCalHeader {
+            padding: 16px !important;
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+          }
+          .calMonthLabel {
+            min-width: 0 !important;
+          }
+          .calNavBtn {
+            width: 36px !important;
+            height: 36px !important;
+            font-size: 16px !important;
+          }
+          .calGridWrap {
+            padding: 12px !important;
+          }
+          .calDowLabel {
+            font-size: 10px !important;
+            padding: 4px 0 !important;
+          }
+          .calDayCell {
+            padding: 5px !important;
+            border-radius: 8px !important;
+          }
+          .calDayNum {
+            font-size: 11px !important;
+          }
+          .calDayDots {
+            gap: 2px !important;
+          }
+          .calDayCount {
+            display: none !important;
+          }
+          .calHoyBadge {
+            font-size: 6.5px !important;
+            padding: 1px 3px !important;
+          }
+          .calDetailHeader {
+            padding: 16px !important;
+          }
+          .calDetailFilters {
+            padding: 12px 16px !important;
+            gap: 6px !important;
+          }
+          .calDetailFilters button {
+            padding: 8px 10px !important;
+            font-size: 12px !important;
+          }
+          .calItemFooter {
+            align-items: flex-start !important;
+          }
+        }
+        @media (max-width: 420px) {
+          .calKpiGrid {
+            grid-template-columns: 1fr 1fr !important;
+          }
+          .calDayCell {
+            padding: 3px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

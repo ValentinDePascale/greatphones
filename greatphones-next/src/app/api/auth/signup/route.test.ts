@@ -12,6 +12,9 @@ vi.mock('@/lib/prisma', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
     },
+    emailVerification: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
   },
 }))
 

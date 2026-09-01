@@ -32,6 +32,11 @@ export async function POST(request: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    const verifiedCode = await prisma.emailVerification.findFirst({
+      where: { email, used: true },
+      orderBy: { createdAt: 'desc' },
+    })
+
     const user = await prisma.user.create({
       data: {
         email,
@@ -42,7 +47,7 @@ export async function POST(request: Request) {
         ciudad,
         password: hashedPassword,
         role: 'CLIENT',
-        verified: false,
+        verified: !!verifiedCode,
       }
     })
 

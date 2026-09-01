@@ -195,20 +195,6 @@ window.GPAnim = (function(){
     window.addEventListener('scroll', upd, { passive: true });
   }
 
-  // ---------- Ocultar la barra de filtros del catálogo al scrollear ----------
-  // Solo cuando el catálogo (#p-shop) está activo. Al bajar se oculta (más
-  // espacio para los productos) y al subir reaparece.
-  document.addEventListener('scroll', function(){
-    var shop = document.getElementById('p-shop');
-    if(!shop || !shop.classList.contains('act')) return;
-    var bar = shop.querySelector('.sh-filterbar');
-    if(!bar) return;
-    var y = window.scrollY || document.documentElement.scrollTop;
-    // Ocultar al pasar cierta altura de scroll, mostrar al volver arriba
-    if(y > 140) bar.classList.add('sh-filterbar--hidden');
-    else bar.classList.remove('sh-filterbar--hidden');
-  }, { passive: true });
-
   // ---------- Init ----------
   function init(){
     initHero();
