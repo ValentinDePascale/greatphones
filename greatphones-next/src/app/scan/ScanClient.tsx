@@ -92,12 +92,26 @@ export default function ScanClient() {
       facingRef.current = targetFacing
       setFacing(targetFacing)
     } catch (err: any) {
+      console.error('Error al iniciar el escaner QR:', err)
       if (err?.name === 'NotAllowedError') {
         setError('Permiso de cámara denegado. En Chrome: tocá el candado 🔒 → "Permisos" → Cámara → "Permitir". En iOS: Ajustes → Privacidad → Cámara → activar.')
       } else if (err?.name === 'NotFoundError') {
         setError('No se encontró la cámara en este dispositivo.')
+      } else if (err?.name === 'NotReadableError') {
+        setError('La cámara está siendo usada por otra aplicación o pestaña. Cerrala e intentá de nuevo.')
+      } else if (err?.name === 'OverconstrainedError') {
+        setError('El dispositivo no tiene una cámara compatible con lo solicitado.')
+      } else if (
+        typeof window !== 'undefined' &&
+        window.isSecureContext === false
+      ) {
+        setError('El escáner requiere una conexión segura (HTTPS).')
       } else {
-        setError('Error al acceder a la cámara: ' + (err?.message || 'desconocido'))
+        const detail =
+          typeof err === 'string'
+            ? err
+            : err?.message || (err ? JSON.stringify(err) : 'desconocido')
+        setError('Error al acceder a la cámara: ' + detail)
       }
       setStatus('error')
     }
