@@ -43,7 +43,7 @@ export default function ScanClient() {
   // que es lo que fallaba antes). Si el dispositivo no tiene esa cámara exacta
   // (p.ej. una notebook con una sola webcam), reintenta sin "exact".
   async function intentarStart(constraint: MediaTrackConstraints) {
-    const scanner = new window.Html5Qrcode(containerRef.current, { verbose: false })
+    const scanner = new window.Html5Qrcode('qr-scanner-container', { verbose: false })
     scannerRef.current = scanner
     await scanner.start(
       constraint,
@@ -204,6 +204,7 @@ export default function ScanClient() {
         `}</style>
 
         <div
+          id="qr-scanner-container"
           ref={containerRef}
           style={{
             position: 'absolute',
