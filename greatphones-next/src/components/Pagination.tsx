@@ -144,7 +144,6 @@ export default function Pagination({
             disabled={page === '...' || page === currentPage}
             style={{
               padding: '6px 10px',
-              border: '1px solid #d1d5db',
               borderRadius: '6px',
               background:
                 page === currentPage
