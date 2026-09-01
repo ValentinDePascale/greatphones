@@ -11,7 +11,21 @@ import { requireAdmin, handleRouteError } from '@/lib/auth-guard'
 import { rateLimit, clientIpKey } from '@/lib/rate-limit'
 import { expireOffers } from '@/lib/expire-offers'
 
-
+// El campo "Proveedor" del form de accesorios es texto libre (no un select),
+// pero Accessory.supplierId es una FK real a Supplier. Buscamos un Supplier
+// existente por nombre (o por id, por si algún día vuelve a ser un select) y,
+// si no existe, lo creamos — así el usuario puede escribir cualquier nombre
+// sin que la creación del accesorio falle por violar la foreign key.
+async function resolveSupplierId(raw: unknown): Promise<string | null> {
+  const name = typeof raw === 'string' ? raw.trim() : ''
+  if (!name) return null
+  const byId = await prisma.supplier.findUnique({ where: { id: name } }).catch(() => null)
+  if (byId) return byId.id
+  const existing = await prisma.supplier.findFirst({ where: { name: { equals: name, mode: 'insensitive' } } })
+  if (existing) return existing.id
+  const created = await prisma.supplier.create({ data: { name, type: 'local' } })
+  return created.id
+}
 
 export async function GET(request: Request) {
   const origin = request.headers.get('origin')
@@ -118,7 +132,7 @@ export async function POST(request: Request) {
         cost: Number(body.cost) || 0,
         compareAtPrice: body.compareAtPrice ? Number(body.compareAtPrice) : null,
         stock: Number(body.stock) || 0,
-        supplierId: body.supplierId || null,
+        supplierId: await resolveSupplierId(body.supplierId),
         imageUrl: body.imageUrl || null,
         images: body.images || [],
         brand: body.brand || null,
@@ -168,7 +182,7 @@ export async function PUT(request: Request) {
     if (body.category) data.category = body.category
     if (body.price !== undefined) data.price = Number(body.price)
     if (body.cost !== undefined) data.cost = Number(body.cost)
-    if (body.supplierId !== undefined) data.supplierId = body.supplierId || null
+    if (body.supplierId !== undefined) data.supplierId = await resolveSupplierId(body.supplierId)
     if (body.compareAtPrice !== undefined) data.compareAtPrice = body.compareAtPrice ? Number(body.compareAtPrice) : null
     if (body.stock !== undefined) data.stock = Number(body.stock)
     if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl || null

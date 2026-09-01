@@ -4480,7 +4480,7 @@ function renderPromoProducts(){
       if(brand&&p.brand!==brand)return;
       if(typeFilter&&p.type!==typeFilter)return;
       if(searchQ&&(p.name||'').toLowerCase().indexOf(searchQ)<0)return;
-      items.push({id:p.id,name:p.name,brand:p.brand,price:p.price,isOffer:p.isOffer,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱'});
+      items.push({id:p.id,name:p.name,brand:p.brand,price:p.price,isOffer:p.isOffer,discount:p.discount,imageUrl:p.imageUrl,type:'producto',ico:p.ico||'📱',color:p.color||null});
     });
   }
   if(itemType==='todos'||itemType==='accesorios'){
@@ -4488,7 +4488,7 @@ function renderPromoProducts(){
       if(brand&&a.brand!==brand)return;
       if(typeFilter&&a.category!==typeFilter)return;
       if(searchQ&&(a.name||'').toLowerCase().indexOf(searchQ)<0)return;
-      items.push({id:a.id,name:a.name,brand:a.brand,price:a.price,isOffer:a.isOffer,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦'});
+      items.push({id:a.id,name:a.name,brand:a.brand,price:a.price,isOffer:a.isOffer,discount:a.discount,imageUrl:a.imageUrl,type:'accesorio',ico:a.ico||'📦',color:a.color||null});
     });
   }
   list.innerHTML=items.map(function(item){
@@ -4504,6 +4504,7 @@ function renderPromoProducts(){
       '<div style="margin-bottom:2px">'+
         '<div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--orange)">'+item.brand+' <span style="color:var(--gray);font-weight:400">['+item.type+']</span></div>'+
         '<div style="font-size:11px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+item.name+'</div>'+
+        (item.color?'<div style="display:flex;align-items:center;gap:4px;margin-top:2px"><span style="width:9px;height:9px;border-radius:50%;background:'+_cssColor(item.color)+';border:1px solid rgba(0,0,0,.15);flex-shrink:0"></span><span style="font-size:10px;color:var(--gray)">'+item.color+'</span></div>':'')+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:4px">'+
         '<span style="font-size:12px;font-weight:700;color:var(--dk)">'+fmt(item.price)+'</span>'+
