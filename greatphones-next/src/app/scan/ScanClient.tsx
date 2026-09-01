@@ -218,7 +218,7 @@ export default function ScanClient() {
             <div style={{
               position: 'absolute', top: 16, left: 16, zIndex: 10,
               width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
+              background: 'rgba(0,0,0,.65)',
               border: '1px solid rgba(255,255,255,.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: '#fff', fontSize: 20,
@@ -229,7 +229,7 @@ export default function ScanClient() {
             <div style={{
               position: 'absolute', top: 16, right: 16, zIndex: 10,
               width: 44, height: 44, borderRadius: '50%',
-              background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(8px)',
+              background: 'rgba(0,0,0,.65)',
               border: '1px solid rgba(255,255,255,.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: '#fff', fontSize: 18,
@@ -237,29 +237,34 @@ export default function ScanClient() {
             }} onClick={cambiarCamara} title="Cambiar cámara">
               🔄
             </div>
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex',
-              flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', pointerEvents: 'none',
-            }}>
-              <div style={{ position: 'relative', width: 260, height: 260 }}>
-                <div style={{
-                  position: 'absolute', inset: 0, borderRadius: 20,
-                  border: '2px solid rgba(255,107,44,.7)',
-                  boxShadow: '0 0 0 9999px rgba(0,0,0,.55)',
-                }} />
-                <div className="linea-scanner" />
+            {/* Overlay armado con franjas solidas (en vez de un box-shadow con
+                spread gigante) porque ese truco hace que algunos GPUs de
+                Android fallen al componer la capa del <video> y la dejen negra. */}
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', pointerEvents: 'none' }}>
+              <div style={{ flex: 1, background: 'rgba(0,0,0,.55)' }} />
+              <div style={{ flex: '0 0 260px', display: 'flex' }}>
+                <div style={{ flex: 1, background: 'rgba(0,0,0,.55)' }} />
+                <div style={{ position: 'relative', width: 260, height: 260, flex: '0 0 260px' }}>
+                  <div style={{
+                    position: 'absolute', inset: 0, borderRadius: 20,
+                    border: '2px solid rgba(255,107,44,.7)',
+                  }} />
+                  <div className="linea-scanner" />
+                </div>
+                <div style={{ flex: 1, background: 'rgba(0,0,0,.55)' }} />
               </div>
-              <div style={{ color: '#fff', fontSize: 14, marginTop: 28, textAlign: 'center', opacity: .85 }}>
-                Apuntá al código QR del dispositivo
-              </div>
-              <div style={{ display: 'flex', gap: 10, marginTop: 40, pointerEvents: 'auto', flexDirection: 'column', alignItems: 'center' }}>
-                <button className="btn-secundario" onClick={() => { stopScanner(); setStatus('idle') }}>
-                  Cancelar
-                </button>
-                <button className="btn-secundario" onClick={cambiarCamara} style={{ fontSize: 13 }}>
-                  🔄 Cambiar a cámara {facing === 'environment' ? 'frontal' : 'trasera'}
-                </button>
+              <div style={{ flex: 1, background: 'rgba(0,0,0,.55)', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ color: '#fff', fontSize: 14, marginTop: 28, textAlign: 'center', opacity: .85 }}>
+                  Apuntá al código QR del dispositivo
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 40, pointerEvents: 'auto', flexDirection: 'column', alignItems: 'center' }}>
+                  <button className="btn-secundario" onClick={() => { stopScanner(); setStatus('idle') }}>
+                    Cancelar
+                  </button>
+                  <button className="btn-secundario" onClick={cambiarCamara} style={{ fontSize: 13 }}>
+                    🔄 Cambiar a cámara {facing === 'environment' ? 'frontal' : 'trasera'}
+                  </button>
+                </div>
               </div>
             </div>
           </>
