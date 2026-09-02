@@ -70,42 +70,13 @@
     overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;background:#000;overflow:hidden';
     overlay.innerHTML =
       '<div id="gp-scanner-reader" style="position:absolute;inset:0;width:100%;height:100%;background:#000"></div>' +
-      '<div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.6);padding:10px 16px;border-radius:10px;backdrop-filter:blur(8px);font-family:system-ui;max-width:90vw;text-align:center;z-index:2">' +
+      '<div style="position:absolute;top:16px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;background:rgba(0,0,0,.7);padding:10px 16px;border-radius:10px;font-family:system-ui;max-width:90vw;text-align:center;z-index:2">' +
         '<div id="gp-scanner-status">' + hintFor(mode) + '</div>' +
       '</div>' +
-      '<button id="gp-scanner-cancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);font-family:system-ui;z-index:2">Cancelar</button>';
+      '<button id="gp-scanner-switch" title="Cambiar cámara" style="position:absolute;top:16px;right:16px;width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;border:1px solid rgba(255,255,255,.15);font-size:18px;cursor:pointer;z-index:2">🔄</button>' +
+      '<button id="gp-scanner-cancel" style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);padding:12px 28px;background:rgba(20,20,20,.75);color:#fff;border:1px solid rgba(255,255,255,.2);border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:system-ui;z-index:2">Cancelar</button>';
     document.body.appendChild(overlay);
     return overlay;
-  }
-
-  async function ensureBackCameraId() {
-    try {
-      const cams = await navigator.mediaDevices.enumerateDevices()
-      const video = cams.filter(d => d.kind === 'videoinput')
-      console.log('[gp-scanner] videoinputs:', video.map(v => ({ id: v.deviceId, label: v.label })))
-      if (!video.length) return null
-      // Buscar explícitamente una que NO sea front/user/selfie
-      const back = video.find(d => /back|rear|environment|trasera|principal|trás/i.test(d.label))
-      if (back) return back.deviceId
-      const notFront = video.filter(d => !/front|user|selfie|frontal/i.test(d.label))
-      if (notFront.length) return notFront[notFront.length - 1].deviceId
-      return video[video.length - 1].deviceId
-    } catch (e) {
-      console.warn('[gp-scanner] enumerateDevices failed', e)
-    }
-    return null
-  }
-
-  async function pickOtherCameraId(avoidId) {
-    try {
-      const cams = await navigator.mediaDevices.enumerateDevices()
-      const video = cams.filter(d => d.kind === 'videoinput' && d.deviceId && d.deviceId !== avoidId)
-      if (!video.length) return null
-      const back = video.find(d => /back|rear|environment/i.test(d.label))
-      if (back) return back.deviceId
-      return video[0].deviceId
-    } catch (e) { console.warn('[gp-scanner] pickOther failed', e) }
-    return null
   }
 
   async function openScanner(opts) {
@@ -126,6 +97,7 @@
     const overlay = createOverlay(mode);
     const statusEl = document.getElementById('gp-scanner-status');
     const cancelBtn = document.getElementById('gp-scanner-cancel');
+    const switchBtn = document.getElementById('gp-scanner-switch');
 
     const scanner = new window.Html5Qrcode('gp-scanner-reader', {
       formatsToSupport: formats,
@@ -155,7 +127,7 @@
     }
 
     const isBarcode = mode === 'barcode'
-    let swapped = false
+    let currentFacing = 'environment'
     const qrboxFn = (vw, vh) => {
       if (isBarcode) {
         // Scanline ancha y no muy alta para códigos de barras 1D
@@ -191,64 +163,62 @@
         await new Promise(r => setTimeout(r, 700))
         if (v.videoWidth === 0 || v.videoHeight === 0) throw new Error('Cámara negra (videoWidth 0)')
       }
-      const track = v && v.srcObject && (() => {
-        try { return v.srcObject.getVideoTracks()[0] } catch { return null }
-      })()
-      const startedTrackSettings = track && track.getSettings ? track.getSettings() : null
-      const trackLabel = track && track.label ? track.label : ''
-      const isFront = startedTrackSettings && (
-        startedTrackSettings.facingMode === 'user' ||
-        /front|user|selfie/i.test(trackLabel) ||
-        /front|user|selfie/i.test(startedTrackSettings.facingMode || '')
-      )
-      console.log('[gp-scanner] track', { label: trackLabel, facingMode: startedTrackSettings && startedTrackSettings.facingMode, deviceId: startedTrackSettings && startedTrackSettings.deviceId })
-      if (!swapped && isFront) {
-        swapped = true
-        console.warn('[gp-scanner] quedó frontal ('+trackLabel+'), pasando a trasera')
-        if (statusEl) statusEl.textContent = 'Cambiando a cámara trasera…'
-        try { await scanner.stop().catch(()=>{}) } catch {}
-        try { await scanner.clear().catch(()=>{}) } catch {}
-        const other = await pickOtherCameraId(
-          (startedTrackSettings && startedTrackSettings.deviceId) || (typeof camConfig === 'string' ? camConfig : '')
-        )
-        if (other) {
-          try { await tryStart(other, buildCfg(false)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
-        } else {
-          try { await tryStart({ facingMode: { exact: 'environment' } }, buildCfg(true)) } catch (e) { console.warn('[gp-scanner] swap falló', e) }
-        }
-        return
-      }
       if (statusEl) statusEl.textContent = hintFor(mode) + (isBarcode ? ' — acercá hasta que ocupe todo el ancho del rectángulo' : ' — enfocá el código')
     }
 
-    const buildCfg = (withFacing) => ({
+    const buildCfg = (facing) => ({
       fps: isBarcode ? 20 : 15,
       qrbox: qrboxFn,
       disableFlip: false,
       videoConstraints: {
-        ...(withFacing ? { facingMode: { exact: 'environment' } } : {}),
+        facingMode: facing,
         width: { min: 640, ideal: 1920, max: 1920 },
         height: { min: 480, ideal: 1080, max: 1080 },
       },
     })
 
-    try {
-      const camId = await ensureBackCameraId()
-      const targetConfig = camId ? camId : { facingMode: { exact: 'environment' } }
-      await tryStart(targetConfig, buildCfg(!camId))
-      return { stop }
-    } catch (err1) {
-      console.warn('[gp-scanner] primer intento falló, reintentando con facingMode environment plano', err1)
+    // Pide explícitamente el facing deseado con "exact" (el navegador resuelve
+    // qué cámara física corresponde a trasera/frontal según el hardware). Si
+    // el dispositivo no tiene esa cámara exacta, reintenta sin "exact".
+    const startFacing = async (facing) => {
       try {
-        await tryStart({ facingMode: 'environment' }, buildCfg(true))
-        return { stop }
-      } catch (err2) {
-        const msg = (err2 && (err2.message || err2.name)) || String(err2)
-        if (statusEl) statusEl.textContent = '⚠️ ' + msg
-        console.error('[gp-scanner] start error final:', err2)
-        setTimeout(stop, 3500)
-        throw err2
+        await tryStart({ facingMode: { exact: facing } }, buildCfg({ exact: facing }))
+      } catch (e) {
+        try { await scanner.stop().catch(() => {}) } catch {}
+        try { await scanner.clear().catch(() => {}) } catch {}
+        await tryStart({ facingMode: facing }, buildCfg(facing))
       }
+      currentFacing = facing
+    }
+
+    let switching = false
+    const switchCamera = async () => {
+      if (stopped || switching) return
+      switching = true
+      if (statusEl) statusEl.textContent = 'Cambiando de cámara…'
+      try {
+        try { await scanner.stop() } catch (e) {}
+        try { await scanner.clear() } catch (e) {}
+        const next = currentFacing === 'environment' ? 'user' : 'environment'
+        await startFacing(next)
+      } catch (e) {
+        console.error('[gp-scanner] switchCamera falló', e)
+        if (statusEl) statusEl.textContent = '⚠️ No se pudo cambiar de cámara'
+      } finally {
+        switching = false
+      }
+    }
+    if (switchBtn) switchBtn.onclick = switchCamera
+
+    try {
+      await startFacing('environment')
+      return { stop }
+    } catch (err) {
+      const msg = (err && (err.message || err.name)) || String(err)
+      if (statusEl) statusEl.textContent = '⚠️ ' + msg
+      console.error('[gp-scanner] start error final:', err)
+      setTimeout(stop, 3500)
+      throw err
     }
   }
 

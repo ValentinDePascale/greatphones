@@ -179,7 +179,7 @@ export default function ScanClient() {
           .btn-scanner:disabled { opacity: .5; cursor: default; transform: none; }
           .btn-secundario {
             padding: 12px 28px;
-            background: rgba(255,255,255,.15);
+            background: rgba(20,20,20,.75);
             color: #fff;
             border: 1px solid rgba(255,255,255,.2);
             border-radius: 12px;
@@ -187,7 +187,6 @@ export default function ScanClient() {
             font-weight: 600;
             cursor: pointer;
             pointer-events: auto;
-            backdrop-filter: blur(8px);
             transition: background .2s;
           }
           .btn-secundario:hover { background: rgba(255,255,255,.25); }
