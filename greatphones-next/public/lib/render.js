@@ -3389,7 +3389,9 @@ function showImeiProductModal(existingProductId){
     '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--gray)">IMEI del dispositivo</label>'+
     '<div style="display:flex;gap:8px"><input type="text" id="imeiInput" maxlength="15" placeholder="Ingresá o escaneá el IMEI de 15 dígitos" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none">'+
     '<button id="imeiLookupBtn" onclick="lookupImei()" style="padding:10px 20px;background:var(--orange);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap">Buscar</button>'+
-    '<button onclick="startImeiScanner()" title="Escaneá el código QR" style="width:44px;height:44px;border-radius:10px;background:var(--cream2);border:1.5px solid var(--border);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">📷</button></div>'+
+    '<button onclick="startImeiScanner()" title="Escaneá el código QR" style="width:44px;height:44px;border-radius:10px;background:var(--cream2);border:1.5px solid var(--border);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center">📷</button>'+
+    '<button onclick="omitirImei()" title="No es un iPhone / no tiene IMEI" style="width:44px;height:44px;border-radius:10px;background:var(--cream2);border:1.5px solid var(--border);cursor:pointer;font-size:16px;font-weight:700;color:var(--gray);display:flex;align-items:center;justify-content:center">✕</button></div>'+
+    '<div style="font-size:11px;color:var(--gray);margin-top:6px">Tocá la ✕ si el producto no tiene IMEI (no es un celular)</div>'+
     '<div id="imeiError" style="display:none;font-size:12px;color:var(--red);margin-top:6px"></div></div>'+
     '<div id="imeiResult" style="display:none"></div>'+
     '<div id="imeiForm" style="display:none">'+
@@ -3622,6 +3624,15 @@ function showImeiProductModal(existingProductId){
     window._imeiSelectedColor=color;
     document.querySelectorAll('#imeiColorContainer > div').forEach(function(d){d.style.borderColor='transparent';});
     el.style.borderColor='var(--orange)';
+  };
+  window.omitirImei=function(){
+    document.getElementById('imeiInput').value='';
+    document.getElementById('imeiInput').disabled=true;
+    document.getElementById('imeiError').style.display='none';
+    document.getElementById('imeiResult').style.display='block';
+    document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:var(--cream2);border-radius:8px;font-size:13px;color:var(--gray)">Sin IMEI — completá los datos manualmente</div>';
+    document.getElementById('imeiForm').style.display='block';
+    onImeiBrandOrTypeChange();
   };
   window.lookupImei=function(){
     var input=document.getElementById('imeiInput');
