@@ -49,8 +49,22 @@ export default function ScanClient() {
       constraint,
       {
         fps: 20,
-        qrbox: 260,
-        aspectRatio: 1.0,
+        // qrbox como función (igual que en el scanner de código de barras,
+        // que no tiene este problema) en vez de un número fijo + aspectRatio:
+        // esa combinación fuerza a html5-qrcode a pedir una resolución de
+        // video muy específica que en varios Android termina en un stream
+        // que "arranca" pero nunca decodifica frames (pantalla negra).
+        qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+          const min = Math.min(viewfinderWidth, viewfinderHeight)
+          const size = Math.max(200, min - 32)
+          return { width: size, height: size }
+        },
+        disableFlip: false,
+        videoConstraints: {
+          ...constraint,
+          width: { min: 640, ideal: 1920, max: 1920 },
+          height: { min: 480, ideal: 1080, max: 1080 },
+        },
       },
       (decodedText: string) => {
         const match = decodedText.trim().match(/\/inv\/([A-Za-z0-9-]+)/)
@@ -69,6 +83,9 @@ export default function ScanClient() {
     // que el caller (iniciarEscanner) pueda reintentar.
     const video = containerRef.current?.querySelector('video')
     if (video) {
+      video.style.objectFit = 'cover'
+      video.style.width = '100%'
+      video.style.height = '100%'
       video.setAttribute('playsinline', 'true')
       video.setAttribute('autoplay', 'true')
       video.muted = true
