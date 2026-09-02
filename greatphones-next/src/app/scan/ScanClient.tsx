@@ -62,6 +62,22 @@ export default function ScanClient() {
       },
       () => { /* ignore per-frame errors */ }
     )
+
+    // En algunos Android el <video> que crea html5-qrcode queda con un frame
+    // negro congelado si no se fuerzan estos atributos y un play() explícito.
+    // Si sigue en 0x0 después de eso, tratamos el intento como fallido para
+    // que el caller (iniciarEscanner) pueda reintentar.
+    const video = containerRef.current?.querySelector('video')
+    if (video) {
+      video.setAttribute('playsinline', 'true')
+      video.setAttribute('autoplay', 'true')
+      video.muted = true
+      try { await video.play() } catch { /* ignore */ }
+      await new Promise((r) => setTimeout(r, 700))
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        throw new Error('Cámara negra (videoWidth 0)')
+      }
+    }
   }
 
   async function iniciarEscanner(facingArg?: Facing) {
