@@ -147,23 +147,25 @@ async function reuseOrphanedItem(existing: any, data: any, origin: string | null
     }
   })
 
-  // Save TAC to cache
-  const tac = data.imei.substring(0, 8)
-  prisma.tacCache.upsert({
-    where: { tac },
-    update: { hitCount: { increment: 1 } },
-    create: {
-      tac,
-      brand: data.brand || '',
-      modelName: data.modelName || '',
-      storage: data.storage || null,
-      color: data.color || null,
-      modelNumber: data.modelNumber || null,
-      deviceType: data.deviceType || 'celular',
-      imageUrl: data.imageUrl || null,
-      specs: Prisma.DbNull,
-    }
-  }).catch(() => {})
+  // Save TAC to cache (solo IMEI real, no identificadores sintéticos)
+  if (/^\d{15}$/.test(data.imei)) {
+    const tac = data.imei.substring(0, 8)
+    prisma.tacCache.upsert({
+      where: { tac },
+      update: { hitCount: { increment: 1 } },
+      create: {
+        tac,
+        brand: data.brand || '',
+        modelName: data.modelName || '',
+        storage: data.storage || null,
+        color: data.color || null,
+        modelNumber: data.modelNumber || null,
+        deviceType: data.deviceType || 'celular',
+        imageUrl: data.imageUrl || null,
+        specs: Prisma.DbNull,
+      }
+    }).catch(() => {})
+  }
 
   productCache.clear()
   return NextResponse.json(updated, { status: 200, headers: corsHeaders })
@@ -379,23 +381,26 @@ export async function POST(request: Request) {
       }
     })
 
-    // Save TAC to cache for future auto-fill
-    const tac = data.imei.substring(0, 8)
-    prisma.tacCache.upsert({
-      where: { tac },
-      update: { hitCount: { increment: 1 } },
-      create: {
-        tac,
-        brand: data.brand || '',
-        modelName: data.modelName || '',
-        storage: data.storage || null,
-        color: data.color || null,
-        modelNumber: data.modelNumber || null,
-        deviceType: data.deviceType || 'celular',
-        imageUrl: data.imageUrl || null,
-        specs: Prisma.DbNull,
-      }
-    }).catch(() => {})
+    // Save TAC to cache for future auto-fill (solo si es un IMEI real; los
+    // identificadores sintéticos "SN-..." de productos sin IMEI no aportan)
+    if (/^\d{15}$/.test(data.imei)) {
+      const tac = data.imei.substring(0, 8)
+      prisma.tacCache.upsert({
+        where: { tac },
+        update: { hitCount: { increment: 1 } },
+        create: {
+          tac,
+          brand: data.brand || '',
+          modelName: data.modelName || '',
+          storage: data.storage || null,
+          color: data.color || null,
+          modelNumber: data.modelNumber || null,
+          deviceType: data.deviceType || 'celular',
+          imageUrl: data.imageUrl || null,
+          specs: Prisma.DbNull,
+        }
+      }).catch(() => {})
+    }
 
     productCache.clear()
     return NextResponse.json(item, { status: 201, headers: corsHeaders })

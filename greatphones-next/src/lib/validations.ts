@@ -295,7 +295,13 @@ export type AssignConversationPayload = z.infer<typeof AssignConversationSchema>
 
 // ==================== INVENTARIO ====================
 export const InventoryCreateSchema = z.object({
-  imei: z.string().regex(/^\d{15}$/, 'IMEI debe tener 15 dígitos'),
+  // 15 dígitos para equipos con IMEI real, o un identificador sintético
+  // "SN-..." generado por el frontend cuando el producto no tiene IMEI
+  // (accesorios, laptops, etc.) — el campo sigue siendo único y obligatorio
+  // en la base porque cada unidad de inventario se trackea individualmente.
+  imei: z
+    .string()
+    .regex(/^(\d{15}|SN-[A-Z0-9]{8,24})$/, 'IMEI debe tener 15 dígitos'),
   serialNumber: z.string().nullish(),
 
   // Auto-completado (opcional si se pasa desde el frontend ya resuelto)

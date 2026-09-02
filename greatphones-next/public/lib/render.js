@@ -3469,11 +3469,14 @@ function showImeiProductModal(existingProductId){
     var isIphone=/^(iPhone|Apple)$/i.test(brand)&&type==='celular';
     document.getElementById('if-modelName').style.display=isIphone?'none':'';
     document.getElementById('if-iphoneModel').style.display=isIphone?'':'none';
-    if(!isIphone){
-      document.getElementById('if-color').style.display='';
-      document.getElementById('imeiColorContainer').style.display='none';
+    if(isIphone){
+      onImeiPhoneModelChange();
+    }else{
+      // No es iPhone: siempre círculos de colores genéricos (no input de texto)
+      document.getElementById('if-color').style.display='none';
+      document.getElementById('imeiColorContainer').style.display='flex';
+      renderGenericColorSwatches(window._imeiSelectedColor);
     }
-    if(isIphone)onImeiPhoneModelChange();
   };
 
   window.onImeiPhoneModelChange=function(){
@@ -3604,10 +3607,10 @@ function showImeiProductModal(existingProductId){
   }
 
   // Global helper functions for this modal
-  window.renderImeiColorSwatches=function(modelName,preselectColor){
+  var GENERIC_COLOR_SWATCHES=['Negro','Blanco','Plateado','Grafito','Dorado','Azul','Rojo','Verde','Amarillo','Rosa','Púrpura'];
+  function renderColorSwatchesList(colors,preselectColor){
     var container=document.getElementById('imeiColorContainer');
     if(!container)return;
-    var colors=(window.getModelColors&&window.getModelColors(modelName))||[];
     var hexMap=window.COLOR_HEX||{};
     if(!colors.length){container.style.display='none';return;}
     container.style.display='flex';
@@ -3619,6 +3622,13 @@ function showImeiProductModal(existingProductId){
       return '<div onclick="selectImeiColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
     }).join('');
     if(preselectColor)window._imeiSelectedColor=preselectColor;
+  }
+  window.renderImeiColorSwatches=function(modelName,preselectColor){
+    var colors=(window.getModelColors&&window.getModelColors(modelName))||[];
+    renderColorSwatchesList(colors,preselectColor);
+  };
+  window.renderGenericColorSwatches=function(preselectColor){
+    renderColorSwatchesList(GENERIC_COLOR_SWATCHES,preselectColor);
   };
   window.selectImeiColor=function(color,el){
     window._imeiSelectedColor=color;
@@ -3826,6 +3836,11 @@ function showImeiProductModal(existingProductId){
 
   window.saveImeiProduct=function(existingId){
     var imei=document.getElementById('imeiInput').value.trim();
+    if(!imei){
+      // Producto sin IMEI (se tocó "omitir"): generar un identificador único
+      // sintético, ya que cada unidad de inventario necesita uno igual.
+      imei='SN-'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
+    }
     var brandSel=document.getElementById('if-brand');
     var brand=brandSel.value==='__other__'?document.getElementById('if-brand-other').value.trim():brandSel.value;
     var iphoneSelect=document.getElementById('if-iphoneModel');
