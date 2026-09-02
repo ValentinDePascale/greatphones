@@ -81,6 +81,10 @@
           <select class="compat-range-sel" id="compatRangeTo"></select>
           <button class="compat-range-apply" onclick="applyCompatRange()">Aplicar</button>
         </div>
+        <div class="compat-custom-row" style="display:flex;gap:8px;margin-bottom:14px">
+          <input type="text" id="compatCustomInput" placeholder="Agregar modelo/marca (ej: Galaxy S24)" style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;box-sizing:border-box" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomCompatModel();}">
+          <button class="compat-action-btn" onclick="addCustomCompatModel()">+ Agregar</button>
+        </div>
       </div>
 
       <div class="compat-modal-grid" id="accCompatGrid"></div>

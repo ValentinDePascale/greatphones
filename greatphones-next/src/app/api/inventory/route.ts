@@ -32,6 +32,10 @@ function generateSpecs(data: any) {
   if (data.specs) return data.specs
   if (data.storage) specs.almacenamiento = data.storage
   if (data.color) specs.color = data.color
+  // InventoryItem no tiene columna propia de "ram" (a diferencia de
+  // Product), se guarda acá para que /api/inventory/public pueda mostrarlo
+  // en el picker de variantes del detalle de producto.
+  if (data.ram) specs.ram = data.ram
   return specs
 }
 

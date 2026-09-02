@@ -1531,17 +1531,59 @@ function buildCompatGrid(existing){
   var grid=document.getElementById('accCompatGrid');
   if(!grid)return;
   var models=getCompatModels();
-  var existingArr=existing?existing.split(',').map(function(s){return s.trim();}):[];
+  var existingArr=existing?existing.split(',').map(function(s){return s.trim();}).filter(Boolean):[];
   var phones=models.filter(function(m){return m.indexOf('iPhone')>=0||m.indexOf('iPad')>=0;});
   var others=models.filter(function(m){return phones.indexOf(m)===-1;});
+  // Modelos/marcas cargados a mano (via addCustomCompatModel) que no están
+  // en la lista fija de getCompatModels() — sin esto se perderían al
+  // reabrir el accesorio, porque buildCompatGrid solo dibujaba chips para
+  // los modelos conocidos.
+  var custom=existingArr.filter(function(m){return models.indexOf(m)===-1;});
   function renderGroup(label,list){
     if(!list.length)return'';
     return'<div class="compat-group"><div class="compat-group-label">'+label+'</div><div class="compat-group-chips">'+
       list.map(function(m){return'<div class="compat-chip'+(existingArr.indexOf(m)>=0?' on':'')+'" data-model="'+m+'" onclick="toggleCompatChip(this)">'+m+'</div>';}).join('')+'</div></div>';
   }
-  grid.innerHTML=renderGroup('iPhone / iPad',phones)+renderGroup('Otros',others);
+  grid.innerHTML=renderGroup('iPhone / iPad',phones)+renderGroup('Otros',others)+renderGroup('Personalizados',custom);
   updateCompatCount();
   populateCompatRange(models);
+}
+
+// Permite marcar compatibilidad con un modelo/marca que no está en la lista
+// fija (ej. un modelo Samsung/Motorola/Xiaomi específico).
+function addCustomCompatModel(){
+  var input=document.getElementById('compatCustomInput');
+  if(!input)return;
+  var val=input.value.trim();
+  if(!val)return;
+  var grid=document.getElementById('accCompatGrid');
+  if(!grid)return;
+  var chips=grid.querySelectorAll('.compat-chip');
+  var existingChip=null;
+  chips.forEach(function(c){if(c.getAttribute('data-model')===val)existingChip=c;});
+  if(existingChip){
+    existingChip.classList.add('on');
+  }else{
+    var groups=grid.querySelectorAll('.compat-group');
+    var customGroup=null;
+    groups.forEach(function(g){
+      var lbl=g.querySelector('.compat-group-label');
+      if(lbl&&lbl.textContent==='Personalizados')customGroup=g;
+    });
+    if(!customGroup){
+      grid.insertAdjacentHTML('beforeend','<div class="compat-group"><div class="compat-group-label">Personalizados</div><div class="compat-group-chips"></div></div>');
+      customGroup=grid.lastElementChild;
+    }
+    var chipsWrap=customGroup.querySelector('.compat-group-chips');
+    var chip=document.createElement('div');
+    chip.className='compat-chip on';
+    chip.setAttribute('data-model',val);
+    chip.setAttribute('onclick','toggleCompatChip(this)');
+    chip.textContent=val;
+    chipsWrap.appendChild(chip);
+  }
+  input.value='';
+  updateCompatCount();
 }
 
 function toggleCompatChip(el){
@@ -2448,61 +2490,8 @@ function updateAdminCoupon(action) {
     .catch(function (e) { showToast(e.message, 'error') })
 }
 
-// Bug #15: iPhone Model → Pantalla autocompletar
-var IPHONE_SPECS = {
-  'iPhone 15': 6.1,
-  'iPhone 15 Plus': 6.7,
-  'iPhone 15 Pro': 6.1,
-  'iPhone 15 Pro Max': 6.7,
-  'iPhone 14': 6.1,
-  'iPhone 14 Plus': 6.7,
-  'iPhone 14 Pro': 6.1,
-  'iPhone 14 Pro Max': 6.7,
-  'iPhone 13': 6.1,
-  'iPhone 13 mini': 5.4,
-  'iPhone 13 Pro': 6.1,
-  'iPhone 13 Pro Max': 6.7,
-  'iPhone SE (3ra gen)': 4.7,
-  'iPhone 12': 6.1,
-  'iPhone 12 mini': 5.4,
-  'iPhone 12 Pro': 6.1,
-  'iPhone 12 Pro Max': 6.7,
-}
-
-function onAdminIphoneModelChange() {
-  var modelSelect = document.getElementById('prodIphoneModel')
-  var screenInput = document.getElementById('prodScreen')
-  var selectedModel = modelSelect ? modelSelect.value : ''
-
-  if (selectedModel && IPHONE_SPECS[selectedModel]) {
-    var screenSize = IPHONE_SPECS[selectedModel]
-    screenInput.value = screenSize
-  } else {
-    screenInput.value = ''
-  }
-}
-
-function updateProductFields() {
-  var typeSelect = document.getElementById('prodType')
-  var brandSelect = document.getElementById('prodBrand')
-  var iPhoneModelField = document.getElementById('prodIphoneModelField')
-  var iPhoneModelSelect = document.getElementById('prodIphoneModel')
-  var processorField = document.getElementById('prodProcessorField')
-  var batteryField = document.getElementById('prodBatteryField')
-  var selectedType = typeSelect ? typeSelect.value : 'celular'
-  var selectedBrand = brandSelect ? brandSelect.value : ''
-
-  // Mostrar/ocultar campos según tipo
-  if (iPhoneModelField) iPhoneModelField.style.display = (selectedBrand === 'iPhone') ? 'block' : 'none'
-  if (processorField) processorField.style.display = (selectedType === 'laptop') ? 'block' : 'none'
-  if (batteryField) batteryField.style.display = (selectedType === 'celular') ? 'block' : 'none'
-
-  // Poblar modelos iPhone si es necesario
-  if (selectedBrand === 'iPhone' && iPhoneModelSelect && iPhoneModelSelect.options.length <= 1) {
-    var modelsHtml = '<option value="">Seleccionar...</option>'
-    for (var model in IPHONE_SPECS) {
-      modelsHtml += '<option value="' + model + '">' + model + '</option>'
-    }
-    iPhoneModelSelect.innerHTML = modelsHtml
-  }
-}
+// onAdminIphoneModelChange y updateProductFields viven en render.js (versión
+// genérica: soporta cualquier marca vía SELL_MODELS, no solo iPhone). No
+// redeclarar acá — al ser scripts clásicos en el mismo scope global, una
+// declaración `function` en este archivo pisaría la de render.js porque
+// admin.js se carga después.

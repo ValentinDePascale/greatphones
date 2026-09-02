@@ -7,6 +7,29 @@ const OPERADORES = ['Martin', 'Maca', 'Sam', 'Eva', 'Buda']
 const TOTAL = 6
 const STEPS = ['Operación', 'Equipo', 'Precio y pago', 'Reparación', 'Preventa', 'Confirmar']
 const OTRO_MODELO = '__otro__'
+const OTRO_VALOR = '__otro__'
+// Presets para evitar que se cargue un número suelto ("8" en vez de "8 GB")
+// en equipos que no son iPhone, donde no hay Lista de Precios de la que
+// derivar el almacenamiento/RAM automáticamente.
+const STORAGE_PRESETS = ['64 GB', '128 GB', '256 GB', '512 GB', '1 TB', '2 TB']
+const RAM_PRESETS = ['4 GB', '6 GB', '8 GB', '12 GB', '16 GB', '32 GB', '64 GB']
+// Paleta genérica en español (mismos nombres/colores que ya usa el catálogo
+// para marcas sin colores curados — public/lib/render.js) para que el color
+// cargado acá matchee con los círculos que se ven después en el detalle del
+// producto, en vez de un texto libre que puede no coincidir con nada.
+const GENERIC_COLORS: [string, string][] = [
+  ['Negro', '#1d1d1f'],
+  ['Blanco', '#f5f5f0'],
+  ['Plateado', '#eae9e6'],
+  ['Grafito', '#555556'],
+  ['Dorado', '#f7e0b0'],
+  ['Azul', '#3b78c4'],
+  ['Rojo', '#d32f2f'],
+  ['Verde', '#78b86a'],
+  ['Amarillo', '#f3d060'],
+  ['Rosa', '#f7c8d0'],
+  ['Púrpura', '#b07dd8'],
+]
 
 // La Lista de Precios (PriceList.colors) guarda los nombres en inglés,
 // tal como los publica Apple (Black, Space Gray, Deep Purple, etc.).
@@ -86,6 +109,10 @@ export default function ComprasClient() {
   const [battery, setBattery] = useState('')
   const [color, setColor] = useState('')
   const [storage, setStorage] = useState('')
+  const [ram, setRam] = useState('')
+  const [isCustomStorage, setIsCustomStorage] = useState(false)
+  const [isCustomRam, setIsCustomRam] = useState(false)
+  const [deviceType, setDeviceType] = useState('celular')
   const [marca, setMarca] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [estadoFisico, setEstadoFisico] = useState('Bueno')
@@ -187,7 +214,10 @@ export default function ComprasClient() {
     if (p === 1 && !operador) e.operador = 'Seleccioná el operador'
     if (p === 2) {
       if (!modelo.trim()) e.modelo = 'Ingresá el modelo del equipo'
-      if (imei.trim() && !/^\d{15}$/.test(imei.trim())) e.imei = 'El IMEI debe tener exactamente 15 números'
+      // El IMEI de 15 dígitos solo aplica a iPhone. Para otros modelos es un
+      // N° de serie libre y totalmente opcional, igual que la batería.
+      if (!isCustomModel && imei.trim() && !/^\d{15}$/.test(imei.trim()))
+        e.imei = 'El IMEI debe tener exactamente 15 números'
       if (battery !== '' && (+battery < 0 || +battery > 100)) e.battery = 'La batería debe estar entre 0 y 100'
     }
     if (p === 3) {
@@ -250,6 +280,10 @@ export default function ComprasClient() {
     setCuil('')
     setColor('')
     setStorage('')
+    setRam('')
+    setIsCustomStorage(false)
+    setIsCustomRam(false)
+    setDeviceType('celular')
     setMarca('')
     setImageUrl('')
     setModeloCustom('')
@@ -305,10 +339,12 @@ export default function ComprasClient() {
           cuil,
           modelo,
           marca,
+          deviceType,
           imei,
           battery: battery !== '' ? +battery : undefined,
           color,
           storage,
+          ram: ram || undefined,
           imageUrl,
           estadoFisico,
           precioCompra: +precioCompra || 0,
@@ -411,9 +447,17 @@ export default function ComprasClient() {
     ['Fecha', fecha],
     ['Proveedor', proveedor || '—'],
     ['Modelo', modelo || '—'],
+    ...(isCustomModel
+      ? ([[
+          'Tipo de dispositivo',
+          ({ celular: 'Celular', tablet: 'Tablet', laptop: 'Laptop', desktop: 'Desktop' } as Record<string, string>)[deviceType] || deviceType,
+        ]] as [string, string][])
+      : []),
     ['IMEI / Serie', imei || '—'],
     ['Batería', battery !== '' ? `${battery}%` : '—'],
+    ['Almacenamiento', storage || '—'],
     ['Color', color || '—'],
+    ['RAM', ram || '—'],
     ['Estado físico', estadoFisico],
     [
       tipo === 'COMPRA' ? 'Precio de compra' : 'Precio consignación',
@@ -799,6 +843,10 @@ export default function ComprasClient() {
                       setMarca('')
                       setStorage('')
                       setColor('')
+                      setRam('')
+                      setIsCustomStorage(false)
+                      setIsCustomRam(false)
+                      setDeviceType('celular')
                       setColors([])
                       setStorages([])
                       setImageUrl('')
@@ -807,6 +855,8 @@ export default function ComprasClient() {
                       setModelo(v)
                       setMarca(v ? 'Apple' : '')
                       setModeloCustom('')
+                      setRam('')
+                      setDeviceType('celular')
                     }
                     limpiarError('modelo')
                   }}
@@ -853,6 +903,130 @@ export default function ComprasClient() {
                         placeholder="Ej: Samsung"
                         autoComplete="off"
                       />
+                    </div>
+                    <div>
+                      <label htmlFor="deviceTypeCustom" style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>
+                        Tipo de dispositivo
+                      </label>
+                      <select
+                        id="deviceTypeCustom"
+                        className="cw-select"
+                        style={inputStyle}
+                        value={deviceType}
+                        onChange={e => setDeviceType(e.target.value)}
+                      >
+                        <option value="celular">Celular</option>
+                        <option value="tablet">Tablet</option>
+                        <option value="laptop">Laptop</option>
+                        <option value="desktop">Desktop</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="storageCustom" style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>
+                        Almacenamiento
+                      </label>
+                      <select
+                        id="storageCustom"
+                        className="cw-select"
+                        style={inputStyle}
+                        value={isCustomStorage ? OTRO_VALOR : storage}
+                        onChange={e => {
+                          if (e.target.value === OTRO_VALOR) {
+                            setIsCustomStorage(true)
+                            setStorage('')
+                          } else {
+                            setIsCustomStorage(false)
+                            setStorage(e.target.value)
+                          }
+                        }}
+                      >
+                        <option value="">Sin especificar</option>
+                        {STORAGE_PRESETS.map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                        <option value={OTRO_VALOR}>Otro (especificar)...</option>
+                      </select>
+                      {isCustomStorage && (
+                        <input
+                          className="cw-input"
+                          style={{ ...inputStyle, marginTop: 8 }}
+                          value={storage}
+                          onChange={e => setStorage(e.target.value)}
+                          placeholder="Ej: 1 TB SSD, 500 GB HDD"
+                          autoComplete="off"
+                          autoFocus
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>Color</label>
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 2 }}>
+                        {GENERIC_COLORS.map(([name, hex]) => (
+                          <button
+                            key={name}
+                            type="button"
+                            onClick={() => setColor(name)}
+                            title={name}
+                            aria-label={name}
+                            aria-pressed={color === name}
+                            style={{
+                              width: 30,
+                              height: 30,
+                              borderRadius: '50%',
+                              backgroundColor: hex,
+                              border: color === name ? '2.5px solid #FF6B2C' : '1.5px solid #E6E7F0',
+                              boxShadow: color === name
+                                ? '0 0 0 2px #FFF, 0 0 0 4px #FF6B2C33'
+                                : '0 1px 3px rgba(0,0,0,.08)',
+                              cursor: 'pointer',
+                              transition: 'all .15s',
+                              padding: 0,
+                            }}
+                          />
+                        ))}
+                      </div>
+                      {color && (
+                        <p style={{ fontSize: 11, color: '#94A3B8', margin: '6px 0 0' }}>
+                          Seleccionado: <strong style={{ color: '#181B2E' }}>{color}</strong>
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="ramCustom" style={{ ...labelStyle, marginTop: 0, fontSize: 11.5 }}>
+                        RAM
+                      </label>
+                      <select
+                        id="ramCustom"
+                        className="cw-select"
+                        style={inputStyle}
+                        value={isCustomRam ? OTRO_VALOR : ram}
+                        onChange={e => {
+                          if (e.target.value === OTRO_VALOR) {
+                            setIsCustomRam(true)
+                            setRam('')
+                          } else {
+                            setIsCustomRam(false)
+                            setRam(e.target.value)
+                          }
+                        }}
+                      >
+                        <option value="">Sin especificar</option>
+                        {RAM_PRESETS.map(r => (
+                          <option key={r} value={r}>{r}</option>
+                        ))}
+                        <option value={OTRO_VALOR}>Otro (especificar)...</option>
+                      </select>
+                      {isCustomRam && (
+                        <input
+                          className="cw-input"
+                          style={{ ...inputStyle, marginTop: 8 }}
+                          value={ram}
+                          onChange={e => setRam(e.target.value)}
+                          placeholder="Ej: 8 GB"
+                          autoComplete="off"
+                          autoFocus
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -933,24 +1107,28 @@ export default function ComprasClient() {
               <div className="cw-grid" style={{ marginTop: 14 }}>
                 <div>
                   <label htmlFor="imei" style={{ ...labelStyle, marginTop: 0 }}>
-                    IMEI / N° de Serie
+                    {isCustomModel ? 'N° de Serie (opcional)' : 'IMEI / N° de Serie'}
                   </label>
                   <input
                     {...fieldProps('imei')}
                     className="cw-input"
                     value={imei}
                     onChange={e => {
-                      setImei(e.target.value.replace(/\D/g, '').slice(0, 15))
+                      setImei(
+                        isCustomModel
+                          ? e.target.value.slice(0, 40)
+                          : e.target.value.replace(/\D/g, '').slice(0, 15)
+                      )
                       limpiarError('imei')
                     }}
                     onBlur={() => validarEnBlur('imei')}
-                    placeholder="15 dígitos"
-                    inputMode="numeric"
-                    maxLength={15}
+                    placeholder={isCustomModel ? 'Opcional' : '15 dígitos'}
+                    inputMode={isCustomModel ? 'text' : 'numeric'}
+                    maxLength={isCustomModel ? 40 : 15}
                     autoComplete="off"
                   />
                   <p style={{ fontSize: 11, color: errors.imei ? '#DC2626' : '#94A3B8', margin: '5px 0 0' }}>
-                    {errors.imei || `${imei.length}/15 dígitos`}
+                    {errors.imei || (isCustomModel ? 'Opcional — dejalo vacío si no tiene' : `${imei.length}/15 dígitos`)}
                   </p>
                 </div>
                 <div>

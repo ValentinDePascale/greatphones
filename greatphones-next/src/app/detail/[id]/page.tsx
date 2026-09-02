@@ -63,7 +63,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
         },
         variants: variants.map(v => ({
           id: v.id, name: v.name, price: v.price, targetPrice: v.price,
-          storage: v.storage || '', color: v.color || '',
+          storage: v.storage || '', color: v.color || '', ram: v.ram || '',
           imageUrl: v.imageUrl || '', ico: v.ico || '',
           stock: v.stock, condition: v.condition || '',
         }))

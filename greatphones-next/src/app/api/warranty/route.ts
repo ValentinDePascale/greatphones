@@ -18,11 +18,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Código de compra requerido' }, { status: 400 })
     }
 
-    if (!imei || !/^\d{15}$/.test(imei.trim())) {
-      return NextResponse.json({ error: 'IMEI inválido (debe tener 15 dígitos)' }, { status: 400 })
+    // IMEI real (15 dígitos) para celulares, o un N° de serie alfanumérico
+    // para equipos sin IMEI (laptops, tablets de otras marcas), incluyendo
+    // los placeholders sintéticos "SN-..." que genera el alta sin IMEI.
+    const imeiTrim = imei?.trim() || ''
+    const esImeiValido = /^\d{15}$/.test(imeiTrim) || /^[A-Za-z0-9-]{4,40}$/.test(imeiTrim)
+    if (!esImeiValido) {
+      return NextResponse.json({ error: 'IMEI o N° de serie inválido' }, { status: 400 })
     }
 
-    const imeiVal = imei.trim()
+    const imeiVal = imeiTrim
 
     // Rate-limit por par (código + IMEI) para mitigar enumeración
     const pairLimit = await rateLimit(`warranty-check-pair:${safeKeyPart(code)}:${safeKeyPart(imeiVal)}`, 5, 60000)

@@ -37,9 +37,19 @@ const CompraSchema = z.object({
   cuil: z.string().optional(),
   modelo: z.string().min(1, 'El modelo es obligatorio'),
   marca: z.string().optional(),
-  imei: z.union([z.string().regex(/^\d{15}$/, 'El IMEI debe tener 15 números'), z.literal('')]).optional(),
+  deviceType: z.enum(['celular', 'tablet', 'laptop', 'desktop']).optional(),
+  // IMEI real (15 dígitos) para celulares, o un N° de serie alfanumérico
+  // libre para equipos que no lo tienen (laptops, tablets de otras marcas).
+  imei: z
+    .union([
+      z.string().regex(/^\d{15}$/, 'El IMEI debe tener 15 números'),
+      z.string().regex(/^[A-Za-z0-9-]{4,40}$/, 'El N° de serie no es válido'),
+      z.literal(''),
+    ])
+    .optional(),
   color: z.string().optional(),
   storage: z.string().optional(),
+  ram: z.string().optional(),
   imageUrl: z.string().optional(),
   battery: z.number().int().min(0).max(100).optional(),
   estadoFisico: z.string().optional(),
@@ -150,15 +160,16 @@ export async function POST(request: Request) {
             name: d.modelo,
             brand: d.marca || 'Genérico',
             modelGroup: d.modelo,
-            ico: 'smartphone',
+            ico: '📱',
             condition: d.estadoFisico || 'Bueno',
             price: precioFinal,
             cost: costo,
             stock: stock,
-            type: 'celular',
+            type: d.deviceType || 'celular',
             imei: d.imei || undefined,
             color: colorEs || undefined,
             storage: d.storage || undefined,
+            ram: d.ram || undefined,
             imageUrl: d.imageUrl || undefined,
             battery: d.battery ?? undefined,
             description: d.obs || `Compra: ${numero}${d.proveedor ? ' de ' + d.proveedor : ''}`,
@@ -176,8 +187,12 @@ export async function POST(request: Request) {
           modelName: d.modelo,
           color: colorEs || null,
           storage: d.storage || null,
+          // InventoryItem no tiene columna propia de "ram" (a diferencia de
+          // Product) — se guarda en "specs" para que /api/inventory/public
+          // pueda mostrarlo en el picker de variantes del detalle.
+          specs: d.ram ? { ram: d.ram } : undefined,
           imageUrl: d.imageUrl || null,
-          deviceType: 'celular',
+          deviceType: d.deviceType || 'celular',
           purchasePrice: d.tipo === 'COMPRA' ? d.precioCompra : d.precioConsig,
           cosmeticCondition: d.estadoFisico || 'Bueno',
           purchasedFrom: d.proveedor || null,

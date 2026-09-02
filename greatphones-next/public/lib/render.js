@@ -1801,7 +1801,7 @@ function selectDetailVariant(idx){
     batteryTo:(window._isPreorderDetail||currentProd.isPreorder)&&!v.batteryHealth?(currentProd.batteryTo||95):undefined,
     availableFrom:(window._isPreorderDetail||currentProd.isPreorder)?(v.availableFrom||v._availableFrom||currentProd.availableFrom):undefined,
     color:v.color,
-    ram:currentProd.ram,
+    ram:v.ram||currentProd.ram,
     storage:v.storage||currentProd.storage,
     stock:v.stock!==undefined?v.stock:currentProd.stock,
     sub:currentProd.sub,
@@ -1888,6 +1888,76 @@ function renderDetailVariants(){
   var modelColors=window.getModelColors&&window.getModelColors(modelName);
   var hexMap=window.COLOR_HEX||{};
 
+  // Buscar color en COLOR_HEX: mapear inglés→español, case-insensitive,
+  // fallback. Compartido por preventas y por el picker genérico (marcas sin
+  // colores curados en MODEL_COLORS).
+  function findColorHex(colorName){
+    if(!window.COLOR_HEX)return'#9ca3af';
+    // Mapeo de nombres en inglés a español (preventas). Apple nombra sus
+    // acabados de titanio como "<Color> Titanium" (ej: "Natural Titanium",
+    // "Black Titanium"): ese es el orden real que llega desde la carga de
+    // preventas, no "Titanium <Color>". Se dejan ambos órdenes para no
+    // romper datos viejos que puedan estar cargados al revés.
+    var colorMapEnEs={'Blue':'Azul','Midnight':'Medianoche','Purple':'Púrpura','Red':'Rojo','Starlight':'Luz Estelar','Yellow':'Amarillo','Black':'Negro','White':'Blanco','Green':'Verde','Pink':'Rosa','Orange':'Naranja Coral','Silver':'Plateado','Gold':'Dorado','Gray':'Gris Espacial','Space Gray':'Gris Espacial','Rose Gold':'Rosa','Deep Purple':'Púrpura Intenso','Graphite':'Grafito','Midnight Black':'Negro','Sierra Blue':'Azul Sierra','Alpine Green':'Verde Alpino','Space Black':'Negro Espacial','Natural Titanium':'Titanio Natural','Blue Titanium':'Titanio Azul','White Titanium':'Titanio Blanco','Black Titanium':'Titanio Negro','Titanium Natural':'Titanio Natural','Titanium Blue':'Titanio Azul','Titanium White':'Titanio Blanco','Titanium Black':'Titanio Negro','Desert Titanium':'Titanio Desierto','Aqua':'Verde Agua','Ultra Violet':'Azul Ultramar'};
+    var esp=colorMapEnEs[colorName]||colorName;
+    if(window.COLOR_HEX[esp])return window.COLOR_HEX[esp];
+    if(window.COLOR_HEX[colorName])return window.COLOR_HEX[colorName];
+    var lower=colorName.toLowerCase();var espLower=esp.toLowerCase();
+    var keys=Object.keys(window.COLOR_HEX);
+    for(var i=0;i<keys.length;i++){
+      if(keys[i].toLowerCase()===lower||keys[i].toLowerCase()===espLower)return window.COLOR_HEX[keys[i]];
+    }
+    return'#9ca3af';
+  }
+
+  // Cajas de "Almacenamiento" para el color elegido, deshabilitando las que
+  // no existen para ese color. Compartido por los tres modos de picker
+  // (preventa, iPhone curado, genérico) — antes estaba triplicado.
+  function buildStorageHtml(colorMap,state){
+    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
+    if(!storagesForColor||!storagesForColor.length){
+      return state.selectedColor?'<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>':'';
+    }
+    if(!state.selectedStorage){
+      // Preferir el almacenamiento del producto abierto si es una opción
+      // válida para el color seleccionado.
+      var preferredStorage=currentProd&&currentProd.storage;
+      var hasPreferred=preferredStorage&&storagesForColor.some(function(v){return (v.storage||'—')===preferredStorage;});
+      state.selectedStorage=hasPreferred?preferredStorage:(storagesForColor[0].storage||'');
+    }
+    var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
+    var allColorStorages={};
+    Object.keys(colorMap).forEach(function(col){
+      allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
+    });
+    var validStorages=allColorStorages[state.selectedColor]||[];
+    return '<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      allStorages.map(function(s){
+        var isAvailable=validStorages.indexOf(s)>=0;
+        var isSelected=s===state.selectedStorage;
+        if(isAvailable){
+          return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
+        }
+        return '<div class="variant-chip disabled">'+s+'</div>';
+      }).join('')+'</div></div>';
+  }
+
+  // Selecciona automáticamente la variante que matchea color+storage elegidos.
+  function autoSelectByColorStorage(variants,state){
+    if(state.selectedColor&&state.selectedStorage){
+      var foundIdx=-1;
+      for(var vi=0;vi<variants.length;vi++){
+        var v=variants[vi];
+        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
+          foundIdx=vi;break;
+        }
+      }
+      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
+      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
+    }else if(variants.length>0)selectDetailVariant(0);
+  }
+
   // Use color circles for known iPhone models (y para preventas: círculos
   // armados desde los colores de las variantes del grupo).
   if(window._isPreorderDetail){
@@ -1902,26 +1972,6 @@ function renderDetailVariants(){
       colorMap[v.color].push(v);
     });
 
-    // Buscar color en COLOR_HEX: mapear inglés→español, case-insensitive, fallback
-    function findColorHex(colorName){
-      if(!window.COLOR_HEX)return'#9ca3af';
-      // Mapeo de nombres en inglés a español (preventas). Apple nombra sus
-      // acabados de titanio como "<Color> Titanium" (ej: "Natural Titanium",
-      // "Black Titanium"): ese es el orden real que llega desde la carga de
-      // preventas, no "Titanium <Color>". Se dejan ambos órdenes para no
-      // romper datos viejos que puedan estar cargados al revés.
-      var colorMap={'Blue':'Azul','Midnight':'Medianoche','Purple':'Púrpura','Red':'Rojo','Starlight':'Luz Estelar','Yellow':'Amarillo','Black':'Negro','White':'Blanco','Green':'Verde','Pink':'Rosa','Orange':'Naranja Coral','Silver':'Plateado','Gold':'Dorado','Gray':'Gris Espacial','Space Gray':'Gris Espacial','Rose Gold':'Rosa','Deep Purple':'Púrpura Intenso','Graphite':'Grafito','Midnight Black':'Negro','Sierra Blue':'Azul Sierra','Alpine Green':'Verde Alpino','Space Black':'Negro Espacial','Natural Titanium':'Titanio Natural','Blue Titanium':'Titanio Azul','White Titanium':'Titanio Blanco','Black Titanium':'Titanio Negro','Titanium Natural':'Titanio Natural','Titanium Blue':'Titanio Azul','Titanium White':'Titanio Blanco','Titanium Black':'Titanio Negro','Desert Titanium':'Titanio Desierto','Aqua':'Verde Agua','Ultra Violet':'Azul Ultramar'};
-      var esp=colorMap[colorName]||colorName;
-      if(window.COLOR_HEX[esp])return window.COLOR_HEX[esp];
-      if(window.COLOR_HEX[colorName])return window.COLOR_HEX[colorName];
-      var lower=colorName.toLowerCase();var espLower=esp.toLowerCase();
-      var keys=Object.keys(window.COLOR_HEX);
-      for(var i=0;i<keys.length;i++){
-        if(keys[i].toLowerCase()===lower||keys[i].toLowerCase()===espLower)return window.COLOR_HEX[keys[i]];
-      }
-      return'#9ca3af';
-    }
-
     var circlesHtml=Object.keys(colorMap).map(function(c){
       var hex=findColorHex(c);
       var isSelected=c===state.selectedColor;
@@ -1929,46 +1979,10 @@ function renderDetailVariants(){
       return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
     }).join('');
 
-    // Storage boxes for selected color
-    var storageHtml='';
-    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
-    if(storagesForColor&&storagesForColor.length){
-      if(!state.selectedStorage)state.selectedStorage=storagesForColor[0].storage||'';
-      var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
-      var allColorStorages={};
-      Object.keys(colorMap).forEach(function(col){
-        allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
-      });
-      var validStorages=allColorStorages[state.selectedColor]||[];
-      storageHtml='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-        allStorages.map(function(s){
-          var isAvailable=validStorages.indexOf(s)>=0;
-          var isSelected=s===state.selectedStorage;
-          if(isAvailable){
-            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
-          }
-          return '<div class="variant-chip disabled">'+s+'</div>';
-        }).join('')+'</div></div>';
-    }else if(state.selectedColor&&!storagesForColor){
-      storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
-    }
-
+    var storageHtml=buildStorageHtml(colorMap,state);
     list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
       circlesHtml+'</div>'+storageHtml+'</div>';
-
-    // Auto-select variant based on selected color+storage
-    if(state.selectedColor&&state.selectedStorage){
-      var foundIdx=-1;
-      for(var vi=0;vi<variants.length;vi++){
-        var v=variants[vi];
-        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
-          foundIdx=vi;break;
-        }
-      }
-      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
-      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
-    }else if(variants.length>0)selectDetailVariant(0);
+    autoSelectByColorStorage(variants,state);
     return;
   }
 
@@ -2007,57 +2021,49 @@ function renderDetailVariants(){
       return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
     }).join('');
 
-    // Storage boxes for selected color
-    var storageHtml='';
-    var storagesForColor=state.selectedColor?colorMap[state.selectedColor]:[];
-    if(storagesForColor&&storagesForColor.length){
-      if(!state.selectedStorage){
-        // Idem color: preferir el almacenamiento del producto abierto si es
-        // una opción válida para el color seleccionado.
-        var preferredStorage=currentProd&&currentProd.storage;
-        var hasPreferred=preferredStorage&&storagesForColor.some(function(v){return (v.storage||'—')===preferredStorage;});
-        state.selectedStorage=hasPreferred?preferredStorage:(storagesForColor[0].storage||'');
-      }
-      var allStorages=Array.from(new Set(storagesForColor.map(function(v){return v.storage||'—';})));
-      // Also get all storages from other colors to gray them out
-      var allColorStorages={};
-      Object.keys(colorMap).forEach(function(col){
-        allColorStorages[col]=Array.from(new Set(colorMap[col].map(function(v){return v.storage||'—';})));
-      });
-      var validStorages=allColorStorages[state.selectedColor]||[];
-      storageHtml='<div style="margin-top:10px"><div style="font-size:11px;font-weight:600;color:var(--gray);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">Almacenamiento</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-        allStorages.map(function(s){
-          var isAvailable=validStorages.indexOf(s)>=0;
-          var isSelected=s===state.selectedStorage;
-          if(isAvailable){
-            return '<div onclick="onStorageBoxClick(\''+s.replace(/'/g,"\\'")+'\')" class="variant-chip'+(isSelected?' act':'')+'">'+s+'</div>';
-          }
-          return '<div class="variant-chip disabled">'+s+'</div>';
-        }).join('')+'</div></div>';
-    }else if(state.selectedColor&&!storagesForColor){
-      storageHtml='<div style="margin-top:8px;font-size:12px;color:var(--gray)">Sin variantes disponibles para este color</div>';
-    }
-
+    var storageHtml=buildStorageHtml(colorMap,state);
     list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
       circlesHtml+'</div>'+storageHtml+'</div>';
-
-    // Auto-select variant based on selected color+storage
-    if(state.selectedColor&&state.selectedStorage){
-      var foundIdx=-1;
-      for(var vi=0;vi<variants.length;vi++){
-        var v=variants[vi];
-        if(v.color===state.selectedColor&&(v.storage||'—')===state.selectedStorage){
-          foundIdx=vi;break;
-        }
-      }
-      if(foundIdx>=0&&foundIdx!==window._selectedVariantIdx)selectDetailVariant(foundIdx);
-      else if(foundIdx<0&&variants.length>0)selectDetailVariant(0);
-    }else if(variants.length>0)selectDetailVariant(0);
+    autoSelectByColorStorage(variants,state);
     return;
   }
 
-  // Fallback: original text pills for non-iPhone products
+  // Círculos genéricos (a partir de los colores reales de las variantes, no
+  // de una lista curada) para cualquier marca sin entradas en MODEL_COLORS
+  // (Samsung, Motorola, Xiaomi, etc.) — misma experiencia que iPhone
+  // (círculo de color + cajas de almacenamiento) en vez de los chips de
+  // texto de más abajo.
+  if(variants.some(function(v){return v.color;})){
+    if(!window._colorCircleState)window._colorCircleState={selectedColor:null,selectedStorage:null};
+    var state=window._colorCircleState;
+
+    var colorMap={};
+    variants.forEach(function(v){
+      if(!v.color)return;
+      if(!colorMap[v.color])colorMap[v.color]=[];
+      colorMap[v.color].push(v);
+    });
+
+    if(!state.selectedColor&&currentProd&&currentProd.color&&colorMap[currentProd.color]){
+      state.selectedColor=currentProd.color;
+    }
+
+    var circlesHtml=Object.keys(colorMap).map(function(c){
+      var hex=findColorHex(c);
+      var isSelected=c===state.selectedColor;
+      if(!state.selectedColor)state.selectedColor=c;
+      return '<div onclick="onColorCircleClick(\''+c.replace(/'/g,"\\'")+'\')" style="width:36px;height:36px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';flex-shrink:0;transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.15);transform:'+(isSelected?'scale(1.1)':'scale(1)')+'" title="'+c+'"></div>';
+    }).join('');
+
+    var storageHtml=buildStorageHtml(colorMap,state);
+    list.innerHTML='<div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
+      circlesHtml+'</div>'+storageHtml+'</div>';
+    autoSelectByColorStorage(variants,state);
+    return;
+  }
+
+  // Fallback: chips de texto cuando ninguna variante tiene color cargado
+  // (solo difieren en almacenamiento/condición, ej. accesorios).
   list.innerHTML=variants.map(function(v,i){
     var isActive=i===window._selectedVariantIdx;
     var isOos=v.status==='SOLD';
@@ -2926,14 +2932,73 @@ function updateProductFields(){
     if(processorField)processorField.style.display='none';
   }
 }
-window.updateAdminBrandFields=function(){
-  var brand=document.getElementById('prodBrand').value;
-  var iphoneField=document.getElementById('prodIphoneModelField');
-  if(brand==='iPhone'){
-    if(iphoneField)iphoneField.style.display='';
-  }else{
-    if(iphoneField)iphoneField.style.display='none';
+// Marca real elegida en el form de "Editar producto" (resuelve "Otra...").
+function getSelectedAdminBrand(){
+  var sel=document.getElementById('prodBrand');
+  var other=document.getElementById('prodBrandOther');
+  return sel&&sel.value==='__other__'?(other?other.value.trim():''):(sel?sel.value:'');
+}
+
+// Modelos conocidos para una marca+tipo (mismo criterio que modelsForImeiBrand
+// del modal de alta por IMEI): Apple se resuelve a iPhone/iPad/MacBook según
+// el tipo; el resto usa SELL_MODELS[marca] si existe.
+function modelsForBrandType(brand,type){
+  if(!brand)return[];
+  if(/^Apple$/i.test(brand)){
+    var key=type==='tablet'?'iPad':type==='laptop'?'MacBook':'iPhone';
+    return(window.SELL_MODELS&&window.SELL_MODELS[key])||[];
   }
+  return(window.SELL_MODELS&&window.SELL_MODELS[brand])||[];
+}
+
+var ADMIN_GENERIC_COLORS=['Negro','Blanco','Plateado','Grafito','Dorado','Azul','Rojo','Verde','Amarillo','Rosa','Púrpura'];
+// Círculos de color: curados por modelo (getModelColors) si hay, si no la
+// paleta genérica — igual que en el modal de alta por IMEI. Reemplaza el
+// input de texto libre que antes quedaba para cualquier marca no-Apple.
+function refreshAdminColorCircles(modelName,preselectColor){
+  var colorField=document.getElementById('prodColor');
+  if(!colorField)return;
+  var colorContainer=document.getElementById('adminColorContainer');
+  if(!colorContainer){
+    colorContainer=document.createElement('div');
+    colorContainer.id='adminColorContainer';
+    colorContainer.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:6px';
+    colorField.parentNode.appendChild(colorContainer);
+  }
+  var curated=(window.getModelColors&&window.getModelColors(modelName))||[];
+  var colors=curated.length?curated:ADMIN_GENERIC_COLORS;
+  var hexMap=window.COLOR_HEX||{};
+  window._adminColorCircleSelected=preselectColor||'';
+  colorField.style.display='none';
+  colorContainer.style.display='flex';
+  colorContainer.innerHTML=colors.map(function(c){
+    var hex=hexMap[c]||'#ccc';
+    var isSelected=c===preselectColor;
+    return '<div onclick="selectAdminColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
+  }).join('');
+}
+
+window.updateAdminBrandFields=function(){
+  var brand=getSelectedAdminBrand();
+  var type=document.getElementById('prodType')?document.getElementById('prodType').value:'celular';
+  var iphoneField=document.getElementById('prodIphoneModelField');
+  var sel=document.getElementById('prodIphoneModel');
+  var models=modelsForBrandType(brand,type);
+  if(sel){
+    sel.innerHTML='<option value="">Seleccionar...</option>'+
+      models.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
+  }
+  if(iphoneField)iphoneField.style.display=models.length?'':'none';
+};
+// Tamaños de pantalla conocidos por modelo de iPhone, para autocompletar
+// "Pantalla" al elegirlo en el dropdown de "Editar producto" (dato que no
+// tiene sentido pedirle a otras marcas, que no tienen esta tabla).
+var IPHONE_SCREEN_SIZES={
+  'iPhone 15':6.1,'iPhone 15 Plus':6.7,'iPhone 15 Pro':6.1,'iPhone 15 Pro Max':6.7,
+  'iPhone 14':6.1,'iPhone 14 Plus':6.7,'iPhone 14 Pro':6.1,'iPhone 14 Pro Max':6.7,
+  'iPhone 13':6.1,'iPhone 13 mini':5.4,'iPhone 13 Pro':6.1,'iPhone 13 Pro Max':6.7,
+  'iPhone SE (3ra gen)':4.7,
+  'iPhone 12':6.1,'iPhone 12 mini':5.4,'iPhone 12 Pro':6.1,'iPhone 12 Pro Max':6.7,
 };
 window.onAdminIphoneModelChange=function(){
   var sel=document.getElementById('prodIphoneModel');
@@ -2942,6 +3007,9 @@ window.onAdminIphoneModelChange=function(){
     document.getElementById('prodName').value=model;
     var base=window.COTIZ_BASE&&window.COTIZ_BASE[model]||0;
     if(base)document.getElementById('prodPrice').value=base;
+    var screenEl=document.getElementById('prodScreen');
+    if(screenEl)screenEl.value=IPHONE_SCREEN_SIZES[model]||'';
+    refreshAdminColorCircles(model,'');
   }
 };
 window.selectAdminColor=function(color,el){
@@ -2963,19 +3031,28 @@ function saveProduct(){
   }
   var brandSel=document.getElementById('prodBrand');
   var brandOther=document.getElementById('prodBrandOther');
+  var storageVal=document.getElementById('prodStorage').value||'';
+  var colorVal=window._adminColorCircleSelected||document.getElementById('prodColor').value.trim();
+  var descVal=document.getElementById('prodDescription').value.trim();
+  // "sub" es el subtítulo que se ve debajo del nombre en las tarjetas del
+  // admin/catálogo: preferir "Almacenamiento / Color" (igual que al crear el
+  // producto por IMEI) y solo caer a la descripción si el producto no tiene
+  // esos datos — antes esto se pisaba siempre con la descripción al editar,
+  // borrando el subtítulo de storage/color.
+  var subVal=[storageVal,colorVal].filter(Boolean).join(' / ')||descVal.substring(0,60)||null;
   var data={
     name:document.getElementById('prodName').value.trim(),
     brand: brandSel.value==='__other__'?(brandOther?brandOther.value.trim():''):brandSel.value,
-    sub:document.getElementById('prodDescription').value.trim().substring(0,60)||null,
-    description:document.getElementById('prodDescription').value.trim()||null,
+    sub:subVal,
+    description:descVal||null,
     price:parseInt(document.getElementById('prodPrice').value.replace(/[^0-9]/g,''))||0,
     cost:parseInt(document.getElementById('prodBuyPrice').value.replace(/[^0-9]/g,''))||0,
     stock:parseInt(document.getElementById('prodStock').value)||0,
     condition:document.getElementById('prodCondition').value||'Nuevo',
     type:document.getElementById('prodType').value||'celular',
-    color:window._adminColorCircleSelected||document.getElementById('prodColor').value.trim(),
+    color:colorVal,
     screen:parseFloat(document.getElementById('prodScreen').value)||null,
-    storage:document.getElementById('prodStorage').value||null,
+    storage:storageVal||null,
     ram:document.getElementById('prodRam').value||null,
     battery:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?null:(parseInt(document.getElementById('prodBattery').value)||null),
     processor:document.getElementById('prodType').value==='laptop'||document.getElementById('prodType').value==='desktop'?(document.getElementById('prodProcessor').value.trim()||null):null,
@@ -3066,21 +3143,19 @@ function editProduct(id){
     // Show/hide iPhone model select
     updateAdminBrandFields();
   };
-  // iPhone model selector
+  // Modelo conocido: dropdown para cualquier marca con lista en SELL_MODELS
+  // (Apple resuelve iPhone/iPad/MacBook por tipo, igual que en el modal de
+  // alta por IMEI), texto libre en prodName si la marca no tiene lista.
   var iphoneField=document.getElementById('prodIphoneModelField');
   var iphoneSel=document.getElementById('prodIphoneModel');
+  var prodModelName=p.modelGroup||p.name||'';
+  var models=modelsForBrandType(currentBrand,p.type||'celular');
   if(iphoneSel){
-    var iphoneModels=window.SELL_MODELS&&window.SELL_MODELS['iPhone']||[];
-    iphoneSel.innerHTML='<option value="">Seleccionar...</option>'+iphoneModels.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
+    iphoneSel.innerHTML='<option value="">Seleccionar...</option>'+
+      models.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
+    if(models.indexOf(prodModelName)>=0)iphoneSel.value=prodModelName;
   }
-  // Hide iPhone field by default, show if brand is iPhone
-  if(p.brand==='iPhone'){
-    if(iphoneField)iphoneField.style.display='';
-    var iphoneModelName=p.modelGroup||p.name||'';
-    if(iphoneSel)iphoneSel.value=iphoneModelName;
-  }else{
-    if(iphoneField)iphoneField.style.display='none';
-  }
+  if(iphoneField)iphoneField.style.display=models.length?'':'none';
   document.getElementById('prodBuyPrice').value=p.cost||'';
   document.getElementById('prodDescription').value=p.description||'';
   document.getElementById('prodPrice').value=p.price||'';
@@ -3088,31 +3163,7 @@ function editProduct(id){
   document.getElementById('prodCondition').value=p.condition||'Nuevo';
   document.getElementById('prodType').value=p.type||'celular';
   document.getElementById('prodColor').value=p.color||'';
-  // Color circles for iPhone models in admin edit
-  var prodModelName=p.modelGroup||p.name||'';
-  var prodColors=window.getModelColors&&window.getModelColors(prodModelName);
-  var colorField=document.getElementById('prodColor');
-  var colorContainer=document.getElementById('adminColorContainer');
-  if(!colorContainer){
-    colorContainer=document.createElement('div');
-    colorContainer.id='adminColorContainer';
-    colorContainer.style.cssText='display:flex;gap:8px;flex-wrap:wrap;margin-top:6px';
-    colorField.parentNode.appendChild(colorContainer);
-  }
-  if(prodColors&&prodColors.length){
-    colorField.style.display='none';
-    colorContainer.style.display='flex';
-    var hexMap=window.COLOR_HEX||{};
-    window._adminColorCircleSelected=p.color||'';
-    colorContainer.innerHTML=prodColors.map(function(c){
-      var hex=hexMap[c]||'#ccc';
-      var isSelected=c===p.color;
-      return '<div onclick="selectAdminColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
-    }).join('');
-  }else{
-    colorField.style.display='';
-    colorContainer.style.display='none';
-  }
+  refreshAdminColorCircles(prodModelName,p.color||'');
   document.getElementById('prodScreen').value=p.screen||'';
   document.getElementById('prodStorage').value=p.storage||'';
   document.getElementById('prodRam').value=p.ram||'';
@@ -3383,8 +3434,6 @@ function showImeiProductModal(existingProductId){
   var brandOptions=Object.keys(brandMap).sort().map(function(label){
     return'<option value="'+brandMap[label]+'">'+label+'</option>';
   }).join('');
-  var iphoneModels=(window.SELL_MODELS&&window.SELL_MODELS['iPhone'])||[];
-  var iphoneModelOptions=iphoneModels.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('');
   var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:20px;font-weight:700;color:var(--dk)">'+(existingProductId?'Agregar variante':'Nuevo producto por IMEI')+'</h3><button onclick="document.getElementById(\'imeiModalOverlay\').remove()" style="width:32px;height:32px;border-radius:8px;border:none;background:var(--cream2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:var(--gray)">✕</button></div>'+
     '<div style="margin-bottom:16px"><label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;color:var(--gray)">IMEI del dispositivo</label>'+
     '<div style="display:flex;gap:8px"><input type="text" id="imeiInput" maxlength="15" placeholder="Ingresá o escaneá el IMEI de 15 dígitos" oninput="this.value=this.value.replace(/[^0-9]/g,\'\')" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;outline:none">'+
@@ -3398,7 +3447,7 @@ function showImeiProductModal(existingProductId){
       '<div id="imeiFormFields" style="display:grid;gap:14px;margin-top:16px">'+
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Marca</label><select class="imei-fld" id="if-brand" onchange="toggleImeiBrandOther();onImeiBrandOrTypeChange()"><option value="">Seleccioná marca...</option>'+brandOptions+'<option value="__other__">Otra...</option></select><input class="imei-fld" id="if-brand-other" placeholder="Escribí la marca" style="display:none;margin-top:6px"></div>'+
-          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName" onchange="autocompletarPrecioImeiManual()" style="display:none"><select class="imei-fld" id="if-iphoneModel" onchange="onImeiPhoneModelChange()" style="display:none"><option value="">Seleccioná modelo iPhone...</option>'+iphoneModelOptions+'</select></div>'+
+          '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Modelo</label><input class="imei-fld" id="if-modelName" placeholder="Escribí el modelo" onchange="autocompletarPrecioImeiManual()" style="display:none"><select class="imei-fld" id="if-iphoneModel" onchange="onImeiPhoneModelChange()" style="display:none"><option value="">Seleccioná modelo...</option></select></div>'+
         '</div>'+
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">'+
           '<div><label style="font-size:11px;font-weight:600;display:block;margin-bottom:4px;color:var(--gray)">Almacenamiento</label><select class="imei-fld" id="if-storage" onchange="autocompletarPrecioImeiManual()"><option value="">—</option><option value="64 GB">64 GB</option><option value="128 GB">128 GB</option><option value="256 GB">256 GB</option><option value="512 GB">512 GB</option><option value="1 TB">1 TB</option></select></div>'+
@@ -3452,6 +3501,34 @@ function showImeiProductModal(existingProductId){
   style.textContent='.imei-fld{width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;box-sizing:border-box;background:#fff}.imei-fld:focus{border-color:var(--orange)}';
   document.head.appendChild(style);
 
+  // Colores: círculos siempre. Curados por modelo (getModelColors, hoy solo
+  // con entradas de iPhone) si el modelo elegido tiene, si no la paleta
+  // genérica. Definidos acá (antes del prefill de "Agregar variante" más
+  // abajo, que los llama de forma síncrona) para que ya existan a tiempo.
+  var GENERIC_COLOR_SWATCHES=['Negro','Blanco','Plateado','Grafito','Dorado','Azul','Rojo','Verde','Amarillo','Rosa','Púrpura'];
+  function renderColorSwatchesList(colors,preselectColor){
+    var container=document.getElementById('imeiColorContainer');
+    if(!container)return;
+    var hexMap=window.COLOR_HEX||{};
+    if(!colors.length){container.style.display='none';return;}
+    container.style.display='flex';
+    container.style.gap='8px';
+    container.style.flexWrap='wrap';
+    container.innerHTML=colors.map(function(c){
+      var hex=hexMap[c]||'#ccc';
+      var isSelected=c===preselectColor;
+      return '<div onclick="selectImeiColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
+    }).join('');
+    if(preselectColor)window._imeiSelectedColor=preselectColor;
+  }
+  window.renderImeiColorSwatches=function(modelName,preselectColor){
+    var colors=(window.getModelColors&&window.getModelColors(modelName))||[];
+    renderColorSwatchesList(colors,preselectColor);
+  };
+  window.renderGenericColorSwatches=function(preselectColor){
+    renderColorSwatchesList(GENERIC_COLOR_SWATCHES,preselectColor);
+  };
+
   window.toggleImeiBrandOther=function(){
     var sel=document.getElementById('if-brand');
     var other=document.getElementById('if-brand-other');
@@ -3463,31 +3540,71 @@ function showImeiProductModal(existingProductId){
     }
   };
 
-  window.onImeiBrandOrTypeChange=function(){
-    var brand=document.getElementById('if-brand').value;
-    var type=document.getElementById('if-type').value;
-    var isIphone=/^(iPhone|Apple)$/i.test(brand)&&type==='celular';
-    document.getElementById('if-modelName').style.display=isIphone?'none':'';
-    document.getElementById('if-iphoneModel').style.display=isIphone?'':'none';
-    if(isIphone){
-      onImeiPhoneModelChange();
-    }else{
-      // No es iPhone: siempre círculos de colores genéricos (no input de texto)
-      document.getElementById('if-color').style.display='none';
-      document.getElementById('imeiColorContainer').style.display='flex';
-      renderGenericColorSwatches(window._imeiSelectedColor);
+  // Marca real elegida (resuelve "Otra..." contra el input de texto libre).
+  function getSelectedImeiBrand(){
+    var sel=document.getElementById('if-brand');
+    return sel.value==='__other__'?document.getElementById('if-brand-other').value.trim():sel.value;
+  }
+
+  // Modelos conocidos para una marca+tipo (mismo criterio que _modelsForBrand
+  // en preventa.js): Apple se resuelve a iPhone/iPad/MacBook según el tipo;
+  // el resto usa SELL_MODELS[marca] si existe (hoy: Samsung, Motorola, Xiaomi).
+  function modelsForImeiBrand(brand,type){
+    if(!brand)return[];
+    if(/^Apple$/i.test(brand)){
+      var key=type==='tablet'?'iPad':type==='laptop'?'MacBook':'iPhone';
+      return(window.SELL_MODELS&&window.SELL_MODELS[key])||[];
     }
+    return(window.SELL_MODELS&&window.SELL_MODELS[brand])||[];
+  }
+
+  // Modelo efectivamente elegido: del <select> de modelos conocidos, o del
+  // input libre (incluye el caso "Otro modelo...").
+  function getSelectedImeiModelName(){
+    var dd=document.getElementById('if-iphoneModel');
+    var custom=document.getElementById('if-modelName');
+    if(dd&&dd.style.display!=='none'){
+      if(dd.value==='__other__')return custom?custom.value.trim():'';
+      return dd.value;
+    }
+    return custom?custom.value.trim():'';
+  }
+
+  window.onImeiBrandOrTypeChange=function(){
+    var brand=getSelectedImeiBrand();
+    var type=document.getElementById('if-type').value;
+    var models=modelsForImeiBrand(brand,type);
+    var dd=document.getElementById('if-iphoneModel');
+    var custom=document.getElementById('if-modelName');
+    if(models.length){
+      dd.innerHTML='<option value="">Seleccioná modelo...</option>'+
+        models.map(function(m){return'<option value="'+m+'">'+m+'</option>';}).join('')+
+        '<option value="__other__">Otro modelo...</option>';
+      dd.style.display='';
+      custom.style.display=dd.value==='__other__'?'':'none';
+    }else{
+      dd.innerHTML='';
+      dd.style.display='none';
+      custom.style.display='';
+    }
+    onImeiPhoneModelChange();
   };
 
   window.onImeiPhoneModelChange=function(){
-    var model=document.getElementById('if-iphoneModel').value;
-    if(model&&window.getModelColors&&window.getModelColors(model)){
-      renderImeiColorSwatches(model,'');
-      document.getElementById('if-color').style.display='none';
-      document.getElementById('imeiColorContainer').style.display='flex';
+    var dd=document.getElementById('if-iphoneModel');
+    var custom=document.getElementById('if-modelName');
+    if(dd&&dd.style.display!=='none'){
+      custom.style.display=dd.value==='__other__'?'':'none';
+      if(dd.value==='__other__')custom.focus();
+    }
+    var model=getSelectedImeiModelName();
+    var curatedColors=model&&window.getModelColors&&window.getModelColors(model);
+    document.getElementById('if-color').style.display='none';
+    document.getElementById('imeiColorContainer').style.display='flex';
+    if(curatedColors&&curatedColors.length){
+      renderImeiColorSwatches(model,window._imeiSelectedColor||'');
     }else{
-      document.getElementById('imeiColorContainer').style.display='none';
-      document.getElementById('if-color').style.display='';
+      renderGenericColorSwatches(window._imeiSelectedColor);
     }
     autocompletarPrecioImeiManual();
   };
@@ -3497,9 +3614,7 @@ function showImeiProductModal(existingProductId){
   window.autocompletarPrecioImeiManual=function(){
     if(window.renderImeiCatalogImages)window.renderImeiCatalogImages();
     if(typeof window.cargarPreciosLista!=='function')return;
-    var iphone=document.getElementById('if-iphoneModel');
-    var custom=document.getElementById('if-modelName');
-    var model=(iphone&&iphone.style.display!=='none')?iphone.value:(custom?custom.value:'');
+    var model=getSelectedImeiModelName();
     var storageEl=document.getElementById('if-storage');
     var storage=storageEl?storageEl.value:'';
     if(!model)return;
@@ -3520,9 +3635,7 @@ function showImeiProductModal(existingProductId){
     var catEl=document.getElementById('imeiImgCatalog');
     var optsEl=document.getElementById('imeiImgOptions');
     if(!catEl||!optsEl)return;
-    var iphone=document.getElementById('if-iphoneModel');
-    var custom=document.getElementById('if-modelName');
-    var model=(iphone&&iphone.style.display!=='none')?iphone.value:(custom?custom.value:'');
+    var model=getSelectedImeiModelName();
     if(!model){catEl.style.display='none';optsEl.innerHTML='';return;}
     var storage=document.getElementById('if-storage');
     var storageVal=storage?storage.value:'';
@@ -3596,8 +3709,15 @@ function showImeiProductModal(existingProductId){
       window._imeiSelectedColor=null;
       var prodName=p.name||'';
       var iphoneSelect=document.getElementById('if-iphoneModel');
-      if(iphoneSelect&&iphoneSelect.querySelector('option[value="'+prodName+'"]')){
+      if(iphoneSelect&&iphoneSelect.style.display!=='none'&&iphoneSelect.querySelector('option[value="'+prodName+'"]')){
         iphoneSelect.value=prodName;
+        onImeiPhoneModelChange();
+        if(p.color)window._imeiSelectedColor=p.color;
+      }else if(iphoneSelect&&iphoneSelect.style.display!=='none'){
+        // Modelo conocido para la marca, pero este producto no coincide con
+        // ninguna opción (nombre libre viejo): usar "Otro modelo".
+        iphoneSelect.value='__other__';
+        document.getElementById('if-modelName').value=prodName;
         onImeiPhoneModelChange();
         if(p.color)window._imeiSelectedColor=p.color;
       }else{
@@ -3607,29 +3727,6 @@ function showImeiProductModal(existingProductId){
   }
 
   // Global helper functions for this modal
-  var GENERIC_COLOR_SWATCHES=['Negro','Blanco','Plateado','Grafito','Dorado','Azul','Rojo','Verde','Amarillo','Rosa','Púrpura'];
-  function renderColorSwatchesList(colors,preselectColor){
-    var container=document.getElementById('imeiColorContainer');
-    if(!container)return;
-    var hexMap=window.COLOR_HEX||{};
-    if(!colors.length){container.style.display='none';return;}
-    container.style.display='flex';
-    container.style.gap='8px';
-    container.style.flexWrap='wrap';
-    container.innerHTML=colors.map(function(c){
-      var hex=hexMap[c]||'#ccc';
-      var isSelected=c===preselectColor;
-      return '<div onclick="selectImeiColor(\''+c.replace(/'/g,"\\'")+'\',this)" style="width:32px;height:32px;border-radius:50%;background:'+hex+';cursor:pointer;border:3px solid '+(isSelected?'var(--orange)':'transparent')+';transition:all .15s;box-shadow:0 2px 6px rgba(0,0,0,.12);flex-shrink:0" title="'+c+'"></div>'
-    }).join('');
-    if(preselectColor)window._imeiSelectedColor=preselectColor;
-  }
-  window.renderImeiColorSwatches=function(modelName,preselectColor){
-    var colors=(window.getModelColors&&window.getModelColors(modelName))||[];
-    renderColorSwatchesList(colors,preselectColor);
-  };
-  window.renderGenericColorSwatches=function(preselectColor){
-    renderColorSwatchesList(GENERIC_COLOR_SWATCHES,preselectColor);
-  };
   window.selectImeiColor=function(color,el){
     window._imeiSelectedColor=color;
     document.querySelectorAll('#imeiColorContainer > div').forEach(function(d){d.style.borderColor='transparent';});
@@ -3694,28 +3791,17 @@ function showImeiProductModal(existingProductId){
       document.getElementById('imeiResult').innerHTML='<div style="padding:10px 14px;background:rgba(34,197,94,.1);border-radius:8px;font-size:13px;color:var(--green)">✅ Datos obtenidos del IMEI. Revisá y editá si es necesario.</div>';
 
       // Set model field and color circles
-      window._imeiSelectedColor=null;
+      window._imeiSelectedColor=data.color||null;
       var imeiModel=data.modelName||'';
       onImeiBrandOrTypeChange();
       var iphoneSelect=document.getElementById('if-iphoneModel');
-      var isIphone=window.SELL_MODELS&&window.SELL_MODELS['iPhone']&&window.SELL_MODELS['iPhone'].indexOf(imeiModel)>=0;
-      if(isIphone&&iphoneSelect){
-        if(iphoneSelect.querySelector('option[value="'+imeiModel+'"]')){
-          iphoneSelect.value=imeiModel;
-          onImeiPhoneModelChange();
-          if(data.color)selectImeiColor(data.color,document.querySelector('#imeiColorContainer > div:first-child'));
-        }
+      if(iphoneSelect&&iphoneSelect.style.display!=='none'&&imeiModel&&iphoneSelect.querySelector('option[value="'+imeiModel+'"]')){
+        iphoneSelect.value=imeiModel;
+        onImeiPhoneModelChange();
       }else{
+        if(iphoneSelect&&iphoneSelect.style.display!=='none')iphoneSelect.value='__other__';
         document.getElementById('if-modelName').value=imeiModel;
-        var modelColors=window.getModelColors&&window.getModelColors(imeiModel);
-        if(modelColors&&modelColors.length){
-          document.getElementById('if-color').style.display='none';
-          renderImeiColorSwatches(imeiModel,data.color);
-          document.getElementById('imeiColorContainer').style.display='flex';
-        }else{
-          document.getElementById('if-color').style.display='';
-          document.getElementById('imeiColorContainer').style.display='none';
-        }
+        onImeiPhoneModelChange();
       }
 
       document.getElementById('imeiForm').style.display='block';
@@ -3841,10 +3927,8 @@ function showImeiProductModal(existingProductId){
       // sintético, ya que cada unidad de inventario necesita uno igual.
       imei='SN-'+Date.now().toString(36).toUpperCase()+Math.random().toString(36).slice(2,6).toUpperCase();
     }
-    var brandSel=document.getElementById('if-brand');
-    var brand=brandSel.value==='__other__'?document.getElementById('if-brand-other').value.trim():brandSel.value;
-    var iphoneSelect=document.getElementById('if-iphoneModel');
-    var modelName=(iphoneSelect&&iphoneSelect.style.display!=='none'&&iphoneSelect.value)?iphoneSelect.value:document.getElementById('if-modelName').value.trim();
+    var brand=getSelectedImeiBrand();
+    var modelName=getSelectedImeiModelName();
     if(!modelName&&!existingId){
       showErrorToast('Error','El nombre del modelo es requerido');
       return;

@@ -7,7 +7,7 @@ import { rateLimit, clientIpKey } from '@/lib/rate-limit'
  *
  * Solo expone información segura para clientes:
  * - id, code, status, targetPrice
- * - storage, color, cosmeticCondition, batteryHealth
+ * - storage, color, ram, cosmeticCondition, batteryHealth
  * - imageUrl
  *
  * NO expone (datos sensibles):
@@ -47,6 +47,7 @@ export async function GET(request: Request) {
         salePrice: true,
         storage: true,
         color: true,
+        specs: true,
         cosmeticCondition: true,
         batteryHealth: true,
         imageUrl: true,
@@ -56,8 +57,17 @@ export async function GET(request: Request) {
       take: limit,
     })
 
+    // InventoryItem no tiene columna propia de "ram" (a diferencia de
+    // Product) — se guarda dentro de "specs" al crear el ítem. Se extrae acá
+    // y no se reexpone el resto de "specs" para mantener la forma pública
+    // documentada arriba.
+    const data = items.map(({ specs, ...rest }) => ({
+      ...rest,
+      ram: (specs && typeof specs === 'object' && 'ram' in specs ? (specs as { ram?: string }).ram : null) || null,
+    }))
+
     return NextResponse.json(
-      { data: items },
+      { data },
       {
         headers: {
           'Cache-Control': 'public, max-age=30, s-maxage=60, stale-while-revalidate=120',
